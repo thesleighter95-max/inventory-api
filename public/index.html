@@ -598,49 +598,61 @@ table td { font-size: 11px; }
     <!-- ║  KELOLA USER — admin only                    ║ -->
     <!-- ╚══════════════════════════════════════════════╝ -->
     <div id="kelolaUserSection" style="margin-bottom:16px;">
-      <div style="background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(79,70,229,0.03));border:1px solid rgba(99,102,241,0.22);border-radius:16px;padding:16px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(79,70,229,0.03));border:1px solid rgba(99,102,241,0.22);border-radius:16px;padding:14px 16px;">
+        <!-- Header — klik untuk expand/collapse seluruh section -->
+        <div onclick="toggleKelolaUser()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;">
           <div style="display:flex;align-items:center;gap:8px;">
             <div style="width:28px;height:28px;background:rgba(99,102,241,0.18);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
               <svg style="width:15px;height:15px;color:#818cf8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             </div>
             <div>
               <p style="font-size:12px;font-weight:800;color:#a5b4fc;margin:0;letter-spacing:.5px;">KELOLA USER</p>
-              <p style="font-size:10px;color:#6b7280;margin:2px 0 0;">Tambah, edit, suspend, atau hapus user</p>
+              <p style="font-size:10px;color:#6b7280;margin:2px 0 0;" id="kelolaUserSubtitle">Tambah, edit, suspend, atau hapus user</p>
             </div>
           </div>
-          <div style="display:flex;gap:5px;">
-            <button onclick="importUsersFromSheets()" id="btnImportUsers" title="Import user dari Google Sheets"
-              style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#34d399;border-radius:8px;padding:6px 9px;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;">
-              <svg style="width:11px;height:11px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          <svg id="kelolaUserChevron" style="width:16px;height:16px;color:#6b7280;transition:transform 0.2s;transform:rotate(0deg);flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </div>
+        <!-- Body — default collapsed -->
+        <div id="kelolaUserBody" style="display:none;margin-top:12px;">
+          <!-- Tombol aksi -->
+          <div style="display:flex;gap:5px;margin-bottom:12px;">
+            <button onclick="toggleFormTambahUser(event)" id="btnToggleForm"
+              style="flex:1;background:rgba(99,102,241,0.18);border:1px solid rgba(99,102,241,0.3);color:#a5b4fc;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
+              <svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+              Tambah User
+            </button>
+            <button onclick="importUsersFromSheets()" id="btnImportUsers"
+              style="flex:1;background:rgba(16,185,129,0.13);border:1px solid rgba(16,185,129,0.28);color:#34d399;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
+              <svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
               Import Sheets
             </button>
             <button onclick="loadUserList()" id="btnRefreshUsers"
-              style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#a5b4fc;border-radius:8px;padding:6px 9px;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;">
-              <svg style="width:11px;height:11px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-              Refresh
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#9ca3af;border-radius:8px;padding:7px 9px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+              <svg style="width:13px;height:13px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
             </button>
           </div>
-        </div>
-        <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:12px;margin-bottom:12px;">
-          <p style="font-size:10px;font-weight:700;color:#94a3b8;margin:0 0 8px;">Tambah User Baru</p>
-          <input id="newUserUsername" type="text" placeholder="Username / NIK / ID"
-            style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;font-size:12px;color:white;outline:none;box-sizing:border-box;margin-bottom:6px;">
-          <input id="newUserNama" type="text" placeholder="Nama Lengkap"
-            style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;font-size:12px;color:white;outline:none;box-sizing:border-box;margin-bottom:6px;">
-          <div class="pwd-wrapper" style="margin-bottom:8px;"><input id="newUserPassword" type="password" placeholder="Password"
-            style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;font-size:12px;color:white;outline:none;box-sizing:border-box;">
-            <button class="pwd-eye-btn" type="button" onclick="togglePwdVisibility('newUserPassword','eyeNewUser')"><svg id="eyeNewUser" style="width:16px;height:16px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg></button>
+          <!-- Form tambah user — hidden by default -->
+          <div id="formTambahUser" style="display:none;background:rgba(0,0,0,0.2);border-radius:10px;padding:12px;margin-bottom:10px;">
+            <input id="newUserUsername" type="text" placeholder="Username / NIK / ID"
+              style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;font-size:12px;color:white;outline:none;box-sizing:border-box;margin-bottom:6px;">
+            <input id="newUserNama" type="text" placeholder="Nama Lengkap"
+              style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;font-size:12px;color:white;outline:none;box-sizing:border-box;margin-bottom:6px;">
+            <div class="pwd-wrapper" style="margin-bottom:8px;">
+              <input id="newUserPassword" type="password" placeholder="Password"
+                style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;font-size:12px;color:white;outline:none;box-sizing:border-box;">
+              <button class="pwd-eye-btn" type="button" onclick="togglePwdVisibility('newUserPassword','eyeNewUser')"><svg id="eyeNewUser" style="width:16px;height:16px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg></button>
+            </div>
+            <button onclick="tambahUser()" id="btnTambahUser"
+              style="width:100%;background:linear-gradient(135deg,#6366f1,#4f46e5);border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:700;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+              <svg style="width:13px;height:13px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+              Simpan User Baru
+            </button>
+            <p id="addUserMsg" style="font-size:11px;min-height:14px;margin:6px 0 0;text-align:center;"></p>
           </div>
-          <button onclick="tambahUser()" id="btnTambahUser"
-            style="width:100%;background:linear-gradient(135deg,#6366f1,#4f46e5);border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:700;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-            <svg style="width:13px;height:13px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-            Tambah User
-          </button>
-          <p id="addUserMsg" style="font-size:11px;min-height:14px;margin:6px 0 0;text-align:center;"></p>
-        </div>
-        <div id="userListContainer">
-          <div style="text-align:center;color:#4b5563;font-size:12px;padding:16px;">Klik Refresh untuk memuat daftar user...</div>
+          <!-- Daftar user — scrollable -->
+          <div id="userListContainer" style="max-height:260px;overflow-y:auto;padding-right:2px;">
+            <div style="text-align:center;color:#4b5563;font-size:12px;padding:16px;">Klik Refresh untuk memuat daftar user...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1197,6 +1209,23 @@ function setBblmStatus(status){
   }).catch(function(){showToast("Gagal menghubungi server","error");});
 }
 function escHtml(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function toggleKelolaUser(){
+  var body=document.getElementById("kelolaUserBody");
+  var chevron=document.getElementById("kelolaUserChevron");
+  var isOpen=body.style.display!=="none";
+  body.style.display=isOpen?"none":"block";
+  chevron.style.transform=isOpen?"rotate(0deg)":"rotate(180deg)";
+  if(!isOpen)loadUserList();
+}
+function toggleFormTambahUser(e){
+  if(e)e.stopPropagation();
+  var form=document.getElementById("formTambahUser");
+  var btn=document.getElementById("btnToggleForm");
+  var isOpen=form.style.display!=="none";
+  form.style.display=isOpen?"none":"block";
+  btn.style.background=isOpen?"rgba(99,102,241,0.18)":"rgba(99,102,241,0.35)";
+  if(!isOpen)setTimeout(function(){var el=document.getElementById("newUserUsername");if(el)el.focus();},50);
+}
 function loadUserList(){
   if(!isAdmin)return;
   var el=document.getElementById("userListContainer");
