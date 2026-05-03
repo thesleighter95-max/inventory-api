@@ -5,7 +5,7 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "00000";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
   "Content-Type": "application/json",
 };
@@ -133,6 +133,16 @@ export default async function handler(req) {
       const maxLimit = Math.min(parseInt(limit ?? "100", 10) || 100, 1000);
       logs = logs.slice(0, maxLimit);
       return json({ success: true, logs });
+    }
+
+    // DELETE /activity-log
+    if (path === "/activity-log" && method === "DELETE") {
+      const { adminPassword } = body;
+      if (adminPassword !== ADMIN_PASSWORD) {
+        return json({ success: false, message: "Unauthorized" }, 403);
+      }
+      await setJson(store, "activity-logs", []);
+      return json({ success: true, message: "Semua log berhasil dihapus" });
     }
 
     // POST /activity-log
