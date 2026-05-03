@@ -3,15 +3,15 @@ import { randomUUID } from "crypto";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "00000";
 
-const CORS = {
+const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
   "Content-Type": "application/json",
 };
 
-function json(data, statusCode = 200) {
-  return { statusCode, headers: CORS, body: JSON.stringify(data) };
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers: CORS_HEADERS });
 }
 
 async function getJson(store, key, defaultValue) {
@@ -28,23 +28,23 @@ async function setJson(store, key, data) {
   await store.set(key, JSON.stringify(data));
 }
 
-export default async function handler(event) {
-  const method = event.httpMethod || "GET";
+export default async function handler(req) {
+  const url = new URL(req.url);
+  const method = req.method;
 
   if (method === "OPTIONS") {
-    return { statusCode: 200, headers: CORS, body: "" };
+    return new Response("", { status: 200, headers: CORS_HEADERS });
   }
 
-  // Extract path: remove /.netlify/functions/api or /api prefix
-  let path = (event.path || "")
-    .replace(/^\/.netlify\/functions\/api/, "")
-    .replace(/^\/api/, "") || "/";
+  // Extract path: strip /api prefix
+  const path = url.pathname.replace(/^\/?api/, "") || "/";
 
   let body = {};
-  if (event.body) {
-    try { body = JSON.parse(event.body); } catch { /* ignore */ }
+  if (method !== "GET" && method !== "HEAD") {
+    try { body = await req.json(); } catch { /* ignore */ }
   }
-  const query = event.queryStringParameters || {};
+
+  const query = Object.fromEntries(url.searchParams.entries());
   const store = getStore("inventory");
 
   try {
