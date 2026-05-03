@@ -1,0 +1,692 @@
+[
+  {
+    "username": "110370174",
+    "action": "search_nama",
+    "detail": "indofood",
+    "createdAt": "2026-05-03T07:42:49.810Z"
+  },
+  {
+    "username": "110370174",
+    "action": "search_nama",
+    "detail": "indo",
+    "createdAt": "2026-05-03T07:42:48.868Z"
+  },
+  {
+    "username": "110370174",
+    "action": "search_nama",
+    "detail": "indoffot",
+    "createdAt": "2026-05-03T07:42:48.668Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login | 📍 Denpasar, Bali, Indonesia, (103.190.47.0)",
+    "createdAt": "2026-05-03T07:21:08.318Z"
+  },
+  {
+    "username": "110370174",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T07:04:12.582Z"
+  },
+  {
+    "username": "110370174",
+    "action": "login",
+    "detail": "User login: IMAM SUDAESI | 📍 Denpasar, Bali, Indonesia, (112.215.220.207)",
+    "createdAt": "2026-05-03T07:04:07.915Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login | 📍 Denpasar, Bali, Indonesia, (103.190.47.0)",
+    "createdAt": "2026-05-03T07:01:22.361Z"
+  },
+  {
+    "username": "100105738",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T06:31:46.684Z"
+  },
+  {
+    "username": "100105738",
+    "action": "tab_expired",
+    "detail": "Buka panel Expired",
+    "createdAt": "2026-05-03T06:31:44.550Z"
+  },
+  {
+    "username": "100105738",
+    "action": "login",
+    "detail": "User login: DENI SYAHPUTRA HALAWA | 📍 Denpasar, Bali, Indonesia, (103.190.47.0)",
+    "createdAt": "2026-05-03T06:31:36.003Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T06:30:49.807Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login | 📍 Denpasar, Bali, Indonesia, (103.190.47.0)",
+    "createdAt": "2026-05-03T06:30:07.726Z"
+  },
+  {
+    "username": "100105738",
+    "action": "lapor_produk",
+    "detail": "89960016006968 — tesss",
+    "createdAt": "2026-05-03T06:29:54.994Z"
+  },
+  {
+    "username": "100105738",
+    "action": "scan_barcode",
+    "detail": "89960016006968",
+    "createdAt": "2026-05-03T06:29:47.094Z"
+  },
+  {
+    "username": "100105738",
+    "action": "scan_barcode",
+    "detail": "8996001600696",
+    "createdAt": "2026-05-03T06:29:41.670Z"
+  },
+  {
+    "username": "100105738",
+    "action": "search_nama",
+    "detail": "chitato",
+    "createdAt": "2026-05-03T06:29:33.820Z"
+  },
+  {
+    "username": "100105738",
+    "action": "login",
+    "detail": "User login: DENI SYAHPUTRA HALAWA | 📍 Denpasar, Bali, Indonesia, (103.190.47.0)",
+    "createdAt": "2026-05-03T06:29:23.562Z"
+  },
+  {
+    "username": "user",
+    "action": "cetak",
+    "detail": "tes [MANUAL] (1x)",
+    "createdAt": "2026-05-03T06:26:27.889Z"
+  },
+  {
+    "username": "user",
+    "action": "scan_barcode",
+    "detail": "8996001600697",
+    "createdAt": "2026-05-03T06:26:12.187Z"
+  },
+  {
+    "username": "user",
+    "action": "scan_barcode",
+    "detail": "8996001600696",
+    "createdAt": "2026-05-03T06:26:08.432Z"
+  },
+  {
+    "username": "user",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T06:26:01.695Z"
+  },
+  {
+    "username": "user",
+    "action": "login",
+    "detail": "User login: user | 📍 Denpasar, Bali, Indonesia, (103.190.47.0)",
+    "createdAt": "2026-05-03T06:25:55.962Z"
+  },
+  {
+    "username": "admin",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T06:21:48.925Z"
+  },
+  {
+    "username": "admin",
+    "action": "scan_barcode",
+    "detail": "uewiiwiw",
+    "createdAt": "2026-05-03T06:21:39.709Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T06:21:36.334Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login | 📍 Denpasar, Bali, Indonesia, (103.190.47.0)",
+    "createdAt": "2026-05-03T06:20:55.498Z"
+  },
+  {
+    "username": "user",
+    "action": "lapor_produk",
+    "detail": "8999999605996 — tess",
+    "createdAt": "2026-05-03T06:20:38.302Z"
+  },
+  {
+    "username": "user",
+    "action": "scan_barcode",
+    "detail": "8999999605996",
+    "createdAt": "2026-05-03T06:20:28.915Z"
+  },
+  {
+    "username": "user",
+    "action": "scan_barcode",
+    "detail": "8999999605995",
+    "createdAt": "2026-05-03T06:20:22.910Z"
+  },
+  {
+    "username": "100201443",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T06:19:33.848Z"
+  },
+  {
+    "username": "100201443",
+    "action": "search_nama",
+    "detail": "bimol",
+    "createdAt": "2026-05-03T06:19:33.131Z"
+  },
+  {
+    "username": "100201443",
+    "action": "login",
+    "detail": "User login: DANANG WINARKO",
+    "createdAt": "2026-05-03T06:19:30.703Z"
+  },
+  {
+    "username": "100201443",
+    "action": "login",
+    "detail": "User login: DANANG WINARKO",
+    "createdAt": "2026-05-03T06:19:30.562Z"
+  },
+  {
+    "username": "user",
+    "action": "login",
+    "detail": "User login: user | 📍 Denpasar, Bali, Indonesia, (103.190.47.0)",
+    "createdAt": "2026-05-03T06:18:54.949Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login | 📍 Denpasar, Bali, Indonesia, (103.190.47.0)",
+    "createdAt": "2026-05-03T06:00:20.005Z"
+  },
+  {
+    "username": "user",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T06:00:02.614Z"
+  },
+  {
+    "username": "user",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T05:59:57.303Z"
+  },
+  {
+    "username": "user",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T05:59:56.761Z"
+  },
+  {
+    "username": "user",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T05:59:55.428Z"
+  },
+  {
+    "username": "user",
+    "action": "login",
+    "detail": "User login: user | 📍 Denpasar, Bali, Indonesia, (103.190.47.0)",
+    "createdAt": "2026-05-03T05:59:50.903Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login | 📍 Denpasar, Bali, Indonesia, (103.190.47.0)",
+    "createdAt": "2026-05-03T05:59:05.793Z"
+  },
+  {
+    "username": "user",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T05:42:32.507Z"
+  },
+  {
+    "username": "user",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T05:42:18.682Z"
+  },
+  {
+    "username": "user",
+    "action": "login",
+    "detail": "User login: user",
+    "createdAt": "2026-05-03T05:42:12.076Z"
+  },
+  {
+    "username": "user",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T05:37:40.655Z"
+  },
+  {
+    "username": "user",
+    "action": "tab_expired",
+    "detail": "Buka panel Expired",
+    "createdAt": "2026-05-03T05:37:39.566Z"
+  },
+  {
+    "username": "user",
+    "action": "login",
+    "detail": "User login: user",
+    "createdAt": "2026-05-03T05:37:35.332Z"
+  },
+  {
+    "username": "user",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T05:35:38.646Z"
+  },
+  {
+    "username": "user",
+    "action": "tab_expired",
+    "detail": "Buka panel Expired",
+    "createdAt": "2026-05-03T05:35:37.640Z"
+  },
+  {
+    "username": "user",
+    "action": "search_nama",
+    "detail": "vape one pu",
+    "createdAt": "2026-05-03T05:34:20.119Z"
+  },
+  {
+    "username": "user",
+    "action": "login",
+    "detail": "User login: user",
+    "createdAt": "2026-05-03T05:34:05.972Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T05:33:38.287Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_expired",
+    "detail": "Buka panel Expired",
+    "createdAt": "2026-05-03T05:33:36.843Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T05:33:34.167Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_expired",
+    "detail": "Buka panel Expired",
+    "createdAt": "2026-05-03T05:33:32.857Z"
+  },
+  {
+    "username": "admin",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T05:33:24.340Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login",
+    "createdAt": "2026-05-03T05:33:18.099Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login",
+    "createdAt": "2026-05-03T05:29:07.229Z"
+  },
+  {
+    "username": "admin",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T05:16:57.293Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T05:16:54.864Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T05:16:53.268Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login",
+    "createdAt": "2026-05-03T05:16:34.528Z"
+  },
+  {
+    "username": "100201443",
+    "action": "search_nama",
+    "detail": "kapal api 60",
+    "createdAt": "2026-05-03T04:54:46.284Z"
+  },
+  {
+    "username": "100201443",
+    "action": "search_nama",
+    "detail": "kapal api",
+    "createdAt": "2026-05-03T04:54:45.836Z"
+  },
+  {
+    "username": "100201443",
+    "action": "search_nama",
+    "detail": "kapal api",
+    "createdAt": "2026-05-03T04:54:45.327Z"
+  },
+  {
+    "username": "100201443",
+    "action": "search_nama",
+    "detail": "kapal",
+    "createdAt": "2026-05-03T04:54:44.193Z"
+  },
+  {
+    "username": "100201443",
+    "action": "search_nama",
+    "detail": "japal",
+    "createdAt": "2026-05-03T04:54:43.106Z"
+  },
+  {
+    "username": "100201443",
+    "action": "login",
+    "detail": "User login: DANANG WINARKO",
+    "createdAt": "2026-05-03T04:54:40.803Z"
+  },
+  {
+    "username": "100201443",
+    "action": "login",
+    "detail": "User login: DANANG WINARKO",
+    "createdAt": "2026-05-03T04:54:40.666Z"
+  },
+  {
+    "username": "user",
+    "action": "search_nama",
+    "detail": "montiss",
+    "createdAt": "2026-05-03T04:49:06.359Z"
+  },
+  {
+    "username": "user",
+    "action": "login",
+    "detail": "User login: user",
+    "createdAt": "2026-05-03T04:48:56.686Z"
+  },
+  {
+    "username": "100105738",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T04:41:26.147Z"
+  },
+  {
+    "username": "100105738",
+    "action": "login",
+    "detail": "User login: DENI SYAHPUTRA HALAWA",
+    "createdAt": "2026-05-03T04:41:17.638Z"
+  },
+  {
+    "username": "admin",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T04:40:56.340Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T04:40:53.836Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login",
+    "createdAt": "2026-05-03T04:40:44.034Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login",
+    "createdAt": "2026-05-03T04:40:27.356Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T04:38:20.402Z"
+  },
+  {
+    "username": "admin",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T04:38:11.293Z"
+  },
+  {
+    "username": "admin",
+    "action": "search_nama",
+    "detail": "chitato",
+    "createdAt": "2026-05-03T04:38:07.272Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T04:38:04.850Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login",
+    "createdAt": "2026-05-03T04:37:47.077Z"
+  },
+  {
+    "username": "admin",
+    "action": "search_nama",
+    "detail": "chitato",
+    "createdAt": "2026-05-03T04:34:17.008Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login",
+    "createdAt": "2026-05-03T04:34:12.120Z"
+  },
+  {
+    "username": "100105738",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T04:32:15.032Z"
+  },
+  {
+    "username": "100105738",
+    "action": "login",
+    "detail": "User login: DENI SYAHPUTRA HALAWA",
+    "createdAt": "2026-05-03T04:32:10.693Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T04:31:57.328Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T04:31:38.421Z"
+  },
+  {
+    "username": "admin",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T04:31:07.607Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T04:31:05.636Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login",
+    "createdAt": "2026-05-03T04:31:00.155Z"
+  },
+  {
+    "username": "100105738",
+    "action": "cetak",
+    "detail": "BIMOLI KLASIK MINYAK GRG PCH 1 L (1x)",
+    "createdAt": "2026-05-03T04:30:40.661Z"
+  },
+  {
+    "username": "100105738",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T04:30:31.787Z"
+  },
+  {
+    "username": "100105738",
+    "action": "login",
+    "detail": "User login: DENI SYAHPUTRA HALAWA",
+    "createdAt": "2026-05-03T04:30:25.625Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login",
+    "createdAt": "2026-05-03T04:29:44.591Z"
+  },
+  {
+    "username": "user",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T04:27:42.768Z"
+  },
+  {
+    "username": "user",
+    "action": "login",
+    "detail": "User login: user",
+    "createdAt": "2026-05-03T04:27:36.002Z"
+  },
+  {
+    "username": "user",
+    "action": "search_nama",
+    "detail": "chitato",
+    "createdAt": "2026-05-03T04:26:46.475Z"
+  },
+  {
+    "username": "user",
+    "action": "login",
+    "detail": "User login: user",
+    "createdAt": "2026-05-03T04:26:40.805Z"
+  },
+  {
+    "username": "user",
+    "action": "cetak",
+    "detail": "BIMOLI KLASIK MINYAK GRG JRG 5 L (1x)",
+    "createdAt": "2026-05-03T04:26:24.910Z"
+  },
+  {
+    "username": "user",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T04:26:01.709Z"
+  },
+  {
+    "username": "user",
+    "action": "login",
+    "detail": "User login: user",
+    "createdAt": "2026-05-03T04:25:56.313Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T04:25:44.422Z"
+  },
+  {
+    "username": "admin",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T04:25:29.215Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login",
+    "createdAt": "2026-05-03T04:25:21.334Z"
+  },
+  {
+    "username": "user",
+    "action": "search_nama",
+    "detail": "bimoli",
+    "createdAt": "2026-05-03T04:25:00.448Z"
+  },
+  {
+    "username": "user",
+    "action": "search_nama",
+    "detail": "vape one pu",
+    "createdAt": "2026-05-03T04:24:53.580Z"
+  },
+  {
+    "username": "user",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T04:24:50.654Z"
+  },
+  {
+    "username": "user",
+    "action": "tab_expired",
+    "detail": "Buka panel Expired",
+    "createdAt": "2026-05-03T04:24:40.592Z"
+  },
+  {
+    "username": "user",
+    "action": "login",
+    "detail": "User login: user",
+    "createdAt": "2026-05-03T04:24:36.640Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login",
+    "createdAt": "2026-05-03T04:23:42.010Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login",
+    "createdAt": "2026-05-03T04:05:48.535Z"
+  },
+  {
+    "username": "admin",
+    "action": "tab_inventory",
+    "detail": "Buka panel Inventory",
+    "createdAt": "2026-05-03T03:46:47.512Z"
+  },
+  {
+    "username": "admin",
+    "action": "login",
+    "detail": "Admin login",
+    "createdAt": "2026-05-03T03:46:28.312Z"
+  },
+  {
+    "username": "test",
+    "action": "login",
+    "detail": "test",
+    "createdAt": "2026-05-03T03:23:22.288Z"
+  }
+]

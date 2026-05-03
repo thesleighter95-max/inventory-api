@@ -1,0 +1,32 @@
+[
+  {
+    "id": "4718206f-9a16-4efe-89e3-72ae7bc3ab4d",
+    "barcode": "89960016006968",
+    "namaBarang": "tesss",
+    "keterangan": "",
+    "username": "100105738",
+    "createdAt": "2026-05-03T06:29:54.766Z",
+    "resolved": true,
+    "resolvedAt": "2026-05-03T06:30:30.202Z"
+  },
+  {
+    "id": "38b18a7b-c50f-42e2-83b1-c60017ecf3de",
+    "barcode": "8996001600697",
+    "namaBarang": "tes",
+    "keterangan": "Dicetak manual oleh user",
+    "username": "user",
+    "createdAt": "2026-05-03T06:26:25.187Z",
+    "resolved": true,
+    "resolvedAt": "2026-05-03T06:30:32.604Z"
+  },
+  {
+    "id": "eafef0b3-ce7f-413b-b96e-0b615d755412",
+    "barcode": "8999999605996",
+    "namaBarang": "tess",
+    "keterangan": "",
+    "username": "user",
+    "createdAt": "2026-05-03T06:20:38.065Z",
+    "resolved": true,
+    "resolvedAt": "2026-05-03T06:30:34.501Z"
+  }
+]

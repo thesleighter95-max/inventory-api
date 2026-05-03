@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "6f7wkV0SDPZ5HvXDA6Dbk"
+uri = "file://artifacts/api-server/public/index_netlify.tar.gz"
+type = "unspecified"
+title = "index.html Netlify (+ Cetak & Submit produk manual)"

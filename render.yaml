@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: inventory-api
+    runtime: node
+    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build
+    startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ADMIN_PASSWORD
+        value: "00000"
+      - key: SESSION_SECRET
+        generateValue: true
