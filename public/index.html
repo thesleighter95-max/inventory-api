@@ -594,6 +594,57 @@ table td { font-size: 11px; }
       </button>
     </div>
 
+    <!-- ╔══════════════════════════════════════════════╗ -->
+    <!-- ║  KELOLA USER — admin only                    ║ -->
+    <!-- ╚══════════════════════════════════════════════╝ -->
+    <div id="kelolaUserSection" style="margin-bottom:16px;">
+      <div style="background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(79,70,229,0.03));border:1px solid rgba(99,102,241,0.22);border-radius:16px;padding:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:28px;height:28px;background:rgba(99,102,241,0.18);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg style="width:15px;height:15px;color:#818cf8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </div>
+            <div>
+              <p style="font-size:12px;font-weight:800;color:#a5b4fc;margin:0;letter-spacing:.5px;">KELOLA USER</p>
+              <p style="font-size:10px;color:#6b7280;margin:2px 0 0;">Tambah, edit, suspend, atau hapus user</p>
+            </div>
+          </div>
+          <div style="display:flex;gap:5px;">
+            <button onclick="importUsersFromSheets()" id="btnImportUsers" title="Import user dari Google Sheets"
+              style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#34d399;border-radius:8px;padding:6px 9px;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;">
+              <svg style="width:11px;height:11px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              Import Sheets
+            </button>
+            <button onclick="loadUserList()" id="btnRefreshUsers"
+              style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#a5b4fc;border-radius:8px;padding:6px 9px;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;">
+              <svg style="width:11px;height:11px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+        <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:12px;margin-bottom:12px;">
+          <p style="font-size:10px;font-weight:700;color:#94a3b8;margin:0 0 8px;">Tambah User Baru</p>
+          <input id="newUserUsername" type="text" placeholder="Username / NIK / ID"
+            style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;font-size:12px;color:white;outline:none;box-sizing:border-box;margin-bottom:6px;">
+          <input id="newUserNama" type="text" placeholder="Nama Lengkap"
+            style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;font-size:12px;color:white;outline:none;box-sizing:border-box;margin-bottom:6px;">
+          <div class="pwd-wrapper" style="margin-bottom:8px;"><input id="newUserPassword" type="password" placeholder="Password"
+            style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;font-size:12px;color:white;outline:none;box-sizing:border-box;">
+            <button class="pwd-eye-btn" type="button" onclick="togglePwdVisibility('newUserPassword','eyeNewUser')"><svg id="eyeNewUser" style="width:16px;height:16px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg></button>
+          </div>
+          <button onclick="tambahUser()" id="btnTambahUser"
+            style="width:100%;background:linear-gradient(135deg,#6366f1,#4f46e5);border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:700;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg style="width:13px;height:13px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+            Tambah User
+          </button>
+          <p id="addUserMsg" style="font-size:11px;min-height:14px;margin:6px 0 0;text-align:center;"></p>
+        </div>
+        <div id="userListContainer">
+          <div style="text-align:center;color:#4b5563;font-size:12px;padding:16px;">Klik Refresh untuk memuat daftar user...</div>
+        </div>
+      </div>
+    </div>
+
     <div id="logListAdmin" class="space-y-2"></div>
 
     <!-- ╔══════════════════════════════════════════════╗ -->
@@ -836,6 +887,11 @@ function parseNum(s){
   return parseFloat(String(s).replace(/[\.,]/g,""))||0;
 }
 
+function doUserLogin(namaLengkap,user){
+  currentUserNameInv=namaLengkap;currentUsernameRaw=user;isAdmin=false;kirimLog(user);kirimAktivitas("login","User login: "+namaLengkap);
+  $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
+  renderUserNav();updateUserInfo(namaLengkap);tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
+}
 function login(){
   var user=$("username").value.trim();
   var pass=$("password").value.trim();
@@ -850,19 +906,36 @@ function login(){
       return;
     }else{errorEl.innerText="Password admin salah!";return}
   }
-  getCSVFresh(LOGIN_URL).then(function(data){
-    if(data.length===0){errorEl.innerText="Gagal koneksi ke server login.";return}
-    for(var i=1;i<data.length;i++){
-      if(data[i][0]==user&&data[i][1]==pass){
-        var namaLengkap=(data[i][2]&&data[i][2].length>0)?data[i][2]:user;
-        currentUserNameInv=namaLengkap;currentUsernameRaw=user;isAdmin=false;kirimLog(user);kirimAktivitas("login","User login: "+namaLengkap);
-        $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
-        renderUserNav();updateUserInfo(namaLengkap);tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
-        return;
-      }
-    }
-    errorEl.innerText="Login gagal! User tidak ditemukan.";
-  });
+  fetch(API_BASE_URL+"/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:user,password:pass})})
+    .then(function(r){return r.json().then(function(d){return{status:r.status,data:d}})})
+    .then(function(res){
+      if(res.data.success){doUserLogin(res.data.namaLengkap||user,user);return}
+      if(res.data.suspended){errorEl.innerText="Akun Anda ditangguhkan oleh admin.";return}
+      if(res.data.notFound){
+        getCSVFresh(LOGIN_URL).then(function(data){
+          if(data.length===0){errorEl.innerText="Gagal koneksi ke server login.";return}
+          for(var i=1;i<data.length;i++){
+            if(data[i][0]==user&&data[i][1]==pass){
+              var namaLengkap=(data[i][2]&&data[i][2].length>0)?data[i][2]:user;
+              doUserLogin(namaLengkap,user);return;
+            }
+          }
+          errorEl.innerText="Login gagal! User tidak ditemukan.";
+        });
+      } else {errorEl.innerText="Login gagal! User tidak ditemukan.";}
+    })
+    .catch(function(){
+      getCSVFresh(LOGIN_URL).then(function(data){
+        if(data.length===0){errorEl.innerText="Gagal koneksi ke server login.";return}
+        for(var i=1;i<data.length;i++){
+          if(data[i][0]==user&&data[i][1]==pass){
+            var namaLengkap=(data[i][2]&&data[i][2].length>0)?data[i][2]:user;
+            doUserLogin(namaLengkap,user);return;
+          }
+        }
+        errorEl.innerText="Login gagal! User tidak ditemukan.";
+      });
+    });
 }
 
 function renderUserNav(){
@@ -1123,6 +1196,111 @@ function setBblmStatus(status){
     }
   }).catch(function(){showToast("Gagal menghubungi server","error");});
 }
+function escHtml(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function loadUserList(){
+  if(!isAdmin)return;
+  var el=document.getElementById("userListContainer");
+  el.innerHTML='<div style="text-align:center;color:#6b7280;font-size:12px;padding:16px;">Memuat...</div>';
+  fetch(BBLM_STATUS_API_URL+"/users?adminPassword="+encodeURIComponent(ADMIN_PASSWORD))
+    .then(function(r){return r.json()}).then(function(d){
+      if(!d.success){el.innerHTML='<div style="color:#f87171;font-size:12px;padding:10px;text-align:center;">Gagal memuat user.</div>';return}
+      var users=d.users;
+      if(!users||users.length===0){
+        el.innerHTML='<div style="text-align:center;color:#6b7280;font-size:11px;padding:16px;line-height:1.5;">Belum ada user tersimpan di server.<br>Klik <b style="color:#34d399;">Import Sheets</b> untuk mengambil dari Google Sheets.</div>';return;
+      }
+      var dl=document.getElementById("resetUserList");if(dl){dl.innerHTML="";users.forEach(function(u){var o=document.createElement("option");o.value=u.username;o.label=u.namaLengkap;dl.appendChild(o);})}
+      var h="";
+      users.forEach(function(u){
+        var suspended=u.suspended===true;
+        h+='<div style="display:flex;align-items:center;gap:8px;padding:9px 10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,'+(suspended?'0.04':'0.07')+');border-radius:8px;margin-bottom:5px;opacity:'+(suspended?'0.6':'1')+'">';
+        h+='<div style="flex:1;min-width:0;">';
+        h+='<p style="font-size:12px;font-weight:700;color:'+(suspended?'#6b7280':'white')+';margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escHtml(u.namaLengkap)+'</p>';
+        h+='<p style="font-size:10px;color:#6b7280;margin:2px 0 0;">'+escHtml(u.username)+(suspended?' <span style="color:#f87171;font-weight:700;">• Ditangguhkan</span>':'')+'</p>';
+        h+='</div>';
+        h+='<div style="display:flex;gap:3px;flex-shrink:0;">';
+        h+='<button onclick="editNamaUser(\''+escHtml(u.username)+'\',\''+escHtml(u.namaLengkap)+'\')" title="Edit nama" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.25);color:#a5b4fc;border-radius:6px;padding:5px 7px;cursor:pointer;font-size:11px;">✏️</button>';
+        h+='<button onclick="toggleSuspendUser(\''+escHtml(u.username)+'\','+suspended+')" title="'+(suspended?'Aktifkan':'Suspend')+'" style="background:'+(suspended?'rgba(16,185,129,0.12)':'rgba(245,158,11,0.12)')+';border:1px solid '+(suspended?'rgba(16,185,129,0.25)':'rgba(245,158,11,0.25)')+';color:'+(suspended?'#34d399':'#fbbf24')+';border-radius:6px;padding:5px 7px;cursor:pointer;font-size:11px;">'+(suspended?'✅':'🔒')+'</button>';
+        h+='<button onclick="hapusUser(\''+escHtml(u.username)+'\')" title="Hapus user" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:6px;padding:5px 7px;cursor:pointer;font-size:11px;">🗑</button>';
+        h+='</div></div>';
+      });
+      h+='<p style="font-size:10px;color:#4b5563;text-align:center;margin-top:6px;">'+users.length+' user tersimpan di server</p>';
+      el.innerHTML=h;
+    }).catch(function(){el.innerHTML='<div style="color:#f87171;font-size:12px;padding:10px;text-align:center;">Gagal terhubung ke server.</div>';});
+}
+function tambahUser(){
+  if(!isAdmin)return;
+  var un=document.getElementById("newUserUsername").value.trim();
+  var nm=document.getElementById("newUserNama").value.trim();
+  var pw=document.getElementById("newUserPassword").value.trim();
+  var msg=document.getElementById("addUserMsg");
+  if(!un||!pw){msg.style.color="#f87171";msg.innerText="Username dan password wajib diisi!";return}
+  var btn=document.getElementById("btnTambahUser");btn.disabled=true;btn.textContent="Menyimpan...";
+  fetch(BBLM_STATUS_API_URL+"/users",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,username:un,password:pw,namaLengkap:nm||un})
+  }).then(function(r){return r.json()}).then(function(d){
+    if(d.success){
+      msg.style.color="#34d399";msg.innerText="✓ User '"+un+"' berhasil ditambahkan!";
+      document.getElementById("newUserUsername").value="";document.getElementById("newUserNama").value="";document.getElementById("newUserPassword").value="";
+      setTimeout(function(){loadUserList();msg.innerText=""},1500);
+    } else {msg.style.color="#f87171";msg.innerText=d.message||"Gagal menambahkan user.";}
+    btn.disabled=false;btn.innerHTML='<svg style="width:13px;height:13px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg> Tambah User';
+  }).catch(function(){msg.style.color="#f87171";msg.innerText="Gagal terhubung ke server.";btn.disabled=false;btn.textContent="Tambah User";});
+}
+function editNamaUser(username,namaSaat){
+  if(!isAdmin)return;
+  var namaBaru=prompt("Edit nama lengkap untuk '"+username+"':",namaSaat);
+  if(namaBaru===null||namaBaru.trim()==="")return;
+  fetch(BBLM_STATUS_API_URL+"/users/"+encodeURIComponent(username),{method:"PATCH",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,namaLengkap:namaBaru.trim()})
+  }).then(function(r){return r.json()}).then(function(d){
+    if(d.success){showToast("Nama '"+username+"' berhasil diubah","success");loadUserList();}
+    else{alert("Gagal: "+(d.message||"Unknown error"));}
+  }).catch(function(){alert("Gagal terhubung ke server.");});
+}
+function toggleSuspendUser(username,suspended){
+  if(!isAdmin)return;
+  var aksi=suspended?"mengaktifkan kembali":"menangguhkan";
+  if(!confirm("Yakin ingin "+aksi+" akun '"+username+"'?"))return;
+  fetch(BBLM_STATUS_API_URL+"/users/"+encodeURIComponent(username),{method:"PATCH",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,suspended:!suspended})
+  }).then(function(r){return r.json()}).then(function(d){
+    if(d.success){showToast("Akun '"+username+"' "+(suspended?"diaktifkan":"ditangguhkan"),"success");loadUserList();}
+    else{alert("Gagal: "+(d.message||"Unknown error"));}
+  }).catch(function(){alert("Gagal terhubung ke server.");});
+}
+function hapusUser(username){
+  if(!isAdmin)return;
+  if(!confirm("Hapus permanen user '"+username+"'?\nTindakan ini tidak bisa dibatalkan!"))return;
+  fetch(BBLM_STATUS_API_URL+"/users/"+encodeURIComponent(username),{method:"DELETE",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD})
+  }).then(function(r){return r.json()}).then(function(d){
+    if(d.success){showToast("User '"+username+"' berhasil dihapus","success");loadUserList();}
+    else{alert("Gagal: "+(d.message||"Unknown error"));}
+  }).catch(function(){alert("Gagal terhubung ke server.");});
+}
+function importUsersFromSheets(){
+  if(!isAdmin)return;
+  var btn=document.getElementById("btnImportUsers");
+  btn.disabled=true;btn.textContent="Mengimpor...";
+  getCSVFresh(LOGIN_URL).then(function(data){
+    if(!data||data.length<=1){alert("Tidak ada data user di Google Sheets.");btn.disabled=false;btn.innerHTML='<svg style="width:11px;height:11px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Import Sheets';return;}
+    var usersData=[];
+    for(var i=1;i<data.length;i++){
+      var row=data[i];if(!row||!row[0])continue;
+      usersData.push({username:(row[0]||"").trim(),password:(row[1]||"").trim(),namaLengkap:(row[2]||"").trim()||((row[0]||"").trim())});
+    }
+    if(usersData.length===0){alert("Tidak ada user valid di Google Sheets.");btn.disabled=false;return;}
+    fetch(BBLM_STATUS_API_URL+"/users/import",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({adminPassword:ADMIN_PASSWORD,usersData:usersData})
+    }).then(function(r){return r.json()}).then(function(d){
+      if(d.success){
+        showToast(d.added+" user baru diimpor (total: "+d.total+")","success");
+        loadUserList();
+      } else {alert("Gagal import: "+(d.message||"Unknown error"));}
+      btn.disabled=false;btn.innerHTML='<svg style="width:11px;height:11px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Import Sheets';
+    }).catch(function(){alert("Gagal terhubung ke server.");btn.disabled=false;btn.textContent="Import Sheets";});
+  }).catch(function(){alert("Gagal membaca Google Sheets.");btn.disabled=false;btn.textContent="Import Sheets";});
+}
 function kirimLog(u){fetch(LOG_POST_URL,{method:"POST",body:JSON.stringify({username:u,device:navigator.userAgent})}).catch(function(){})}
 function kirimAktivitas(action,detail){
   if(!currentUsernameRaw&&!isAdmin)return;
@@ -1252,7 +1430,7 @@ function switchMainTab(tab){
   var ns=document.querySelectorAll("#navContainer .nav-item");for(var n=0;n<ns.length;n++){ns[n].classList.remove("active");ns[n].classList.add("text-gray-500");var ind=ns[n].querySelector(".nav-indicator");if(ind)ind.style.opacity="0"}
   if(tab==="inventory"){$("inventoryPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navInventory");setMarquee(true);kirimAktivitas("tab_inventory","Buka panel Inventory")}
   else if(tab==="expired"){$("expiredPanel").classList.add("active");document.body.classList.add("light-mode");activateNav("navExpired");setMarquee(false);lucide.createIcons();kirimAktivitas("tab_expired","Buka panel Expired")}
-  else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();}
+  else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
 function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items-center justify-center p-10 text-pro-text"><svg class="animate-spin h-6 w-6 text-pro-main mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-xs">'+(t||"Memuat...")+'</span></div>'}
