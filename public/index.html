@@ -300,6 +300,21 @@ table td { font-size: 11px; }
 </div>
 
 
+<!-- MAINTENANCE OVERLAY -->
+<div id="maintenanceOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#0c0f1a,#0f1525);flex-direction:column;align-items:center;justify-content:center;padding:32px;">
+  <div style="text-align:center;max-width:320px;">
+    <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,rgba(245,158,11,0.2),rgba(217,119,6,0.08));border:2px solid rgba(245,158,11,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;animation:bioPulse 2s ease-in-out infinite;">
+      <svg style="width:34px;height:34px;color:#fbbf24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+    </div>
+    <h2 style="font-size:20px;font-weight:900;color:white;margin:0 0 10px;letter-spacing:-0.3px;">Sistem Dalam Pemeliharaan</h2>
+    <p id="maintenanceMsg" style="font-size:13px;color:#94a3b8;line-height:1.6;margin:0 0 24px;">Sistem sedang dalam proses pemeliharaan. Silakan coba beberapa saat lagi.</p>
+    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:12px 16px;">
+      <p style="font-size:11px;color:#fbbf24;font-weight:600;margin:0;">Hubungi admin jika membutuhkan akses segera</p>
+    </div>
+    <button onclick="showLoginPageFromMaintenance()" style="margin-top:20px;background:none;border:none;color:#4b5563;font-size:11px;cursor:pointer;font-weight:600;text-decoration:underline;">Login sebagai Admin</button>
+  </div>
+</div>
+
 <!-- PROMO LIGHTBOX -->
 <div id="promoLightbox">
   <button class="lb-close" onclick="closeLightbox()">✕</button>
@@ -561,6 +576,56 @@ table td { font-size: 11px; }
         <span id="driveSyncTime" class="ml-2"></span>
       </div>
     </div>
+    <!-- ╔══════════════════════════════════════════════╗ -->
+    <!-- ║  SYSTEM TOOLS — admin only                   ║ -->
+    <!-- ╚══════════════════════════════════════════════╝ -->
+    <div style="background:linear-gradient(135deg,rgba(239,68,68,0.07),rgba(220,38,38,0.03));border:1px solid rgba(239,68,68,0.2);border-radius:16px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <div style="width:28px;height:28px;background:rgba(239,68,68,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg style="width:15px;height:15px;color:#f87171" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        </div>
+        <div>
+          <p style="font-size:12px;font-weight:800;color:#fca5a5;margin:0;letter-spacing:.5px;">SYSTEM TOOLS</p>
+          <p style="font-size:10px;color:#6b7280;margin:2px 0 0;">Maintenance mode &amp; backup data</p>
+        </div>
+      </div>
+
+      <!-- MODE MAINTENANCE -->
+      <div style="background:rgba(0,0,0,0.2);border-radius:12px;padding:12px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div>
+            <p style="font-size:11px;font-weight:700;color:#fca5a5;margin:0;">Mode Maintenance</p>
+            <p style="font-size:10px;color:#6b7280;margin:2px 0 0;" id="maintenanceStatusText">Memeriksa status...</p>
+          </div>
+          <button id="btnToggleMaintenance" onclick="toggleMaintenance()"
+            style="background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.35);color:#f87171;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;min-width:80px;transition:all 0.2s;">
+            Memuat...
+          </button>
+        </div>
+        <input id="maintenanceMsgInput" type="text" placeholder="Pesan untuk user (opsional)..."
+          style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:7px 10px;font-size:11px;color:white;outline:none;box-sizing:border-box;" maxlength="120">
+      </div>
+
+      <!-- BACKUP & RESTORE -->
+      <div style="background:rgba(0,0,0,0.2);border-radius:12px;padding:12px;">
+        <p style="font-size:11px;font-weight:700;color:#fca5a5;margin:0 0 8px;">Backup &amp; Restore Data</p>
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+          <button onclick="downloadBackup()" id="btnDownloadBackup"
+            style="flex:1;background:rgba(99,102,241,0.18);border:1px solid rgba(99,102,241,0.3);color:#a5b4fc;border-radius:8px;padding:8px 6px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
+            <svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Download Backup
+          </button>
+          <button onclick="document.getElementById('restoreFileInput').click()" id="btnRestoreData"
+            style="flex:1;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;border-radius:8px;padding:8px 6px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
+            <svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            Restore Backup
+          </button>
+        </div>
+        <input type="file" id="restoreFileInput" accept=".json" class="hidden" onchange="handleRestoreFile(this)" style="display:none;">
+        <p style="font-size:10px;color:#6b7280;margin:0;text-align:center;">Backup mencakup: user, BBLM, activity log, product request</p>
+      </div>
+    </div>
+
     <!-- RESET PASSWORD ADMIN CARD -->
     <div style="background:linear-gradient(135deg,rgba(99,102,241,0.10),rgba(79,70,229,0.05));border:1px solid rgba(99,102,241,0.25);border-radius:14px;padding:16px;margin-bottom:16px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
@@ -915,9 +980,11 @@ function login(){
       currentUserNameInv="Admin";isAdmin=true;kirimLog("admin");kirimAktivitas("login","Admin login");
       $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
       renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();
+      loadMaintenanceStatus();
       return;
     }else{errorEl.innerText="Password admin salah!";return}
   }
+  if(_maintenanceActive){errorEl.innerText="Sistem sedang dalam pemeliharaan. Hubungi admin.";return}
   fetch(API_BASE_URL+"/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:user,password:pass})})
     .then(function(r){return r.json().then(function(d){return{status:r.status,data:d}})})
     .then(function(res){
@@ -1209,6 +1276,122 @@ function setBblmStatus(status){
   }).catch(function(){showToast("Gagal menghubungi server","error");});
 }
 function escHtml(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+/* =====================================================
+   MAINTENANCE MODE
+   ===================================================== */
+var _maintenanceActive=false;
+function checkMaintenance(onDone){
+  fetch(API_BASE_URL+"/maintenance").then(function(r){return r.json()}).then(function(d){
+    _maintenanceActive=d.active||false;
+    if(_maintenanceActive){
+      var msg=d.message||"Sistem sedang dalam proses pemeliharaan. Silakan coba beberapa saat lagi.";
+      var el=$("maintenanceMsg");if(el)el.innerText=msg;
+      var ov=$("maintenanceOverlay");if(ov){ov.style.display="flex";}
+    }else{
+      var ov=$("maintenanceOverlay");if(ov)ov.style.display="none";
+    }
+    if(onDone)onDone(d);
+  }).catch(function(){if(onDone)onDone({active:false});});
+}
+function showLoginPageFromMaintenance(){
+  var ov=$("maintenanceOverlay");if(ov)ov.style.display="none";
+  $("homePage").style.display="none";
+  $("loginPage").classList.remove("hidden");
+}
+function loadMaintenanceStatus(){
+  fetch(API_BASE_URL+"/maintenance").then(function(r){return r.json()}).then(function(d){
+    _maintenanceActive=d.active||false;
+    updateMaintenanceUI(d);
+  }).catch(function(){});
+}
+function updateMaintenanceUI(d){
+  var btn=$("btnToggleMaintenance"),st=$("maintenanceStatusText"),inp=$("maintenanceMsgInput");
+  if(!btn)return;
+  if(d.active){
+    btn.textContent="Nonaktifkan";
+    btn.style.background="rgba(16,185,129,0.2)";
+    btn.style.border="1px solid rgba(16,185,129,0.35)";
+    btn.style.color="#34d399";
+    if(st)st.innerText="AKTIF — user tidak bisa login";
+    if(inp&&d.message)inp.value=d.message;
+  }else{
+    btn.textContent="Aktifkan";
+    btn.style.background="rgba(239,68,68,0.2)";
+    btn.style.border="1px solid rgba(239,68,68,0.35)";
+    btn.style.color="#f87171";
+    if(st)st.innerText="Nonaktif — sistem berjalan normal";
+  }
+}
+function toggleMaintenance(){
+  var btn=$("btnToggleMaintenance");
+  var inp=$("maintenanceMsgInput");
+  var newActive=!_maintenanceActive;
+  var msg=(inp&&inp.value.trim())?inp.value.trim():"";
+  if(newActive&&!confirm("Aktifkan mode maintenance? Semua user (kecuali admin) tidak bisa login."))return;
+  if(!newActive&&!confirm("Nonaktifkan mode maintenance? Sistem kembali normal."))return;
+  if(btn){btn.disabled=true;btn.textContent="Menyimpan...";}
+  fetch(API_BASE_URL+"/maintenance",{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,active:newActive,message:msg})
+  }).then(function(r){return r.json()}).then(function(d){
+    if(d.success){
+      _maintenanceActive=newActive;
+      updateMaintenanceUI({active:newActive,message:msg});
+      showToast(newActive?"Mode maintenance diaktifkan":"Mode maintenance dinonaktifkan",newActive?"error":"success");
+    }else{showToast("Gagal mengubah status","error");}
+  }).catch(function(){showToast("Gagal menghubungi server","error");})
+  .finally(function(){if(btn)btn.disabled=false;});
+}
+
+/* =====================================================
+   BACKUP & RESTORE DATA
+   ===================================================== */
+function downloadBackup(){
+  var btn=$("btnDownloadBackup");
+  if(btn){btn.disabled=true;btn.textContent="Mengunduh...";}
+  fetch(API_BASE_URL+"/backup?adminPassword="+encodeURIComponent(ADMIN_PASSWORD))
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(!d.success){showToast("Gagal membuat backup","error");return;}
+      var json=JSON.stringify(d.data,null,2);
+      var blob=new Blob([json],{type:"application/json"});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement("a");
+      var tgl=new Date();
+      var tglStr=tgl.getFullYear()+"-"+String(tgl.getMonth()+1).padStart(2,"0")+"-"+String(tgl.getDate()).padStart(2,"0");
+      a.href=url;a.download="backup_inventory_"+tglStr+".json";
+      a.click();URL.revokeObjectURL(url);
+      showToast("Backup berhasil didownload","success");
+    }).catch(function(){showToast("Gagal mengunduh backup","error");})
+    .finally(function(){if(btn){btn.disabled=false;btn.innerHTML='<svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Download Backup';}});
+}
+function handleRestoreFile(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var text=e.target.result;
+    var data;
+    try{data=JSON.parse(text);}catch(err){showToast("File tidak valid (bukan JSON)","error");input.value="";return;}
+    if(!confirm("Restore data dari file "+file.name+"?\n\nSEMUA DATA SAAT INI AKAN DIGANTIKAN dengan data dari backup.\nAksi ini tidak bisa dibatalkan!"))return;
+    var btn=$("btnRestoreData");
+    if(btn){btn.disabled=true;btn.textContent="Merestore...";}
+    fetch(API_BASE_URL+"/restore",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({adminPassword:ADMIN_PASSWORD,data:data})
+    }).then(function(r){return r.json()}).then(function(d){
+      if(d.success){
+        showToast("Restore berhasil! "+d.message,"success");
+        loadUserList();loadMonitoringData();
+      }else{showToast("Restore gagal: "+(d.message||""),"error");}
+    }).catch(function(){showToast("Gagal menghubungi server","error");})
+    .finally(function(){
+      if(btn){btn.disabled=false;btn.innerHTML='<svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> Restore Backup';}
+      input.value="";
+    });
+  };
+  reader.readAsText(file);
+}
+
 function toggleKelolaUser(){
   var body=document.getElementById("kelolaUserBody");
   var chevron=document.getElementById("kelolaUserChevron");
@@ -2872,6 +3055,7 @@ function showHomePage(){
 
 /* ---- Init on page load ---- */
 (function() {
+  checkMaintenance();
   initQuickLogin();
   fetchLoginLocation();
   // render store name on initial home load
