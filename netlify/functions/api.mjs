@@ -158,6 +158,132 @@ export default async function handler(req) {
       return json({ success: true });
     }
 
+    // POST /login  — cek user di Netlify Blobs
+    if (path === "/login" && method === "POST") {
+      const { username, password } = body;
+      if (!username || !password) {
+        return json({ success: false, message: "username dan password wajib diisi" }, 400);
+      }
+      const users = await getJson(store, "users", []);
+      const user = users.find(u => u.username === username.trim() && u.password === password.trim());
+      if (!user) {
+        return json({ success: false, notFound: true, message: "User tidak ditemukan di server" }, 404);
+      }
+      if (user.suspended) {
+        return json({ success: false, suspended: true, message: "Akun ditangguhkan oleh admin" }, 403);
+      }
+      return json({ success: true, namaLengkap: user.namaLengkap || user.username });
+    }
+
+    // GET /users  — hanya admin
+    if (path === "/users" && method === "GET") {
+      const { adminPassword } = query;
+      if (adminPassword !== ADMIN_PASSWORD) {
+        return json({ success: false, message: "Unauthorized" }, 403);
+      }
+      const users = await getJson(store, "users", []);
+      const safeUsers = users.map(u => ({
+        username: u.username,
+        namaLengkap: u.namaLengkap || u.username,
+        suspended: u.suspended ?? false,
+        createdAt: u.createdAt ?? null,
+      }));
+      return json({ success: true, users: safeUsers });
+    }
+
+    // POST /users  — tambah user baru, hanya admin
+    if (path === "/users" && method === "POST") {
+      const { adminPassword, username, password, namaLengkap } = body;
+      if (adminPassword !== ADMIN_PASSWORD) {
+        return json({ success: false, message: "Unauthorized" }, 403);
+      }
+      if (!username || !password) {
+        return json({ success: false, message: "username dan password wajib diisi" }, 400);
+      }
+      const users = await getJson(store, "users", []);
+      const existing = users.find(u => u.username === username.trim());
+      if (existing) {
+        return json({ success: false, message: "Username sudah ada" }, 409);
+      }
+      users.push({
+        username: username.trim(),
+        password: password.trim(),
+        namaLengkap: (namaLengkap || username).trim(),
+        suspended: false,
+        createdAt: new Date().toISOString(),
+      });
+      await setJson(store, "users", users);
+      return json({ success: true });
+    }
+
+    // POST /users/import  — bulk import dari CSV, hanya admin
+    if (path === "/users/import" && method === "POST") {
+      const { adminPassword, usersData } = body;
+      if (adminPassword !== ADMIN_PASSWORD) {
+        return json({ success: false, message: "Unauthorized" }, 403);
+      }
+      if (!Array.isArray(usersData)) {
+        return json({ success: false, message: "usersData must be array" }, 400);
+      }
+      const existing = await getJson(store, "users", []);
+      const existingMap = {};
+      existing.forEach(u => { existingMap[u.username] = true; });
+      let added = 0;
+      usersData.forEach(u => {
+        if (u.username && u.password && !existingMap[u.username]) {
+          existing.push({
+            username: u.username,
+            password: u.password,
+            namaLengkap: u.namaLengkap || u.username,
+            suspended: false,
+            createdAt: new Date().toISOString(),
+          });
+          existingMap[u.username] = true;
+          added++;
+        }
+      });
+      await setJson(store, "users", existing);
+      return json({ success: true, added, total: existing.length });
+    }
+
+    // PATCH /users/:username  — edit nama / suspend / reset password, hanya admin
+    const userPatchMatch = path.match(/^\/users\/([^/]+)$/);
+    if (userPatchMatch && method === "PATCH") {
+      const { adminPassword, namaLengkap, suspended, password } = body;
+      if (adminPassword !== ADMIN_PASSWORD) {
+        return json({ success: false, message: "Unauthorized" }, 403);
+      }
+      const username = decodeURIComponent(userPatchMatch[1]);
+      const users = await getJson(store, "users", []);
+      const idx = users.findIndex(u => u.username === username);
+      if (idx === -1) {
+        return json({ success: false, message: "User tidak ditemukan" }, 404);
+      }
+      if (namaLengkap !== undefined) users[idx].namaLengkap = namaLengkap.trim();
+      if (suspended !== undefined) users[idx].suspended = suspended;
+      if (password !== undefined && password !== "") users[idx].password = password.trim();
+      await setJson(store, "users", users);
+      return json({ success: true });
+    }
+
+    // DELETE /users/:username  — hapus user, hanya admin
+    const userDeleteMatch = path.match(/^\/users\/([^/]+)$/);
+    if (userDeleteMatch && method === "DELETE") {
+      const { adminPassword } = body;
+      if (adminPassword !== ADMIN_PASSWORD) {
+        return json({ success: false, message: "Unauthorized" }, 403);
+      }
+      const username = decodeURIComponent(userDeleteMatch[1]);
+      let users = await getJson(store, "users", []);
+      const before = users.length;
+      users = users.filter(u => u.username !== username);
+      if (users.length === before) {
+        return json({ success: false, message: "User tidak ditemukan" }, 404);
+      }
+      await setJson(store, "users", users);
+      return json({ success: true });
+    }
+
     // POST /product-request
     if (path === "/product-request" && method === "POST") {
       const { barcode, namaBarang, keterangan, username } = body;
