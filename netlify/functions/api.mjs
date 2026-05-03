@@ -284,6 +284,64 @@ export default async function handler(req) {
       return json({ success: true });
     }
 
+    // GET /maintenance
+    if (path === "/maintenance" && method === "GET") {
+      const data = await getJson(store, "maintenance", { active: false, message: "", updatedAt: null });
+      return json(data);
+    }
+
+    // POST /maintenance
+    if (path === "/maintenance" && method === "POST") {
+      const { adminPassword, active, message } = body;
+      if (adminPassword !== ADMIN_PASSWORD) {
+        return json({ success: false, message: "Unauthorized" }, 403);
+      }
+      const data = { active: !!active, message: message ?? "", updatedAt: new Date().toISOString() };
+      await setJson(store, "maintenance", data);
+      return json({ success: true, ...data });
+    }
+
+    // GET /backup
+    if (path === "/backup" && method === "GET") {
+      const { adminPassword } = query;
+      if (adminPassword !== ADMIN_PASSWORD) {
+        return json({ success: false, message: "Unauthorized" }, 403);
+      }
+      const [users, bblm, logs, requests, maintenance, bblmStatus] = await Promise.all([
+        getJson(store, "users", []),
+        getJson(store, "bblm", {}),
+        getJson(store, "activity-logs", []),
+        getJson(store, "product-requests", []),
+        getJson(store, "maintenance", { active: false, message: "" }),
+        getJson(store, "bblm-status", {}),
+      ]);
+      return json({
+        success: true,
+        exportedAt: new Date().toISOString(),
+        data: { users, bblm, "activity-logs": logs, "product-requests": requests, maintenance, "bblm-status": bblmStatus }
+      });
+    }
+
+    // POST /restore
+    if (path === "/restore" && method === "POST") {
+      const { adminPassword, data } = body;
+      if (adminPassword !== ADMIN_PASSWORD) {
+        return json({ success: false, message: "Unauthorized" }, 403);
+      }
+      if (!data || typeof data !== "object") {
+        return json({ success: false, message: "data harus berupa object" }, 400);
+      }
+      const keys = ["users", "bblm", "activity-logs", "product-requests", "maintenance", "bblm-status"];
+      let restored = 0;
+      await Promise.all(keys.map(async (k) => {
+        if (data[k] !== undefined) {
+          await setJson(store, k, data[k]);
+          restored++;
+        }
+      }));
+      return json({ success: true, message: restored + " kunci data berhasil direstore" });
+    }
+
     // POST /product-request
     if (path === "/product-request" && method === "POST") {
       const { barcode, namaBarang, keterangan, username } = body;
