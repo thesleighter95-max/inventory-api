@@ -637,11 +637,18 @@ table td { font-size: 11px; }
               <p style="font-size:10px;color:#6b7280;margin:2px 0 0;">Fitur yang dibuka setiap user — real-time</p>
             </div>
           </div>
-          <button onclick="loadMonitoringData()" id="btnRefreshMonitoring"
-            style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#34d399;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;">
-            <svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-            Refresh
-          </button>
+          <div style="display:flex;gap:6px;">
+            <button onclick="hapusSemuaLog()" id="btnHapusLog"
+              style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;">
+              <svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              Hapus Log
+            </button>
+            <button onclick="loadMonitoringData()" id="btnRefreshMonitoring"
+              style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#34d399;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;">
+              <svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+              Refresh
+            </button>
+          </div>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:12px;">
           <select id="monitoringUserFilter" onchange="loadMonitoringData()"
@@ -1127,6 +1134,29 @@ function kirimAktivitas(action,detail){
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({username:uname,action:action,detail:finalDetail})
   }).catch(function(){});
+}
+function hapusSemuaLog(){
+  if(!isAdmin)return;
+  if(!confirm("Hapus SEMUA log aktivitas dari server?\nTindakan ini tidak bisa dibatalkan!"))return;
+  var btn=document.getElementById("btnHapusLog");
+  btn.disabled=true;btn.textContent="Menghapus...";
+  fetch(BBLM_STATUS_API_URL+"/activity-log",{
+    method:"DELETE",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD})
+  }).then(function(r){return r.json()}).then(function(d){
+    if(d.success){
+      document.getElementById("monitoringList").innerHTML='<div style="text-align:center;color:#34d399;font-size:12px;padding:20px;">✅ Semua log berhasil dihapus.</div>';
+      btn.textContent="✓ Terhapus";
+      setTimeout(function(){btn.disabled=false;btn.innerHTML='<svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus Log'},2000);
+    } else {
+      alert("Gagal: "+(d.message||"Unknown error"));
+      btn.disabled=false;btn.innerHTML='<svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus Log';
+    }
+  }).catch(function(){
+    alert("Gagal terhubung ke server.");
+    btn.disabled=false;btn.innerHTML='<svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus Log';
+  });
 }
 function loadMonitoringData(){
   var listEl=document.getElementById("monitoringList");
