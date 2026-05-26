@@ -1701,7 +1701,7 @@ function loadBarcodeNotFound(){
         it.users.forEach(function(u){h+='<span style="font-size:10px;color:#6366f1;background:rgba(99,102,241,0.1);border-radius:6px;padding:1px 7px;">@'+u+'</span>';});
         h+='<span style="font-size:10px;color:#4b5563;margin-left:2px;">'+ts+'</span>';
         h+='</div></div>';
-        h+='<button onclick="navigator.clipboard.writeText(''+it.barcode+'').then(function(){showToast('Barcode disalin!','success')})" style="flex-shrink:0;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.25);color:#818cf8;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">Salin</button>';
+        h+='<button onclick="navigator.clipboard.writeText(\x27'+it.barcode+'\x27).then(function(){showToast(\x27Barcode disalin!\x27,\x27success\x27)})" style="flex-shrink:0;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.25);color:#818cf8;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">Salin</button>';
         h+='</div></div>';
       }
       listEl.innerHTML=h;
