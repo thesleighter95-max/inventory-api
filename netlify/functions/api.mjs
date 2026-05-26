@@ -135,11 +135,17 @@ export default async function handler(req) {
       return json({ success: true, logs });
     }
 
-    // DELETE /activity-log
+    // DELETE /activity-log — hapus semua atau per barcode
     if (path === "/activity-log" && method === "DELETE") {
-      const { adminPassword } = body;
+      const { adminPassword, barcode } = body;
       if (adminPassword !== ADMIN_PASSWORD) {
         return json({ success: false, message: "Unauthorized" }, 403);
+      }
+      if (barcode) {
+        const logs = await getJson(store, "activity-logs", []);
+        const filtered = logs.filter(l => !(l.action === "scan_notfound" && (l.detail || "").trim() === barcode.trim()));
+        await setJson(store, "activity-logs", filtered);
+        return json({ success: true, message: "Log barcode " + barcode + " berhasil dihapus" });
       }
       await setJson(store, "activity-logs", []);
       return json({ success: true, message: "Semua log berhasil dihapus" });
