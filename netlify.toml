@@ -9,6 +9,20 @@
   node_bundler = "esbuild"
   external_node_modules = ["@netlify/blobs"]
 
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api"
