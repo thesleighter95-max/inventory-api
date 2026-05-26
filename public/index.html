@@ -762,7 +762,7 @@ table td { font-size: 11px; }
             </div>
             <div>
               <p style="font-size:12px;font-weight:800;color:#f87171;margin:0;letter-spacing:.5px;">BARCODE TIDAK DITEMUKAN</p>
-              <p style="font-size:10px;color:#6b7280;margin:2px 0 0;">Barcode yang sering gagal dibaca — perlu koreksi di database</p>
+              <p style="font-size:10px;color:#6b7280;margin:2px 0 0;">Barcode yang sering gagal dibaca — perlu koreksi di database <span style="color:#4ade80;font-size:9px;">&#x21bb; auto 3 mnt</span></p>
             </div>
           </div>
           <button onclick="loadBarcodeNotFound()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;">
@@ -903,7 +903,7 @@ table td { font-size: 11px; }
 
 <script>
 var $=function(id){return document.getElementById(id)};
-var currentUserNameInv="",currentUsernameRaw="",cacheBarang=null,lastState="",scanner=null,isAdmin=false;
+var currentUserNameInv="",currentUsernameRaw="",cacheBarang=null,lastState="",scanner=null,isAdmin=false,_bnfInterval=null;
 var lastFoundItem=null;window._multiItems=[];submitCount=0;submitSessionLog=[];isSubmitting=false;sessionLogOpen=false;
 var SUBMIT_URL="https://script.google.com/macros/s/AKfycbzvS76WTW9sbJvy9Tp-MSEA6qyQJiiTmu8_8DG3yHzKFMjCHIf2E204VuwOmLLG0GOrtA/exec";
 var allDataExp=[],filteredDataExp=[],currentPageExp=1,perPageExp=10,sortState={type:null,order:"asc"};
@@ -1701,20 +1701,32 @@ function loadBarcodeNotFound(){
         it.users.forEach(function(u){h+='<span style="font-size:10px;color:#6366f1;background:rgba(99,102,241,0.1);border-radius:6px;padding:1px 7px;">@'+u+'</span>';});
         h+='<span style="font-size:10px;color:#4b5563;margin-left:2px;">'+ts+'</span>';
         h+='</div></div>';
-        h+='<button onclick="navigator.clipboard.writeText(\x27'+it.barcode+'\x27).then(function(){showToast(\x27Barcode disalin!\x27,\x27success\x27)})" style="flex-shrink:0;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.25);color:#818cf8;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">Salin</button>';
+        h+='<div style="display:flex;gap:6px;flex-shrink:0;">';
+        h+='<button onclick="navigator.clipboard.writeText(\x27'+it.barcode+'\x27).then(function(){showToast(\x27Barcode disalin!\x27,\x27success\x27)})" style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.25);color:#818cf8;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">Salin</button>';
+        h+='<button onclick="deleteBarcodeLog(\x27'+it.barcode+'\x27)" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">Hapus</button>';
+        h+='</div>';
         h+='</div></div>';
       }
       listEl.innerHTML=h;
     }).catch(function(){listEl.innerHTML='<div style="text-align:center;color:#f87171;font-size:11px;padding:12px;">Error koneksi server</div>';});
+}
+function deleteBarcodeLog(barcode){
+  if(!confirm('Hapus semua log scan gagal untuk barcode '+barcode+'?'))return;
+  fetch(BBLM_STATUS_API_URL+'/activity-log',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminPassword:ADMIN_PASSWORD,barcode:barcode})})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.success){showToast('Log barcode dihapus','success');loadBarcodeNotFound();}
+      else showToast('Gagal: '+(d.message||'error'),'error');
+    }).catch(function(){showToast('Error koneksi','error');});
 }
 function logout(){showHomePage()}
 function setMarquee(show){var m=$("marqueeBar");if(m)m.style.display=show?"flex":"none";}
 function switchMainTab(tab){
   var ps=document.querySelectorAll(".panel-container");for(var p=0;p<ps.length;p++)ps[p].classList.remove("active");
   var ns=document.querySelectorAll("#navContainer .nav-item");for(var n=0;n<ns.length;n++){ns[n].classList.remove("active");ns[n].classList.add("text-gray-500");var ind=ns[n].querySelector(".nav-indicator");if(ind)ind.style.opacity="0"}
-  if(tab==="inventory"){$("inventoryPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navInventory");setMarquee(true);kirimAktivitas("tab_inventory","Buka panel Inventory")}
+  if(_bnfInterval){clearInterval(_bnfInterval);_bnfInterval=null;}if(tab==="inventory"){$("inventoryPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navInventory");setMarquee(true);kirimAktivitas("tab_inventory","Buka panel Inventory")}
   else if(tab==="expired"){$("expiredPanel").classList.add("active");document.body.classList.add("light-mode");activateNav("navExpired");setMarquee(false);lucide.createIcons();kirimAktivitas("tab_expired","Buka panel Expired")}
-  else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();loadBarcodeNotFound();}
+  else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();loadBarcodeNotFound();if(_bnfInterval)clearInterval(_bnfInterval);_bnfInterval=setInterval(loadBarcodeNotFound,180000);}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
 function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items-center justify-center p-10 text-pro-text"><svg class="animate-spin h-6 w-6 text-pro-main mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-xs">'+(t||"Memuat...")+'</span></div>'}
