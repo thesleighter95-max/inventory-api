@@ -933,16 +933,16 @@ function sessionClear(){
 function restoreSession(){
   var sess=sessionLoad();
   if(!sess)return false;
+  $("homePage").style.display="none";
+  $("loginPage").style.display="none";
   if(sess.a){
     currentUserNameInv="Admin";isAdmin=true;
-    $("loginPage").classList.add("hidden");
     $("mainApp").classList.remove("hidden");setMarquee(true);
     renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();
     updateBBLMSyncDisplay();fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();
     loadMaintenanceStatus();
   }else{
     currentUserNameInv=sess.n;currentUsernameRaw=sess.u;isAdmin=false;
-    $("loginPage").classList.add("hidden");
     $("mainApp").classList.remove("hidden");setMarquee(true);
     renderUserNav();updateUserInfo(sess.n);tampilkanUpdate();
     updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
