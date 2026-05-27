@@ -905,6 +905,50 @@ table td { font-size: 11px; }
 var $=function(id){return document.getElementById(id)};
 var currentUserNameInv="",currentUsernameRaw="",cacheBarang=null,lastState="",scanner=null,isAdmin=false,_bnfInterval=null;
 var lastFoundItem=null;window._multiItems=[];submitCount=0;submitSessionLog=[];isSubmitting=false;sessionLogOpen=false;
+
+/* =====================================================
+   SESSION PERSISTENCE — auto-restore login saat refresh
+   ===================================================== */
+var SESSION_KEY="inv_sess_v1";
+var SESSION_TTL=8*60*60*1000; // 8 jam
+
+function sessionSave(nama,user,admin){
+  try{
+    var d={n:nama,u:user,a:!!admin,exp:Date.now()+SESSION_TTL};
+    localStorage.setItem(SESSION_KEY,btoa(unescape(encodeURIComponent(JSON.stringify(d)))));
+  }catch(e){}
+}
+function sessionLoad(){
+  try{
+    var raw=localStorage.getItem(SESSION_KEY);
+    if(!raw)return null;
+    var d=JSON.parse(decodeURIComponent(escape(atob(raw))));
+    if(!d||Date.now()>d.exp){sessionClear();return null;}
+    return d;
+  }catch(e){return null;}
+}
+function sessionClear(){
+  try{localStorage.removeItem(SESSION_KEY);}catch(e){}
+}
+function restoreSession(){
+  var sess=sessionLoad();
+  if(!sess)return false;
+  if(sess.a){
+    currentUserNameInv="Admin";isAdmin=true;
+    $("loginPage").classList.add("hidden");
+    $("mainApp").classList.remove("hidden");setMarquee(true);
+    renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();
+    updateBBLMSyncDisplay();fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();
+    loadMaintenanceStatus();
+  }else{
+    currentUserNameInv=sess.n;currentUsernameRaw=sess.u;isAdmin=false;
+    $("loginPage").classList.add("hidden");
+    $("mainApp").classList.remove("hidden");setMarquee(true);
+    renderUserNav();updateUserInfo(sess.n);tampilkanUpdate();
+    updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
+  }
+  return true;
+}
 var SUBMIT_URL="https://script.google.com/macros/s/AKfycbzvS76WTW9sbJvy9Tp-MSEA6qyQJiiTmu8_8DG3yHzKFMjCHIf2E204VuwOmLLG0GOrtA/exec";
 var allDataExp=[],filteredDataExp=[],currentPageExp=1,perPageExp=10,sortState={type:null,order:"asc"};
 var SHEET_URL_EXP="https://docs.google.com/spreadsheets/d/e/2PACX-1vREz2JiEJyESnFIyafKyu9cYUaUQxlf2zMdYCYgTVY2_AZX5jbHokHVeRv9EZnOhkIGlFDG0I68h2j3/pub?gid=0&single=true&output=csv";
@@ -992,6 +1036,7 @@ function parseNum(s){
 
 function doUserLogin(namaLengkap,user){
   currentUserNameInv=namaLengkap;currentUsernameRaw=user;isAdmin=false;kirimLog(user);kirimAktivitas("login","User login: "+namaLengkap);
+  sessionSave(namaLengkap,user,false);
   $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
   renderUserNav();updateUserInfo(namaLengkap);tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
 }
@@ -1045,9 +1090,10 @@ function login(){
 
 function renderUserNav(){
   $("navContainer").innerHTML=
-    '<div id="navInventory" class="nav-item active flex flex-col items-center cursor-pointer relative" onclick="switchMainTab(\'inventory\')"><div class="nav-indicator absolute top-0 w-12 h-1 bg-pro-main rounded-b-full"></div><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span class="text-xs font-medium">Inventory</span></div>'+
-    '<div id="navExpired" class="nav-item flex flex-col items-center cursor-pointer text-gray-500" onclick="switchMainTab(\'expired\')"><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-xs font-medium">Expired</span></div>'+
-    '<div class="nav-item flex flex-col items-center cursor-pointer text-gray-500" onclick="logout()"><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-xs font-medium">Logout</span></div>';
+    '<div id="navInventory" class="nav-item active flex-1 flex flex-col items-center cursor-pointer relative py-1" onclick="switchMainTab(\'inventory\')"><div class="nav-indicator absolute top-0 w-12 h-1 bg-pro-main rounded-b-full"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span class="text-[10px] font-medium">Inventory</span></div>'+
+    '<div id="navExpired" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'expired\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[10px] font-medium">Expired</span></div>'+
+    '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="window.open(\'https://pog-mataram.netlify.app/\',\'_blank\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span class="text-[10px] font-medium">POG</span></div>'+
+    '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
 }
 function renderAdminNav(){
@@ -1055,6 +1101,7 @@ function renderAdminNav(){
     '<div id="navInventory" class="nav-item active flex-1 flex flex-col items-center cursor-pointer relative py-2" onclick="switchMainTab(\'inventory\')"><div class="nav-indicator absolute top-0 w-12 h-1 bg-pro-main rounded-b-full"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span class="text-[10px] font-medium">Inventory</span></div>'+
     '<div id="navLogs" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'logs\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="text-[10px] font-medium">Log Activity</span></div>'+
     '<div id="navExpired" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'expired\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[10px] font-medium">Expired</span></div>'+
+    '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="window.open(\'https://pog-mataram.netlify.app/\',\'_blank\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span class="text-[10px] font-medium">POG</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
 }
@@ -1719,7 +1766,7 @@ function deleteBarcodeLog(barcode){
       else showToast('Gagal: '+(d.message||'error'),'error');
     }).catch(function(){showToast('Error koneksi','error');});
 }
-function logout(){showHomePage()}
+function logout(){sessionClear();showHomePage()}
 function setMarquee(show){var m=$("marqueeBar");if(m)m.style.display=show?"flex":"none";}
 function switchMainTab(tab){
   var ps=document.querySelectorAll(".panel-container");for(var p=0;p<ps.length;p++)ps[p].classList.remove("active");
@@ -2879,6 +2926,7 @@ function proceedQuickLogin(data) {
         $("loginPage").classList.add("hidden"); $("mainApp").classList.remove("hidden"); setMarquee(true);
         renderAdminNav(); updateUserInfo("Admin"); tampilkanUpdate(); updateBBLMSyncDisplay();
         fetchDataExp(); loadAdminData(); fetchBBLM(); getUOMData(); fetchBBLMStatus();
+        sessionSave("Admin","admin",true);
         offerQuickLoginSetup("admin", pass, "Admin", true);
         return;
       } else { if (errorEl) errorEl.innerText = "Password admin salah!"; return; }
@@ -2893,6 +2941,7 @@ function proceedQuickLogin(data) {
           $("loginPage").classList.add("hidden"); $("mainApp").classList.remove("hidden"); setMarquee(true);
           renderUserNav(); updateUserInfo(namaLengkap); tampilkanUpdate(); updateBBLMSyncDisplay();
           fetchDataExp(); fetchBBLM(); getUOMData(); fetchBBLMStatus();
+          sessionSave(namaLengkap,user,false);
           offerQuickLoginSetup(user, pass, namaLengkap, false);
           return;
         }
@@ -3138,9 +3187,23 @@ function showHomePage(){
   loadPromos();
 }
 
+/* ---- Peringatan sebelum refresh/tutup tab jika ada data belum terkirim ---- */
+window.addEventListener("beforeunload",function(e){
+  var adaLog=submitSessionLog&&submitSessionLog.length>0;
+  var adaMulti=window._multiItems&&window._multiItems.length>0;
+  if((adaLog||adaMulti)&&(currentUserNameInv||isAdmin)){
+    var msg="Ada "+((adaLog?submitSessionLog.length:0)+(adaMulti?window._multiItems.length:0))+" item yang belum tersimpan. Yakin ingin meninggalkan halaman?";
+    e.preventDefault();
+    e.returnValue=msg;
+    return msg;
+  }
+});
+
 /* ---- Init on page load ---- */
 (function() {
   checkMaintenance();
+  // Coba restore session — jika berhasil, langsung masuk tanpa harus login ulang
+  if(restoreSession())return;
   initQuickLogin();
   fetchLoginLocation();
   // render store name on initial home load
