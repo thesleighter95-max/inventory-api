@@ -1826,7 +1826,7 @@ function updateBBLMSyncDisplay(dt){
 
 function simpanState(){lastState=$("hasil").innerHTML}
 function goBack(){if(lastState)$("hasil").innerHTML=lastState;else $("hasil").innerHTML=""}
-function handleScanOrSearch(){if($("barcode").value.trim())cariBarang();else startScan()}
+function handleScanOrSearch(){if($("barcode").value.trim())cariBarang();else if($("namaBarang").value.trim())cariNama();else startScan()}
 function startScan(){var rd=$("reader");rd.classList.add("active");rd.innerHTML="";var ls=document.createElement("div");ls.className="scanner-laser";rd.appendChild(ls);scanner=new Html5Qrcode("reader");var fmt=[Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.ITF,Html5QrcodeSupportedFormats.CODE_93];var cfg={fps:10,qrbox:function(vw,vh){var s=Math.floor(Math.min(vw,vh)*0.8);return{width:s,height:s/2}},aspectRatio:1.0,formatsToSupport:fmt};scanner.start({facingMode:"environment"},cfg,function(dt){$("barcode").value=dt;if(navigator.vibrate)navigator.vibrate(100);scanner.stop().then(function(){rd.classList.remove("active");cariBarang()})}).catch(function(e){console.error("Scanner:",e);rd.classList.remove("active")})}
 function stopScanner(){if(scanner&&scanner.isScanning)scanner.stop().then(function(){$("reader").classList.remove("active");$("reader").innerHTML=""}).catch(function(e){console.error(e)})}
 function normalizeBarcode(b){return(b||"").trim().replace(/^0+/,"")}function cariBarang(){var v=$("barcode").value.trim();if(!v)return;kirimAktivitas("scan_barcode",v);showLoadingInv("Mencari...");getBarang().then(function(d){var vN=normalizeBarcode(v);for(var i=1;i<d.length;i++){if((d[i][1]||"").trim()===v){simpanState();tampilkan(d[i]);return}}for(var i=1;i<d.length;i++){if(normalizeBarcode(d[i][1])===vN){simpanState();tampilkan(d[i]);return}}var vNum=parseInt(vN,10);if(!isNaN(vNum)&&vNum>0){for(var i=1;i<d.length;i++){var dbN=parseInt(normalizeBarcode(d[i][1]),10);if(!isNaN(dbN)&&dbN===vNum){simpanState();tampilkan(d[i]);return}}}showNotFoundForm(v)})}
@@ -1923,7 +1923,7 @@ function submitNotFoundItem(){
     }
   });
 }
-var delay;$("namaBarang").addEventListener("input",function(){clearTimeout(delay);delay=setTimeout(cariNama,400)});
+$("namaBarang").addEventListener("keydown",function(e){if(e.key==="Enter")handleScanOrSearch()});
 function cariNama(){var v=$("namaBarang").value.toLowerCase().trim();if(!v)return;kirimAktivitas("search_nama",v);var kw=v.split(/\s+/).filter(function(k){return k.length>0});showLoadingInv("Mencari...");getBarang().then(function(d){var ls=[];for(var i=1;i<d.length;i++){if(kw.every(function(k){return d[i][2].toLowerCase().includes(k)}))ls.push(d[i])}if(!ls.length)$("hasil").innerHTML='<div class="bg-red-500/10 border border-red-500/30 p-4 text-center rounded-xl text-red-400 text-sm font-medium">Tidak ditemukan</div>';else if(ls.length===1){simpanState();tampilkan(ls[0])}else tampilkanMultiple(ls)})}
 
 function tampilkan(item){
