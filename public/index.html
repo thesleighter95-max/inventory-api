@@ -1790,7 +1790,9 @@ function syncAllPrices(data){
     if(bc&&pr>0)items.push({barcode:bc,price:pr});
   }
   if(!items.length)return;
-  fetch(API_BASE_URL+"/sync-prices",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:items})}).catch(function(){});
+  fetch(API_BASE_URL+"/sync-prices",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:items})}).then(function(r){return r.json()}).then(function(res){
+    if(res&&res.saved>0&&typeof showToast==="function"){showToast("📸 Snapshot harga tersimpan ("+res.saved+" produk)","success");}
+  }).catch(function(){});
 }
 function getBarang(){if(cacheBarang)return Promise.resolve(cacheBarang);return getCSV(BARANG_URL).then(function(d){cacheBarang=d;syncAllPrices(d);return d})}
 function tampilkanUpdate(){getBarang().then(function(d){$("lastUpdate").innerText="Update: "+(d[0][1]||"-")})}
