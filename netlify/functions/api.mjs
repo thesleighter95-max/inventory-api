@@ -376,7 +376,7 @@ export default async function handler(req) {
       return json({
         success: true,
         current: { date: current.date, count: Object.keys(current.prices || {}).length },
-        prev: { date: prev.date, count: Object.keys(prev.prices || {}).length }
+        prev: { date: prev.date, count: Object.keys(prev.prices || {}).length, prices: prev.prices || {} }
       });
     }
 
