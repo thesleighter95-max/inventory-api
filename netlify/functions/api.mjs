@@ -369,11 +369,11 @@ export default async function handler(req) {
 
     // POST /sync-prices — simpan semua harga dari Sheets sekaligus
     if (path === "/sync-prices" && method === "POST") {
-      const { items } = body;
+      const { items, forceOverwrite } = body;
       if (!Array.isArray(items) || !items.length) return json({ success: false, message: "items harus array" }, 400);
       const today = new Date().toISOString().slice(0, 10);
       const current = await getJson(store, "price-snapshot-current", { date: null, prices: {} });
-      if (current.date === today) return json({ success: true, saved: 0, message: "sudah tersimpan hari ini" });
+      if (current.date === today && !forceOverwrite) return json({ success: true, saved: 0, message: "sudah tersimpan hari ini" });
       // Rotasi: simpan current sebagai prev sebelum overwrite
       if (current.date && current.date !== today) {
         await setJson(store, "price-snapshot-prev", current);
