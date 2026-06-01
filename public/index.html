@@ -1385,11 +1385,25 @@ function showLoginPageFromMaintenance(){
   $("homePage").style.display="none";
   $("loginPage").classList.remove("hidden");
 }
+function loadSnapshotStatus(){
+  fetch(API_BASE_URL+"/sync-prices").then(function(r){return r.json()}).then(function(res){
+    var st=$("snapshotStatusText");if(!st)return;
+    if(res.current&&res.current.date){
+      var tgl=new Date(res.current.date).toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"});
+      st.innerText="✅ Tersimpan: "+res.current.count+" produk ("+tgl+")";
+      st.style.color="#34d399";
+    } else {
+      st.innerText="Belum ada snapshot tersimpan";
+      st.style.color="#6b7280";
+    }
+  }).catch(function(){});
+}
 function loadMaintenanceStatus(){
   fetch(API_BASE_URL+"/maintenance").then(function(r){return r.json()}).then(function(d){
     _maintenanceActive=d.active||false;
     updateMaintenanceUI(d);
   }).catch(function(){});
+  loadSnapshotStatus();
 }
 function updateMaintenanceUI(d){
   var btn=$("btnToggleMaintenance"),st=$("maintenanceStatusText"),inp=$("maintenanceMsgInput");
