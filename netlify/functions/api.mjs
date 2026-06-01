@@ -135,17 +135,11 @@ export default async function handler(req) {
       return json({ success: true, logs });
     }
 
-    // DELETE /activity-log — hapus semua atau per barcode
+    // DELETE /activity-log
     if (path === "/activity-log" && method === "DELETE") {
-      const { adminPassword, barcode } = body;
+      const { adminPassword } = body;
       if (adminPassword !== ADMIN_PASSWORD) {
         return json({ success: false, message: "Unauthorized" }, 403);
-      }
-      if (barcode) {
-        const logs = await getJson(store, "activity-logs", []);
-        const filtered = logs.filter(l => !(l.action === "scan_notfound" && (l.detail || "").trim() === barcode.trim()));
-        await setJson(store, "activity-logs", filtered);
-        return json({ success: true, message: "Log barcode " + barcode + " berhasil dihapus" });
       }
       await setJson(store, "activity-logs", []);
       return json({ success: true, message: "Semua log berhasil dihapus" });
@@ -346,6 +340,48 @@ export default async function handler(req) {
         }
       }));
       return json({ success: true, message: restored + " kunci data berhasil direstore" });
+    }
+
+    // GET /price-history/:barcode
+    if (path.startsWith("/price-history/") && method === "GET") {
+      const barcode = decodeURIComponent(path.replace("/price-history/", "").trim());
+      if (!barcode) return json({ success: false, message: "barcode wajib diisi" }, 400);
+      const [individual, prev] = await Promise.all([
+        getJson(store, `price-history:${barcode}`, null),
+        getJson(store, "price-snapshot-prev", { date: null, prices: {} })
+      ]);
+      const prevPrice = prev.prices?.[barcode];
+      const data = prevPrice != null ? { price: prevPrice, date: prev.date } : individual;
+      return json({ success: true, data });
+    }
+
+    // POST /price-history (per-scan fallback)
+    if (path === "/price-history" && method === "POST") {
+      const { barcode, price } = body;
+      if (!barcode || price === undefined) return json({ success: false, message: "barcode dan price wajib diisi" }, 400);
+      const today = new Date().toISOString().slice(0, 10);
+      const existing = await getJson(store, `price-history:${barcode}`, null);
+      if (!existing || existing.date !== today) {
+        await setJson(store, `price-history:${barcode}`, { price: Number(price), date: today });
+      }
+      return json({ success: true });
+    }
+
+    // POST /sync-prices — simpan semua harga dari Sheets sekaligus
+    if (path === "/sync-prices" && method === "POST") {
+      const { items } = body;
+      if (!Array.isArray(items) || !items.length) return json({ success: false, message: "items harus array" }, 400);
+      const today = new Date().toISOString().slice(0, 10);
+      const current = await getJson(store, "price-snapshot-current", { date: null, prices: {} });
+      if (current.date === today) return json({ success: true, saved: 0, message: "sudah tersimpan hari ini" });
+      // Rotasi: simpan current sebagai prev sebelum overwrite
+      if (current.date && current.date !== today) {
+        await setJson(store, "price-snapshot-prev", current);
+      }
+      const prices = {};
+      items.forEach(({ barcode, price }) => { if (barcode) prices[barcode] = Number(price) || 0; });
+      await setJson(store, "price-snapshot-current", { date: today, prices });
+      return json({ success: true, saved: Object.keys(prices).length });
     }
 
     // POST /product-request
