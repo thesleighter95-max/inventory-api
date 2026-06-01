@@ -367,6 +367,19 @@ export default async function handler(req) {
       return json({ success: true });
     }
 
+    // GET /sync-prices — status snapshot harga terkini
+    if (path === "/sync-prices" && method === "GET") {
+      const [current, prev] = await Promise.all([
+        getJson(store, "price-snapshot-current", { date: null, prices: {} }),
+        getJson(store, "price-snapshot-prev", { date: null, prices: {} })
+      ]);
+      return json({
+        success: true,
+        current: { date: current.date, count: Object.keys(current.prices || {}).length },
+        prev: { date: prev.date, count: Object.keys(prev.prices || {}).length }
+      });
+    }
+
     // POST /sync-prices — simpan semua harga dari Sheets sekaligus
     if (path === "/sync-prices" && method === "POST") {
       const { items, forceOverwrite } = body;
