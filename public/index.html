@@ -722,6 +722,8 @@ table td { font-size: 11px; }
       </div>
     </div>
 
+    <div id="logListAdmin" class="space-y-2"></div>
+
     <!-- ╔══════════════════════════════════════════════╗ -->
     <!-- ║  PERMINTAAN PRODUK BARU — admin only         ║ -->
     <!-- ╚══════════════════════════════════════════════╝ -->
@@ -743,6 +745,32 @@ table td { font-size: 11px; }
           </button>
         </div>
         <div id="productRequestList">
+          <div style="text-align:center;color:#4b5563;font-size:12px;padding:20px;">Klik Refresh untuk memuat...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ╔══════════════════════════════════════════════╗ -->
+    <!-- ║  BARCODE TIDAK DITEMUKAN — admin only        ║ -->
+    <!-- ╚══════════════════════════════════════════════╝ -->
+    <div id="barcodeNotFoundSection" style="margin-top:20px;">
+      <div style="background:linear-gradient(135deg,rgba(239,68,68,0.08),rgba(185,28,28,0.03));border:1px solid rgba(239,68,68,0.22);border-radius:16px;padding:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:28px;height:28px;background:rgba(239,68,68,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg style="width:15px;height:15px;color:#f87171" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            </div>
+            <div>
+              <p style="font-size:12px;font-weight:800;color:#f87171;margin:0;letter-spacing:.5px;">BARCODE TIDAK DITEMUKAN</p>
+              <p style="font-size:10px;color:#6b7280;margin:2px 0 0;">Barcode yang sering gagal dibaca — perlu koreksi di database <span style="color:#4ade80;font-size:9px;">&#x21bb; auto 3 mnt</span></p>
+            </div>
+          </div>
+          <button onclick="loadBarcodeNotFound()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;">
+            <svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            Refresh
+          </button>
+        </div>
+        <div id="barcodeNotFoundList">
           <div style="text-align:center;color:#4b5563;font-size:12px;padding:20px;">Klik Refresh untuk memuat...</div>
         </div>
       </div>
@@ -877,8 +905,52 @@ table td { font-size: 11px; }
 
 <script>
 var $=function(id){return document.getElementById(id)};
-var currentUserNameInv="",currentUsernameRaw="",cacheBarang=null,lastState="",scanner=null,isAdmin=false;
+var currentUserNameInv="",currentUsernameRaw="",cacheBarang=null,lastState="",scanner=null,isAdmin=false,_bnfInterval=null;
 var lastFoundItem=null;window._multiItems=[];submitCount=0;submitSessionLog=[];isSubmitting=false;sessionLogOpen=false;
+
+/* =====================================================
+   SESSION PERSISTENCE — auto-restore login saat refresh
+   ===================================================== */
+var SESSION_KEY="inv_sess_v1";
+var SESSION_TTL=8*60*60*1000; // 8 jam
+
+function sessionSave(nama,user,admin){
+  try{
+    var d={n:nama,u:user,a:!!admin,exp:Date.now()+SESSION_TTL};
+    localStorage.setItem(SESSION_KEY,btoa(unescape(encodeURIComponent(JSON.stringify(d)))));
+  }catch(e){}
+}
+function sessionLoad(){
+  try{
+    var raw=localStorage.getItem(SESSION_KEY);
+    if(!raw)return null;
+    var d=JSON.parse(decodeURIComponent(escape(atob(raw))));
+    if(!d||Date.now()>d.exp){sessionClear();return null;}
+    return d;
+  }catch(e){return null;}
+}
+function sessionClear(){
+  try{localStorage.removeItem(SESSION_KEY);}catch(e){}
+}
+function restoreSession(){
+  var sess=sessionLoad();
+  if(!sess)return false;
+  $("homePage").style.display="none";
+  $("loginPage").style.display="none";
+  if(sess.a){
+    currentUserNameInv="Admin";isAdmin=true;
+    $("mainApp").classList.remove("hidden");setMarquee(true);
+    renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();
+    updateBBLMSyncDisplay();fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();
+    loadMaintenanceStatus();
+  }else{
+    currentUserNameInv=sess.n;currentUsernameRaw=sess.u;isAdmin=false;
+    $("mainApp").classList.remove("hidden");setMarquee(true);
+    renderUserNav();updateUserInfo(sess.n);tampilkanUpdate();
+    updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
+  }
+  return true;
+}
 var SUBMIT_URL="https://script.google.com/macros/s/AKfycbzvS76WTW9sbJvy9Tp-MSEA6qyQJiiTmu8_8DG3yHzKFMjCHIf2E204VuwOmLLG0GOrtA/exec";
 var allDataExp=[],filteredDataExp=[],currentPageExp=1,perPageExp=10,sortState={type:null,order:"asc"};
 var SHEET_URL_EXP="https://docs.google.com/spreadsheets/d/e/2PACX-1vREz2JiEJyESnFIyafKyu9cYUaUQxlf2zMdYCYgTVY2_AZX5jbHokHVeRv9EZnOhkIGlFDG0I68h2j3/pub?gid=0&single=true&output=csv";
@@ -966,6 +1038,7 @@ function parseNum(s){
 
 function doUserLogin(namaLengkap,user){
   currentUserNameInv=namaLengkap;currentUsernameRaw=user;isAdmin=false;kirimLog(user);kirimAktivitas("login","User login: "+namaLengkap);
+  sessionSave(namaLengkap,user,false);
   $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
   renderUserNav();updateUserInfo(namaLengkap);tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
 }
@@ -1019,9 +1092,10 @@ function login(){
 
 function renderUserNav(){
   $("navContainer").innerHTML=
-    '<div id="navInventory" class="nav-item active flex flex-col items-center cursor-pointer relative" onclick="switchMainTab(\'inventory\')"><div class="nav-indicator absolute top-0 w-12 h-1 bg-pro-main rounded-b-full"></div><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span class="text-xs font-medium">Inventory</span></div>'+
-    '<div id="navExpired" class="nav-item flex flex-col items-center cursor-pointer text-gray-500" onclick="switchMainTab(\'expired\')"><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-xs font-medium">Expired</span></div>'+
-    '<div class="nav-item flex flex-col items-center cursor-pointer text-gray-500" onclick="logout()"><svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-xs font-medium">Logout</span></div>';
+    '<div id="navInventory" class="nav-item active flex-1 flex flex-col items-center cursor-pointer relative py-1" onclick="switchMainTab(\'inventory\')"><div class="nav-indicator absolute top-0 w-12 h-1 bg-pro-main rounded-b-full"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span class="text-[10px] font-medium">Inventory</span></div>'+
+    '<div id="navExpired" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'expired\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[10px] font-medium">Expired</span></div>'+
+    '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="window.open(\'https://pog-mataram.netlify.app/\',\'_blank\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span class="text-[10px] font-medium">POG</span></div>'+
+    '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
 }
 function renderAdminNav(){
@@ -1029,6 +1103,7 @@ function renderAdminNav(){
     '<div id="navInventory" class="nav-item active flex-1 flex flex-col items-center cursor-pointer relative py-2" onclick="switchMainTab(\'inventory\')"><div class="nav-indicator absolute top-0 w-12 h-1 bg-pro-main rounded-b-full"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span class="text-[10px] font-medium">Inventory</span></div>'+
     '<div id="navLogs" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'logs\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="text-[10px] font-medium">Log Activity</span></div>'+
     '<div id="navExpired" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'expired\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[10px] font-medium">Expired</span></div>'+
+    '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="window.open(\'https://pog-mataram.netlify.app/\',\'_blank\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span class="text-[10px] font-medium">POG</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
 }
@@ -1569,8 +1644,8 @@ function loadMonitoringData(){
       users.forEach(function(u){var o=document.createElement("option");o.value=u;o.textContent=u;filterEl.appendChild(o)});
     }
     if(!logs.length){listEl.innerHTML='<div style="text-align:center;color:#4b5563;font-size:12px;padding:16px;">Tidak ada data aktivitas</div>';return}
-    var actionLabels={"login":"🔑 Login","tab_inventory":"📦 Buka Inventory","tab_expired":"📅 Buka Expired","tab_logs":"⚙️ Buka Admin","scan_barcode":"🔍 Scan Barcode","search_nama":"🔎 Cari Nama","cetak":"🖨️ Cetak","lapor_produk":"📩 Lapor Produk"};
-    var actionColors={"login":"rgba(99,102,241,0.12)","tab_inventory":"rgba(16,185,129,0.1)","tab_expired":"rgba(59,130,246,0.1)","tab_logs":"rgba(245,158,11,0.1)","scan_barcode":"rgba(139,92,246,0.1)","search_nama":"rgba(20,184,166,0.1)","cetak":"rgba(234,88,12,0.1)","lapor_produk":"rgba(245,158,11,0.12)"};
+    var actionLabels={"login":"🔑 Login","tab_inventory":"📦 Buka Inventory","tab_expired":"📅 Buka Expired","tab_logs":"⚙️ Buka Admin","scan_notfound":"❌ Scan Gagal","scan_barcode":"🔍 Scan Barcode","search_nama":"🔎 Cari Nama","cetak":"🖨️ Cetak","lapor_produk":"📩 Lapor Produk"};
+    var actionColors={"login":"rgba(99,102,241,0.12)","tab_inventory":"rgba(16,185,129,0.1)","tab_expired":"rgba(59,130,246,0.1)","tab_logs":"rgba(245,158,11,0.1)","scan_notfound":"rgba(239,68,68,0.12)","scan_barcode":"rgba(139,92,246,0.1)","search_nama":"rgba(20,184,166,0.1)","cetak":"rgba(234,88,12,0.1)","lapor_produk":"rgba(245,158,11,0.12)"};
     var h="";
     for(var i=0;i<logs.length;i++){
       var lg=logs[i];
@@ -1636,14 +1711,72 @@ function resolveProductRequest(id){
     else showToast("Gagal: "+d.message,"error");
   }).catch(function(){showToast("Gagal terhubung ke server","error");});
 }
-function logout(){showHomePage()}
+function loadBarcodeNotFound(){
+  var listEl=document.getElementById("barcodeNotFoundList");
+  if(!listEl)return;
+  listEl.innerHTML='<div style="text-align:center;color:#f87171;font-size:11px;padding:16px;display:flex;align-items:center;justify-content:center;gap:6px;"><svg class="animate-spin" style="width:14px;height:14px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>Memuat...</div>';
+  fetch(BBLM_STATUS_API_URL+"/activity-log?adminPassword="+encodeURIComponent(ADMIN_PASSWORD)+"&limit=1000")
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d.success){listEl.innerHTML='<div style="text-align:center;color:#f87171;font-size:11px;padding:12px;">Gagal memuat data</div>';return;}
+      var logs=(d.logs||[]).filter(function(l){return l.action==="scan_notfound";});
+      if(!logs.length){listEl.innerHTML='<div style="text-align:center;color:#4b5563;font-size:12px;padding:20px;">Belum ada barcode yang gagal dibaca 🎉</div>';return;}
+      var grouped={};
+      logs.forEach(function(l){
+        var bc=(l.detail||"").trim();if(!bc)return;
+        if(!grouped[bc])grouped[bc]={barcode:bc,count:0,users:[],lastAt:l.createdAt};
+        grouped[bc].count++;
+        if(grouped[bc].users.indexOf(l.username)===-1)grouped[bc].users.push(l.username);
+        if(l.createdAt>grouped[bc].lastAt)grouped[bc].lastAt=l.createdAt;
+      });
+      var items=Object.values(grouped).sort(function(a,b){return b.count-a.count;});
+      var months=["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agt","Sep","Okt","Nov","Des"];
+      var h='<div style="font-size:11px;font-weight:700;color:#f87171;margin-bottom:8px;">';
+      h+='<span style="background:rgba(239,68,68,0.15);border-radius:99px;padding:2px 10px;">'+items.length+' barcode bermasalah</span></div>';
+      h+='<div style="font-size:10px;color:#6b7280;margin-bottom:10px;padding:8px 10px;background:rgba(0,0,0,0.2);border-radius:8px;">Barcode ini sering di-scan tapi tidak ditemukan. Kemungkinan perbedaan angka nol di depan antara scanner dan database.</div>';
+      for(var i=0;i<items.length;i++){
+        var it=items[i];
+        var dt=new Date(it.lastAt);
+        var ts=dt.getDate()+" "+months[dt.getMonth()]+" "+dt.getFullYear()+" "+String(dt.getHours()).padStart(2,"0")+":"+String(dt.getMinutes()).padStart(2,"0");
+        var normalized=it.barcode.replace(/^0+/,"");
+        h+='<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:12px;margin-bottom:8px;">';
+        h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">';
+        h+='<div style="flex:1;min-width:0;">';
+        h+='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">';
+        h+='<span style="font-size:13px;font-weight:800;color:#fca5a5;font-family:monospace;">'+it.barcode+'</span>';
+        h+='<span style="background:rgba(239,68,68,0.2);color:#f87171;font-size:9px;font-weight:800;border-radius:99px;padding:1px 7px;">'+it.count+'x gagal</span>';
+        h+='</div>';
+        h+='<div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">Tanpa leading zero: <span style="font-family:monospace;color:#fbbf24;">'+normalized+'</span></div>';
+        h+='<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;">';
+        it.users.forEach(function(u){h+='<span style="font-size:10px;color:#6366f1;background:rgba(99,102,241,0.1);border-radius:6px;padding:1px 7px;">@'+u+'</span>';});
+        h+='<span style="font-size:10px;color:#4b5563;margin-left:2px;">'+ts+'</span>';
+        h+='</div></div>';
+        h+='<div style="display:flex;gap:6px;flex-shrink:0;">';
+        h+='<button onclick="navigator.clipboard.writeText(\x27'+it.barcode+'\x27).then(function(){showToast(\x27Barcode disalin!\x27,\x27success\x27)})" style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.25);color:#818cf8;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">Salin</button>';
+        h+='<button onclick="deleteBarcodeLog(\x27'+it.barcode+'\x27)" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">Hapus</button>';
+        h+='</div>';
+        h+='</div></div>';
+      }
+      listEl.innerHTML=h;
+    }).catch(function(){listEl.innerHTML='<div style="text-align:center;color:#f87171;font-size:11px;padding:12px;">Error koneksi server</div>';});
+}
+function deleteBarcodeLog(barcode){
+  if(!confirm('Hapus semua log scan gagal untuk barcode '+barcode+'?'))return;
+  fetch(BBLM_STATUS_API_URL+'/activity-log',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminPassword:ADMIN_PASSWORD,barcode:barcode})})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.success){showToast('Log barcode dihapus','success');loadBarcodeNotFound();}
+      else showToast('Gagal: '+(d.message||'error'),'error');
+    }).catch(function(){showToast('Error koneksi','error');});
+}
+function logout(){sessionClear();showHomePage()}
 function setMarquee(show){var m=$("marqueeBar");if(m)m.style.display=show?"flex":"none";}
 function switchMainTab(tab){
   var ps=document.querySelectorAll(".panel-container");for(var p=0;p<ps.length;p++)ps[p].classList.remove("active");
   var ns=document.querySelectorAll("#navContainer .nav-item");for(var n=0;n<ns.length;n++){ns[n].classList.remove("active");ns[n].classList.add("text-gray-500");var ind=ns[n].querySelector(".nav-indicator");if(ind)ind.style.opacity="0"}
-  if(tab==="inventory"){$("inventoryPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navInventory");setMarquee(true);kirimAktivitas("tab_inventory","Buka panel Inventory")}
+  if(_bnfInterval){clearInterval(_bnfInterval);_bnfInterval=null;}if(tab==="inventory"){$("inventoryPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navInventory");setMarquee(true);kirimAktivitas("tab_inventory","Buka panel Inventory")}
   else if(tab==="expired"){$("expiredPanel").classList.add("active");document.body.classList.add("light-mode");activateNav("navExpired");setMarquee(false);lucide.createIcons();kirimAktivitas("tab_expired","Buka panel Expired")}
-  else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();}
+  else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();loadBarcodeNotFound();if(_bnfInterval)clearInterval(_bnfInterval);_bnfInterval=setInterval(loadBarcodeNotFound,180000);}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
 function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items-center justify-center p-10 text-pro-text"><svg class="animate-spin h-6 w-6 text-pro-main mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-xs">'+(t||"Memuat...")+'</span></div>'}
@@ -1696,12 +1829,13 @@ function updateBBLMSyncDisplay(dt){
 
 function simpanState(){lastState=$("hasil").innerHTML}
 function goBack(){if(lastState)$("hasil").innerHTML=lastState;else $("hasil").innerHTML=""}
-function handleScanOrSearch(){if($("barcode").value.trim())cariBarang();else startScan()}
+function handleScanOrSearch(){if($("barcode").value.trim())cariBarang();else if($("namaBarang").value.trim())cariNama();else startScan()}
 function startScan(){var rd=$("reader");rd.classList.add("active");rd.innerHTML="";var ls=document.createElement("div");ls.className="scanner-laser";rd.appendChild(ls);scanner=new Html5Qrcode("reader");var fmt=[Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.ITF,Html5QrcodeSupportedFormats.CODE_93];var cfg={fps:10,qrbox:function(vw,vh){var s=Math.floor(Math.min(vw,vh)*0.8);return{width:s,height:s/2}},aspectRatio:1.0,formatsToSupport:fmt};scanner.start({facingMode:"environment"},cfg,function(dt){$("barcode").value=dt;if(navigator.vibrate)navigator.vibrate(100);scanner.stop().then(function(){rd.classList.remove("active");cariBarang()})}).catch(function(e){console.error("Scanner:",e);rd.classList.remove("active")})}
 function stopScanner(){if(scanner&&scanner.isScanning)scanner.stop().then(function(){$("reader").classList.remove("active");$("reader").innerHTML=""}).catch(function(e){console.error(e)})}
-function cariBarang(){var v=$("barcode").value.trim();if(!v)return;kirimAktivitas("scan_barcode",v);showLoadingInv("Mencari...");getBarang().then(function(d){for(var i=1;i<d.length;i++){if(d[i][1]==v){simpanState();tampilkan(d[i]);return}}showNotFoundForm(v)})}
+function normalizeBarcode(b){return(b||"").trim().replace(/^0+/,"")}function cariBarang(){var v=$("barcode").value.trim();if(!v)return;kirimAktivitas("scan_barcode",v);showLoadingInv("Mencari...");getBarang().then(function(d){var vN=normalizeBarcode(v);for(var i=1;i<d.length;i++){if((d[i][1]||"").trim()===v){simpanState();tampilkan(d[i]);return}}for(var i=1;i<d.length;i++){if(normalizeBarcode(d[i][1])===vN){simpanState();tampilkan(d[i]);return}}var vNum=parseInt(vN,10);if(!isNaN(vNum)&&vNum>0){for(var i=1;i<d.length;i++){var dbN=parseInt(normalizeBarcode(d[i][1]),10);if(!isNaN(dbN)&&dbN===vNum){simpanState();tampilkan(d[i]);return}}}showNotFoundForm(v)})}
 function hideReqErr(){var e=document.getElementById("reqNamaErr");if(e)e.style.display="none";}
 function showNotFoundForm(barcode){
+  kirimAktivitas("scan_notfound",barcode);
   $("hasil").innerHTML=
     '<div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.25);border-radius:16px;padding:16px;margin-top:4px;">'
     +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'
@@ -1792,7 +1926,7 @@ function submitNotFoundItem(){
     }
   });
 }
-var delay;$("namaBarang").addEventListener("input",function(){clearTimeout(delay);delay=setTimeout(cariNama,400)});
+$("namaBarang").addEventListener("keydown",function(e){if(e.key==="Enter")handleScanOrSearch()});
 function cariNama(){var v=$("namaBarang").value.toLowerCase().trim();if(!v)return;kirimAktivitas("search_nama",v);var kw=v.split(/\s+/).filter(function(k){return k.length>0});showLoadingInv("Mencari...");getBarang().then(function(d){var ls=[];for(var i=1;i<d.length;i++){if(kw.every(function(k){return d[i][2].toLowerCase().includes(k)}))ls.push(d[i])}if(!ls.length)$("hasil").innerHTML='<div class="bg-red-500/10 border border-red-500/30 p-4 text-center rounded-xl text-red-400 text-sm font-medium">Tidak ditemukan</div>';else if(ls.length===1){simpanState();tampilkan(ls[0])}else tampilkanMultiple(ls)})}
 
 function tampilkan(item){
@@ -1812,7 +1946,7 @@ function tampilkan(item){
   }
   $("hasil").innerHTML='<div class="gradient-border p-6 shadow-pro fade-in relative overflow-hidden"><div class="relative z-10"><div class="mb-4"><p class="text-xs text-pro-text font-medium uppercase tracking-wider mb-1">Product Name</p><h2 class="text-lg font-bold text-white leading-tight">'+item[2]+'</h2><p class="text-xs text-gray-500 font-mono mt-1">'+item[1]+'</p></div><div class="bg-pro-bg rounded-xl p-4 text-center mb-4 border border-pro-border"><p class="text-[10px] text-pro-text uppercase tracking-widest font-bold mb-1">Price</p><p class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 tracking-tight">Rp '+formatRupiah(item[3])+'</p></div><div class="flex justify-between items-center bg-white/5 rounded-lg px-4 py-3 mb-2"><span class="text-xs font-semibold text-gray-400 uppercase">Stock</span><span class="text-xl font-bold '+sc+'">'+sd.display+'</span></div><div class="flex justify-between items-center bg-white/5 rounded-lg px-4 py-2 mb-4"><span class="text-xs font-semibold text-gray-400 uppercase">UOM</span><span id="uomDisplay" class="text-sm font-bold text-gray-200">'+(bblmUom||"-")+'</span></div>'+'<div class="border-t border-pro-border pt-4 mt-2"><p class="text-[10px] text-pro-text uppercase tracking-widest font-bold mb-3 text-center">Cetak Harga Barang</p><div class="flex items-center gap-3 mb-1"><div class="flex-1"><label class="text-[10px] text-gray-500 font-semibold uppercase tracking-wider block mb-1">Jumlah Cetak</label><input type="number" id="submitQty" value="1" min="1" max="99" class="submit-qty-input w-full"></div></div><p class="text-[10px] text-gray-500 font-semibold text-center mb-3">Maksimal cetak 99 per item</p><button id="btnSubmitItem" onclick="submitItem()" class="btn-submit"><span class="btn-submit-shine"></span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>CETAK & SUBMIT</button></div></div></div></div>'+bblmHtml;
 }
-function tampilkanMultiple(items){simpanState();window._multiItems=items;var h="";for(var i=0;i<items.length;i++){var sd=processStock(items[i]),sc=sd.value>0?"text-emerald-400":"text-red-400";h+='<div onclick="lastFoundItem=window._multiItems['+i+'];tampilkan(window._multiItems['+i+'])" class="gradient-border p-4 mb-3 cursor-pointer hover:border-pro-main transition-all active:scale-[0.98] fade-in shadow-pro"><div class="flex justify-between items-center"><div class="flex-1 pr-3"><p class="font-semibold text-white text-sm">'+items[i][2]+'</p><p class="text-xs text-gray-500 mt-1">'+items[i][1]+'</p></div><div class="flex items-center gap-2"><div class="text-right"><p class="text-lg font-bold text-white">Rp '+formatRupiah(items[i][3])+'</p><p class="text-xs font-semibold '+sc+'">Stk: '+sd.display+'</p></div><button onclick="event.stopPropagation();lastFoundItem=window._multiItems['+i+'];submitItem()" class="btn-submit-sm" title="Cetak langsung"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg></button></div></div></div>'}$("hasil").innerHTML=h}
+function tampilkanMultiple(items){simpanState();window._multiItems=items;var groups={},groupOrder=[];for(var i=0;i<items.length;i++){var key=items[i][2].trim().toUpperCase()+'||'+items[i][3];if(!groups[key]){groups[key]={name:items[i][2],harga:items[i][3],items:[]};groupOrder.push(key)}groups[key].items.push(i)}var h="";for(var gi=0;gi<groupOrder.length;gi++){var g=groups[groupOrder[gi]];g.items.reverse();var i0=g.items[0],sd=processStock(items[i0]),sc=sd.value>0?"text-emerald-400":"text-red-400";var extraBarcodes="";for(var k=1;k<g.items.length;k++){extraBarcodes+='<p class="text-xs text-gray-500 mt-1">'+items[g.items[k]][1]+'</p>'}h+='<div onclick="lastFoundItem=window._multiItems['+i0+'];tampilkan(window._multiItems['+i0+'])" class="gradient-border p-4 mb-3 cursor-pointer hover:border-pro-main transition-all active:scale-[0.98] fade-in shadow-pro"><div class="flex justify-between items-center"><div class="flex-1 pr-3"><p class="font-semibold text-white text-sm">'+items[i0][2]+'</p><p class="text-xs text-gray-500 mt-1">'+items[i0][1]+'</p>'+extraBarcodes+'</div><div class="flex items-center gap-2"><div class="text-right"><p class="text-lg font-bold text-white">Rp '+formatRupiah(items[i0][3])+'</p><p class="text-xs font-semibold '+sc+'">Stk: '+sd.display+'</p></div><button onclick="event.stopPropagation();lastFoundItem=window._multiItems['+i0+'];submitItem()" class="btn-submit-sm" title="Cetak langsung"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg></button></div></div></div>'}$("hasil").innerHTML=h}
 function resetCari(){$("barcode").value="";$("namaBarang").value="";$("hasil").innerHTML="";stopScanner();lastFoundItem=null;lastBblmProduct=null}
 function submitItem(){if(!lastFoundItem){showToast("Tidak ada barang yang dipilih","error");return}if(isSubmitting)return;isSubmitting=true;var btn=$("btnSubmitItem");if(btn){btn.disabled=true;btn.innerHTML='<svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Mengirim...'}var qe=$("submitQty"),jc=qe?(parseInt(qe.value)||1):1;if(jc<1)jc=1;if(jc>99)jc=99;if(qe)qe.value=jc;var sd=processStock(lastFoundItem);var pl={username:currentUserNameInv||"Unknown",barcode:lastFoundItem[1],nama_barang:lastFoundItem[2],harga:lastFoundItem[3],stock:sd.display,jumlah_cetak:jc};fetch(SUBMIT_URL,{method:"POST",body:JSON.stringify(pl)}).then(function(r){return r.json()}).then(function(){if(navigator.vibrate)navigator.vibrate([50,30,50]);kirimAktivitas("cetak",(lastFoundItem?lastFoundItem[2]:"-")+" ("+jc+"x)");submitCount++;var now=new Date(),ts=now.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});submitSessionLog.unshift({time:ts,nama:lastFoundItem[2],harga:formatRupiah(lastFoundItem[3]),qty:jc,barcode:lastFoundItem[1]});updateSubmitBadge();renderSessionLog();showToast("Berhasil dicetak ("+jc+"x)","success");if(qe)qe.value=1}).catch(function(e){console.error("Submit:",e);showToast("Gagal mengirim! Periksa koneksi.","error")}).finally(function(){isSubmitting=false;if(btn){btn.disabled=false;btn.innerHTML='<span class="btn-submit-shine"></span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> CETAK & SUBMIT'}})}
 function updateSubmitBadge(){var b=$("submitBadge");if(submitCount>0){b.classList.remove("hidden");b.textContent=submitCount>99?"99+":submitCount;b.style.animation="none";b.offsetHeight;b.style.animation=""}else b.classList.add("hidden")}
@@ -2795,6 +2929,7 @@ function proceedQuickLogin(data) {
         $("loginPage").classList.add("hidden"); $("mainApp").classList.remove("hidden"); setMarquee(true);
         renderAdminNav(); updateUserInfo("Admin"); tampilkanUpdate(); updateBBLMSyncDisplay();
         fetchDataExp(); loadAdminData(); fetchBBLM(); getUOMData(); fetchBBLMStatus();
+        sessionSave("Admin","admin",true);
         offerQuickLoginSetup("admin", pass, "Admin", true);
         return;
       } else { if (errorEl) errorEl.innerText = "Password admin salah!"; return; }
@@ -2809,6 +2944,7 @@ function proceedQuickLogin(data) {
           $("loginPage").classList.add("hidden"); $("mainApp").classList.remove("hidden"); setMarquee(true);
           renderUserNav(); updateUserInfo(namaLengkap); tampilkanUpdate(); updateBBLMSyncDisplay();
           fetchDataExp(); fetchBBLM(); getUOMData(); fetchBBLMStatus();
+          sessionSave(namaLengkap,user,false);
           offerQuickLoginSetup(user, pass, namaLengkap, false);
           return;
         }
@@ -3054,9 +3190,23 @@ function showHomePage(){
   loadPromos();
 }
 
+/* ---- Peringatan sebelum refresh/tutup tab jika ada data belum terkirim ---- */
+window.addEventListener("beforeunload",function(e){
+  var adaLog=submitSessionLog&&submitSessionLog.length>0;
+  var adaMulti=window._multiItems&&window._multiItems.length>0;
+  if((adaLog||adaMulti)&&(currentUserNameInv||isAdmin)){
+    var msg="Ada "+((adaLog?submitSessionLog.length:0)+(adaMulti?window._multiItems.length:0))+" item yang belum tersimpan. Yakin ingin meninggalkan halaman?";
+    e.preventDefault();
+    e.returnValue=msg;
+    return msg;
+  }
+});
+
 /* ---- Init on page load ---- */
 (function() {
   checkMaintenance();
+  // Coba restore session — jika berhasil, langsung masuk tanpa harus login ulang
+  if(restoreSession())return;
   initQuickLogin();
   fetchLoginLocation();
   // render store name on initial home load
