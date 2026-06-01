@@ -1386,11 +1386,13 @@ function showLoginPageFromMaintenance(){
   $("loginPage").classList.remove("hidden");
 }
 var _prevPriceMap={};
+var _priceMapPromise=null;
 function loadPriceMap(){
-  if(window._priceMapLoaded)return;window._priceMapLoaded=true;
-  fetch(API_BASE_URL+"/sync-prices").then(function(r){return r.json()}).then(function(res){
+  if(_priceMapPromise)return _priceMapPromise;
+  _priceMapPromise=fetch(API_BASE_URL+"/sync-prices").then(function(r){return r.json()}).then(function(res){
     if(res.prev&&res.prev.prices)_prevPriceMap=res.prev.prices;
   }).catch(function(){});
+  return _priceMapPromise;
 }
 function loadSnapshotStatus(){
   fetch(API_BASE_URL+"/sync-prices").then(function(r){return r.json()}).then(function(res){
@@ -1993,7 +1995,7 @@ function submitNotFoundItem(){
   });
 }
 $("namaBarang").addEventListener("keydown",function(e){if(e.key==="Enter")handleScanOrSearch()});
-function cariNama(){var v=$("namaBarang").value.toLowerCase().trim();if(!v)return;kirimAktivitas("search_nama",v);var kw=v.split(/\s+/).filter(function(k){return k.length>0});showLoadingInv("Mencari...");getBarang().then(function(d){var ls=[];for(var i=1;i<d.length;i++){if(kw.every(function(k){return d[i][2].toLowerCase().includes(k)}))ls.push(d[i])}if(!ls.length)$("hasil").innerHTML='<div class="bg-red-500/10 border border-red-500/30 p-4 text-center rounded-xl text-red-400 text-sm font-medium">Tidak ditemukan</div>';else if(ls.length===1){simpanState();tampilkan(ls[0])}else tampilkanMultiple(ls)})}
+function cariNama(){var v=$("namaBarang").value.toLowerCase().trim();if(!v)return;kirimAktivitas("search_nama",v);var kw=v.split(/\s+/).filter(function(k){return k.length>0});showLoadingInv("Mencari...");Promise.all([getBarang(),loadPriceMap()]).then(function(r){var d=r[0];var ls=[];for(var i=1;i<d.length;i++){if(kw.every(function(k){return d[i][2].toLowerCase().includes(k)}))ls.push(d[i])}if(!ls.length)$("hasil").innerHTML='<div class="bg-red-500/10 border border-red-500/30 p-4 text-center rounded-xl text-red-400 text-sm font-medium">Tidak ditemukan</div>';else if(ls.length===1){simpanState();tampilkan(ls[0])}else tampilkanMultiple(ls)})}
 
 function tampilkan(item){
   simpanState();lastFoundItem=item;lastBblmProduct=null;lastBblmMatchType="";
