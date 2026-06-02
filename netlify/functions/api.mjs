@@ -302,6 +302,21 @@ export default async function handler(req) {
     }
 
     // GET /backup
+    if (path === "/storage-info" && method === "GET") {
+      const { adminPassword } = query;
+      if (adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
+      const keys = ["users","bblm","activity-logs","product-requests","maintenance","bblm-status","price-snapshot-current","price-snapshot-prev"];
+      const results = await Promise.all(keys.map(async k => {
+        try {
+          const raw = await store.get(k);
+          const bytes = raw ? new TextEncoder().encode(raw).length : 0;
+          return { key: k, bytes, kb: (bytes/1024).toFixed(2) };
+        } catch { return { key: k, bytes: 0, kb: "0.00" }; }
+      }));
+      const totalBytes = results.reduce((s,r)=>s+r.bytes,0);
+      return json({ success: true, items: results, totalKB: (totalBytes/1024).toFixed(2), totalMB: (totalBytes/1024/1024).toFixed(4) });
+    }
+
     if (path === "/backup" && method === "GET") {
       const { adminPassword } = query;
       if (adminPassword !== ADMIN_PASSWORD) {
