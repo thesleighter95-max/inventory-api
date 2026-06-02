@@ -10,7 +10,7 @@
   },
   "private": true,
   "dependencies": {
-    "@netlify/blobs": "^8.1.0"
+    "@upstash/redis": "^1.34.3"
   },
   "devDependencies": {
     "typescript": "~5.9.2",
