@@ -1,9 +1,17 @@
-import { Redis } from "@upstash/redis";
+import { neon } from "@neondatabase/serverless";
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
-});
+const sql = neon(process.env.DATABASE_URL);
+
+let dbReady = false;
+async function initDb() {
+  if (dbReady) return;
+  await sql`CREATE TABLE IF NOT EXISTS kv_store (
+    key TEXT PRIMARY KEY,
+    value JSONB,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`;
+  dbReady = true;
+}
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "00000";
 
@@ -19,16 +27,20 @@ async function parseBody(req) {
 
 async function getJson(key, defaultValue) {
   try {
-    const raw = await redis.get(key);
-    if (raw === null || raw === undefined) return defaultValue;
-    return raw;
+    await initDb();
+    const rows = await sql`SELECT value FROM kv_store WHERE key = ${key}`;
+    if (!rows.length || rows[0].value === null) return defaultValue;
+    return rows[0].value;
   } catch {
     return defaultValue;
   }
 }
 
 async function setJson(key, data) {
-  await redis.set(key, data);
+  await initDb();
+  await sql`INSERT INTO kv_store (key, value, updated_at)
+    VALUES (${key}, ${JSON.stringify(data)}, NOW())
+    ON CONFLICT (key) DO UPDATE SET value = ${JSON.stringify(data)}, updated_at = NOW()`;
 }
 
 export default async function handler(req, res) {
@@ -201,8 +213,9 @@ export default async function handler(req, res) {
       const keys = ["users","bblm","activity-logs","product-requests","maintenance","bblm-status","price-snapshot-current","price-snapshot-prev"];
       const results = await Promise.all(keys.map(async k => {
         try {
-          const raw = await redis.get(k);
-          const str = raw ? JSON.stringify(raw) : "";
+          const rows = await sql`SELECT value FROM kv_store WHERE key = ${k}`;
+          const val = rows.length ? rows[0].value : null;
+          const str = val ? JSON.stringify(val) : "";
           const bytes = Buffer.byteLength(str, "utf8");
           return { key: k, bytes, kb: (bytes/1024).toFixed(2) };
         } catch { return { key: k, bytes: 0, kb: "0.00" }; }
