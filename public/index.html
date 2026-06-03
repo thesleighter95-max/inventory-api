@@ -675,6 +675,11 @@ table td { font-size: 11px; }
           <svg id="snapHistChevron" style="width:14px;height:14px;color:#6b7280;transition:transform 0.2s;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
         </div>
         <div id="snapHistBody" style="display:none;margin-top:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <p style="font-size:9px;color:#6b7280;margin:0;">Pilih tanggal sebagai acuan manual, atau bangun ulang harga tertinggi dari semua snapshot</p>
+            <button onclick="rebuildHighest()" id="btnRebuildHighest" style="flex-shrink:0;margin-left:8px;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);color:#34d399;border-radius:6px;padding:4px 9px;font-size:9px;font-weight:700;cursor:pointer;white-space:nowrap;">&#8635; Bangun Ulang Tertinggi</button>
+          </div>
+          <div id="snapRebuildMsg" style="font-size:10px;text-align:center;margin-bottom:6px;display:none;"></div>
           <div id="snapHistList" style="font-size:11px;color:#9ca3af;font-style:italic;">Memuat...</div>
         </div>
       </div>
@@ -1559,6 +1564,28 @@ function setSnapshotAcuan(date){
       if(j.success){showToast("\u2705 "+j.message,"success");loadHargaCoretStatus();}
       else showToast("\u274C "+(j.message||"Gagal"),"error");
     }).catch(function(){showToast("Gagal menghubungi server","error");});
+}
+function rebuildHighest(){
+  var btn=$("btnRebuildHighest"),msg=$("snapRebuildMsg");
+  if(btn){btn.disabled=true;btn.textContent="⏳ Membangun...";}
+  if(msg){msg.style.display="block";msg.style.color="#fbbf24";msg.textContent="Membangun ulang harga tertinggi dari semua snapshot...";}
+  var adminPwd=ADMIN_PASSWORD||prompt("Password admin:");
+  if(!adminPwd){if(btn){btn.disabled=false;btn.textContent="↻ Bangun Ulang Tertinggi";}return;}
+  fetch(API_BASE_URL+"/price-snapshots/rebuild-highest",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:adminPwd})})
+    .then(function(r){return r.json()})
+    .then(function(j){
+      if(j.success){
+        if(msg){msg.style.color="#34d399";msg.textContent="✅ "+j.message;}
+        loadHargaCoretStatus();
+      }else{
+        if(msg){msg.style.color="#f87171";msg.textContent="❌ "+(j.message||"Gagal");}
+      }
+      if(btn){btn.disabled=false;btn.textContent="↻ Bangun Ulang Tertinggi";}
+    })
+    .catch(function(e){
+      if(msg){msg.style.color="#f87171";msg.textContent="❌ Error: "+e.message;}
+      if(btn){btn.disabled=false;btn.textContent="↻ Bangun Ulang Tertinggi";}
+    });
 }
 function deleteSnapshot(date){
   if(!confirm("Hapus snapshot harga tanggal "+date+"?\n\nData ini tidak bisa dikembalikan."))return;
