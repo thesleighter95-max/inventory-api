@@ -44,6 +44,11 @@ async function setJson(key, data) {
     ON CONFLICT (key) DO UPDATE SET value = ${JSON.stringify(data)}, updated_at = NOW()`;
 }
 
+async function deleteKey(key) {
+  await initDb();
+  await sql`DELETE FROM kv_store WHERE key = ${key}`;
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
@@ -442,6 +447,14 @@ loadStatus();
         return send({ success: false, message: "Belum ada harga terbaru di server. Buka aplikasi dulu agar harga tersinkron dari spreadsheet." });
       }
       await setJson("price-snapshot-prev", current);
+      // Simpan juga ke riwayat harga per tanggal
+      const snapIdxAcuan = await getJson("price-snapshots-index", []);
+      if (!snapIdxAcuan.some(s => s.date === current.date)) {
+        await setJson(`price-snapshot:${current.date}`, current);
+        snapIdxAcuan.unshift({ date: current.date, count: Object.keys(current.prices || {}).length });
+        if (snapIdxAcuan.length > 60) snapIdxAcuan.length = 60;
+        await setJson("price-snapshots-index", snapIdxAcuan);
+      }
       const count = Object.keys(current.prices).length;
       return send({ success: true, saved: count, message: count.toLocaleString("id-ID") + " harga berhasil disimpan sebagai acuan. Sekarang update spreadsheet — harga coret akan tampil otomatis." });
     }
@@ -479,6 +492,14 @@ loadStatus();
         if (!existingPrev.date || existingPrev.date <= existingCurrent.date) {
           await setJson("price-snapshot-prev", existingCurrent);
         }
+        // Simpan ke riwayat harga per tanggal
+        const snapIdx = await getJson("price-snapshots-index", []);
+        if (!snapIdx.some(s => s.date === existingCurrent.date)) {
+          await setJson(`price-snapshot:${existingCurrent.date}`, existingCurrent);
+          snapIdx.unshift({ date: existingCurrent.date, count: Object.keys(existingCurrent.prices || {}).length });
+          if (snapIdx.length > 60) snapIdx.length = 60;
+          await setJson("price-snapshots-index", snapIdx);
+        }
       }
       await setJson("price-snapshot-current", { date: today, prices });
       return send({ success: true, saved: Object.keys(prices).length });
@@ -514,6 +535,39 @@ loadStatus();
       list[idx].resolvedAt = new Date().toISOString();
       await setJson("product-requests", list);
       return send({ success: true });
+    }
+
+
+    // GET /price-snapshots — daftar riwayat snapshot harga per tanggal
+    if (path === "/price-snapshots" && method === "GET") {
+      if (query.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const snapIndex = await getJson("price-snapshots-index", []);
+      return send({ success: true, snapshots: snapIndex });
+    }
+
+    // POST /price-snapshots/:date/set-acuan — jadikan snapshot tanggal tertentu sebagai acuan harga coret
+    const setAcuanMatch = path.match(/^\/price-snapshots\/(\d{4}-\d{2}-\d{2})\/set-acuan$/);
+    if (setAcuanMatch && method === "POST") {
+      const { adminPassword } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const date = setAcuanMatch[1];
+      const snap = await getJson(`price-snapshot:${date}`, null);
+      if (!snap) return send({ success: false, message: `Snapshot ${date} tidak ditemukan` }, 404);
+      await setJson("price-snapshot-prev", snap);
+      const count = Object.keys(snap.prices || {}).length;
+      return send({ success: true, message: `Snapshot ${date} (${count.toLocaleString("id-ID")} produk) dijadikan acuan harga coret` });
+    }
+
+    // DELETE /price-snapshots/:date — hapus snapshot tanggal tertentu
+    const snapDeleteMatch = path.match(/^\/price-snapshots\/(\d{4}-\d{2}-\d{2})$/);
+    if (snapDeleteMatch && method === "DELETE") {
+      const { adminPassword } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const date = snapDeleteMatch[1];
+      await deleteKey(`price-snapshot:${date}`);
+      const snapIndex = await getJson("price-snapshots-index", []);
+      await setJson("price-snapshots-index", snapIndex.filter(s => s.date !== date));
+      return send({ success: true, message: `Snapshot ${date} berhasil dihapus` });
     }
 
     return send({ error: "Not found" }, 404);
