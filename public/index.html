@@ -1423,7 +1423,7 @@ function loadPriceMap(){
 function loadHargaCoretStatus(){
   fetch(API_BASE_URL+"/sync-prices").then(function(r){return r.json()}).then(function(j){
     if(!j.success)return;
-    var cur=j.current,prev=j.prev;
+    var cur=j.current,prev=j.prev,diffCount=j.diffCount||0;
     var icT=$("hcTerbaruIcon"),ctT=$("hcTerbaruCount"),dtT=$("hcTerbaruDate");
     var icA=$("hcAcuanIcon"),ctA=$("hcAcuanCount"),dtA=$("hcAcuanDate");
     var warn=$("hcWarn");
@@ -1437,10 +1437,17 @@ function loadHargaCoretStatus(){
     if(prev&&prev.count>0){
       icA.textContent="✅";ctA.textContent=prev.count.toLocaleString("id-ID")+" produk";ctA.style.color="#34d399";ctA.style.fontStyle="normal";
       dtA.textContent=prev.date||"";
-      warn.style.display="none";
+      if(diffCount>0){
+        warn.style.display="block";warn.style.color="#34d399";warn.style.background="rgba(52,211,153,0.1)";
+        warn.textContent="✅ "+diffCount.toLocaleString("id-ID")+" produk siap tampil harga coret";
+      }else{
+        warn.style.display="block";warn.style.color="#fbbf24";warn.style.background="rgba(245,158,11,0.1)";
+        warn.textContent="⚠️ Kedua snapshot harga sama — belum ada perbedaan harga terdeteksi. Pastikan: (1) Simpan Acuan dulu, (2) baru update spreadsheet, (3) lalu reload app";
+      }
     }else{
       icA.textContent="❌";ctA.textContent="Belum disimpan";ctA.style.color="#f87171";ctA.style.fontStyle="italic";
-      if(cur&&cur.count>0){warn.style.display="block";warn.textContent="⚠️ Klik tombol di bawah SEBELUM update harga di spreadsheet";}
+      warn.style.display="block";warn.style.color="#fbbf24";warn.style.background="rgba(245,158,11,0.1)";
+      warn.textContent="⚠️ Klik tombol di bawah SEBELUM update harga di spreadsheet";
     }
   }).catch(function(){});
 }
@@ -2054,6 +2061,7 @@ function checkPriceHistory(barcode, currentPriceRaw){
   if(!currentPrice||!barcode)return;
   fetch(API_BASE_URL+"/price-history/"+encodeURIComponent(barcode)).then(function(r){return r.json()}).then(function(res){
     var box=document.getElementById("priceBox");if(!box)return;
+    console.log("[HC] barcode="+barcode+" currentPrice="+currentPrice+" res=",JSON.stringify(res));
     // Gunakan server-side snapshot comparison jika tersedia
     if(res&&res.promo&&res.promo.prevPrice&&res.promo.currentPrice){
       var sp=res.promo.prevPrice,cp=res.promo.currentPrice;
