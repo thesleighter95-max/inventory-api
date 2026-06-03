@@ -602,7 +602,32 @@ loadStatus();
       return send({ success: true, message: `Snapshot ${date} (${count.toLocaleString("id-ID")} produk) dijadikan acuan harga coret` });
     }
 
-    // DELETE /price-snapshots/:date — hapus snapshot tanggal tertentu
+    // POST /price-snapshots/rebuild-highest — bangun ulang price-snapshot-highest dari semua snapshot tersimpan
+    if (path === "/price-snapshots/rebuild-highest" && method === "POST") {
+      const { adminPassword } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const snapIndex = await getJson("price-snapshots-index", []);
+      if (!snapIndex.length) return send({ success: false, message: "Belum ada snapshot tersimpan" });
+      const highest = {};
+      let processed = 0;
+      for (const s of snapIndex) {
+        const snap = await getJson(`price-snapshot:${s.date}`, null);
+        if (!snap || !snap.prices) continue;
+        for (const [barcode, price] of Object.entries(snap.prices)) {
+          const p = Number(price) || 0;
+          if (p > 0 && (highest[barcode] == null || p > highest[barcode])) {
+            highest[barcode] = p;
+          }
+        }
+        processed++;
+      }
+      if (!processed) return send({ success: false, message: "Tidak ada data snapshot yang bisa dibaca" });
+      await setJson("price-snapshot-highest", { prices: highest, updatedAt: new Date().toISOString() });
+      const count = Object.keys(highest).length;
+      return send({ success: true, processed, message: `Berhasil membangun ulang dari ${processed} snapshot. ${count.toLocaleString("id-ID")} produk tersimpan di harga tertinggi.`, count });
+    }
+
+        // DELETE /price-snapshots/:date — hapus snapshot tanggal tertentu
     const snapDeleteMatch = path.match(/^\/price-snapshots\/(\d{4}-\d{2}-\d{2})$/);
     if (snapDeleteMatch && method === "DELETE") {
       const { adminPassword } = body;
