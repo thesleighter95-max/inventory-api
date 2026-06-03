@@ -888,6 +888,67 @@ table td { font-size: 11px; }
     </div>
   </div>
 
+  <!-- PROMO PANEL -->
+  <div id="promoPanel" class="panel-container">
+    <div class="max-w-sm mx-auto px-3 pt-4" style="padding-bottom:90px;">
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg,#dc2626,#b91c1c);border-radius:16px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+        <div style="background:rgba(255,255,255,0.2);border-radius:10px;padding:8px;flex-shrink:0;">
+          <svg style="width:18px;height:18px;color:white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+        </div>
+        <div style="flex:1;">
+          <p style="font-size:13px;font-weight:800;color:white;margin:0;letter-spacing:.5px;">PROMO AKTIF</p>
+          <p style="font-size:10px;color:rgba(255,255,255,0.7);margin:2px 0 0;">Harga turun dari harga tertinggi</p>
+        </div>
+        <button onclick="refreshPromoList()" id="btnPromoRefresh" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:6px;cursor:pointer;flex-shrink:0;">
+          <svg id="promoRefreshIcon" style="width:16px;height:16px;color:white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+      </div>
+      <!-- Summary -->
+      <div id="promoSummary" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div style="background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.2);border-radius:10px;padding:10px;text-align:center;">
+          <p style="font-size:9px;color:#f87171;font-weight:700;margin:0 0 3px;text-transform:uppercase;">Total Promo</p>
+          <p id="promoCountBig" style="font-size:18px;font-weight:800;color:#fca5a5;margin:0;">-</p>
+          <p style="font-size:9px;color:#6b7280;margin:2px 0 0;">produk</p>
+        </div>
+        <div style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px;text-align:center;">
+          <p style="font-size:9px;color:#9ca3af;font-weight:700;margin:0 0 3px;text-transform:uppercase;">Diskon &gt; 10%</p>
+          <p id="promoCount10" style="font-size:18px;font-weight:800;color:#e5e7eb;margin:0;">-</p>
+          <p style="font-size:9px;color:#6b7280;margin:2px 0 0;">produk</p>
+        </div>
+        <div style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px;text-align:center;">
+          <p style="font-size:9px;color:#9ca3af;font-weight:700;margin:0 0 3px;text-transform:uppercase;">Diskon &gt; 20%</p>
+          <p id="promoCount20" style="font-size:18px;font-weight:800;color:#e5e7eb;margin:0;">-</p>
+          <p style="font-size:9px;color:#6b7280;margin:2px 0 0;">produk</p>
+        </div>
+      </div>
+      <!-- Filters -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <div style="flex:1;position:relative;">
+          <svg style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:#6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="promoSearch" type="text" placeholder="Cari nama / barcode..." oninput="renderPromoItems()"
+            style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 8px 8px 26px;font-size:12px;color:#e5e7eb;outline:none;">
+        </div>
+        <select id="promoSort" onchange="renderPromoItems()"
+          style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px 8px;font-size:11px;color:#9ca3af;outline:none;flex-shrink:0;">
+          <option value="disc_pct">Diskon Terbesar</option>
+          <option value="disc_amt">Potongan Terbesar</option>
+          <option value="name">Nama A-Z</option>
+          <option value="price_low">Harga Terendah</option>
+        </select>
+      </div>
+      <!-- Info tanggal snapshot -->
+      <div id="promoDateInfo" style="font-size:10px;color:#6b7280;text-align:center;margin-bottom:8px;"></div>
+      <!-- List -->
+      <div id="promoList">
+        <div style="text-align:center;padding:40px 0;color:#6b7280;">
+          <svg style="width:32px;height:32px;margin:0 auto 8px;display:block;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+          <p style="font-size:12px;">Pilih menu Promo untuk memuat data</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="expiredPanel" class="panel-container">
    <div class="p-4">
      <header class="header-floating-expired mx-auto max-w-6xl px-6 py-5 mb-5 fade-in" style="margin-top:4px;">
@@ -1152,6 +1213,7 @@ function login(){
 function renderUserNav(){
   $("navContainer").innerHTML=
     '<div id="navInventory" class="nav-item active flex-1 flex flex-col items-center cursor-pointer relative py-1" onclick="switchMainTab(\'inventory\')"><div class="nav-indicator absolute top-0 w-12 h-1 bg-pro-main rounded-b-full"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span class="text-[10px] font-medium">Inventory</span></div>'+
+    '<div id="navPromo" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'promo\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#dc2626;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg><span class="text-[9px] font-semibold">Promo</span></div>'+
     '<div id="navExpired" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'expired\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[10px] font-medium">Expired</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="window.open(\'https://pog-mataram.netlify.app/\',\'_blank\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span class="text-[10px] font-medium">POG</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
@@ -1161,6 +1223,7 @@ function renderAdminNav(){
   $("navContainer").innerHTML=
     '<div id="navInventory" class="nav-item active flex-1 flex flex-col items-center cursor-pointer relative py-2" onclick="switchMainTab(\'inventory\')"><div class="nav-indicator absolute top-0 w-12 h-1 bg-pro-main rounded-b-full"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span class="text-[10px] font-medium">Inventory</span></div>'+
     '<div id="navLogs" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'logs\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="text-[10px] font-medium">Log Activity</span></div>'+
+    '<div id="navPromo" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'promo\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#dc2626;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg><span class="text-[9px] font-semibold">Promo</span></div>'+
     '<div id="navExpired" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'expired\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[10px] font-medium">Expired</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="window.open(\'https://pog-mataram.netlify.app/\',\'_blank\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span class="text-[10px] font-medium">POG</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
@@ -1999,6 +2062,7 @@ function switchMainTab(tab){
   if(_bnfInterval){clearInterval(_bnfInterval);_bnfInterval=null;}if(tab==="inventory"){$("inventoryPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navInventory");setMarquee(true);kirimAktivitas("tab_inventory","Buka panel Inventory")}
   else if(tab==="expired"){$("expiredPanel").classList.add("active");document.body.classList.add("light-mode");activateNav("navExpired");setMarquee(false);lucide.createIcons();kirimAktivitas("tab_expired","Buka panel Expired")}
   else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();loadBarcodeNotFound();if(_bnfInterval)clearInterval(_bnfInterval);_bnfInterval=setInterval(loadBarcodeNotFound,180000);}
+  else if(tab==="promo"){$("promoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navPromo");setMarquee(false);loadPromoList();}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
 function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items-center justify-center p-10 text-pro-text"><svg class="animate-spin h-6 w-6 text-pro-main mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-xs">'+(t||"Memuat...")+'</span></div>'}
@@ -3492,6 +3556,103 @@ window.addEventListener("beforeunload",function(e){
   if(st){st.textContent=STORE_TAGLINE||"";st.style.display=STORE_TAGLINE?"block":"none";}
   loadPromos();
 })();
+
+/* ===== PROMO LIST ===== */
+var _promoData=null;
+var _promoLoading=false;
+
+function loadPromoList(){
+  if(_promoData){renderPromoItems();return;}
+  if(_promoLoading)return;
+  _promoLoading=true;
+  var el=$("promoList");
+  if(el)el.innerHTML='<div style="text-align:center;padding:40px 0;color:#6b7280;"><svg style="width:28px;height:28px;margin:0 auto 8px;display:block;animation:spin 1s linear infinite;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><p style="font-size:12px;margin:0;">Memuat data promo...</p></div>';
+  Promise.all([
+    fetch(API_BASE_URL+"/promo-list").then(function(r){return r.json()}),
+    getBarang().catch(function(){return null})
+  ]).then(function(results){
+    var j=results[0],barang=results[1];
+    _promoLoading=false;
+    if(!j.success){
+      var el=$("promoList");
+      if(el)el.innerHTML='<div style="text-align:center;padding:30px;color:#f87171;font-size:12px;">Gagal memuat: '+(j.message||"Error")+'</div>';
+      return;
+    }
+    var nameMap={};
+    if(barang&&barang.length>1){
+      for(var i=1;i<barang.length;i++){
+        var row=barang[i];if(!row)continue;
+        var bc=(row[1]||"").trim(),nm=(row[2]||"").trim().toUpperCase();
+        if(bc&&nm)nameMap[bc]=nm;
+      }
+    }
+    j.items.forEach(function(it){it.name=nameMap[it.barcode]||"";});
+    _promoData=j;
+    var c10=j.items.filter(function(it){return it.discountPct>10;}).length;
+    var c20=j.items.filter(function(it){return it.discountPct>20;}).length;
+    if($("promoCountBig"))$("promoCountBig").textContent=j.count.toLocaleString("id-ID");
+    if($("promoCount10"))$("promoCount10").textContent=c10.toLocaleString("id-ID");
+    if($("promoCount20"))$("promoCount20").textContent=c20.toLocaleString("id-ID");
+    var di=$("promoDateInfo");
+    if(di){
+      var txt="";
+      if(j.currentDate)txt+="Harga terbaru: "+j.currentDate;
+      if(j.highestUpdatedAt){var d=new Date(j.highestUpdatedAt);txt+=(txt?" · ":"")+"Referensi diperbarui: "+d.toLocaleDateString("id-ID");}
+      di.textContent=txt;
+    }
+    renderPromoItems();
+  }).catch(function(e){
+    _promoLoading=false;
+    var el=$("promoList");
+    if(el)el.innerHTML='<div style="text-align:center;padding:30px;color:#f87171;font-size:12px;">Error: '+e.message+'</div>';
+  });
+}
+
+function refreshPromoList(){
+  _promoData=null;_promoLoading=false;
+  if($("promoCountBig"))$("promoCountBig").textContent="-";
+  if($("promoCount10"))$("promoCount10").textContent="-";
+  if($("promoCount20"))$("promoCount20").textContent="-";
+  loadPromoList();
+}
+
+function renderPromoItems(){
+  if(!_promoData)return;
+  var search=($("promoSearch")?$("promoSearch").value.toLowerCase().trim():"");
+  var sort=($("promoSort")?$("promoSort").value:"disc_pct");
+  var items=_promoData.items.slice();
+  if(search)items=items.filter(function(it){return(it.name||"").toLowerCase().includes(search)||it.barcode.toLowerCase().includes(search);});
+  if(sort==="disc_pct")items.sort(function(a,b){return b.discountPct-a.discountPct;});
+  else if(sort==="disc_amt")items.sort(function(a,b){return b.discount-a.discount;});
+  else if(sort==="name")items.sort(function(a,b){return(a.name||a.barcode).localeCompare(b.name||b.barcode);});
+  else if(sort==="price_low")items.sort(function(a,b){return a.currentPrice-b.currentPrice;});
+  var el=$("promoList");if(!el)return;
+  if(!items.length){
+    el.innerHTML='<div style="text-align:center;padding:40px 0;color:#6b7280;"><p style="font-size:12px;margin:4px 0 0;">'+(search?"Tidak ada hasil untuk \""+search+"\"":"Belum ada produk promo saat ini")+'</p></div>';
+    return;
+  }
+  var h='<div style="font-size:10px;color:#6b7280;text-align:right;margin-bottom:6px;">Menampilkan '+items.length.toLocaleString("id-ID")+(search?" dari "+_promoData.count.toLocaleString("id-ID"):"")+' produk</div>';
+  items.forEach(function(it){
+    var pct=Math.round(it.discountPct);
+    var badgeColor=pct>=20?"#dc2626":pct>=10?"#f97316":"#6b7280";
+    var badgeBg=pct>=20?"rgba(220,38,38,0.15)":pct>=10?"rgba(249,115,22,0.15)":"rgba(107,114,128,0.15)";
+    var savingText="hemat Rp "+it.discount.toLocaleString("id-ID");
+    h+='<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px;">'
+      +'<div style="flex:1;min-width:0;">'
+      +(it.name?'<p style="font-size:12px;font-weight:700;color:#e5e7eb;margin:0 0 1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+it.name+'</p>':'')
+      +'<p style="font-size:10px;color:#6b7280;margin:0 0 2px;">'+it.barcode+'</p>'
+      +'<p style="font-size:9px;color:#34d399;margin:0;">'+savingText+'</p>'
+      +'</div>'
+      +'<div style="text-align:right;flex-shrink:0;">'
+      +'<p style="font-size:10px;color:#9ca3af;margin:0;text-decoration:line-through;">Rp '+it.prevPrice.toLocaleString("id-ID")+'</p>'
+      +'<p style="font-size:14px;font-weight:800;color:#f87171;margin:1px 0 3px;">Rp '+it.currentPrice.toLocaleString("id-ID")+'</p>'
+      +'<span style="background:'+badgeBg+';color:'+badgeColor+';border:1px solid '+badgeColor+';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800;">-'+pct+'%</span>'
+      +'</div>'
+      +'</div>';
+  });
+  el.innerHTML=h;
+}
+
 </script>
 </body>
 </html>
