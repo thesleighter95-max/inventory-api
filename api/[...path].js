@@ -307,16 +307,10 @@ input:focus,select:focus{border-color:#3182ce}
   <h1>Upload Harga</h1>
   <div class="sub">PDA Mini Mataram — Import harga dari file Excel atau CSV</div>
 
-  <div id="pwdArea">
-    <label id="pwdLabel">Password Admin</label>
-    <input type="password" id="pwd" placeholder="Masukkan password">
-    <div class="hint" id="pwdHint">Untuk Harga Terbaru: gunakan password admin biasa</div>
-  </div>
+  <label>Password Admin</label>
+  <input type="password" id="pwd" placeholder="Password admin">
 
-  <div class="tabs">
-    <div class="tab active" onclick="setMode(0)" id="t0">📌 Set Acuan (Admin)</div>
-    <div class="tab" onclick="setMode(1)" id="t1">🆕 Harga Terbaru</div>
-  </div>
+
 
   <div class="desc" id="desc">
     <b>Harga Acuan (Coret):</b> Dipakai sebagai acuan harga coret. Jika harga terbaru lebih murah dari acuan ini, harga acuan akan tampil dicoret di aplikasi.
@@ -335,21 +329,13 @@ input:focus,select:focus{border-color:#3182ce}
     <div class="count" id="countInfo"></div>
   </div>
 
-  <button class="btn" id="btnUp" onclick="doUpload()" disabled>⬆️ Simpan Harga</button>
+  <button class="btn" id="btnUp" onclick="doUpload()" disabled>⬆️ Simpan Harga Terbaru</button>
   <div class="alert ok" id="aOk"></div>
   <div class="alert err" id="aErr"></div>
 </div>
 
 <script>
-let mode=0, rows=[], headers=[];
-function setMode(m){
-  mode=m;
-  document.getElementById("t0").className="tab"+(m===0?" active":"");
-  document.getElementById("t1").className="tab"+(m===1?" active":"");
-  document.getElementById("desc").innerHTML=m===0
-    ?"<b>Harga Acuan (Coret):</b> Dipakai sebagai acuan harga coret. Jika harga terbaru lebih murah dari acuan ini, harga acuan akan tampil dicoret di aplikasi."
-    :"<b>Harga Terbaru:</b> Update harga terbaru ke sistem. Harga turun dari acuan = tampil coret. Harga naik = update ke harga baru. Simpan kapan saja — tidak ada batasan per hari.";
-}
+let rows=[], headers=[];
 function readFile(inp){
   const file=inp.files[0]; if(!file) return;
   const r=new FileReader();
@@ -393,13 +379,9 @@ async function doUpload(){
   document.getElementById("btnUp").textContent="⏳ Menyimpan...";
   hideAlert();
   try{
-    const ep=mode===0?"/api/snap-prices":"/api/sync-prices";
-    const bodyData=mode===0
-      ?{snapPassword:pwd,items:items.map(i=>({barcode:i.barcode,price:i.price}))}
-      :{adminPassword:pwd,items:items.map(i=>({barcode:i.barcode,price:i.price}))};
-    const res=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(bodyData)});
+    const res=await fetch("/api/sync-prices",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:pwd,items:items.map(i=>({barcode:i.barcode,price:i.price}))})});
     const j=await res.json();
-    if(j.success) showOk((mode===0?"✅ Harga Acuan disimpan":"✅ Harga Terbaru disimpan")+" — "+(j.saved??items.length)+" produk");
+    if(j.success) showOk("✅ Harga Terbaru disimpan — "+(j.saved??items.length)+" produk");
     else showErr(j.message||"Gagal upload");
   }catch(e){showErr("Error: "+e.message);}
   document.getElementById("btnUp").disabled=false;
@@ -414,19 +396,7 @@ function hideAlert(){document.getElementById("aOk").style.display="none";documen
       return;
     }
 
-    // POST /snap-prices — simpan harga sebagai acuan harga coret (prev)
-    // Menggunakan snapPassword (bukan adminPassword) agar tidak bisa dipanggil otomatis oleh Apps Script
-    const SNAP_PASSWORD = process.env.SNAP_PASSWORD ?? ADMIN_PASSWORD;
-    if (path === "/snap-prices" && method === "POST") {
-      const { snapPassword, items } = body;
-      if (snapPassword !== SNAP_PASSWORD) return send({ success: false, message: "Unauthorized: snapPassword salah" }, 403);
-      if (!Array.isArray(items) || !items.length) return send({ success: false, message: "items harus array" }, 400);
-      const today = new Date().toISOString().slice(0, 10);
-      const prices = {};
-      items.forEach(({ barcode, price }) => { if (barcode) prices[barcode] = Number(price) || 0; });
-      await setJson("price-snapshot-prev", { date: today, prices });
-      return send({ success: true, saved: Object.keys(prices).length, message: "Harga acuan berhasil disimpan" });
-    }
+    // snap-prices endpoint dihapus — tidak ada auto-snapshot
 
     if (path === "/sync-prices" && method === "GET") {
       const [current, prev] = await Promise.all([
