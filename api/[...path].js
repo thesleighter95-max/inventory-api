@@ -49,6 +49,23 @@ async function deleteKey(key) {
   await sql`DELETE FROM kv_store WHERE key = ${key}`;
 }
 
+// Update price-snapshot-highest: simpan harga tertinggi per produk dari semua snapshot
+async function updateHighestSnapshot(newPrices) {
+  const existing = await getJson("price-snapshot-highest", { prices: {}, updatedAt: null });
+  const highest = existing.prices || {};
+  let updated = 0;
+  for (const [barcode, price] of Object.entries(newPrices || {})) {
+    const p = Number(price) || 0;
+    if (p > 0 && (highest[barcode] == null || p > highest[barcode])) {
+      highest[barcode] = p;
+      updated++;
+    }
+  }
+  if (updated > 0) {
+    await setJson("price-snapshot-highest", { prices: highest, updatedAt: new Date().toISOString() });
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
@@ -253,18 +270,29 @@ export default async function handler(req, res) {
     if (path.startsWith("/price-history/") && method === "GET") {
       const barcode = decodeURIComponent(path.replace("/price-history/", "").trim());
       if (!barcode) return send({ success: false, message: "barcode wajib diisi" }, 400);
-      const [individual, prev, current] = await Promise.all([
+      const [individual, prev, current, highest] = await Promise.all([
         getJson(`price-history:${barcode}`, null),
         getJson("price-snapshot-prev", { date: null, prices: {} }),
-        getJson("price-snapshot-current", { date: null, prices: {} })
+        getJson("price-snapshot-current", { date: null, prices: {} }),
+        getJson("price-snapshot-highest", { prices: {} })
       ]);
-      const prevPrice = prev?.prices?.[barcode];
       const currentSnapshotPrice = current?.prices?.[barcode];
-      // Server-side comparison: bandingkan snapshot acuan vs snapshot terbaru
       let promo = null;
-      if (prevPrice != null && currentSnapshotPrice != null && prevPrice > currentSnapshotPrice) {
-        promo = { prevPrice, currentPrice: currentSnapshotPrice };
+
+      // 1. Cek harga tertinggi otomatis dari semua snapshot
+      const highestPrice = highest?.prices?.[barcode];
+      if (highestPrice != null && currentSnapshotPrice != null && highestPrice > currentSnapshotPrice) {
+        promo = { prevPrice: highestPrice, currentPrice: currentSnapshotPrice, source: "highest" };
       }
+
+      // 2. Cek acuan manual (price-snapshot-prev) — pakai jika harganya lebih tinggi dari highest
+      const prevPrice = prev?.prices?.[barcode];
+      if (prevPrice != null && currentSnapshotPrice != null && prevPrice > currentSnapshotPrice) {
+        if (!promo || prevPrice > promo.prevPrice) {
+          promo = { prevPrice, currentPrice: currentSnapshotPrice, source: "manual", date: prev.date };
+        }
+      }
+
       const data = prevPrice != null ? { price: prevPrice, date: prev.date } : individual;
       return send({ success: true, data, promo });
     }
@@ -454,26 +482,40 @@ loadStatus();
         snapIdxAcuan.unshift({ date: current.date, count: Object.keys(current.prices || {}).length });
         if (snapIdxAcuan.length > 60) snapIdxAcuan.length = 60;
         await setJson("price-snapshots-index", snapIdxAcuan);
+        await updateHighestSnapshot(current.prices);
+      } else {
+        // Snapshot tanggal ini sudah ada, tetap update highest
+        await updateHighestSnapshot(current.prices);
       }
       const count = Object.keys(current.prices).length;
       return send({ success: true, saved: count, message: count.toLocaleString("id-ID") + " harga berhasil disimpan sebagai acuan. Sekarang update spreadsheet — harga coret akan tampil otomatis." });
     }
 
     if (path === "/sync-prices" && method === "GET") {
-      const [current, prev] = await Promise.all([
+      const [current, prev, highest] = await Promise.all([
         getJson("price-snapshot-current", { date: null, prices: {} }),
-        getJson("price-snapshot-prev", { date: null, prices: {} })
+        getJson("price-snapshot-prev", { date: null, prices: {} }),
+        getJson("price-snapshot-highest", { prices: {}, updatedAt: null })
       ]);
       const cPrices = current.prices || {};
       const pPrices = prev.prices || {};
-      const diffCount = Object.keys(pPrices).filter(bc => {
+      const hPrices = highest.prices || {};
+      // diffCount: produk yang harga tertingginya > harga terbaru (akan tampil harga coret)
+      const diffCount = Object.keys(hPrices).filter(bc => {
+        const hp = hPrices[bc];
+        const cp = cPrices[bc];
+        return hp != null && cp != null && hp > cp;
+      }).length;
+      // diffCountManual: dari acuan manual saja
+      const diffCountManual = Object.keys(pPrices).filter(bc => {
         const pp = pPrices[bc];
         const cp = cPrices[bc];
         return pp != null && cp != null && pp > cp;
       }).length;
       return send({ success: true,
         current: { date: current.date, count: Object.keys(cPrices).length },
-        prev: { date: prev.date, count: Object.keys(pPrices).length },
+        prev: { date: prev.date, count: Object.keys(pPrices).length, diffCount: diffCountManual },
+        highest: { count: Object.keys(hPrices).length, updatedAt: highest.updatedAt, diffCount },
         diffCount
       });
     }
@@ -499,6 +541,7 @@ loadStatus();
           snapIdx.unshift({ date: existingCurrent.date, count: Object.keys(existingCurrent.prices || {}).length });
           if (snapIdx.length > 60) snapIdx.length = 60;
           await setJson("price-snapshots-index", snapIdx);
+          await updateHighestSnapshot(existingCurrent.prices);
         }
       }
       await setJson("price-snapshot-current", { date: today, prices });
@@ -554,6 +597,7 @@ loadStatus();
       const snap = await getJson(`price-snapshot:${date}`, null);
       if (!snap) return send({ success: false, message: `Snapshot ${date} tidak ditemukan` }, 404);
       await setJson("price-snapshot-prev", snap);
+      await updateHighestSnapshot(snap.prices);
       const count = Object.keys(snap.prices || {}).length;
       return send({ success: true, message: `Snapshot ${date} (${count.toLocaleString("id-ID")} produk) dijadikan acuan harga coret` });
     }
