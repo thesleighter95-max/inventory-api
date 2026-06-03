@@ -1506,8 +1506,8 @@ function loadSnapshotList(){
           +'<span style="font-size:10px;color:#6b7280;margin-left:6px;">'+(s.count||0).toLocaleString("id-ID")+' produk</span>'
           +'</div>'
           +'<div style="display:flex;gap:4px;">'
-          +'<button onclick="setSnapshotAcuan(''+s.date+'')" style="background:rgba(52,211,153,0.15);border:1px solid rgba(52,211,153,0.3);color:#34d399;border-radius:5px;padding:4px 7px;font-size:10px;font-weight:700;cursor:pointer;">&#10003; Acuan</button>'
-          +'<button onclick="deleteSnapshot(''+s.date+'')" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:5px;padding:4px 7px;font-size:10px;font-weight:700;cursor:pointer;">&#10005;</button>'
+          +'<button onclick="setSnapshotAcuan(&apos;'+s.date+'&apos;)" style="background:rgba(52,211,153,0.15);border:1px solid rgba(52,211,153,0.3);color:#34d399;border-radius:5px;padding:4px 7px;font-size:10px;font-weight:700;cursor:pointer;">&#10003; Acuan</button>'
+          +'<button onclick="deleteSnapshot(&apos;'+s.date+'&apos;)" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:5px;padding:4px 7px;font-size:10px;font-weight:700;cursor:pointer;">&#10005;</button>'
           +'</div>'
           +'</div>';
       });
@@ -1516,9 +1516,7 @@ function loadSnapshotList(){
     .catch(function(){el.innerHTML='<span style="color:#f87171;">Gagal memuat</span>';});
 }
 function setSnapshotAcuan(date){
-  if(!confirm("Jadikan snapshot "+date+" sebagai acuan harga coret?
-
-Harga dari tanggal ini akan dipakai untuk mendeteksi penurunan harga."))return;
+  if(!confirm("Jadikan snapshot "+date+" sebagai acuan harga coret?\n\nHarga dari tanggal ini akan dipakai untuk mendeteksi penurunan harga."))return;
   fetch(API_BASE_URL+"/price-snapshots/"+date+"/set-acuan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:ADMIN_PASSWORD})})
     .then(function(r){return r.json()}).then(function(j){
       if(j.success){showToast("\u2705 "+j.message,"success");loadHargaCoretStatus();}
