@@ -1,5 +1,6 @@
+export const runtime = "edge";
+
 import { Redis } from "@upstash/redis";
-import { randomUUID } from "crypto";
 
 const redis = Redis.fromEnv();
 
@@ -277,7 +278,7 @@ export default async function handler(req) {
       const { barcode, namaBarang, keterangan, username } = body;
       if (!barcode || !namaBarang || !username) return json({ success: false, message: "barcode, namaBarang, dan username wajib diisi" }, 400);
       const list = await getJson("product-requests", []);
-      list.unshift({ id: randomUUID(), barcode: barcode.trim(), namaBarang: namaBarang.trim(), keterangan: (keterangan ?? "").trim(), username: username.trim(), createdAt: new Date().toISOString(), resolved: false });
+      list.unshift({ id: crypto.randomUUID(), barcode: barcode.trim(), namaBarang: namaBarang.trim(), keterangan: (keterangan ?? "").trim(), username: username.trim(), createdAt: new Date().toISOString(), resolved: false });
       if (list.length > 500) list.length = 500;
       await setJson("product-requests", list);
       return json({ success: true });
