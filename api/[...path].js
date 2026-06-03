@@ -13,7 +13,8 @@ async function initDb() {
   dbReady = true;
 }
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "00000";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "00000";
+const SNAP_PASSWORD = process.env.SNAP_PASSWORD || "00000";
 
 async function parseBody(req) {
   return new Promise((resolve) => {
@@ -433,8 +434,9 @@ loadStatus();
 
     // POST /set-price-acuan — admin eksplisit simpan harga terbaru sebagai acuan harga coret (current → prev)
     if (path === "/set-price-acuan" && method === "POST") {
-      const { adminPassword } = body;
-      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const { snapPassword, adminPassword } = body;
+      const pw = snapPassword || adminPassword || "";
+      if (pw !== SNAP_PASSWORD && pw !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
       const current = await getJson("price-snapshot-current", { date: null, prices: {} });
       if (!current.date || Object.keys(current.prices || {}).length === 0) {
         return send({ success: false, message: "Belum ada harga terbaru di server. Buka aplikasi dulu agar harga tersinkron dari spreadsheet." });
