@@ -627,6 +627,40 @@ table td { font-size: 11px; }
       
     </div>
 
+    <!-- HARGA CORET CARD -->
+    <div style="background:linear-gradient(135deg,rgba(239,68,68,0.10),rgba(185,28,28,0.05));border:1px solid rgba(239,68,68,0.25);border-radius:14px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <div style="width:28px;height:28px;background:rgba(239,68,68,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg style="width:15px;height:15px;color:#f87171" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+        </div>
+        <div>
+          <p style="font-size:12px;font-weight:800;color:#fca5a5;margin:0;letter-spacing:.5px;">HARGA CORET</p>
+          <p style="font-size:10px;color:#6b7280;margin:2px 0 0;">Simpan acuan harga coret sebelum update spreadsheet</p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div id="hcBoxAcuan" style="background:rgba(0,0,0,0.2);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
+          <p style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;margin:0 0 4px;">Harga Acuan</p>
+          <p id="hcAcuanIcon" style="font-size:18px;margin:0 0 2px;">⏳</p>
+          <p id="hcAcuanCount" style="font-size:11px;color:#9ca3af;margin:0;font-style:italic;">Memuat...</p>
+          <p id="hcAcuanDate" style="font-size:9px;color:#6b7280;margin:2px 0 0;"></p>
+        </div>
+        <div id="hcBoxTerbaru" style="background:rgba(0,0,0,0.2);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
+          <p style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;margin:0 0 4px;">Harga Terbaru</p>
+          <p id="hcTerbaruIcon" style="font-size:18px;margin:0 0 2px;">⏳</p>
+          <p id="hcTerbaruCount" style="font-size:11px;color:#9ca3af;margin:0;font-style:italic;">Memuat...</p>
+          <p id="hcTerbaruDate" style="font-size:9px;color:#6b7280;margin:2px 0 0;"></p>
+        </div>
+      </div>
+      <p id="hcWarn" style="font-size:10px;color:#fbbf24;background:rgba(245,158,11,0.1);border-radius:6px;padding:6px 10px;margin:0 0 10px;display:none;"></p>
+      <button onclick="doSetAcuanInline()" id="btnHargaCoret"
+        style="width:100%;background:linear-gradient(135deg,rgba(239,68,68,0.25),rgba(185,28,28,0.2));border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:8px;padding:10px 8px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <svg style="width:13px;height:13px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+        Simpan sebagai Acuan Harga Coret
+      </button>
+      <p id="hcMsg" style="font-size:11px;text-align:center;margin:8px 0 0;display:none;"></p>
+    </div>
+
     <!-- RESET PASSWORD ADMIN CARD -->
     <div style="background:linear-gradient(135deg,rgba(99,102,241,0.10),rgba(79,70,229,0.05));border:1px solid rgba(99,102,241,0.25);border-radius:14px;padding:16px;margin-bottom:16px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
@@ -1110,6 +1144,7 @@ function renderAdminNav(){
 }
 function updateUserInfo(n){$("displayName").innerText=n;$("displayInitial").innerText=n.charAt(0).toUpperCase()}
 function loadAdminData(){
+  loadHargaCoretStatus();
   Promise.all([getCSV(LOG_URL),getCSV(LOGIN_URL)]).then(function(results){
     var d=results[0],loginData=results[1];
     var userMap={},userList=[];
@@ -1385,6 +1420,48 @@ function loadPriceMap(){
   return _priceMapPromise;
 }
 
+function loadHargaCoretStatus(){
+  fetch(API_BASE_URL+"/sync-prices").then(function(r){return r.json()}).then(function(j){
+    if(!j.success)return;
+    var cur=j.current,prev=j.prev;
+    var icT=$("hcTerbaruIcon"),ctT=$("hcTerbaruCount"),dtT=$("hcTerbaruDate");
+    var icA=$("hcAcuanIcon"),ctA=$("hcAcuanCount"),dtA=$("hcAcuanDate");
+    var warn=$("hcWarn");
+    if(!icT)return;
+    if(cur&&cur.count>0){
+      icT.textContent="✅";ctT.textContent=cur.count.toLocaleString("id-ID")+" produk";ctT.style.color="#34d399";ctT.style.fontStyle="normal";
+      dtT.textContent=cur.date||"";
+    }else{
+      icT.textContent="⏳";ctT.textContent="Belum ada";ctT.style.color="#9ca3af";
+    }
+    if(prev&&prev.count>0){
+      icA.textContent="✅";ctA.textContent=prev.count.toLocaleString("id-ID")+" produk";ctA.style.color="#34d399";ctA.style.fontStyle="normal";
+      dtA.textContent=prev.date||"";
+      warn.style.display="none";
+    }else{
+      icA.textContent="❌";ctA.textContent="Belum disimpan";ctA.style.color="#f87171";ctA.style.fontStyle="italic";
+      if(cur&&cur.count>0){warn.style.display="block";warn.textContent="⚠️ Klik tombol di bawah SEBELUM update harga di spreadsheet";}
+    }
+  }).catch(function(){});
+}
+function doSetAcuanInline(){
+  var btn=$("btnHargaCoret"),msg=$("hcMsg");
+  if(!btn)return;
+  if(!confirm("Simpan harga terbaru ("+($("hcTerbaruCount").textContent||"-")+") sebagai acuan harga coret?\n\nLakukan ini SEBELUM mengubah harga di spreadsheet."))return;
+  btn.disabled=true;btn.style.opacity="0.6";
+  if(msg){msg.style.display="none";}
+  fetch(API_BASE_URL+"/set-price-acuan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:ADMIN_PASSWORD})})
+    .then(function(r){return r.json()}).then(function(j){
+      if(msg){
+        msg.style.display="block";
+        msg.style.color=j.success?"#34d399":"#f87171";
+        msg.textContent=j.success?"✅ "+j.message:"❌ "+j.message;
+      }
+      if(j.success)loadHargaCoretStatus();
+    }).catch(function(e){
+      if(msg){msg.style.display="block";msg.style.color="#f87171";msg.textContent="❌ Gagal: "+e.message;}
+    }).finally(function(){btn.disabled=false;btn.style.opacity="1";});
+}
 function loadMaintenanceStatus(){
   fetch(API_BASE_URL+"/maintenance").then(function(r){return r.json()}).then(function(d){
     _maintenanceActive=d.active||false;
