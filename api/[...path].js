@@ -639,6 +639,36 @@ loadStatus();
       return send({ success: true, message: `Snapshot ${date} berhasil dihapus` });
     }
 
+    // GET /promo-list — daftar artikel promo (harga terbaru < harga tertinggi historis)
+    if (path === "/promo-list" && method === "GET") {
+      const [highest, current] = await Promise.all([
+        getJson("price-snapshot-highest", { prices: {} }),
+        getJson("price-snapshot-current", { date: null, prices: {} })
+      ]);
+      const hPrices = highest.prices || {};
+      const cPrices = current.prices || {};
+      const items = [];
+      for (const [barcode, prevPrice] of Object.entries(hPrices)) {
+        const currentPrice = cPrices[barcode];
+        if (currentPrice == null) continue;
+        const p = Number(prevPrice) || 0;
+        const c = Number(currentPrice) || 0;
+        if (p > c && c > 0) {
+          const discount = p - c;
+          const discountPct = (discount / p) * 100;
+          items.push({ barcode, prevPrice: p, currentPrice: c, discount, discountPct });
+        }
+      }
+      items.sort((a, b) => b.discountPct - a.discountPct);
+      return send({
+        success: true,
+        count: items.length,
+        highestUpdatedAt: highest.updatedAt || null,
+        currentDate: current.date || null,
+        items
+      });
+    }
+
     return send({ error: "Not found" }, 404);
   } catch (err) {
     return send({ error: "Internal server error", detail: String(err) }, 500);
