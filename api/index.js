@@ -1,7 +1,6 @@
 export const runtime = "edge";
 
 import { Redis } from "@upstash/redis";
-import { randomUUID } from "crypto";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL,
@@ -400,7 +399,7 @@ export default async function handler(req) {
       }
       const list = await getJson("product-requests", []);
       list.unshift({
-        id: randomUUID(),
+        id: crypto.randomUUID(),
         barcode: barcode.trim(),
         namaBarang: namaBarang.trim(),
         keterangan: (keterangan ?? "").trim(),
