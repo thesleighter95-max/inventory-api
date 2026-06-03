@@ -251,6 +251,19 @@ export default async function handler(req, res) {
       return send({ success: true });
     }
 
+    // POST /snap-prices — simpan harga sekarang sebagai acuan (prev), lalu set current baru
+    if (path === "/snap-prices" && method === "POST") {
+      const { adminPassword, items } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      if (!Array.isArray(items) || !items.length) return send({ success: false, message: "items harus array" }, 400);
+      const today = new Date().toISOString().slice(0, 10);
+      // Simpan items sebagai price-snapshot-prev (harga acuan / harga lama)
+      const prices = {};
+      items.forEach(({ barcode, price }) => { if (barcode) prices[barcode] = Number(price) || 0; });
+      await setJson("price-snapshot-prev", { date: today, prices });
+      return send({ success: true, saved: Object.keys(prices).length, message: "Harga berhasil di-snap sebagai acuan" });
+    }
+
     if (path === "/sync-prices" && method === "GET") {
       const [current, prev] = await Promise.all([
         getJson("price-snapshot-current", { date: null, prices: {} }),
