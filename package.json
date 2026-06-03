@@ -1,1 +1,1 @@
-{"name":"pda-mini-mataram","version":"1.0.0","type":"module","dependencies":{"@upstash/redis":"^1.34.3"}}
+{"name":"pda-mini-mataram","version":"1.0.0","type":"module","dependencies":{"@neondatabase/serverless":"^0.10.4"}}
