@@ -449,7 +449,18 @@ loadStatus();
         getJson("price-snapshot-current", { date: null, prices: {} }),
         getJson("price-snapshot-prev", { date: null, prices: {} })
       ]);
-      return send({ success: true, current: { date: current.date, count: Object.keys(current.prices || {}).length }, prev: { date: prev.date, count: Object.keys(prev.prices || {}).length, prices: prev.prices || {} } });
+      const cPrices = current.prices || {};
+      const pPrices = prev.prices || {};
+      const diffCount = Object.keys(pPrices).filter(bc => {
+        const pp = pPrices[bc];
+        const cp = cPrices[bc];
+        return pp != null && cp != null && pp > cp;
+      }).length;
+      return send({ success: true,
+        current: { date: current.date, count: Object.keys(cPrices).length },
+        prev: { date: prev.date, count: Object.keys(pPrices).length },
+        diffCount
+      });
     }
 
     // POST /sync-prices — dipanggil otomatis oleh app saat load, simpan harga terbaru dari spreadsheet
