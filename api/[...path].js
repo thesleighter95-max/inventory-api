@@ -264,7 +264,6 @@ export default async function handler(req, res) {
       return send({ success: true });
     }
 
-
     // GET /upload-harga — halaman upload Excel/CSV untuk harga lama & baru
     if (path === "/upload-harga" && method === "GET") {
       res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -312,12 +311,12 @@ input:focus,select:focus{border-color:#3182ce}
   <input type="password" id="pwd" placeholder="Password admin">
 
   <div class="tabs">
-    <div class="tab active" onclick="setMode(0)" id="t0">📸 Harga Lama</div>
-    <div class="tab" onclick="setMode(1)" id="t1">🆕 Harga Baru</div>
+    <div class="tab active" onclick="setMode(0)" id="t0">📸 Harga Acuan (Coret)</div>
+    <div class="tab" onclick="setMode(1)" id="t1">🆕 Harga Terbaru</div>
   </div>
 
   <div class="desc" id="desc">
-    <b>Harga Lama (Prev):</b> Dipakai sebagai acuan harga coret. Kalau harga sekarang lebih murah, harga ini akan tampil dicoret di aplikasi.
+    <b>Harga Acuan (Coret):</b> Dipakai sebagai acuan harga coret. Jika harga terbaru lebih murah dari acuan ini, harga acuan akan tampil dicoret di aplikasi.
   </div>
 
   <label>Pilih File Excel / CSV</label>
@@ -333,7 +332,7 @@ input:focus,select:focus{border-color:#3182ce}
     <div class="count" id="countInfo"></div>
   </div>
 
-  <button class="btn" id="btnUp" onclick="doUpload()" disabled>⬆️ Upload Harga</button>
+  <button class="btn" id="btnUp" onclick="doUpload()" disabled>⬆️ Simpan Harga</button>
   <div class="alert ok" id="aOk"></div>
   <div class="alert err" id="aErr"></div>
 </div>
@@ -345,8 +344,8 @@ function setMode(m){
   document.getElementById("t0").className="tab"+(m===0?" active":"");
   document.getElementById("t1").className="tab"+(m===1?" active":"");
   document.getElementById("desc").innerHTML=m===0
-    ?"<b>Harga Lama (Prev):</b> Dipakai sebagai acuan harga coret. Kalau harga sekarang lebih murah, harga ini akan tampil dicoret di aplikasi."
-    :"<b>Harga Baru (Sync):</b> Update harga terbaru ke sistem. Otomatis geser snapshot hari ini ke prev jika sudah ada.";
+    ?"<b>Harga Acuan (Coret):</b> Dipakai sebagai acuan harga coret. Jika harga terbaru lebih murah dari acuan ini, harga acuan akan tampil dicoret di aplikasi."
+    :"<b>Harga Terbaru:</b> Update harga terbaru ke sistem. Harga turun dari acuan = tampil coret. Harga naik = update ke harga baru. Simpan kapan saja — tidak ada batasan per hari.";
 }
 function readFile(inp){
   const file=inp.files[0]; if(!file) return;
@@ -388,17 +387,17 @@ async function doUpload(){
   const items=getItems();
   if(!items.length){showErr("Tidak ada data valid");return;}
   document.getElementById("btnUp").disabled=true;
-  document.getElementById("btnUp").textContent="⏳ Mengupload...";
+  document.getElementById("btnUp").textContent="⏳ Menyimpan...";
   hideAlert();
   try{
     const ep=mode===0?"/api/snap-prices":"/api/sync-prices";
     const res=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:pwd,items:items.map(i=>({barcode:i.barcode,price:i.price}))})});
     const j=await res.json();
-    if(j.success) showOk((mode===0?"✅ Harga Lama disimpan":"✅ Harga Baru disync")+" — "+(j.saved??items.length)+" produk");
+    if(j.success) showOk((mode===0?"✅ Harga Acuan disimpan":"✅ Harga Terbaru disimpan")+" — "+(j.saved??items.length)+" produk");
     else showErr(j.message||"Gagal upload");
   }catch(e){showErr("Error: "+e.message);}
   document.getElementById("btnUp").disabled=false;
-  document.getElementById("btnUp").textContent="⬆️ Upload Harga";
+  document.getElementById("btnUp").textContent="⬆️ Simpan Harga";
 }
 function showOk(m){const e=document.getElementById("aOk");e.textContent=m;e.style.display="block";}
 function showErr(m){const e=document.getElementById("aErr");e.textContent=m;e.style.display="block";}
@@ -409,17 +408,16 @@ function hideAlert(){document.getElementById("aOk").style.display="none";documen
       return;
     }
 
-    // POST /snap-prices — simpan harga sekarang sebagai acuan (prev), lalu set current baru
+    // POST /snap-prices — simpan harga sebagai acuan harga coret (prev)
     if (path === "/snap-prices" && method === "POST") {
       const { adminPassword, items } = body;
       if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
       if (!Array.isArray(items) || !items.length) return send({ success: false, message: "items harus array" }, 400);
       const today = new Date().toISOString().slice(0, 10);
-      // Simpan items sebagai price-snapshot-prev (harga acuan / harga lama)
       const prices = {};
       items.forEach(({ barcode, price }) => { if (barcode) prices[barcode] = Number(price) || 0; });
       await setJson("price-snapshot-prev", { date: today, prices });
-      return send({ success: true, saved: Object.keys(prices).length, message: "Harga berhasil di-snap sebagai acuan" });
+      return send({ success: true, saved: Object.keys(prices).length, message: "Harga acuan berhasil disimpan" });
     }
 
     if (path === "/sync-prices" && method === "GET") {
@@ -430,13 +428,14 @@ function hideAlert(){document.getElementById("aOk").style.display="none";documen
       return send({ success: true, current: { date: current.date, count: Object.keys(current.prices || {}).length }, prev: { date: prev.date, count: Object.keys(prev.prices || {}).length, prices: prev.prices || {} } });
     }
 
+    // POST /sync-prices — simpan harga terbaru, selalu overwrite, geser current ke prev
     if (path === "/sync-prices" && method === "POST") {
-      const { items, forceOverwrite } = body;
+      const { items } = body;
       if (!Array.isArray(items) || !items.length) return send({ success: false, message: "items harus array" }, 400);
       const today = new Date().toISOString().slice(0, 10);
       const current = await getJson("price-snapshot-current", { date: null, prices: {} });
-      if (current.date === today && !forceOverwrite) return send({ success: true, saved: 0, message: "sudah tersimpan hari ini" });
-      if (current.date && current.date !== today) await setJson("price-snapshot-prev", current);
+      // Selalu geser harga current ke prev sebagai acuan perbandingan
+      if (current.date) await setJson("price-snapshot-prev", current);
       const prices = {};
       items.forEach(({ barcode, price }) => { if (barcode) prices[barcode] = Number(price) || 0; });
       await setJson("price-snapshot-current", { date: today, prices });
