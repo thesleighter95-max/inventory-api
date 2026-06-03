@@ -1457,7 +1457,7 @@ function doSetAcuanInline(){
   if(!confirm("Simpan harga terbaru ("+($("hcTerbaruCount").textContent||"-")+") sebagai acuan harga coret?\n\nLakukan ini SEBELUM mengubah harga di spreadsheet."))return;
   btn.disabled=true;btn.style.opacity="0.6";
   if(msg){msg.style.display="none";}
-  fetch(API_BASE_URL+"/set-price-acuan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:ADMIN_PASSWORD})})
+  fetch(API_BASE_URL+"/set-price-acuan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({snapPassword:"snap-acuan-2026"})})
     .then(function(r){return r.json()}).then(function(j){
       if(msg){
         msg.style.display="block";
