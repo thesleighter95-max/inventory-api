@@ -1,8 +1,1 @@
-{
-  "name": "pda-mini-mataram",
-  "version": "1.0.0",
-  "type": "module",
-  "dependencies": {
-    "@vercel/kv": "^3.0.0"
-  }
-}
+{"name":"pda-mini-mataram","version":"1.0.0","type":"module","dependencies":{"@upstash/redis":"^1.34.3"}}
