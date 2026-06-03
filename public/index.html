@@ -638,16 +638,25 @@ table td { font-size: 11px; }
           <p style="font-size:10px;color:#6b7280;margin:2px 0 0;">Simpan acuan harga coret sebelum update spreadsheet</p>
         </div>
       </div>
+      <!-- Tertinggi Otomatis (full width, primary) -->
+      <div id="hcBoxHighest" style="background:rgba(52,211,153,0.06);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(52,211,153,0.18);margin-bottom:8px;">
+        <p style="font-size:9px;font-weight:700;color:#34d399;text-transform:uppercase;margin:0 0 1px;letter-spacing:.5px;">&#128314; Tertinggi Otomatis</p>
+        <p style="font-size:8px;color:#6b7280;margin:0 0 4px;">Harga tertinggi dari semua snapshot — dipakai otomatis saat scan</p>
+        <p id="hcHighestIcon" style="font-size:16px;margin:0 0 2px;">&#9203;</p>
+        <p id="hcHighestCount" style="font-size:11px;color:#9ca3af;margin:0;font-style:italic;">Memuat...</p>
+        <p id="hcHighestDiff" style="font-size:10px;color:#34d399;margin:3px 0 0;font-weight:700;display:none;"></p>
+      </div>
+      <!-- Acuan Manual + Terbaru (2 kolom) -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
         <div id="hcBoxAcuan" style="background:rgba(0,0,0,0.2);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
-          <p style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;margin:0 0 4px;">Harga Acuan</p>
-          <p id="hcAcuanIcon" style="font-size:18px;margin:0 0 2px;">⏳</p>
+          <p style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;margin:0 0 4px;">&#128204; Acuan Manual</p>
+          <p id="hcAcuanIcon" style="font-size:18px;margin:0 0 2px;">&#10067;</p>
           <p id="hcAcuanCount" style="font-size:11px;color:#9ca3af;margin:0;font-style:italic;">Memuat...</p>
           <p id="hcAcuanDate" style="font-size:9px;color:#6b7280;margin:2px 0 0;"></p>
         </div>
         <div id="hcBoxTerbaru" style="background:rgba(0,0,0,0.2);border-radius:8px;padding:10px;text-align:center;border:1px solid rgba(255,255,255,0.06);">
           <p style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;margin:0 0 4px;">Harga Terbaru</p>
-          <p id="hcTerbaruIcon" style="font-size:18px;margin:0 0 2px;">⏳</p>
+          <p id="hcTerbaruIcon" style="font-size:18px;margin:0 0 2px;">&#9203;</p>
           <p id="hcTerbaruCount" style="font-size:11px;color:#9ca3af;margin:0;font-style:italic;">Memuat...</p>
           <p id="hcTerbaruDate" style="font-size:9px;color:#6b7280;margin:2px 0 0;"></p>
         </div>
@@ -1430,13 +1439,26 @@ function loadPriceMap(){
   return _priceMapPromise;
 }
 
+var _currentAcuanDate=null;
 function loadHargaCoretStatus(){
   fetch(API_BASE_URL+"/sync-prices").then(function(r){return r.json()}).then(function(j){
     if(!j.success)return;
-    var cur=j.current,prev=j.prev,diffCount=j.diffCount||0;
+    var cur=j.current,prev=j.prev,highest=j.highest||{},diffCount=j.diffCount||0;
+    // Simpan tanggal acuan manual untuk dipakai di snapshot list
+    _currentAcuanDate=prev&&prev.date?prev.date:null;
+    // === Tertinggi Otomatis ===
+    var icH=$("hcHighestIcon"),ctH=$("hcHighestCount"),dfH=$("hcHighestDiff");
+    if(icH){
+      if(highest.count>0){
+        icH.textContent="✅";ctH.textContent=highest.count.toLocaleString("id-ID")+" produk";ctH.style.color="#34d399";ctH.style.fontStyle="normal";
+        if(diffCount>0&&dfH){dfH.style.display="block";dfH.textContent="▼ "+diffCount.toLocaleString("id-ID")+" produk harga turun — siap tampil harga coret";}
+        else if(dfH){dfH.style.display="block";dfH.textContent="Belum ada produk harga turun terdeteksi";dfH.style.color="#6b7280";}
+      }else{
+        icH.textContent="⏳";ctH.textContent="Belum ada snapshot";ctH.style.color="#9ca3af";
+      }
+    }
+    // === Harga Terbaru ===
     var icT=$("hcTerbaruIcon"),ctT=$("hcTerbaruCount"),dtT=$("hcTerbaruDate");
-    var icA=$("hcAcuanIcon"),ctA=$("hcAcuanCount"),dtA=$("hcAcuanDate");
-    var warn=$("hcWarn");
     if(!icT)return;
     if(cur&&cur.count>0){
       icT.textContent="✅";ctT.textContent=cur.count.toLocaleString("id-ID")+" produk";ctT.style.color="#34d399";ctT.style.fontStyle="normal";
@@ -1444,21 +1466,29 @@ function loadHargaCoretStatus(){
     }else{
       icT.textContent="⏳";ctT.textContent="Belum ada";ctT.style.color="#9ca3af";
     }
+    // === Acuan Manual ===
+    var icA=$("hcAcuanIcon"),ctA=$("hcAcuanCount"),dtA=$("hcAcuanDate"),warn=$("hcWarn");
     if(prev&&prev.count>0){
-      icA.textContent="✅";ctA.textContent=prev.count.toLocaleString("id-ID")+" produk";ctA.style.color="#34d399";ctA.style.fontStyle="normal";
+      icA.textContent="📌";ctA.textContent=prev.count.toLocaleString("id-ID")+" produk";ctA.style.color="#fbbf24";ctA.style.fontStyle="normal";
       dtA.textContent=prev.date||"";
+    }else{
+      icA.textContent="➖";ctA.textContent="Belum dipilih";ctA.style.color="#6b7280";ctA.style.fontStyle="italic";
+    }
+    // === Peringatan / Status ===
+    if(warn){
       if(diffCount>0){
         warn.style.display="block";warn.style.color="#34d399";warn.style.background="rgba(52,211,153,0.1)";
-        warn.textContent="✅ "+diffCount.toLocaleString("id-ID")+" produk siap tampil harga coret";
-      }else{
+        warn.textContent="✅ "+diffCount.toLocaleString("id-ID")+" produk siap tampil harga coret (dari harga tertinggi otomatis)";
+      }else if(!highest.count){
         warn.style.display="block";warn.style.color="#fbbf24";warn.style.background="rgba(245,158,11,0.1)";
-        warn.textContent="⚠️ Kedua snapshot harga sama — belum ada perbedaan harga terdeteksi. Pastikan: (1) Simpan Acuan dulu, (2) baru update spreadsheet, (3) lalu reload app";
+        warn.textContent="⚠️ Simpan Acuan dulu agar sistem mulai melacak harga tertinggi";
+      }else{
+        warn.style.display="block";warn.style.color="#6b7280";warn.style.background="rgba(0,0,0,0.15)";
+        warn.textContent="Harga tertinggi sudah tersimpan. Belum ada produk yang harganya turun dari snapshot manapun.";
       }
-    }else{
-      icA.textContent="❌";ctA.textContent="Belum disimpan";ctA.style.color="#f87171";ctA.style.fontStyle="italic";
-      warn.style.display="block";warn.style.color="#fbbf24";warn.style.background="rgba(245,158,11,0.1)";
-      warn.textContent="⚠️ Klik tombol di bawah SEBELUM update harga di spreadsheet";
     }
+    // Refresh daftar snapshot jika sudah terbuka
+    if(_snapHistOpen)loadSnapshotList();
   }).catch(function(){});
 }
 function doSetAcuanInline(){
@@ -1500,13 +1530,20 @@ function loadSnapshotList(){
       }
       var h='';
       j.snapshots.forEach(function(s){
-        h+='<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);border-radius:6px;padding:7px 10px;margin-bottom:5px;">'
+        var isAcuan=_currentAcuanDate&&s.date===_currentAcuanDate;
+        var rowBg=isAcuan?'rgba(251,191,36,0.08)':'rgba(0,0,0,0.2)';
+        var rowBorder=isAcuan?'1px solid rgba(251,191,36,0.3)':'1px solid rgba(255,255,255,0.04)';
+        h+='<div style="display:flex;align-items:center;justify-content:space-between;background:'+rowBg+';border-radius:6px;padding:7px 10px;margin-bottom:5px;border:'+rowBorder+'">'
           +'<div>'
+          +(isAcuan?'<span style="font-size:9px;background:rgba(251,191,36,0.2);color:#fbbf24;border-radius:4px;padding:1px 5px;margin-right:5px;font-weight:700;">ACUAN</span>':'')
           +'<span style="font-size:11px;font-weight:700;color:#e5e7eb;">'+s.date+'</span>'
           +'<span style="font-size:10px;color:#6b7280;margin-left:6px;">'+(s.count||0).toLocaleString("id-ID")+' produk</span>'
           +'</div>'
           +'<div style="display:flex;gap:4px;">'
-          +'<button onclick="setSnapshotAcuan(&apos;'+s.date+'&apos;)" style="background:rgba(52,211,153,0.15);border:1px solid rgba(52,211,153,0.3);color:#34d399;border-radius:5px;padding:4px 7px;font-size:10px;font-weight:700;cursor:pointer;">&#10003; Acuan</button>'
+          +(isAcuan
+            ?'<span style="font-size:10px;color:#fbbf24;padding:4px 7px;font-weight:700;">&#128204; Aktif</span>'
+            :'<button onclick="setSnapshotAcuan(&apos;'+s.date+'&apos;)" style="background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);color:#34d399;border-radius:5px;padding:4px 7px;font-size:10px;font-weight:700;cursor:pointer;">Pilih Acuan</button>'
+          )
           +'<button onclick="deleteSnapshot(&apos;'+s.date+'&apos;)" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:5px;padding:4px 7px;font-size:10px;font-weight:700;cursor:pointer;">&#10005;</button>'
           +'</div>'
           +'</div>';
