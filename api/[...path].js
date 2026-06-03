@@ -247,12 +247,20 @@ export default async function handler(req, res) {
     if (path.startsWith("/price-history/") && method === "GET") {
       const barcode = decodeURIComponent(path.replace("/price-history/", "").trim());
       if (!barcode) return send({ success: false, message: "barcode wajib diisi" }, 400);
-      const [individual, prev] = await Promise.all([
+      const [individual, prev, current] = await Promise.all([
         getJson(`price-history:${barcode}`, null),
-        getJson("price-snapshot-prev", { date: null, prices: {} })
+        getJson("price-snapshot-prev", { date: null, prices: {} }),
+        getJson("price-snapshot-current", { date: null, prices: {} })
       ]);
       const prevPrice = prev?.prices?.[barcode];
-      return send({ success: true, data: prevPrice != null ? { price: prevPrice, date: prev.date } : individual });
+      const currentSnapshotPrice = current?.prices?.[barcode];
+      // Server-side comparison: bandingkan snapshot acuan vs snapshot terbaru
+      let promo = null;
+      if (prevPrice != null && currentSnapshotPrice != null && prevPrice > currentSnapshotPrice) {
+        promo = { prevPrice, currentPrice: currentSnapshotPrice };
+      }
+      const data = prevPrice != null ? { price: prevPrice, date: prev.date } : individual;
+      return send({ success: true, data, promo });
     }
 
     if (path === "/price-history" && method === "POST") {
