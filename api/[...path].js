@@ -307,11 +307,14 @@ input:focus,select:focus{border-color:#3182ce}
   <h1>Upload Harga</h1>
   <div class="sub">PDA Mini Mataram — Import harga dari file Excel atau CSV</div>
 
-  <label>Password Admin</label>
-  <input type="password" id="pwd" placeholder="Password admin">
+  <div id="pwdArea">
+    <label id="pwdLabel">Password Admin</label>
+    <input type="password" id="pwd" placeholder="Masukkan password">
+    <div class="hint" id="pwdHint">Untuk Harga Terbaru: gunakan password admin biasa</div>
+  </div>
 
   <div class="tabs">
-    <div class="tab active" onclick="setMode(0)" id="t0">📸 Harga Acuan (Coret)</div>
+    <div class="tab active" onclick="setMode(0)" id="t0">📌 Set Acuan (Admin)</div>
     <div class="tab" onclick="setMode(1)" id="t1">🆕 Harga Terbaru</div>
   </div>
 
@@ -391,7 +394,10 @@ async function doUpload(){
   hideAlert();
   try{
     const ep=mode===0?"/api/snap-prices":"/api/sync-prices";
-    const res=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:pwd,items:items.map(i=>({barcode:i.barcode,price:i.price}))})});
+    const bodyData=mode===0
+      ?{snapPassword:pwd,items:items.map(i=>({barcode:i.barcode,price:i.price}))}
+      :{adminPassword:pwd,items:items.map(i=>({barcode:i.barcode,price:i.price}))};
+    const res=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(bodyData)});
     const j=await res.json();
     if(j.success) showOk((mode===0?"✅ Harga Acuan disimpan":"✅ Harga Terbaru disimpan")+" — "+(j.saved??items.length)+" produk");
     else showErr(j.message||"Gagal upload");
@@ -409,9 +415,11 @@ function hideAlert(){document.getElementById("aOk").style.display="none";documen
     }
 
     // POST /snap-prices — simpan harga sebagai acuan harga coret (prev)
+    // Menggunakan snapPassword (bukan adminPassword) agar tidak bisa dipanggil otomatis oleh Apps Script
+    const SNAP_PASSWORD = process.env.SNAP_PASSWORD ?? ADMIN_PASSWORD;
     if (path === "/snap-prices" && method === "POST") {
-      const { adminPassword, items } = body;
-      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const { snapPassword, items } = body;
+      if (snapPassword !== SNAP_PASSWORD) return send({ success: false, message: "Unauthorized: snapPassword salah" }, 403);
       if (!Array.isArray(items) || !items.length) return send({ success: false, message: "items harus array" }, 400);
       const today = new Date().toISOString().slice(0, 10);
       const prices = {};
