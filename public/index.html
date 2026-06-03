@@ -624,17 +624,7 @@ table td { font-size: 11px; }
         <input type="file" id="restoreFileInput" accept=".json" class="hidden" onchange="handleRestoreFile(this)" style="display:none;">
         <p style="font-size:10px;color:#6b7280;margin:0;text-align:center;">Backup mencakup: user, BBLM, activity log, product request</p>
       </div>
-      <div style="background:rgba(0,0,0,0.2);border-radius:12px;padding:12px;margin-top:10px;">
-        <p style="font-size:11px;font-weight:700;color:#fca5a5;margin:0 0 8px;">Snapshot Harga</p>
-        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
-          <button onclick="adminSimpanSnapshot()" id="btnSimpanSnapshot"
-            style="flex:1;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#34d399;border-radius:8px;padding:8px 6px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
-            <svg style="width:12px;height:12px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            Simpan Snapshot Harga Sekarang
-          </button>
-        </div>
-        <p id="snapshotStatusText" style="font-size:10px;color:#6b7280;margin:0;text-align:center;">Simpan semua harga saat ini sebagai acuan hari ini</p>
-      </div>
+      
     </div>
 
     <!-- RESET PASSWORD ADMIN CARD -->
@@ -1394,26 +1384,13 @@ function loadPriceMap(){
   }).catch(function(){});
   return _priceMapPromise;
 }
-function loadSnapshotStatus(){
-  fetch(API_BASE_URL+"/sync-prices").then(function(r){return r.json()}).then(function(res){
-    if(res.prev&&res.prev.prices)_prevPriceMap=res.prev.prices;
-    var st=$("snapshotStatusText");if(!st)return;
-    if(res.current&&res.current.date){
-      var tgl=new Date(res.current.date).toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"});
-      st.innerText="✅ Tersimpan: "+res.current.count+" produk ("+tgl+")";
-      st.style.color="#34d399";
-    } else {
-      st.innerText="Belum ada snapshot tersimpan";
-      st.style.color="#6b7280";
-    }
-  }).catch(function(){});
-}
+
 function loadMaintenanceStatus(){
   fetch(API_BASE_URL+"/maintenance").then(function(r){return r.json()}).then(function(d){
     _maintenanceActive=d.active||false;
     updateMaintenanceUI(d);
   }).catch(function(){});
-  loadSnapshotStatus();
+  
 }
 function updateMaintenanceUI(d){
   var btn=$("btnToggleMaintenance"),st=$("maintenanceStatusText"),inp=$("maintenanceMsgInput");
@@ -1811,33 +1788,13 @@ function switchMainTab(tab){
   var ns=document.querySelectorAll("#navContainer .nav-item");for(var n=0;n<ns.length;n++){ns[n].classList.remove("active");ns[n].classList.add("text-gray-500");var ind=ns[n].querySelector(".nav-indicator");if(ind)ind.style.opacity="0"}
   if(_bnfInterval){clearInterval(_bnfInterval);_bnfInterval=null;}if(tab==="inventory"){$("inventoryPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navInventory");setMarquee(true);kirimAktivitas("tab_inventory","Buka panel Inventory")}
   else if(tab==="expired"){$("expiredPanel").classList.add("active");document.body.classList.add("light-mode");activateNav("navExpired");setMarquee(false);lucide.createIcons();kirimAktivitas("tab_expired","Buka panel Expired")}
-  else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();loadBarcodeNotFound();loadSnapshotStatus();if(_bnfInterval)clearInterval(_bnfInterval);_bnfInterval=setInterval(loadBarcodeNotFound,180000);}
+  else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();loadBarcodeNotFound()if(_bnfInterval)clearInterval(_bnfInterval);_bnfInterval=setInterval(loadBarcodeNotFound,180000);}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
 function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items-center justify-center p-10 text-pro-text"><svg class="animate-spin h-6 w-6 text-pro-main mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-xs">'+(t||"Memuat...")+'</span></div>'}
 function formatRupiah(n){if(!n)return"0";return new Intl.NumberFormat("id-ID").format(parseInt(n.toString().replace(/[^0-9]/g,""))||0)}
 function processStock(item){var sr=parseInt((item[4]||"").replace(/[^0-9]/g,""))||0,nm=item[2].toUpperCase(),fs=sr,us="";if(/\d+([.,]\d+)?\s*KG\s*$/i.test(nm))fs=sr;else if(/KG\s*$/i.test(nm)){fs=sr/1000;us=" Kg"}var fd;if(us===" Kg")fd=fs.toLocaleString("id-ID",{minimumFractionDigits:3,maximumFractionDigits:3});else fd=fs.toLocaleString("id-ID");return{value:fs,display:fd+us}}
-function adminSimpanSnapshot(){
-  var btn=$("btnSimpanSnapshot"),st=$("snapshotStatusText");
-  if(btn){btn.disabled=true;btn.style.opacity="0.6";}
-  if(st)st.innerText="Mengambil data harga...";
-  getCSVFresh(BARANG_URL).then(function(data){
-    var items=[];
-    for(var i=1;i<data.length;i++){
-      var bc=(data[i][1]||"").trim();
-      var pr=parseFloat(String(data[i][3]||"").replace(/[^0-9.]/g,""))||0;
-      if(bc&&pr>0)items.push({barcode:bc,price:pr});
-    }
-    if(!items.length){if(st)st.innerText="Tidak ada data ditemukan.";return;}
-    return fetch(API_BASE_URL+"/sync-prices",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:items,forceOverwrite:true})}).then(function(r){return r.json()}).then(function(res){
-      var msg=res.saved>0?"✅ Tersimpan: "+res.saved+" produk ("+new Date().toLocaleDateString("id-ID")+")":(res.message||"Sudah tersimpan hari ini");
-      if(st)st.innerText=msg;
-      if(typeof showToast==="function")showToast("📸 "+msg,"success");
-    });
-  }).catch(function(e){if(st)st.innerText="Gagal menyimpan. Coba lagi.";}).finally(function(){
-    if(btn){btn.disabled=false;btn.style.opacity="1";}
-  });
-}
+
 function syncAllPrices(data){
   var items=[];
   for(var i=1;i<data.length;i++){
@@ -1847,7 +1804,7 @@ function syncAllPrices(data){
   }
   if(!items.length)return;
   fetch(API_BASE_URL+"/sync-prices",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:items})}).then(function(r){return r.json()}).then(function(res){
-    if(res&&res.saved>0&&typeof showToast==="function"){showToast("📸 Snapshot harga tersimpan ("+res.saved+" produk)","success");}
+    if(res&&res.saved>0&&typeof showToast==="function"){}
   }).catch(function(){});
 }
 function getBarang(){if(cacheBarang)return Promise.resolve(cacheBarang);loadPriceMap();return getCSV(BARANG_URL).then(function(d){cacheBarang=d;syncAllPrices(d);return d})}
