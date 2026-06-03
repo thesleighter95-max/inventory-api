@@ -381,7 +381,7 @@ async function doUpload(){
   try{
     const res=await fetch("/api/sync-prices",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:pwd,items:items.map(i=>({barcode:i.barcode,price:i.price}))})});
     const j=await res.json();
-    if(j.success) showOk("✅ Harga Terbaru disimpan — "+(j.saved??items.length)+" produk");
+    if(j.success) showOk("✅ "+(j.message||("Harga disimpan — "+(j.saved??items.length)+" produk")));
     else showErr(j.message||"Gagal upload");
   }catch(e){showErr("Error: "+e.message);}
   document.getElementById("btnUp").disabled=false;
@@ -406,15 +406,23 @@ function hideAlert(){document.getElementById("aOk").style.display="none";documen
       return send({ success: true, current: { date: current.date, count: Object.keys(current.prices || {}).length }, prev: { date: prev.date, count: Object.keys(prev.prices || {}).length, prices: prev.prices || {} } });
     }
 
-    // POST /sync-prices — simpan harga terbaru, selalu overwrite, TIDAK mengubah acuan (prev)
+    // POST /sync-prices — simpan harga terbaru; otomatis pindahkan current → prev (acuan harga coret)
     if (path === "/sync-prices" && method === "POST") {
-      const { items } = body;
+      const { items, adminPassword } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
       if (!Array.isArray(items) || !items.length) return send({ success: false, message: "items harus array" }, 400);
       const today = new Date().toISOString().slice(0, 10);
       const prices = {};
       items.forEach(({ barcode, price }) => { if (barcode) prices[barcode] = Number(price) || 0; });
+      // Pindahkan harga current → prev sebagai acuan harga coret
+      const current = await getJson("price-snapshot-current", { date: null, prices: {} });
+      if (current.date && Object.keys(current.prices || {}).length > 0) {
+        await setJson("price-snapshot-prev", current);
+      }
       await setJson("price-snapshot-current", { date: today, prices });
-      return send({ success: true, saved: Object.keys(prices).length });
+      const saved = Object.keys(prices).length;
+      const prevCount = Object.keys(current.prices || {}).length;
+      return send({ success: true, saved, prevSaved: prevCount, message: prevCount > 0 ? "Harga disimpan. Harga lama ("+prevCount+" produk) dijadikan acuan harga coret." : "Harga disimpan. Upload berikutnya akan mengaktifkan fitur harga coret." });
     }
 
     if (path === "/product-request" && method === "POST") {
