@@ -213,18 +213,19 @@ export default async function handler(req, res) {
 
     if (path === "/backup" && method === "GET") {
       if (query.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
-      const [users, bblm, logs, requests, maintenance, bblmStatus] = await Promise.all([
+      const [users, bblm, logs, requests, maintenance, bblmStatus, snapshotCurrent, snapshotPrev] = await Promise.all([
         getJson("users", []), getJson("bblm", {}), getJson("activity-logs", []),
         getJson("product-requests", []), getJson("maintenance", { active: false, message: "" }), getJson("bblm-status", {}),
+        getJson("price-snapshot-current", { date: null, prices: {} }), getJson("price-snapshot-prev", { date: null, prices: {} }),
       ]);
-      return send({ success: true, exportedAt: new Date().toISOString(), data: { users, bblm, "activity-logs": logs, "product-requests": requests, maintenance, "bblm-status": bblmStatus } });
+      return send({ success: true, exportedAt: new Date().toISOString(), data: { users, bblm, "activity-logs": logs, "product-requests": requests, maintenance, "bblm-status": bblmStatus, "price-snapshot-current": snapshotCurrent, "price-snapshot-prev": snapshotPrev } });
     }
 
     if (path === "/restore" && method === "POST") {
       const { adminPassword, data } = body;
       if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
       if (!data || typeof data !== "object") return send({ success: false, message: "data harus berupa object" }, 400);
-      const keys = ["users","bblm","activity-logs","product-requests","maintenance","bblm-status"];
+      const keys = ["users","bblm","activity-logs","product-requests","maintenance","bblm-status","price-snapshot-current","price-snapshot-prev"];
       let restored = 0;
       await Promise.all(keys.map(async k => { if (data[k] !== undefined) { await setJson(k, data[k]); restored++; } }));
       return send({ success: true, message: restored + " kunci data berhasil direstore" });
