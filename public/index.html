@@ -659,6 +659,16 @@ table td { font-size: 11px; }
         Simpan sebagai Acuan Harga Coret
       </button>
       <p id="hcMsg" style="font-size:11px;text-align:center;margin:8px 0 0;display:none;"></p>
+      <!-- Riwayat Snapshot Harga -->
+      <div style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;">
+        <div onclick="toggleSnapHistory()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:0;">
+          <p style="font-size:10px;font-weight:700;color:#9ca3af;margin:0;text-transform:uppercase;letter-spacing:.5px;">&#128197; Riwayat Snapshot Harga</p>
+          <svg id="snapHistChevron" style="width:14px;height:14px;color:#6b7280;transition:transform 0.2s;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </div>
+        <div id="snapHistBody" style="display:none;margin-top:8px;">
+          <div id="snapHistList" style="font-size:11px;color:#9ca3af;font-style:italic;">Memuat...</div>
+        </div>
+      </div>
     </div>
 
     <!-- RESET PASSWORD ADMIN CARD -->
@@ -1468,6 +1478,60 @@ function doSetAcuanInline(){
     }).catch(function(e){
       if(msg){msg.style.display="block";msg.style.color="#f87171";msg.textContent="❌ Gagal: "+e.message;}
     }).finally(function(){btn.disabled=false;btn.style.opacity="1";});
+}
+var _snapHistOpen=false;
+function toggleSnapHistory(){
+  _snapHistOpen=!_snapHistOpen;
+  var body=$("snapHistBody"),chev=$("snapHistChevron");
+  if(!body)return;
+  body.style.display=_snapHistOpen?"block":"none";
+  if(chev)chev.style.transform=_snapHistOpen?"rotate(180deg)":"rotate(0deg)";
+  if(_snapHistOpen)loadSnapshotList();
+}
+function loadSnapshotList(){
+  var el=$("snapHistList");if(!el)return;
+  el.innerHTML='<span style="color:#6b7280;font-style:italic;">Memuat...</span>';
+  fetch(API_BASE_URL+"/price-snapshots?adminPassword="+encodeURIComponent(ADMIN_PASSWORD))
+    .then(function(r){return r.json()})
+    .then(function(j){
+      if(!j.success||!j.snapshots||!j.snapshots.length){
+        el.innerHTML='<span style="color:#6b7280;font-style:italic;">Belum ada riwayat snapshot tersimpan</span>';
+        return;
+      }
+      var h='';
+      j.snapshots.forEach(function(s){
+        h+='<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.2);border-radius:6px;padding:7px 10px;margin-bottom:5px;">'
+          +'<div>'
+          +'<span style="font-size:11px;font-weight:700;color:#e5e7eb;">'+s.date+'</span>'
+          +'<span style="font-size:10px;color:#6b7280;margin-left:6px;">'+(s.count||0).toLocaleString("id-ID")+' produk</span>'
+          +'</div>'
+          +'<div style="display:flex;gap:4px;">'
+          +'<button onclick="setSnapshotAcuan(''+s.date+'')" style="background:rgba(52,211,153,0.15);border:1px solid rgba(52,211,153,0.3);color:#34d399;border-radius:5px;padding:4px 7px;font-size:10px;font-weight:700;cursor:pointer;">&#10003; Acuan</button>'
+          +'<button onclick="deleteSnapshot(''+s.date+'')" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:5px;padding:4px 7px;font-size:10px;font-weight:700;cursor:pointer;">&#10005;</button>'
+          +'</div>'
+          +'</div>';
+      });
+      el.innerHTML=h;
+    })
+    .catch(function(){el.innerHTML='<span style="color:#f87171;">Gagal memuat</span>';});
+}
+function setSnapshotAcuan(date){
+  if(!confirm("Jadikan snapshot "+date+" sebagai acuan harga coret?
+
+Harga dari tanggal ini akan dipakai untuk mendeteksi penurunan harga."))return;
+  fetch(API_BASE_URL+"/price-snapshots/"+date+"/set-acuan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:ADMIN_PASSWORD})})
+    .then(function(r){return r.json()}).then(function(j){
+      if(j.success){showToast("\u2705 "+j.message,"success");loadHargaCoretStatus();}
+      else showToast("\u274C "+(j.message||"Gagal"),"error");
+    }).catch(function(){showToast("Gagal menghubungi server","error");});
+}
+function deleteSnapshot(date){
+  if(!confirm("Hapus snapshot harga tanggal "+date+"?\n\nData ini tidak bisa dikembalikan."))return;
+  fetch(API_BASE_URL+"/price-snapshots/"+date,{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:ADMIN_PASSWORD})})
+    .then(function(r){return r.json()}).then(function(j){
+      if(j.success){showToast("\u2705 "+j.message,"success");loadSnapshotList();}
+      else showToast("\u274C "+(j.message||"Gagal"),"error");
+    }).catch(function(){showToast("Gagal menghubungi server","error");});
 }
 function loadMaintenanceStatus(){
   fetch(API_BASE_URL+"/maintenance").then(function(r){return r.json()}).then(function(d){
