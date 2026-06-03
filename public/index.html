@@ -1884,7 +1884,7 @@ function syncAllPrices(data){
     if(res&&res.saved>0&&typeof showToast==="function"){}
   }).catch(function(){});
 }
-function getBarang(){if(cacheBarang)return Promise.resolve(cacheBarang);loadPriceMap();return getCSV(BARANG_URL).then(function(d){cacheBarang=d;syncAllPrices(d);return d})}
+var _cacheBarangTime=0;function getBarang(){if(cacheBarang&&(Date.now()-_cacheBarangTime)<600000)return Promise.resolve(cacheBarang);loadPriceMap();return getCSV(BARANG_URL).then(function(d){cacheBarang=d;_cacheBarangTime=Date.now();syncAllPrices(d);return d})}
 function tampilkanUpdate(){getBarang().then(function(d){$("lastUpdate").innerText="Update: "+(d[0][1]||"-")})}
 function getUOMData(){if(cacheUOM)return Promise.resolve(cacheUOM);return getCSV(UOM_URL).then(function(d){cacheUOM=d;return d})}
 function findUOMByBarcode(barcode){
@@ -2054,6 +2054,16 @@ function checkPriceHistory(barcode, currentPriceRaw){
   if(!currentPrice||!barcode)return;
   fetch(API_BASE_URL+"/price-history/"+encodeURIComponent(barcode)).then(function(r){return r.json()}).then(function(res){
     var box=document.getElementById("priceBox");if(!box)return;
+    // Gunakan server-side snapshot comparison jika tersedia
+    if(res&&res.promo&&res.promo.prevPrice&&res.promo.currentPrice){
+      var sp=res.promo.prevPrice,cp=res.promo.currentPrice;
+      box.innerHTML='<p class="text-[10px] text-pro-text uppercase tracking-widest font-bold mb-1">Price</p>'
+        +'<p class="text-xs font-bold text-gray-500 line-through mb-1">Rp '+formatRupiah(sp)+'</p>'
+        +'<p class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-400 tracking-tight">Rp '+formatRupiah(cp)+'</p>'
+        +'<p class="text-[10px] text-emerald-400 font-bold mt-1">&#9660; Harga Turun</p>';
+      return;
+    }
+    // Fallback: bandingkan dengan harga dari cache frontend
     var saved=res&&res.data;
     var savedPrice=saved?parseFloat(saved.price)||0:0;
     if(savedPrice>0&&savedPrice>currentPrice){
@@ -2069,11 +2079,13 @@ function tampilkanMultiple(items){simpanState();window._multiItems=items;var gro
   var _lpGroups=[];for(var gi2=0;gi2<groupOrder.length;gi2++){var g2=groups[groupOrder[gi2]];var i02=g2.items[0];var bc02=items[i02][1];var cp02=parseFloat(String(items[i02][3]||"").replace(/[^0-9.]/g,""))||0;var sc2=processStock(items[i02]);var sc2c=sc2.value>0?"text-emerald-400":"text-red-400";_lpGroups.push({bc:bc02,cp:cp02,sc:sc2c,stk:sc2.display});}
   _lpGroups.forEach(function(g){
     fetch(API_BASE_URL+"/price-history/"+encodeURIComponent(g.bc)).then(function(r){return r.json()}).then(function(res){
-      var saved=res&&res.data;var pp=saved?parseFloat(saved.price)||0:0;
       var elId="lp-"+g.bc.replace(/[^a-zA-Z0-9]/g,"_");
       var el=document.getElementById(elId);if(!el)return;
-      if(pp>0&&pp>g.cp){
-        el.innerHTML='<p class="text-xs font-bold text-gray-500 line-through">Rp '+formatRupiah(pp)+'</p><p class="text-lg font-bold text-emerald-400">Rp '+formatRupiah(g.cp)+'</p><p class="text-[10px] text-emerald-400 font-bold">&#9660; Turun</p><p class="text-xs font-semibold '+g.sc+'">Stk: '+g.stk+'</p>';
+      var pp=0,cp=g.cp;
+      if(res&&res.promo&&res.promo.prevPrice&&res.promo.currentPrice){pp=res.promo.prevPrice;cp=res.promo.currentPrice;}
+      else{var saved=res&&res.data;pp=saved?parseFloat(saved.price)||0:0;}
+      if(pp>0&&pp>cp){
+        el.innerHTML='<p class="text-xs font-bold text-gray-500 line-through">Rp '+formatRupiah(pp)+'</p><p class="text-lg font-bold text-emerald-400">Rp '+formatRupiah(cp)+'</p><p class="text-[10px] text-emerald-400 font-bold">&#9660; Turun</p><p class="text-xs font-semibold '+g.sc+'">Stk: '+g.stk+'</p>';
       }
     }).catch(function(){});
   });
