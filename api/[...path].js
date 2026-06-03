@@ -1,4 +1,9 @@
-import { kv } from "@vercel/kv";
+import { Redis } from "@upstash/redis";
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "00000";
 
@@ -14,7 +19,7 @@ async function parseBody(req) {
 
 async function getJson(key, defaultValue) {
   try {
-    const raw = await kv.get(key);
+    const raw = await redis.get(key);
     if (raw === null || raw === undefined) return defaultValue;
     return raw;
   } catch {
@@ -23,7 +28,7 @@ async function getJson(key, defaultValue) {
 }
 
 async function setJson(key, data) {
-  await kv.set(key, data);
+  await redis.set(key, data);
 }
 
 export default async function handler(req, res) {
@@ -196,7 +201,7 @@ export default async function handler(req, res) {
       const keys = ["users","bblm","activity-logs","product-requests","maintenance","bblm-status","price-snapshot-current","price-snapshot-prev"];
       const results = await Promise.all(keys.map(async k => {
         try {
-          const raw = await kv.get(k);
+          const raw = await redis.get(k);
           const str = raw ? JSON.stringify(raw) : "";
           const bytes = Buffer.byteLength(str, "utf8");
           return { key: k, bytes, kb: (bytes/1024).toFixed(2) };
