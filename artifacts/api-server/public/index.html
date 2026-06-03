@@ -768,7 +768,8 @@ table td { font-size: 11px; }
 
 <script>
 var $=function(id){return document.getElementById(id)};
-var currentUserNameInv="",currentUsernameRaw="",cacheBarang=null,lastState="",scanner=null,isAdmin=false;
+var currentUserNameInv="",currentUsernameRaw="",cacheBarang=null,cacheBarangTime=0,lastState="",scanner=null,isAdmin=false;
+var BARANG_CACHE_MS=5*60*1000;
 var lastFoundItem=null;window._multiItems=[];submitCount=0;submitSessionLog=[];isSubmitting=false;sessionLogOpen=false;
 var SUBMIT_URL="https://script.google.com/macros/s/AKfycbzvS76WTW9sbJvy9Tp-MSEA6qyQJiiTmu8_8DG3yHzKFMjCHIf2E204VuwOmLLG0GOrtA/exec";
 var allDataExp=[],filteredDataExp=[],currentPageExp=1,perPageExp=10,sortState={type:null,order:"asc"};
@@ -1301,7 +1302,7 @@ function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.c
 function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items-center justify-center p-10 text-pro-text"><svg class="animate-spin h-6 w-6 text-pro-main mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-xs">'+(t||"Memuat...")+'</span></div>'}
 function formatRupiah(n){if(!n)return"0";return new Intl.NumberFormat("id-ID").format(parseInt(n.toString().replace(/[^0-9]/g,""))||0)}
 function processStock(item){var sr=parseInt((item[4]||"").replace(/[^0-9]/g,""))||0,nm=item[2].toUpperCase(),fs=sr,us="";if(/\d+([.,]\d+)?\s*KG\s*$/i.test(nm))fs=sr;else if(/KG\s*$/i.test(nm)){fs=sr/1000;us=" Kg"}var fd;if(us===" Kg")fd=fs.toLocaleString("id-ID",{minimumFractionDigits:3,maximumFractionDigits:3});else fd=fs.toLocaleString("id-ID");return{value:fs,display:fd+us}}
-function getBarang(){if(cacheBarang)return Promise.resolve(cacheBarang);return getCSV(BARANG_URL).then(function(d){cacheBarang=d;return d})}
+function getBarang(){var now=Date.now();if(cacheBarang&&(now-cacheBarangTime)<BARANG_CACHE_MS)return Promise.resolve(cacheBarang);return getCSVFresh(BARANG_URL).then(function(d){cacheBarang=d;cacheBarangTime=Date.now();return d})}
 function tampilkanUpdate(){getBarang().then(function(d){$("lastUpdate").innerText="Update: "+(d[0][1]||"-")})}
 function getUOMData(){if(cacheUOM)return Promise.resolve(cacheUOM);return getCSV(UOM_URL).then(function(d){cacheUOM=d;return d})}
 function findUOMByBarcode(barcode){
