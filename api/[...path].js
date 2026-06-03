@@ -428,14 +428,11 @@ function hideAlert(){document.getElementById("aOk").style.display="none";documen
       return send({ success: true, current: { date: current.date, count: Object.keys(current.prices || {}).length }, prev: { date: prev.date, count: Object.keys(prev.prices || {}).length, prices: prev.prices || {} } });
     }
 
-    // POST /sync-prices — simpan harga terbaru, selalu overwrite, geser current ke prev
+    // POST /sync-prices — simpan harga terbaru, selalu overwrite, TIDAK mengubah acuan (prev)
     if (path === "/sync-prices" && method === "POST") {
       const { items } = body;
       if (!Array.isArray(items) || !items.length) return send({ success: false, message: "items harus array" }, 400);
       const today = new Date().toISOString().slice(0, 10);
-      const current = await getJson("price-snapshot-current", { date: null, prices: {} });
-      // Selalu geser harga current ke prev sebagai acuan perbandingan
-      if (current.date) await setJson("price-snapshot-prev", current);
       const prices = {};
       items.forEach(({ barcode, price }) => { if (barcode) prices[barcode] = Number(price) || 0; });
       await setJson("price-snapshot-current", { date: today, prices });
