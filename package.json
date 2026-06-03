@@ -1,19 +1,8 @@
 {
-  "name": "workspace",
-  "version": "0.0.0",
-  "license": "MIT",
-  "scripts": {
-    "start": "node --enable-source-maps artifacts/api-server/dist/index.mjs",
-    "build": "echo 'No build needed'",
-    "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
-  },
-  "private": true,
+  "name": "pda-mini-mataram",
+  "version": "1.0.0",
+  "type": "module",
   "dependencies": {
     "@upstash/redis": "^1.34.3"
-  },
-  "devDependencies": {
-    "typescript": "~5.9.2",
-    "prettier": "^3.8.1"
   }
 }
