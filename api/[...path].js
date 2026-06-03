@@ -264,6 +264,151 @@ export default async function handler(req, res) {
       return send({ success: true });
     }
 
+
+    // GET /upload-harga — halaman upload Excel/CSV untuk harga lama & baru
+    if (path === "/upload-harga" && method === "GET") {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.status(200).end(`<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Upload Harga - PDA Mini Mataram</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f0f4f8;min-height:100vh;padding:16px}
+.card{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+h1{font-size:20px;color:#1a202c;margin-bottom:4px}
+.sub{color:#718096;font-size:13px;margin-bottom:16px}
+label{display:block;font-size:13px;font-weight:600;color:#4a5568;margin-bottom:6px;margin-top:12px}
+input[type=password],input[type=file],select{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none}
+input:focus,select:focus{border-color:#3182ce}
+.tabs{display:flex;gap:8px;margin:16px 0}
+.tab{flex:1;padding:10px;border:2px solid #e2e8f0;border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;text-align:center;color:#718096}
+.tab.active{border-color:#3182ce;color:#3182ce;background:#ebf8ff}
+.btn{display:block;width:100%;padding:13px;background:#3182ce;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-top:16px}
+.btn:disabled{background:#a0aec0;cursor:not-allowed}
+.hint{font-size:11px;color:#a0aec0;margin-top:4px}
+.desc{font-size:12px;color:#718096;padding:10px;background:#f7fafc;border-radius:8px;margin-bottom:12px}
+.col-row{display:flex;gap:10px;margin-top:4px}
+.col-row>div{flex:1}
+.preview{margin-top:14px;overflow:auto;border:1px solid #e2e8f0;border-radius:8px;font-size:12px}
+.preview table{width:100%;border-collapse:collapse}
+.preview th{background:#f7fafc;padding:7px 10px;text-align:left;border-bottom:1px solid #e2e8f0;color:#718096;font-size:11px}
+.preview td{padding:7px 10px;border-bottom:1px solid #f0f4f8}
+.count{font-size:12px;color:#718096;margin-top:6px;text-align:right}
+.alert{padding:12px 14px;border-radius:8px;font-size:13px;margin-top:12px;display:none}
+.ok{background:#f0fff4;color:#276749;border:1px solid #9ae6b4}
+.err{background:#fff5f5;color:#c53030;border:1px solid #fed7d7}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Upload Harga</h1>
+  <div class="sub">PDA Mini Mataram — Import harga dari file Excel atau CSV</div>
+
+  <label>Password Admin</label>
+  <input type="password" id="pwd" placeholder="Password admin">
+
+  <div class="tabs">
+    <div class="tab active" onclick="setMode(0)" id="t0">📸 Harga Lama</div>
+    <div class="tab" onclick="setMode(1)" id="t1">🆕 Harga Baru</div>
+  </div>
+
+  <div class="desc" id="desc">
+    <b>Harga Lama (Prev):</b> Dipakai sebagai acuan harga coret. Kalau harga sekarang lebih murah, harga ini akan tampil dicoret di aplikasi.
+  </div>
+
+  <label>Pilih File Excel / CSV</label>
+  <input type="file" id="file" accept=".xlsx,.xls,.csv" onchange="readFile(this)">
+  <div class="hint">Format yang didukung: .xlsx · .xls · .csv</div>
+
+  <div id="mapArea" style="display:none">
+    <div class="col-row">
+      <div><label>Kolom Barcode</label><select id="cBarcode" onchange="renderPreview()"></select></div>
+      <div><label>Kolom Harga</label><select id="cHarga" onchange="renderPreview()"></select></div>
+    </div>
+    <div class="preview" id="previewBox"></div>
+    <div class="count" id="countInfo"></div>
+  </div>
+
+  <button class="btn" id="btnUp" onclick="doUpload()" disabled>⬆️ Upload Harga</button>
+  <div class="alert ok" id="aOk"></div>
+  <div class="alert err" id="aErr"></div>
+</div>
+
+<script>
+let mode=0, rows=[], headers=[];
+function setMode(m){
+  mode=m;
+  document.getElementById("t0").className="tab"+(m===0?" active":"");
+  document.getElementById("t1").className="tab"+(m===1?" active":"");
+  document.getElementById("desc").innerHTML=m===0
+    ?"<b>Harga Lama (Prev):</b> Dipakai sebagai acuan harga coret. Kalau harga sekarang lebih murah, harga ini akan tampil dicoret di aplikasi."
+    :"<b>Harga Baru (Sync):</b> Update harga terbaru ke sistem. Otomatis geser snapshot hari ini ke prev jika sudah ada.";
+}
+function readFile(inp){
+  const file=inp.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:"array"});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      rows=XLSX.utils.sheet_to_json(ws,{defval:""});
+      if(!rows.length){showErr("File kosong");return;}
+      headers=Object.keys(rows[0]);
+      const cb=document.getElementById("cBarcode"), ch=document.getElementById("cHarga");
+      cb.innerHTML=headers.map(h=>"<option>"+h+"</option>").join("");
+      ch.innerHTML=headers.map(h=>"<option>"+h+"</option>").join("");
+      cb.value=headers.find(h=>/barcode|kode|sku|id/i.test(h))||headers[0];
+      ch.value=headers.find(h=>/harga|price|nilai|rp|cost/i.test(h))||headers[1]||headers[0];
+      document.getElementById("mapArea").style.display="block";
+      document.getElementById("btnUp").disabled=false;
+      renderPreview();
+    }catch(e){showErr("Gagal baca: "+e.message);}
+  };
+  r.readAsArrayBuffer(file);
+}
+function getItems(){
+  const bc=document.getElementById("cBarcode").value, hg=document.getElementById("cHarga").value;
+  return rows.map(r=>({barcode:String(r[bc]||"").trim(),price:parseFloat(String(r[hg]||"0").replace(/[^0-9.]/g,""))||0})).filter(r=>r.barcode&&r.barcode!=="0");
+}
+function renderPreview(){
+  const items=getItems(), show=items.slice(0,5);
+  document.getElementById("countInfo").textContent=items.length+" baris terdeteksi";
+  document.getElementById("previewBox").innerHTML="<table><tr><th>#</th><th>Barcode</th><th>Harga</th></tr>"+
+    show.map((r,i)=>"<tr><td>"+(i+1)+"</td><td>"+r.barcode+"</td><td>Rp "+r.price.toLocaleString("id-ID")+"</td></tr>").join("")+
+    (items.length>5?"<tr><td colspan=3 style='color:#a0aec0;text-align:center'>... dan "+(items.length-5)+" baris lainnya</td></tr>":"")+
+    "</table>";
+}
+async function doUpload(){
+  const pwd=document.getElementById("pwd").value.trim();
+  if(!pwd){showErr("Password admin wajib diisi");return;}
+  const items=getItems();
+  if(!items.length){showErr("Tidak ada data valid");return;}
+  document.getElementById("btnUp").disabled=true;
+  document.getElementById("btnUp").textContent="⏳ Mengupload...";
+  hideAlert();
+  try{
+    const ep=mode===0?"/api/snap-prices":"/api/sync-prices";
+    const res=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:pwd,items:items.map(i=>({barcode:i.barcode,price:i.price}))})});
+    const j=await res.json();
+    if(j.success) showOk((mode===0?"✅ Harga Lama disimpan":"✅ Harga Baru disync")+" — "+(j.saved??items.length)+" produk");
+    else showErr(j.message||"Gagal upload");
+  }catch(e){showErr("Error: "+e.message);}
+  document.getElementById("btnUp").disabled=false;
+  document.getElementById("btnUp").textContent="⬆️ Upload Harga";
+}
+function showOk(m){const e=document.getElementById("aOk");e.textContent=m;e.style.display="block";}
+function showErr(m){const e=document.getElementById("aErr");e.textContent=m;e.style.display="block";}
+function hideAlert(){document.getElementById("aOk").style.display="none";document.getElementById("aErr").style.display="none";}
+<\/script>
+</body>
+</html>`);
+      return;
+    }
+
     // POST /snap-prices — simpan harga sekarang sebagai acuan (prev), lalu set current baru
     if (path === "/snap-prices" && method === "POST") {
       const { adminPassword, items } = body;
