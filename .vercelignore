@@ -2,3 +2,4 @@ artifacts/
 lib/
 scripts/
 netlify/
+tsconfig*.json
