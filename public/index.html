@@ -242,15 +242,26 @@ table td { font-size: 11px; }
 #homePage{position:fixed;inset:0;z-index:200;background:#0c0f1a;display:flex;flex-direction:column;overflow-y:auto;}
 .home-header{padding:20px 20px 10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .home-logo{height:64px;border-radius:18px;padding:4px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);box-shadow:0 0 32px rgba(99,102,241,0.18);}
-.promo-grid-section{margin:10px 10px 0;border-radius:16px;overflow:hidden;background:#151929;border:1px solid rgba(99,102,241,0.15);flex-shrink:0;}
-.promo-grid-header{padding:8px 12px 6px;display:flex;align-items:center;justify-content:space-between;}
-.promo-grid-label{font-size:11px;font-weight:700;color:#c7d2fe;letter-spacing:0.3px;text-transform:uppercase;}
-.promo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:0 3px 3px;}
-.promo-thumb{aspect-ratio:3/4;border-radius:6px;overflow:hidden;background:#0c0f1a;cursor:pointer;position:relative;transition:transform 0.15s,opacity 0.15s;}
-.promo-thumb:active{transform:scale(0.93);opacity:0.8;}
-.promo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
-.promo-thumb-label{position:absolute;bottom:0;left:0;right:0;padding:10px 4px 3px;background:linear-gradient(transparent,rgba(0,0,0,0.7));font-size:8px;font-weight:700;color:rgba(255,255,255,0.9);text-align:center;line-height:1.2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
 .promo-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;color:#6b7280;font-size:13px;}
+/* ===== BINGKAI BENTO 2-1-2 ===== */
+.bingkai-bento{margin:8px 10px 0;flex-shrink:0;}
+.bingkai-row{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px;}
+.bingkai-row.center{grid-template-columns:1fr;}
+.bingkai-card{border-radius:12px;overflow:hidden;background:#151929;cursor:pointer;border:1px solid rgba(99,102,241,0.12);transition:transform 0.15s,opacity 0.15s;}
+.bingkai-card:active{transform:scale(0.96);opacity:0.82;}
+.bingkai-card-cover{width:100%;height:118px;background:#0c0f1a;overflow:hidden;}
+.bingkai-row.center .bingkai-card-cover{height:158px;}
+.bingkai-card-cover img{width:100%;height:100%;object-fit:cover;display:block;}
+.bingkai-card-cover-loading{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+.bingkai-card-footer{padding:4px 8px 5px;display:flex;align-items:center;justify-content:space-between;background:#0f1628;}
+.bingkai-card-title{font-size:10px;font-weight:700;color:#c7d2fe;letter-spacing:0.2px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bingkai-card-count{font-size:9px;color:#6b7280;flex-shrink:0;margin-left:6px;}
+/* Slideshow nav in lightbox */
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:15;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.18);color:white;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px);transition:background 0.2s;}
+.lb-nav:active{background:rgba(0,0,0,0.8);}
+#lbNavPrev{left:12px;}
+#lbNavNext{right:12px;}
+#lbSlideCounter{position:absolute;top:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.55);color:rgba(255,255,255,0.9);font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;pointer-events:none;white-space:nowrap;display:none;}
 .home-footer{padding:14px 20px 32px;flex-shrink:0;}
 .home-app-info{text-align:center;margin-bottom:14px;}
 .home-app-name{font-size:17px;font-weight:800;color:white;letter-spacing:-0.3px;}
@@ -336,7 +347,14 @@ table td { font-size: 11px; }
   <div class="lb-img-wrap" id="lbImgWrap">
     <img id="lbImg" src="" alt="promo">
   </div>
-  <span class="lb-hint">Pinch / double-tap untuk zoom</span>
+  <span class="lb-hint">Geser kiri/kanan untuk pindah foto</span>
+  <button class="lb-nav" id="lbNavPrev" onclick="lbSlideshowNav(-1)" style="display:none">
+    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+  </button>
+  <button class="lb-nav" id="lbNavNext" onclick="lbSlideshowNav(1)" style="display:none">
+    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+  </button>
+  <div id="lbSlideCounter"></div>
 </div>
 
 <!-- ===== HOME PAGE ===== -->
@@ -348,16 +366,32 @@ table td { font-size: 11px; }
       <div class="home-store-tagline" id="homeStoreTagline"></div>
     </div>
   </div>
-  <!-- PROMO GRID THUMBNAIL -->
-  <div class="promo-grid-section" id="promoGridSection">
-    <div class="promo-grid-header">
-      <span class="promo-grid-label">Flyer Promo</span>
-      <span id="promoGridCount" style="font-size:10px;color:#6b7280;"></span>
+  <!-- BINGKAI BENTO 2-1-2 -->
+  <div class="bingkai-bento">
+    <div class="bingkai-row">
+      <div class="bingkai-card" id="bcard1" onclick="openBingkaiSlideshow(1)" style="display:none">
+        <div class="bingkai-card-cover" id="bcov1"><div class="bingkai-card-cover-loading"><div style="width:16px;height:16px;border:2px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"></div></div></div>
+        <div class="bingkai-card-footer"><span class="bingkai-card-title" id="btitle1">Flyer 1</span><span class="bingkai-card-count" id="bcount1"></span></div>
+      </div>
+      <div class="bingkai-card" id="bcard2" onclick="openBingkaiSlideshow(2)" style="display:none">
+        <div class="bingkai-card-cover" id="bcov2"><div class="bingkai-card-cover-loading"><div style="width:16px;height:16px;border:2px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"></div></div></div>
+        <div class="bingkai-card-footer"><span class="bingkai-card-title" id="btitle2">Flyer 2</span><span class="bingkai-card-count" id="bcount2"></span></div>
+      </div>
     </div>
-    <div class="promo-grid" id="promoGridEl">
-      <div style="grid-column:1/-1;padding:18px;display:flex;align-items:center;justify-content:center;gap:10px;color:#6b7280;font-size:12px;">
-        <div style="width:18px;height:18px;border:2px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-        Memuat flyer...
+    <div class="bingkai-row center">
+      <div class="bingkai-card" id="bcard3" onclick="openBingkaiSlideshow(3)" style="display:none">
+        <div class="bingkai-card-cover" id="bcov3"><div class="bingkai-card-cover-loading"><div style="width:16px;height:16px;border:2px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"></div></div></div>
+        <div class="bingkai-card-footer"><span class="bingkai-card-title" id="btitle3">Flyer 3</span><span class="bingkai-card-count" id="bcount3"></span></div>
+      </div>
+    </div>
+    <div class="bingkai-row">
+      <div class="bingkai-card" id="bcard4" onclick="openBingkaiSlideshow(4)" style="display:none">
+        <div class="bingkai-card-cover" id="bcov4"><div class="bingkai-card-cover-loading"><div style="width:16px;height:16px;border:2px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"></div></div></div>
+        <div class="bingkai-card-footer"><span class="bingkai-card-title" id="btitle4">Flyer 4</span><span class="bingkai-card-count" id="bcount4"></span></div>
+      </div>
+      <div class="bingkai-card" id="bcard5" onclick="openBingkaiSlideshow(5)" style="display:none">
+        <div class="bingkai-card-cover" id="bcov5"><div class="bingkai-card-cover-loading"><div style="width:16px;height:16px;border:2px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"></div></div></div>
+        <div class="bingkai-card-footer"><span class="bingkai-card-title" id="btitle5">Flyer 5</span><span class="bingkai-card-count" id="bcount5"></span></div>
       </div>
     </div>
   </div>
@@ -3356,72 +3390,19 @@ function proceedQuickLogin(data) {
   };
 })();
 
-/* ===== PROMO SLIDER ===== */
-/* ===== KONFIGURASI BINGKAI ===== */
-/* Ganti URL di bawah sesuai sheet masing-masing bingkai.
-   Format sheet: Kolom A=URL gambar, Kolom B=Judul (opsional), Kolom C=Subjudul (opsional)
-   Untuk menggunakan sheet berbeda dari spreadsheet yang sama, ganti nilai gid= */
-var BINGKAI_URL_2=PROMO_URL.replace('gid=0','gid=551485687');
-var BINGKAI_URL_3=PROMO_URL.replace('gid=0','gid=553669916');
-var BINGKAI_URL_4=PROMO_URL.replace('gid=0','gid=583509450');
-var BINGKAI_TITLE_2="Flyer Promo 2";
-var BINGKAI_TITLE_3="Flyer Promo 3";
-var BINGKAI_TITLE_4="Flyer Promo 4";
-
-var _bCfg=[
-  {id:2,urlKey:'BINGKAI_URL_2',titleKey:'BINGKAI_TITLE_2'},
-  {id:3,urlKey:'BINGKAI_URL_3',titleKey:'BINGKAI_TITLE_3'},
-  {id:4,urlKey:'BINGKAI_URL_4',titleKey:'BINGKAI_TITLE_4'}
+/* ===== KONFIGURASI BINGKAI (5 bingkai, masing-masing 1 sheet) ===== */
+/* Tambah GID sheet ke-5 saat sheet sudah dibuat, ganti '' dengan gid=XXXXXXX */
+var BINGKAI_URLS=[
+  PROMO_URL,
+  PROMO_URL.replace('gid=0','gid=551485687'),
+  PROMO_URL.replace('gid=0','gid=553669916'),
+  PROMO_URL.replace('gid=0','gid=583509450'),
+  ''
 ];
-var bSlides={2:[],3:[],4:[]},bIdx={2:0,3:0,4:0},bTimers={2:null,3:null,4:null},bTouchX={};
+var BINGKAI_TITLES=['Flyer 1','Flyer 2','Flyer 3','Flyer 4','Flyer 5'];
 
-var allPromoSlides=[];
-var promoGridLoaded=0;
-var promoGridTotal=4; // sheet 1 + bingkai 2,3,4
-
-function addToPromoGrid(slides){
-  allPromoSlides=allPromoSlides.concat(slides);
-  promoGridLoaded++;
-  renderPromoGrid();
-}
-
-function renderPromoGrid(){
-  var grid=$('promoGridEl'),cnt=$('promoGridCount');
-  if(!grid)return;
-  if(!allPromoSlides.length){
-    if(promoGridLoaded>=promoGridTotal)grid.innerHTML='<div style="grid-column:1/-1;padding:18px;text-align:center;color:#4b5563;font-size:12px;">Belum ada flyer</div>';
-    return;
-  }
-  if(cnt)cnt.textContent=allPromoSlides.length+' gambar';
-  grid.innerHTML=allPromoSlides.map(function(s){
-    return'<div class="promo-thumb" onclick="openLightbox(\''+s.img+'\')">'
-      +'<img src="'+s.img+'" alt="" loading="lazy" onerror="this.closest(\'.promo-thumb\').style.display=\'none\'">'
-      +(s.title?'<div class="promo-thumb-label">'+s.title+'</div>':'')
-      +'</div>';
-  }).join('');
-}
-
-function loadBingkai(id,url,title){
-  if(!url){promoGridLoaded++;return;}
-  fetch(url+(/\?/.test(url)?'&':'?')+'_t='+Date.now())
-    .then(function(r){if(!r.ok)throw new Error();return r.text();})
-    .then(function(csv){
-      var slides=[],rows=csv.split('\n');
-      for(var i=1;i<rows.length;i++){
-        var cols=rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(function(c){return c.replace(/^"|"$/g,'').trim();});
-        var img=driveImgUrl((cols[0]||'').trim());
-        if(!img)continue;
-        slides.push({img:img,title:(cols[1]||'').trim(),sub:(cols[2]||'').trim()});
-      }
-      addToPromoGrid(slides);
-    }).catch(function(){promoGridLoaded++;});
-}
-
-function loadAllBingkai(){
-  loadBingkai(2,BINGKAI_URL_2,BINGKAI_TITLE_2);
-  loadBingkai(3,BINGKAI_URL_3,BINGKAI_TITLE_3);
-  loadBingkai(4,BINGKAI_URL_4,BINGKAI_TITLE_4);
-}
+var bingSlidesAll={1:[],2:[],3:[],4:[],5:[]};
+var bingLbSlides=[],bingLbIdx=0,bingLbTouchX0=0;
 
 function driveImgUrl(url){
   if(!url)return"";
@@ -3430,21 +3411,80 @@ function driveImgUrl(url){
   return url;
 }
 
-function loadPromos(){
-  if(!PROMO_URL){promoGridLoaded++;renderPromoGrid();return;}
-  fetch(PROMO_URL+(/\?/.test(PROMO_URL)?"&":"?")+"_t="+Date.now())
+function loadBingkai(id,url,title){
+  var titleEl=$('btitle'+id),coverEl=$('bcov'+id),countEl=$('bcount'+id),card=$('bcard'+id);
+  if(titleEl&&title)titleEl.textContent=title;
+  if(!url)return;
+  fetch(url+(/\?/.test(url)?'&':'?')+'_t='+Date.now())
     .then(function(r){if(!r.ok)throw new Error();return r.text();})
     .then(function(csv){
-      var slides=[],rows=csv.split("\n");
+      var slides=[],rows=csv.split('\n');
       for(var i=1;i<rows.length;i++){
-        var cols=rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(function(c){return c.replace(/^"|"$/g,"").trim();});
-        var imgUrl=driveImgUrl((cols[0]||"").trim());
-        if(!imgUrl)continue;
-        slides.push({img:imgUrl,title:(cols[1]||"").trim(),sub:(cols[2]||"").trim()});
+        var cols=rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(function(c){return c.replace(/^"|"$/g,'').trim();});
+        var img=driveImgUrl((cols[0]||'').trim());
+        if(!img)continue;
+        slides.push({img:img,title:(cols[1]||'').trim()});
       }
-      addToPromoGrid(slides);
-    }).catch(function(){promoGridLoaded++;renderPromoGrid();});
+      if(!slides.length)return;
+      bingSlidesAll[id]=slides;
+      if(coverEl)coverEl.innerHTML='<img src="'+slides[0].img+'" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display=\'none\'">';
+      if(countEl)countEl.textContent=slides.length+(slides.length===1?' foto':' foto');
+      if(card)card.style.display='';
+    }).catch(function(){});
 }
+
+function openBingkaiSlideshow(id){
+  var slides=bingSlidesAll[id];
+  if(!slides||!slides.length)return;
+  bingLbSlides=slides;bingLbIdx=0;
+  _openLbSlides();
+}
+
+function openLightbox(src){
+  bingLbSlides=[{img:src,title:''}];bingLbIdx=0;
+  _openLbSlides();
+}
+
+function _openLbSlides(){
+  var s=bingLbSlides[bingLbIdx];
+  var lb=$('promoLightbox'),img=$('lbImg'),wrap=$('lbImgWrap');
+  var prev=$('lbNavPrev'),next=$('lbNavNext'),ctr=$('lbSlideCounter');
+  lbScale=1;lbTransX=0;lbTransY=0;
+  img.style.transform='scale(0.88)';img.src=s.img;
+  var multi=bingLbSlides.length>1;
+  if(prev)prev.style.display=multi?'flex':'none';
+  if(next)next.style.display=multi?'flex':'none';
+  if(ctr){ctr.textContent=(bingLbIdx+1)+' / '+bingLbSlides.length;ctr.style.display=multi?'block':'none';}
+  lb.style.display='flex';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){lb.classList.add('open');});});
+  document.body.style.overflow='hidden';
+  wrap.ontouchstart=lbTouchStart;wrap.ontouchmove=lbTouchMove;wrap.ontouchend=lbTouchEnd;
+  wrap.onmousedown=lbMouseDown;wrap.onwheel=lbWheel;
+  // Swipe to navigate slides
+  lb.ontouchstart=function(e){if(e.touches.length===1)bingLbTouchX0=e.touches[0].clientX;};
+  lb.ontouchend=function(e){
+    if(!e.changedTouches||lbScale>1.05)return;
+    var dx=e.changedTouches[0].clientX-bingLbTouchX0;
+    if(Math.abs(dx)>50)lbSlideshowNav(dx<0?1:-1);
+  };
+}
+
+function lbSlideshowNav(dir){
+  if(!bingLbSlides.length)return;
+  bingLbIdx=(bingLbIdx+dir+bingLbSlides.length)%bingLbSlides.length;
+  var img=$('lbImg'),ctr=$('lbSlideCounter');
+  lbScale=1;lbTransX=0;lbTransY=0;
+  img.style.opacity='0.3';
+  img.src=bingLbSlides[bingLbIdx].img;
+  img.onload=function(){img.style.opacity='1';img.onload=null;};
+  if(ctr)ctr.textContent=(bingLbIdx+1)+' / '+bingLbSlides.length;
+}
+
+function loadAllBingkai(){
+  for(var i=1;i<=5;i++)loadBingkai(i,BINGKAI_URLS[i-1],BINGKAI_TITLES[i-1]);
+}
+
+function loadPromos(){loadAllBingkai();}
 
 function renderPromoSlides(){
   var track=$("promoSliderTrack"),dots=$("promoDots");
