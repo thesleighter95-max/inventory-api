@@ -3417,7 +3417,7 @@ function driveImgUrl(url){
   return url;
 }
 
-var _bcDone={},_bcAnimEnd={},_bcLoginShown=false,_bcFallback=null;
+var _bcDone={},_bcAnimEnd={},_bcLoginShown=false,_bcFallback=null,_btnPulseInterval=null;
 function _triggerLoginBtn(){
   if(_bcLoginShown)return;
   _bcLoginShown=true;
@@ -3430,7 +3430,16 @@ function _triggerLoginBtn(){
     b.style.transition='none';
     b.style.animation='bnSlideUp 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards';
     setTimeout(function(){var sh=document.getElementById('btnShimmer');if(sh)sh.style.animation='bnShimmer 0.9s ease forwards';},500);
-    setTimeout(function(){b.style.transform='translateY(0)';b.style.opacity='1';b.style.animation='bnPulseRing 0.85s ease-out forwards';},2200);
+    setTimeout(function(){
+      function _doPulse(){
+        b.style.transform='translateY(0)';b.style.opacity='1';
+        b.style.animation='none';
+        void b.offsetWidth;
+        b.style.animation='bnPulseRing 0.85s ease-out forwards';
+      }
+      _doPulse();
+      _btnPulseInterval=setInterval(_doPulse,2200);
+    },2200);
   },remaining);
 }
 function loadBingkai(id,url,title){
@@ -3620,6 +3629,7 @@ document.addEventListener("DOMContentLoaded",function(){
 });
 
 function showLoginPage(){
+  if(_btnPulseInterval){clearInterval(_btnPulseInterval);_btnPulseInterval=null;}
   $("homePage").style.display="none";
   $("loginPage").classList.remove("hidden");
   setMarquee(false);
