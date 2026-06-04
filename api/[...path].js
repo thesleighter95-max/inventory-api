@@ -270,31 +270,37 @@ export default async function handler(req, res) {
     if (path.startsWith("/price-history/") && method === "GET") {
       const barcode = decodeURIComponent(path.replace("/price-history/", "").trim());
       if (!barcode) return send({ success: false, message: "barcode wajib diisi" }, 400);
-      const [individual, prev, current, highest] = await Promise.all([
+      const [individual, prev, current, highest, excluded] = await Promise.all([
         getJson(`price-history:${barcode}`, null),
         getJson("price-snapshot-prev", { date: null, prices: {} }),
         getJson("price-snapshot-current", { date: null, prices: {} }),
-        getJson("price-snapshot-highest", { prices: {} })
+        getJson("price-snapshot-highest", { prices: {} }),
+        getJson("promo-excluded", { barcodes: [] })
       ]);
+      // Jika barcode dikecualikan dari promo, kembalikan data tanpa info promo
+      const isExcluded = (excluded.barcodes || []).includes(barcode);
       const currentSnapshotPrice = current?.prices?.[barcode];
       let promo = null;
 
-      // 1. Cek harga tertinggi otomatis dari semua snapshot
-      const highestPrice = highest?.prices?.[barcode];
-      if (highestPrice != null && currentSnapshotPrice != null && highestPrice > currentSnapshotPrice) {
-        promo = { prevPrice: highestPrice, currentPrice: currentSnapshotPrice, source: "highest" };
-      }
+      if (!isExcluded) {
+        // 1. Cek harga tertinggi otomatis dari semua snapshot
+        const highestPrice = highest?.prices?.[barcode];
+        if (highestPrice != null && currentSnapshotPrice != null && highestPrice > currentSnapshotPrice) {
+          promo = { prevPrice: highestPrice, currentPrice: currentSnapshotPrice, source: "highest" };
+        }
 
-      // 2. Cek acuan manual (price-snapshot-prev) — pakai jika harganya lebih tinggi dari highest
-      const prevPrice = prev?.prices?.[barcode];
-      if (prevPrice != null && currentSnapshotPrice != null && prevPrice > currentSnapshotPrice) {
-        if (!promo || prevPrice > promo.prevPrice) {
-          promo = { prevPrice, currentPrice: currentSnapshotPrice, source: "manual", date: prev.date };
+        // 2. Cek acuan manual (price-snapshot-prev) — pakai jika harganya lebih tinggi dari highest
+        const prevPrice = prev?.prices?.[barcode];
+        if (prevPrice != null && currentSnapshotPrice != null && prevPrice > currentSnapshotPrice) {
+          if (!promo || prevPrice > promo.prevPrice) {
+            promo = { prevPrice, currentPrice: currentSnapshotPrice, source: "manual", date: prev.date };
+          }
         }
       }
 
+      const prevPrice = prev?.prices?.[barcode];
       const data = prevPrice != null ? { price: prevPrice, date: prev.date } : individual;
-      return send({ success: true, data, promo });
+      return send({ success: true, data, promo, excluded: isExcluded });
     }
 
     if (path === "/price-history" && method === "POST") {
@@ -651,14 +657,17 @@ loadStatus();
 
     // GET /promo-list — daftar artikel promo (harga terbaru < harga tertinggi historis)
     if (path === "/promo-list" && method === "GET") {
-      const [highest, current] = await Promise.all([
+      const [highest, current, excluded] = await Promise.all([
         getJson("price-snapshot-highest", { prices: {} }),
-        getJson("price-snapshot-current", { date: null, prices: {} })
+        getJson("price-snapshot-current", { date: null, prices: {} }),
+        getJson("promo-excluded", { barcodes: [] })
       ]);
       const hPrices = highest.prices || {};
       const cPrices = current.prices || {};
+      const excludedSet = new Set(excluded.barcodes || []);
       const items = [];
       for (const [barcode, prevPrice] of Object.entries(hPrices)) {
+        if (excludedSet.has(barcode)) continue;
         const currentPrice = cPrices[barcode];
         if (currentPrice == null) continue;
         const p = Number(prevPrice) || 0;
@@ -673,10 +682,44 @@ loadStatus();
       return send({
         success: true,
         count: items.length,
+        excludedCount: excludedSet.size,
         highestUpdatedAt: highest.updatedAt || null,
         currentDate: current.date || null,
         items
       });
+    }
+
+    // GET /promo-excluded — daftar barcode yang dikecualikan dari promo (admin only)
+    if (path === "/promo-excluded" && method === "GET") {
+      if (query.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const exc = await getJson("promo-excluded", { barcodes: [] });
+      return send({ success: true, barcodes: exc.barcodes || [], updatedAt: exc.updatedAt || null });
+    }
+
+    // POST /promo-exclude — tambah barcode ke daftar pengecualian promo (admin only)
+    if (path === "/promo-exclude" && method === "POST") {
+      const { adminPassword, barcode: bc } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      if (!bc) return send({ success: false, message: "barcode wajib diisi" }, 400);
+      const exc = await getJson("promo-excluded", { barcodes: [] });
+      const barcodes = exc.barcodes || [];
+      if (!barcodes.includes(bc)) {
+        barcodes.push(bc);
+        await setJson("promo-excluded", { barcodes, updatedAt: new Date().toISOString() });
+      }
+      return send({ success: true, total: barcodes.length });
+    }
+
+    // DELETE /promo-exclude/:barcode — restore barcode dari daftar pengecualian (admin only)
+    if (path.startsWith("/promo-exclude/") && method === "DELETE") {
+      const { adminPassword } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const bc = decodeURIComponent(path.replace("/promo-exclude/", "").trim());
+      if (!bc) return send({ success: false, message: "barcode wajib diisi" }, 400);
+      const exc = await getJson("promo-excluded", { barcodes: [] });
+      const barcodes = (exc.barcodes || []).filter(b => b !== bc);
+      await setJson("promo-excluded", { barcodes, updatedAt: new Date().toISOString() });
+      return send({ success: true, total: barcodes.length });
     }
 
     return send({ error: "Not found" }, 404);
