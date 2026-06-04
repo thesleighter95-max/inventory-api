@@ -2289,12 +2289,16 @@ function checkPriceHistory(barcode, currentPriceRaw){
     console.log("[HC] barcode="+barcode+" currentPrice="+currentPrice+" res=",JSON.stringify(res));
     // Gunakan server-side snapshot comparison jika tersedia
     if(res&&res.promo&&res.promo.prevPrice&&res.promo.currentPrice){
-      var sp=res.promo.prevPrice,cp=res.promo.currentPrice;
-      box.innerHTML='<p class="text-[10px] text-pro-text uppercase tracking-widest font-bold mb-1">Price</p>'
-        +'<p class="text-xs font-bold text-gray-500 line-through mb-1">Rp '+formatRupiah(sp)+'</p>'
-        +'<p class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-400 tracking-tight">Rp '+formatRupiah(cp)+'</p>'
-        +'<p class="text-[10px] text-emerald-400 font-bold mt-1">&#9660; Harga Turun</p>';
-      return;
+      var sp=res.promo.prevPrice;
+      // Prioritaskan harga live dari spreadsheet; fallback ke snapshot jika tidak tersedia
+      var cp=currentPrice>0?currentPrice:res.promo.currentPrice;
+      if(sp>cp){
+        box.innerHTML='<p class="text-[10px] text-pro-text uppercase tracking-widest font-bold mb-1">Price</p>'
+          +'<p class="text-xs font-bold text-gray-500 line-through mb-1">Rp '+formatRupiah(sp)+'</p>'
+          +'<p class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-400 tracking-tight">Rp '+formatRupiah(cp)+'</p>'
+          +'<p class="text-[10px] text-emerald-400 font-bold mt-1">&#9660; Harga Turun</p>';
+        return;
+      }
     }
     // Fallback: bandingkan dengan harga dari cache frontend
     var saved=res&&res.data;
@@ -2315,7 +2319,7 @@ function tampilkanMultiple(items){simpanState();window._multiItems=items;var gro
       var elId="lp-"+g.bc.replace(/[^a-zA-Z0-9]/g,"_");
       var el=document.getElementById(elId);if(!el)return;
       var pp=0,cp=g.cp;
-      if(res&&res.promo&&res.promo.prevPrice&&res.promo.currentPrice){pp=res.promo.prevPrice;cp=res.promo.currentPrice;}
+      if(res&&res.promo&&res.promo.prevPrice&&res.promo.currentPrice){pp=res.promo.prevPrice;cp=g.cp>0?g.cp:res.promo.currentPrice;}
       else{var saved=res&&res.data;pp=saved?parseFloat(saved.price)||0:0;}
       if(pp>0&&pp>cp){
         el.innerHTML='<p class="text-xs font-bold text-gray-500 line-through">Rp '+formatRupiah(pp)+'</p><p class="text-lg font-bold text-emerald-400">Rp '+formatRupiah(cp)+'</p><p class="text-[10px] text-emerald-400 font-bold">&#9660; Turun</p><p class="text-xs font-semibold '+g.sc+'">Stk: '+g.stk+'</p>';
