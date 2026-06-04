@@ -675,11 +675,14 @@ table td { font-size: 11px; }
           <svg id="snapHistChevron" style="width:14px;height:14px;color:#6b7280;transition:transform 0.2s;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
         </div>
         <div id="snapHistBody" style="display:none;margin-top:8px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <p style="font-size:9px;color:#6b7280;margin:0;">Pilih tanggal sebagai acuan manual, atau bangun ulang harga tertinggi dari semua snapshot</p>
-            <button onclick="rebuildHighest()" id="btnRebuildHighest" style="flex-shrink:0;margin-left:8px;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);color:#34d399;border-radius:6px;padding:4px 9px;font-size:9px;font-weight:700;cursor:pointer;white-space:nowrap;">&#8635; Bangun Ulang Tertinggi</button>
+          <div style="margin-bottom:6px;">
+            <p style="font-size:9px;color:#6b7280;margin:0;">Pilih tanggal sebagai acuan manual, atau gunakan tombol di atas untuk kelola harga tertinggi</p>
           </div>
           <div id="snapRebuildMsg" style="font-size:10px;text-align:center;margin-bottom:6px;display:none;"></div>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <button onclick="rebuildHighest()" id="btnRebuildHighest" style="flex:1;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);color:#34d399;border-radius:6px;padding:5px 6px;font-size:9px;font-weight:700;cursor:pointer;">&#8635; Bangun Ulang Tertinggi</button>
+            <button onclick="resetHighest()" style="flex-shrink:0;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:6px;padding:5px 8px;font-size:9px;font-weight:700;cursor:pointer;" title="Hapus data harga tertinggi dan mulai dari nol">&#128465; Reset</button>
+          </div>
           <div id="snapHistList" style="font-size:11px;color:#9ca3af;font-style:italic;">Memuat...</div>
         </div>
       </div>
@@ -923,7 +926,7 @@ table td { font-size: 11px; }
         </div>
       </div>
       <!-- Filters -->
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <div style="display:flex;gap:6px;margin-bottom:6px;">
         <div style="flex:1;position:relative;">
           <svg style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:#6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           <input id="promoSearch" type="text" placeholder="Cari nama / barcode..." oninput="renderPromoItems()"
@@ -936,6 +939,19 @@ table td { font-size: 11px; }
           <option value="name">Nama A-Z</option>
           <option value="price_low">Harga Terendah</option>
         </select>
+      </div>
+      <!-- Baris kedua: filter maks diskon -->
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+        <span style="font-size:10px;color:#6b7280;flex-shrink:0;">Filter maks diskon:</span>
+        <select id="promoMaxDisc" onchange="renderPromoItems()"
+          style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:5px 8px;font-size:11px;color:#9ca3af;outline:none;flex:1;">
+          <option value="50">Maks 50%</option>
+          <option value="60">Maks 60%</option>
+          <option value="70" selected>Maks 70%</option>
+          <option value="80">Maks 80%</option>
+          <option value="100">Tanpa Batas</option>
+        </select>
+        <span id="promoHiddenCount" style="font-size:9px;color:#f97316;display:none;flex-shrink:0;"></span>
       </div>
       <!-- Info tanggal snapshot -->
       <div id="promoDateInfo" style="font-size:10px;color:#6b7280;text-align:center;margin-bottom:8px;"></div>
@@ -1627,6 +1643,25 @@ function setSnapshotAcuan(date){
       if(j.success){showToast("\u2705 "+j.message,"success");loadHargaCoretStatus();}
       else showToast("\u274C "+(j.message||"Gagal"),"error");
     }).catch(function(){showToast("Gagal menghubungi server","error");});
+}
+function resetHighest(){
+  if(!confirm("Hapus semua data harga tertinggi? Data ini tidak bisa dikembalikan. Kamu perlu klik Bangun Ulang setelah ini."))return;
+  var adminPwd=ADMIN_PASSWORD||prompt("Password admin:");
+  if(!adminPwd)return;
+  var msg=$("snapRebuildMsg");
+  if(msg){msg.style.display="block";msg.style.color="#f87171";msg.textContent="Menghapus data harga tertinggi...";}
+  fetch(API_BASE_URL+"/price-snapshot-highest/reset",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:adminPwd})})
+    .then(function(r){return r.json()})
+    .then(function(j){
+      if(j.success){
+        if(msg){msg.style.color="#34d399";msg.textContent="✅ "+j.message;}
+        _promoData=null;_promoLoading=false;
+        loadHargaCoretStatus();
+      }else{
+        if(msg){msg.style.color="#f87171";msg.textContent="❌ "+(j.message||"Gagal");}
+      }
+    })
+    .catch(function(e){if(msg){msg.style.color="#f87171";msg.textContent="❌ Error: "+e.message;}});
 }
 function rebuildHighest(){
   var btn=$("btnRebuildHighest"),msg=$("snapRebuildMsg");
@@ -3620,28 +3655,43 @@ function renderPromoItems(){
   if(!_promoData)return;
   var search=($("promoSearch")?$("promoSearch").value.toLowerCase().trim():"");
   var sort=($("promoSort")?$("promoSort").value:"disc_pct");
-  var items=_promoData.items.slice();
+  var maxDisc=parseInt(($("promoMaxDisc")?$("promoMaxDisc").value:"70")||"70");
+  var all=_promoData.items.slice();
+  // Filter maks diskon
+  var hidden=all.filter(function(it){return it.discountPct>maxDisc;});
+  var items=all.filter(function(it){return it.discountPct<=maxDisc;});
+  // Update hidden count badge
+  var hc=$("promoHiddenCount");
+  if(hc){if(hidden.length>0){hc.style.display="block";hc.textContent=hidden.length+" disembunyikan";}else{hc.style.display="none";}}
+  // Filter search
   if(search)items=items.filter(function(it){return(it.name||"").toLowerCase().includes(search)||it.barcode.toLowerCase().includes(search);});
+  // Sort
   if(sort==="disc_pct")items.sort(function(a,b){return b.discountPct-a.discountPct;});
   else if(sort==="disc_amt")items.sort(function(a,b){return b.discount-a.discount;});
   else if(sort==="name")items.sort(function(a,b){return(a.name||a.barcode).localeCompare(b.name||b.barcode);});
   else if(sort==="price_low")items.sort(function(a,b){return a.currentPrice-b.currentPrice;});
   var el=$("promoList");if(!el)return;
   if(!items.length){
-    el.innerHTML='<div style="text-align:center;padding:40px 0;color:#6b7280;"><p style="font-size:12px;margin:4px 0 0;">'+(search?"Tidak ada hasil untuk \""+search+"\"":"Belum ada produk promo saat ini")+'</p></div>';
+    var msg=search?"Tidak ada hasil untuk \""+search+"\"":hidden.length?"Semua "+_promoData.count+" item tersaring — coba naikkan batas maks diskon":"Belum ada produk promo saat ini";
+    el.innerHTML='<div style="text-align:center;padding:40px 0;color:#6b7280;"><p style="font-size:12px;margin:4px 0 0;">'+msg+'</p></div>';
     return;
   }
-  var h='<div style="font-size:10px;color:#6b7280;text-align:right;margin-bottom:6px;">Menampilkan '+items.length.toLocaleString("id-ID")+(search?" dari "+_promoData.count.toLocaleString("id-ID"):"")+' produk</div>';
+  var totalShown=items.length;
+  var h='<div style="font-size:10px;color:#6b7280;text-align:right;margin-bottom:6px;">Menampilkan '+totalShown.toLocaleString("id-ID")+(search?" hasil":"")+' (dari '+_promoData.count.toLocaleString("id-ID")+' total)</div>';
   items.forEach(function(it){
     var pct=Math.round(it.discountPct);
+    // Warning untuk diskon sangat tinggi (kemungkinan data error)
+    var isExtreme=pct>60;
     var badgeColor=pct>=20?"#dc2626":pct>=10?"#f97316":"#6b7280";
     var badgeBg=pct>=20?"rgba(220,38,38,0.15)":pct>=10?"rgba(249,115,22,0.15)":"rgba(107,114,128,0.15)";
+    var rowBorder=isExtreme?"1px solid rgba(249,115,22,0.3)":"1px solid rgba(255,255,255,0.06)";
     var savingText="hemat Rp "+it.discount.toLocaleString("id-ID");
-    h+='<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px;">'
+    h+='<div style="background:rgba(0,0,0,0.25);border:'+rowBorder+';border-radius:10px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px;">'
       +'<div style="flex:1;min-width:0;">'
       +(it.name?'<p style="font-size:12px;font-weight:700;color:#e5e7eb;margin:0 0 1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+it.name+'</p>':'')
       +'<p style="font-size:10px;color:#6b7280;margin:0 0 2px;">'+it.barcode+'</p>'
       +'<p style="font-size:9px;color:#34d399;margin:0;">'+savingText+'</p>'
+      +(isExtreme?'<p style="font-size:9px;color:#f97316;margin:2px 0 0;">⚠️ Periksa kebenaran harga tertinggi</p>':'')
       +'</div>'
       +'<div style="text-align:right;flex-shrink:0;">'
       +'<p style="font-size:10px;color:#9ca3af;margin:0;text-decoration:line-through;">Rp '+it.prevPrice.toLocaleString("id-ID")+'</p>'
