@@ -290,6 +290,29 @@ table td { font-size: 11px; }
 
 <body class="pb-24 pt-4" style="padding-top:52px;">
 
+<!-- NOTICE: Pindah ke Vercel -->
+<div id="pindah-notice" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); align-items:center; justify-content:center;">
+  <div style="background:#151929; border:1px solid rgba(99,102,241,0.4); border-radius:20px; padding:32px 28px; max-width:360px; width:90%; margin:auto; text-align:center; box-shadow:0 25px 60px rgba(0,0,0,0.6);">
+    <div style="font-size:40px; margin-bottom:12px;">📢</div>
+    <h2 style="color:#e2e8f0; font-size:18px; font-weight:800; margin-bottom:8px;">Alamat Web Telah Pindah</h2>
+    <p style="color:#94a3b8; font-size:13px; line-height:1.6; margin-bottom:6px;">Versi terbaru dan terlengkap tersedia di alamat baru:</p>
+    <a href="https://pda-mini-mataram.vercel.app" style="display:inline-block; background:linear-gradient(135deg,#6366f1,#818cf8); color:#fff; font-weight:700; font-size:13px; padding:8px 18px; border-radius:10px; margin:10px 0; text-decoration:none; word-break:break-all;">pda-mini-mataram.vercel.app</a>
+    <p style="color:#64748b; font-size:11px; margin-bottom:20px;">Simpan & gunakan alamat baru ini untuk akses yang lebih baik.</p>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <a href="https://pda-mini-mataram.vercel.app" style="flex:1; background:linear-gradient(135deg,#6366f1,#4f46e5); color:#fff; font-weight:700; font-size:13px; padding:12px; border-radius:12px; text-decoration:none; text-align:center;">Buka Alamat Baru</a>
+      <button onclick="document.getElementById('pindah-notice').style.display='none'" style="flex:1; background:rgba(255,255,255,0.07); color:#94a3b8; font-weight:600; font-size:13px; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); cursor:pointer;">Tetap di Sini</button>
+    </div>
+  </div>
+</div>
+<script>
+  (function() {
+    if (window.location.hostname.includes('netlify.app')) {
+      var el = document.getElementById('pindah-notice');
+      if (el) el.style.display = 'flex';
+    }
+  })();
+</script>
+
 <div class="marquee-bar" id="marqueeBar" style="display:none;">
   <div class="marquee-track">
     <div class="marquee-content">
