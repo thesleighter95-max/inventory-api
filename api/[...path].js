@@ -545,6 +545,8 @@ loadStatus();
         }
       }
       await setJson("price-snapshot-current", { date: today, prices });
+      // Selalu update highest agar harga naik langsung tercermin (tidak tunggu hari berganti)
+      await updateHighestSnapshot(prices);
       return send({ success: true, saved: Object.keys(prices).length });
     }
 
