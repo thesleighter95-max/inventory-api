@@ -242,20 +242,14 @@ table td { font-size: 11px; }
 #homePage{position:fixed;inset:0;z-index:200;background:#0c0f1a;display:flex;flex-direction:column;overflow-y:auto;}
 .home-header{padding:20px 20px 10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .home-logo{height:64px;border-radius:18px;padding:4px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);box-shadow:0 0 32px rgba(99,102,241,0.18);}
-.promo-slider-wrap{height:44vh;flex-shrink:0;position:relative;overflow:hidden;min-height:0;}
-.promo-slider-track{display:flex;width:100%;height:100%;transition:transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94);will-change:transform;}
-.promo-slide{min-width:100%;width:100%;height:100%;position:relative;overflow:hidden;flex-shrink:0;background:#0c0f1a;display:flex;align-items:center;justify-content:center;}
-.promo-slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;}
-.promo-slide-caption{position:absolute;bottom:0;left:0;right:0;padding:40px 20px 20px;background:linear-gradient(transparent,rgba(0,0,0,0.72));}
-.promo-slide-title{font-size:16px;font-weight:800;color:white;margin:0;line-height:1.3;}
-.promo-slide-sub{font-size:12px;color:rgba(255,255,255,0.78);margin:4px 0 0;}
-.promo-dots{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:10;}
-.promo-dot{width:6px;height:6px;border-radius:99px;background:rgba(255,255,255,0.35);transition:all 0.3s;cursor:pointer;border:none;padding:0;}
-.promo-dot.active{background:white;width:22px;}
-.promo-arrow{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;color:white;backdrop-filter:blur(6px);transition:background 0.2s;}
-.promo-arrow:active{background:rgba(0,0,0,0.7);}
-.promo-arrow-prev{left:12px;}
-.promo-arrow-next{right:12px;}
+.promo-grid-section{margin:10px 10px 0;border-radius:16px;overflow:hidden;background:#151929;border:1px solid rgba(99,102,241,0.15);flex-shrink:0;}
+.promo-grid-header{padding:8px 12px 6px;display:flex;align-items:center;justify-content:space-between;}
+.promo-grid-label{font-size:11px;font-weight:700;color:#c7d2fe;letter-spacing:0.3px;text-transform:uppercase;}
+.promo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:0 3px 3px;}
+.promo-thumb{aspect-ratio:3/4;border-radius:6px;overflow:hidden;background:#0c0f1a;cursor:pointer;position:relative;transition:transform 0.15s,opacity 0.15s;}
+.promo-thumb:active{transform:scale(0.93);opacity:0.8;}
+.promo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.promo-thumb-label{position:absolute;bottom:0;left:0;right:0;padding:10px 4px 3px;background:linear-gradient(transparent,rgba(0,0,0,0.7));font-size:8px;font-weight:700;color:rgba(255,255,255,0.9);text-align:center;line-height:1.2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
 .promo-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;color:#6b7280;font-size:13px;}
 .home-footer{padding:14px 20px 32px;flex-shrink:0;}
 .home-app-info{text-align:center;margin-bottom:14px;}
@@ -284,21 +278,6 @@ table td { font-size: 11px; }
 .home-store-info{text-align:center;margin-top:8px;}
 .home-store-name{font-size:16px;font-weight:800;color:white;letter-spacing:-0.2px;line-height:1.2;}
 .home-store-tagline{font-size:11px;color:#6366f1;font-weight:600;margin-top:3px;letter-spacing:0.3px;}
-.promo-slide{cursor:pointer;}
-/* ===== BINGKAI SECTIONS ===== */
-.bingkai-section{margin:10px 10px 0;border-radius:16px;overflow:hidden;background:#151929;border:1px solid rgba(99,102,241,0.15);flex-shrink:0;}
-.bingkai-header{padding:9px 14px 6px;display:flex;align-items:center;justify-content:space-between;}
-.bingkai-title{font-size:12px;font-weight:700;color:#c7d2fe;letter-spacing:0.3px;text-transform:uppercase;}
-.bingkai-slider-wrap{position:relative;overflow:hidden;height:190px;}
-.bingkai-track{display:flex;height:100%;transition:transform 0.42s cubic-bezier(0.25,0.46,0.45,0.94);will-change:transform;}
-.bingkai-slide{min-width:100%;height:100%;position:relative;overflow:hidden;flex-shrink:0;background:#0c0f1a;display:flex;align-items:center;justify-content:center;}
-.bingkai-slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;}
-.bingkai-counter{position:absolute;top:8px;right:10px;background:rgba(0,0,0,0.55);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;display:none;z-index:5;}
-.bingkai-arrow{position:absolute;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.45);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:5;padding:0;}
-.bingkai-arrow-prev{left:7px;}.bingkai-arrow-next{right:7px;}
-.bingkai-dots{display:flex;justify-content:center;gap:5px;padding:6px 0;}
-.bingkai-dot{width:6px;height:6px;border-radius:50%;background:rgba(99,102,241,0.25);border:none;cursor:pointer;padding:0;transition:background 0.2s,transform 0.2s;}
-.bingkai-dot.active{background:#6366f1;transform:scale(1.25);}
 </style>
 </head>
 
@@ -369,60 +348,18 @@ table td { font-size: 11px; }
       <div class="home-store-tagline" id="homeStoreTagline"></div>
     </div>
   </div>
-  <div class="promo-slider-wrap" id="promoSliderWrap">
-    <div id="promoSliderTrack" class="promo-slider-track">
-      <div class="promo-loading">
-        <div style="width:32px;height:32px;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-        <span>Memuat promo...</span>
+  <!-- PROMO GRID THUMBNAIL -->
+  <div class="promo-grid-section" id="promoGridSection">
+    <div class="promo-grid-header">
+      <span class="promo-grid-label">Flyer Promo</span>
+      <span id="promoGridCount" style="font-size:10px;color:#6b7280;"></span>
+    </div>
+    <div class="promo-grid" id="promoGridEl">
+      <div style="grid-column:1/-1;padding:18px;display:flex;align-items:center;justify-content:center;gap:10px;color:#6b7280;font-size:12px;">
+        <div style="width:18px;height:18px;border:2px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+        Memuat flyer...
       </div>
     </div>
-    <div id="promoDots" class="promo-dots"></div>
-    <div id="promoCounter" class="promo-counter" style="display:none;"></div>
-    <button class="promo-arrow promo-arrow-prev" onclick="promoSlide(-1)" aria-label="Sebelumnya">
-      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-    </button>
-    <button class="promo-arrow promo-arrow-next" onclick="promoSlide(1)" aria-label="Berikutnya">
-      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-    </button>
-  </div>
-  <!-- BINGKAI 2 -->
-  <div class="bingkai-section" id="bingkaiSection2">
-    <div class="bingkai-header">
-      <span class="bingkai-title" id="bingkaiTitle2">Flyer 2</span>
-      <span class="bingkai-counter" id="bingkaiCounter2" style="position:static;display:inline-block;background:rgba(99,102,241,0.18);color:#a5b4fc;"></span>
-    </div>
-    <div class="bingkai-slider-wrap" id="bingkaiWrap2">
-      <div class="bingkai-track" id="bingkaiTrack2"><div class="promo-loading"><div style="width:24px;height:24px;border:2px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"></div><span>Memuat...</span></div></div>
-      <button class="bingkai-arrow bingkai-arrow-prev" onclick="slideBingkai(2,-1)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg></button>
-      <button class="bingkai-arrow bingkai-arrow-next" onclick="slideBingkai(2,1)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></button>
-    </div>
-    <div class="bingkai-dots" id="bingkaiDots2"></div>
-  </div>
-  <!-- BINGKAI 3 -->
-  <div class="bingkai-section" id="bingkaiSection3">
-    <div class="bingkai-header">
-      <span class="bingkai-title" id="bingkaiTitle3">Flyer 3</span>
-      <span class="bingkai-counter" id="bingkaiCounter3" style="position:static;display:inline-block;background:rgba(99,102,241,0.18);color:#a5b4fc;"></span>
-    </div>
-    <div class="bingkai-slider-wrap" id="bingkaiWrap3">
-      <div class="bingkai-track" id="bingkaiTrack3"><div class="promo-loading"><div style="width:24px;height:24px;border:2px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"></div><span>Memuat...</span></div></div>
-      <button class="bingkai-arrow bingkai-arrow-prev" onclick="slideBingkai(3,-1)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg></button>
-      <button class="bingkai-arrow bingkai-arrow-next" onclick="slideBingkai(3,1)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></button>
-    </div>
-    <div class="bingkai-dots" id="bingkaiDots3"></div>
-  </div>
-  <!-- BINGKAI 4 -->
-  <div class="bingkai-section" id="bingkaiSection4">
-    <div class="bingkai-header">
-      <span class="bingkai-title" id="bingkaiTitle4">Flyer 4</span>
-      <span class="bingkai-counter" id="bingkaiCounter4" style="position:static;display:inline-block;background:rgba(99,102,241,0.18);color:#a5b4fc;"></span>
-    </div>
-    <div class="bingkai-slider-wrap" id="bingkaiWrap4">
-      <div class="bingkai-track" id="bingkaiTrack4"><div class="promo-loading"><div style="width:24px;height:24px;border:2px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"></div><span>Memuat...</span></div></div>
-      <button class="bingkai-arrow bingkai-arrow-prev" onclick="slideBingkai(4,-1)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg></button>
-      <button class="bingkai-arrow bingkai-arrow-next" onclick="slideBingkai(4,1)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg></button>
-    </div>
-    <div class="bingkai-dots" id="bingkaiDots4"></div>
   </div>
 
   <div class="home-footer">
@@ -3438,11 +3375,34 @@ var _bCfg=[
 ];
 var bSlides={2:[],3:[],4:[]},bIdx={2:0,3:0,4:0},bTimers={2:null,3:null,4:null},bTouchX={};
 
+var allPromoSlides=[];
+var promoGridLoaded=0;
+var promoGridTotal=4; // sheet 1 + bingkai 2,3,4
+
+function addToPromoGrid(slides){
+  allPromoSlides=allPromoSlides.concat(slides);
+  promoGridLoaded++;
+  renderPromoGrid();
+}
+
+function renderPromoGrid(){
+  var grid=$('promoGridEl'),cnt=$('promoGridCount');
+  if(!grid)return;
+  if(!allPromoSlides.length){
+    if(promoGridLoaded>=promoGridTotal)grid.innerHTML='<div style="grid-column:1/-1;padding:18px;text-align:center;color:#4b5563;font-size:12px;">Belum ada flyer</div>';
+    return;
+  }
+  if(cnt)cnt.textContent=allPromoSlides.length+' gambar';
+  grid.innerHTML=allPromoSlides.map(function(s){
+    return'<div class="promo-thumb" onclick="openLightbox(\''+s.img+'\')">'
+      +'<img src="'+s.img+'" alt="" loading="lazy" onerror="this.closest(\'.promo-thumb\').style.display=\'none\'">'
+      +(s.title?'<div class="promo-thumb-label">'+s.title+'</div>':'')
+      +'</div>';
+  }).join('');
+}
+
 function loadBingkai(id,url,title){
-  var sec=$('bingkaiSection'+id),track=$('bingkaiTrack'+id),titleEl=$('bingkaiTitle'+id);
-  if(!track)return;
-  if(titleEl&&title)titleEl.textContent=title;
-  if(!url){if(sec)sec.style.display='none';return;}
+  if(!url){promoGridLoaded++;return;}
   fetch(url+(/\?/.test(url)?'&':'?')+'_t='+Date.now())
     .then(function(r){if(!r.ok)throw new Error();return r.text();})
     .then(function(csv){
@@ -3453,59 +3413,15 @@ function loadBingkai(id,url,title){
         if(!img)continue;
         slides.push({img:img,title:(cols[1]||'').trim(),sub:(cols[2]||'').trim()});
       }
-      if(!slides.length){if(sec)sec.style.display='none';return;}
-      bSlides[id]=slides;renderBingkai(id);
-    }).catch(function(){if(sec)sec.style.display='none';});
+      addToPromoGrid(slides);
+    }).catch(function(){promoGridLoaded++;});
 }
 
-function renderBingkai(id){
-  var track=$('bingkaiTrack'+id),dots=$('bingkaiDots'+id),slides=bSlides[id];
-  if(!track)return;
-  track.innerHTML=slides.map(function(s,i){
-    return'<div class="bingkai-slide" onclick="openLightbox(\''+s.img+'\')">'
-      +'<img src="'+s.img+'" alt="flyer '+(i+1)+'" loading="lazy" onerror="this.closest(\'.bingkai-slide\').style.background=\'#1e1b4b\';this.remove();">'
-      +(s.title?'<div class="promo-slide-caption"><p class="promo-slide-title">'+s.title+'</p>'+(s.sub?'<p class="promo-slide-sub">'+s.sub+'</p>':'')+'</div>':'')
-      +'</div>';
-  }).join('');
-  if(dots)dots.innerHTML=slides.map(function(_,i){
-    return'<button class="bingkai-dot'+(i===0?' active':'')+'" onclick="bGoTo('+id+','+i+')" aria-label="Slide '+(i+1)+'"></button>';
-  }).join('');
-  bIdx[id]=0;updateBPos(id);startBTimer(id);initBTouch(id);
-}
-
-function updateBPos(id){
-  var track=$('bingkaiTrack'+id),slides=bSlides[id];
-  if(track)track.style.transform='translateX(-'+(bIdx[id]*100)+'%)';
-  var ds=document.querySelectorAll('#bingkaiDots'+id+' .bingkai-dot');
-  for(var i=0;i<ds.length;i++)ds[i].classList.toggle('active',i===bIdx[id]);
-  var ctr=$('bingkaiCounter'+id);
-  if(ctr){ctr.textContent=(bIdx[id]+1)+' / '+slides.length;ctr.style.display=slides.length>1?'inline-block':'none';}
-}
-
-function slideBingkai(id,dir){
-  var s=bSlides[id];if(!s||!s.length)return;
-  bIdx[id]=(bIdx[id]+dir+s.length)%s.length;updateBPos(id);resetBTimer(id);
-}
-function bGoTo(id,idx){bIdx[id]=idx;updateBPos(id);resetBTimer(id);}
-function startBTimer(id){
-  if(bTimers[id])clearInterval(bTimers[id]);
-  if(bSlides[id].length>1)bTimers[id]=setInterval(function(){slideBingkai(id,1);},(4800+id*600));
-}
-function resetBTimer(id){clearInterval(bTimers[id]);startBTimer(id);}
-function initBTouch(id){
-  var wrap=$('bingkaiWrap'+id);
-  if(!wrap||wrap._bTouchInit)return;
-  wrap._bTouchInit=true;
-  wrap.addEventListener('touchstart',function(e){bTouchX[id]=e.touches[0].clientX;},{passive:true});
-  wrap.addEventListener('touchend',function(e){var dx=e.changedTouches[0].clientX-bTouchX[id];if(Math.abs(dx)>40)slideBingkai(id,dx<0?1:-1);},{passive:true});
-}
 function loadAllBingkai(){
   loadBingkai(2,BINGKAI_URL_2,BINGKAI_TITLE_2);
   loadBingkai(3,BINGKAI_URL_3,BINGKAI_TITLE_3);
   loadBingkai(4,BINGKAI_URL_4,BINGKAI_TITLE_4);
 }
-
-var promoSlides=[],promoIdx=0,promoTimer=null,promoTouchX=0;
 
 function driveImgUrl(url){
   if(!url)return"";
@@ -3515,33 +3431,19 @@ function driveImgUrl(url){
 }
 
 function loadPromos(){
-  var track=$("promoSliderTrack");
-  if(!track)return;
-  track.innerHTML='<div class="promo-loading"><div style="width:32px;height:32px;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;"></div><span>Memuat promo...</span></div>';
-  if(!PROMO_URL){renderPromoFallback();return;}
+  if(!PROMO_URL){promoGridLoaded++;renderPromoGrid();return;}
   fetch(PROMO_URL+(/\?/.test(PROMO_URL)?"&":"?")+"_t="+Date.now())
     .then(function(r){if(!r.ok)throw new Error();return r.text();})
     .then(function(csv){
-      var slides=[];
-      var rows=csv.split("\n");
+      var slides=[],rows=csv.split("\n");
       for(var i=1;i<rows.length;i++){
         var cols=rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(function(c){return c.replace(/^"|"$/g,"").trim();});
         var imgUrl=driveImgUrl((cols[0]||"").trim());
         if(!imgUrl)continue;
         slides.push({img:imgUrl,title:(cols[1]||"").trim(),sub:(cols[2]||"").trim()});
       }
-      if(slides.length===0){renderPromoFallback();return;}
-      promoSlides=slides;renderPromoSlides();
-    }).catch(function(){renderPromoFallback();});
-}
-
-function renderPromoFallback(){
-  promoSlides=[
-    {img:"",title:"Selamat Datang",sub:"Sistem Inventory & Harga Terpadu",color:"linear-gradient(135deg,#1e1b4b,#312e81,#4338ca)"},
-    {img:"",title:"Data Selalu Terupdate",sub:"Sinkronisasi otomatis dari Google Sheets",color:"linear-gradient(135deg,#0c1445,#1e3a5f,#1d4ed8)"},
-    {img:"",title:"Kelola Stok & Expired",sub:"Pantau inventaris dengan mudah",color:"linear-gradient(135deg,#064e3b,#065f46,#059669)"}
-  ];
-  renderPromoSlides();
+      addToPromoGrid(slides);
+    }).catch(function(){promoGridLoaded++;renderPromoGrid();});
 }
 
 function renderPromoSlides(){
