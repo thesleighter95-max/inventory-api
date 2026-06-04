@@ -401,7 +401,7 @@ table td { font-size: 11px; }
       <div class="home-app-name">Integrated Inventory System</div>
       <div class="home-app-sub">Manajemen stok &amp; harga terpadu</div>
     </div>
-    <button class="home-login-btn" onclick="showLoginPage()">
+    <button id="homeLoginBtn" class="home-login-btn" onclick="showLoginPage()" style="opacity:0;transition:opacity 0.8s ease;">
       <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
       Masuk
     </button>
@@ -3397,7 +3397,7 @@ var BINGKAI_URLS=[
   PROMO_URL.replace('gid=0','gid=551485687'),
   PROMO_URL.replace('gid=0','gid=553669916'),
   PROMO_URL.replace('gid=0','gid=583509450'),
-  ''
+  PROMO_URL.replace('gid=0','gid=964924672')
 ];
 var BINGKAI_TITLES=['Flyer 1','Flyer 2','Flyer 3','Flyer 4','Flyer 5'];
 
@@ -3604,6 +3604,7 @@ function showHomePage(){
   if(sn)sn.style.display=STORE_NAME?"block":"none";
   if(st)st.style.display=STORE_TAGLINE?"block":"none";
   loadPromos();loadAllBingkai();
+  var _lb=document.getElementById("homeLoginBtn");if(_lb)_lb.style.opacity="1";
 }
 
 /* ---- Peringatan sebelum refresh/tutup tab jika ada data belum terkirim ---- */
@@ -3630,6 +3631,7 @@ window.addEventListener("beforeunload",function(e){
   if(sn){sn.textContent=STORE_NAME||"";sn.style.display=STORE_NAME?"block":"none";}
   if(st){st.textContent=STORE_TAGLINE||"";st.style.display=STORE_TAGLINE?"block":"none";}
   loadPromos();loadAllBingkai();
+  setTimeout(function(){var b=document.getElementById("homeLoginBtn");if(b)b.style.opacity="1";},3000);
 })();
 
 /* ===== PROMO LIST ===== */
