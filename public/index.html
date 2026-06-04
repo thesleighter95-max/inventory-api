@@ -3486,86 +3486,10 @@ function loadAllBingkai(){
 
 function loadPromos(){loadAllBingkai();}
 
-function renderPromoSlides(){
-  var track=$("promoSliderTrack"),dots=$("promoDots");
-  if(!track)return;
-  track.innerHTML=promoSlides.map(function(s,i){
-    if(s.img){
-      return'<div class="promo-slide" onclick="openLightbox(\''+s.img+'\')"><img src="'+s.img+'" alt="promo '+(i+1)+'" onerror="this.closest(\'.promo-slide\').style.background=\'linear-gradient(135deg,#1e1b4b,#312e81)\';this.remove();" loading="lazy">'+
-        (s.title?'<div class="promo-slide-caption"><p class="promo-slide-title">'+s.title+'</p>'+(s.sub?'<p class="promo-slide-sub">'+s.sub+'</p>':'')+'</div>':'')+'</div>';
-    }
-    return'<div class="promo-slide" style="background:'+(s.color||'#1e1b4b')+';display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;">'+
-      '<p style="font-size:26px;font-weight:900;color:white;margin:0 0 10px;line-height:1.2;">'+s.title+'</p>'+
-      '<p style="font-size:13px;color:rgba(255,255,255,0.75);margin:0;">'+s.sub+'</p></div>';
-  }).join("");
-  if(dots)dots.innerHTML=promoSlides.map(function(_,i){
-    return'<button class="promo-dot'+(i===0?' active':'')+'" onclick="promoGoTo('+i+')" aria-label="Slide '+(i+1)+'"></button>';
-  }).join("");
-  promoIdx=0;updatePromoPos();startPromoTimer();initPromoTouch();
-}
-
-function updatePromoPos(){
-  var track=$("promoSliderTrack");
-  if(track)track.style.transform="translateX(-"+(promoIdx*100)+"%)";
-  var ds=document.querySelectorAll(".promo-dot");
-  for(var i=0;i<ds.length;i++)ds[i].classList.toggle("active",i===promoIdx);
-  var ctr=$("promoCounter");
-  if(ctr){
-    if(promoSlides.length>1){ctr.style.display="block";ctr.textContent=(promoIdx+1)+" / "+promoSlides.length;}
-    else{ctr.style.display="none";}
-  }
-}
-
-function promoSlide(dir){
-  if(!promoSlides.length)return;
-  promoIdx=(promoIdx+dir+promoSlides.length)%promoSlides.length;
-  updatePromoPos();resetPromoTimer();
-}
-
-function promoGoTo(idx){promoIdx=idx;updatePromoPos();resetPromoTimer();}
-
-function startPromoTimer(){
-  if(promoTimer)clearInterval(promoTimer);
-  if(promoSlides.length>1)promoTimer=setInterval(function(){promoSlide(1);},4000);
-}
-
-function resetPromoTimer(){if(promoTimer)clearInterval(promoTimer);startPromoTimer();}
-
-function initPromoTouch(){
-  var wrap=$("promoSliderWrap");
-  if(!wrap||wrap._touchInit)return;
-  wrap._touchInit=true;
-  wrap.addEventListener("touchstart",function(e){promoTouchX=e.touches[0].clientX;},{passive:true});
-  wrap.addEventListener("touchend",function(e){
-    var dx=e.changedTouches[0].clientX-promoTouchX;
-    if(Math.abs(dx)>40)promoSlide(dx<0?1:-1);
-  },{passive:true});
-}
-
 /* ===== PROMO LIGHTBOX ===== */
 var lbScale=1,lbMinScale=1,lbMaxScale=5;
 var lbLastTap=0,lbPinchDist0=0,lbPinchScale0=1;
 var lbDragX=0,lbDragY=0,lbDragStartX=0,lbDragStartY=0,lbTransX=0,lbTransY=0,lbIsDragging=false;
-
-function openLightbox(src){
-  var lb=$("promoLightbox"),img=$("lbImg"),wrap=$("lbImgWrap");
-  lbScale=1;lbTransX=0;lbTransY=0;
-  img.style.transform="scale(0.88)";
-  img.src=src;
-  lb.style.display="flex";
-  // rAF trick: let browser paint display:flex first, then trigger CSS transition
-  requestAnimationFrame(function(){
-    requestAnimationFrame(function(){
-      lb.classList.add("open");
-    });
-  });
-  document.body.style.overflow="hidden";
-  wrap.ontouchstart=lbTouchStart;
-  wrap.ontouchmove=lbTouchMove;
-  wrap.ontouchend=lbTouchEnd;
-  wrap.onmousedown=lbMouseDown;
-  wrap.onwheel=lbWheel;
-}
 
 function closeLightbox(){
   var lb=$("promoLightbox");
