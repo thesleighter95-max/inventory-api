@@ -271,6 +271,7 @@ table td { font-size: 11px; }
 @keyframes bnSlideUp{from{transform:translateY(72px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 @keyframes bnShimmer{0%{left:-120%;}100%{left:140%;}}
 @keyframes bcSlideUp{from{opacity:0;transform:translateY(36px);}to{opacity:1;transform:translateY(0);}}
+@keyframes bnPulseRing{0%{transform:translateY(0);opacity:1;box-shadow:0 8px 28px rgba(99,102,241,0.38),0 0 0 0px rgba(99,102,241,0.5);}100%{transform:translateY(0);opacity:1;box-shadow:0 8px 28px rgba(99,102,241,0.12),0 0 0 22px rgba(99,102,241,0);}}
 .home-login-btn-shimmer{position:absolute;top:0;left:-120%;width:55%;height:100%;background:linear-gradient(105deg,transparent 20%,rgba(255,255,255,0.38) 50%,transparent 80%);border-radius:14px;pointer-events:none;}
 /* BACK BUTTON LOGIN */
 .login-back-btn{display:flex;align-items:center;gap:6px;color:#6b7280;font-size:13px;font-weight:600;background:none;border:none;cursor:pointer;padding:4px 0 16px;transition:color 0.2s;}
@@ -3429,6 +3430,7 @@ function _triggerLoginBtn(){
     b.style.transition='none';
     b.style.animation='bnSlideUp 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards';
     setTimeout(function(){var sh=document.getElementById('btnShimmer');if(sh)sh.style.animation='bnShimmer 0.9s ease forwards';},500);
+    setTimeout(function(){b.style.transform='translateY(0)';b.style.opacity='1';b.style.animation='bnPulseRing 0.85s ease-out forwards';},2200);
   },remaining);
 }
 function loadBingkai(id,url,title){
