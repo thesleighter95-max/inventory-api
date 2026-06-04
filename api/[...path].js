@@ -639,6 +639,14 @@ loadStatus();
       return send({ success: true, message: `Snapshot ${date} berhasil dihapus` });
     }
 
+    // POST /price-snapshot-highest/reset — hapus dan reset price-snapshot-highest (admin only)
+    if (path === "/price-snapshot-highest/reset" && method === "POST") {
+      const { adminPassword } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      await deleteKey("price-snapshot-highest");
+      return send({ success: true, message: "price-snapshot-highest berhasil direset. Klik Bangun Ulang Tertinggi untuk membangun ulang dari snapshot yang valid." });
+    }
+
     // GET /promo-list — daftar artikel promo (harga terbaru < harga tertinggi historis)
     if (path === "/promo-list" && method === "GET") {
       const [highest, current] = await Promise.all([
