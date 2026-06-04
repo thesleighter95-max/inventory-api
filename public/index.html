@@ -3416,6 +3416,21 @@ function driveImgUrl(url){
   return url;
 }
 
+var _bcDone={},_bcAnimEnd={},_bcLoginShown=false,_bcFallback=null;
+function _triggerLoginBtn(){
+  if(_bcLoginShown)return;
+  _bcLoginShown=true;
+  if(_bcFallback){clearTimeout(_bcFallback);_bcFallback=null;}
+  var b=document.getElementById("homeLoginBtn");
+  if(!b)return;
+  var remaining=Math.max(0,Math.max.apply(null,Object.keys(_bcAnimEnd).map(function(k){return _bcAnimEnd[k];}))-Date.now())+320;
+  setTimeout(function(){
+    if(b.style.opacity!=='0')return;
+    b.style.transition='none';
+    b.style.animation='bnSlideUp 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards';
+    setTimeout(function(){var sh=document.getElementById('btnShimmer');if(sh)sh.style.animation='bnShimmer 0.9s ease forwards';},500);
+  },remaining);
+}
 function loadBingkai(id,url,title){
   var titleEl=$('btitle'+id),coverEl=$('bcov'+id),countEl=$('bcount'+id),card=$('bcard'+id);
   if(titleEl&&title)titleEl.textContent=title;
@@ -3439,9 +3454,13 @@ function loadBingkai(id,url,title){
         card.style.opacity='0';
         card.style.transform='translateY(36px)';
         card.style.display='';
+        var _stagger=(_id-1)*190;
+        _bcAnimEnd[_id]=Date.now()+_stagger+520;
         setTimeout(function(){
           card.style.animation='bcSlideUp 0.52s cubic-bezier(0.34,1.56,0.64,1) forwards';
-        }, (_id-1)*190);
+          _bcDone[_id]=true;
+          if(Object.keys(_bcDone).length>=5)_triggerLoginBtn();
+        },_stagger);
       }
     }).catch(function(){});
 }
@@ -3644,16 +3663,7 @@ window.addEventListener("beforeunload",function(e){
   if(sn){sn.textContent=STORE_NAME||"";sn.style.display=STORE_NAME?"block":"none";}
   if(st){st.textContent=STORE_TAGLINE||"";st.style.display=STORE_TAGLINE?"block":"none";}
   loadPromos();loadAllBingkai();
-  setTimeout(function(){
-    var b=document.getElementById("homeLoginBtn");
-    if(!b)return;
-    b.style.transition="none";
-    b.style.animation="bnSlideUp 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards";
-    setTimeout(function(){
-      var sh=document.getElementById("btnShimmer");
-      if(sh)sh.style.animation="bnShimmer 0.9s ease forwards";
-    },500);
-  },2500);
+  _bcFallback=setTimeout(_triggerLoginBtn,5000);
 })();
 
 /* ===== PROMO LIST ===== */
