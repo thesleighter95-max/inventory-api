@@ -962,6 +962,15 @@ table td { font-size: 11px; }
           <p style="font-size:12px;">Pilih menu Promo untuk memuat data</p>
         </div>
       </div>
+      <!-- Panel pengecualian (admin only, toggled) -->
+      <div id="excludedPromoPanel" style="display:none;margin-top:10px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <p style="font-size:11px;font-weight:700;color:#9ca3af;margin:0;">Dikecualikan dari Promo</p>
+          <button onclick="toggleExcludedPanel()" style="background:none;border:none;color:#6b7280;font-size:14px;cursor:pointer;line-height:1;">&#10005;</button>
+        </div>
+        <p style="font-size:9px;color:#6b7280;margin:0 0 8px;">Item ini tidak tampil di daftar promo, tapi tetap muncul normal saat di-scan.</p>
+        <div id="excludedPromoList"></div>
+      </div>
     </div>
   </div>
 
@@ -3661,15 +3670,11 @@ function renderPromoItems(){
   var sort=($("promoSort")?$("promoSort").value:"disc_pct");
   var maxDisc=parseInt(($("promoMaxDisc")?$("promoMaxDisc").value:"70")||"70");
   var all=_promoData.items.slice();
-  // Filter maks diskon
   var hidden=all.filter(function(it){return it.discountPct>maxDisc;});
   var items=all.filter(function(it){return it.discountPct<=maxDisc;});
-  // Update hidden count badge
   var hc=$("promoHiddenCount");
   if(hc){if(hidden.length>0){hc.style.display="block";hc.textContent=hidden.length+" disembunyikan";}else{hc.style.display="none";}}
-  // Filter search
   if(search)items=items.filter(function(it){return(it.name||"").toLowerCase().includes(search)||it.barcode.toLowerCase().includes(search);});
-  // Sort
   if(sort==="disc_pct")items.sort(function(a,b){return b.discountPct-a.discountPct;});
   else if(sort==="disc_amt")items.sort(function(a,b){return b.discount-a.discount;});
   else if(sort==="name")items.sort(function(a,b){return(a.name||a.barcode).localeCompare(b.name||b.barcode);});
@@ -3684,13 +3689,16 @@ function renderPromoItems(){
   var h='<div style="font-size:10px;color:#6b7280;text-align:right;margin-bottom:6px;">Menampilkan '+totalShown.toLocaleString("id-ID")+(search?" hasil":"")+' (dari '+_promoData.count.toLocaleString("id-ID")+' total)</div>';
   items.forEach(function(it){
     var pct=Math.round(it.discountPct);
-    // Warning untuk diskon sangat tinggi (kemungkinan data error)
     var isExtreme=pct>60;
     var badgeColor=pct>=20?"#dc2626":pct>=10?"#f97316":"#6b7280";
     var badgeBg=pct>=20?"rgba(220,38,38,0.15)":pct>=10?"rgba(249,115,22,0.15)":"rgba(107,114,128,0.15)";
     var rowBorder=isExtreme?"1px solid rgba(249,115,22,0.3)":"1px solid rgba(255,255,255,0.06)";
     var savingText="hemat Rp "+it.discount.toLocaleString("id-ID");
-    h+='<div style="background:rgba(0,0,0,0.25);border:'+rowBorder+';border-radius:10px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px;">'
+    var safeBC=it.barcode.replace(/'/g,"");
+    var adminTrashBtn=isAdmin
+      ?'<button onclick="removePromoItem(\'' +safeBC+ '\')" title="Hapus harga coret" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:6px;padding:4px 7px;font-size:11px;cursor:pointer;flex-shrink:0;line-height:1;" aria-label="Hapus">&#128465;</button>'
+      :"";
+    h+='<div id="promo-row-'+safeBC+'" style="background:rgba(0,0,0,0.25);border:'+rowBorder+';border-radius:10px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px;">'
       +'<div style="flex:1;min-width:0;">'
       +(it.name?'<p style="font-size:12px;font-weight:700;color:#e5e7eb;margin:0 0 1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+it.name+'</p>':'')
       +'<p style="font-size:10px;color:#6b7280;margin:0 0 2px;">'+it.barcode+'</p>'
@@ -3702,11 +3710,90 @@ function renderPromoItems(){
       +'<p style="font-size:14px;font-weight:800;color:#f87171;margin:1px 0 3px;">Rp '+it.currentPrice.toLocaleString("id-ID")+'</p>'
       +'<span style="background:'+badgeBg+';color:'+badgeColor+';border:1px solid '+badgeColor+';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800;">-'+pct+'%</span>'
       +'</div>'
+      +adminTrashBtn
       +'</div>';
   });
+  if(isAdmin){
+    h+='<div style="text-align:center;margin-top:8px;">'
+      +'<button onclick="toggleExcludedPanel()" style="background:none;border:none;color:#6b7280;font-size:10px;cursor:pointer;text-decoration:underline;">Lihat daftar yang dikecualikan</button>'
+      +'</div>';
+  }
   el.innerHTML=h;
 }
 
+
+// ===== PROMO EXCLUSION MANAGEMENT =====
+var _excludedPanel=false;
+function removePromoItem(barcode){
+  var nm="";
+  if(_promoData){var it=_promoData.items.find(function(x){return x.barcode===barcode;});if(it)nm=it.name||barcode;}
+  if(!confirm("Hapus harga coret untuk:\n"+(nm||barcode)+"\n\nProduk tetap tampil normal saat di-scan."))return;
+  fetch(API_BASE_URL+"/promo-exclude",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,barcode:barcode})})
+  .then(function(r){return r.json()})
+  .then(function(j){
+    if(j.success){
+      showToast("Harga coret dihapus: "+(nm||barcode),"success");
+      if(_promoData){
+        _promoData.items=_promoData.items.filter(function(x){return x.barcode!==barcode;});
+        _promoData.count=_promoData.items.length;
+        var ct=_promoData.items.filter(function(x){return x.discountPct>10;}).length;
+        var ct2=_promoData.items.filter(function(x){return x.discountPct>20;}).length;
+        if($("promoCountBig"))$("promoCountBig").textContent=_promoData.count.toLocaleString("id-ID");
+        if($("promoCount10"))$("promoCount10").textContent=ct.toLocaleString("id-ID");
+        if($("promoCount20"))$("promoCount20").textContent=ct2.toLocaleString("id-ID");
+        renderPromoItems();
+      }
+    }else{showToast("Gagal: "+(j.message||"Error"),"error");}
+  })
+  .catch(function(e){showToast("Error: "+e.message,"error");});
+}
+function restorePromoItem(barcode){
+  fetch(API_BASE_URL+"/promo-exclude/"+encodeURIComponent(barcode),{method:"DELETE",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD})})
+  .then(function(r){return r.json()})
+  .then(function(j){
+    if(j.success){
+      showToast("Barcode "+barcode+" direstorasi","success");
+      loadExcludedList();
+      _promoData=null;_promoLoading=false;loadPromoList();
+    }else{showToast("Gagal: "+(j.message||"Error"),"error");}
+  })
+  .catch(function(e){showToast("Error: "+e.message,"error");});
+}
+function toggleExcludedPanel(){
+  _excludedPanel=!_excludedPanel;
+  var p=$("excludedPromoPanel");
+  if(!p)return;
+  if(_excludedPanel){p.style.display="block";loadExcludedList();}
+  else{p.style.display="none";}
+}
+function loadExcludedList(){
+  var el=$("excludedPromoList");if(!el)return;
+  el.innerHTML='<p style="font-size:10px;color:#6b7280;text-align:center;">Memuat...</p>';
+  fetch(API_BASE_URL+"/promo-excluded?adminPassword="+encodeURIComponent(ADMIN_PASSWORD))
+  .then(function(r){return r.json()})
+  .then(function(j){
+    if(!j.success){el.innerHTML='<p style="font-size:10px;color:#f87171;">Gagal memuat</p>';return;}
+    var barcodes=j.barcodes||[];
+    if(!barcodes.length){el.innerHTML='<p style="font-size:10px;color:#6b7280;text-align:center;padding:12px 0;">Tidak ada item yang dikecualikan</p>';return;}
+    var nameMap={};
+    if(barang&&barang.length>1){for(var i=1;i<barang.length;i++){var row=barang[i];if(!row)continue;var bc2=(row[1]||"").trim(),nm2=(row[2]||"").trim().toUpperCase();if(bc2&&nm2)nameMap[bc2]=nm2;}}
+    var h="";
+    barcodes.forEach(function(bc){
+      var safeBC=bc.replace(/'/g,"");
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);">'
+        +'<div style="flex:1;min-width:0;">'
+        +(nameMap[bc]?'<p style="font-size:11px;font-weight:700;color:#e5e7eb;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+nameMap[bc]+'</p>':'')
+        +'<p style="font-size:9px;color:#6b7280;margin:0;">'+bc+'</p>'
+        +'</div>'
+        +'<button onclick="restorePromoItem(\'' +safeBC+ '\')" style="background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);color:#34d399;border-radius:6px;padding:3px 8px;font-size:9px;cursor:pointer;flex-shrink:0;">Restore</button>'
+        +'</div>';
+    });
+    el.innerHTML=h;
+  })
+  .catch(function(e){el.innerHTML='<p style="font-size:10px;color:#f87171;">Error: '+e.message+'</p>';});
+}
 </script>
 </body>
 </html>
