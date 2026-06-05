@@ -722,6 +722,28 @@ loadStatus();
       return send({ success: true, total: barcodes.length });
     }
 
+
+    // GET /cron/daily-reset?secret=ADMIN_PASSWORD
+    // Dipanggil oleh cron-job.org setiap jam 04:00 WITA (UTC+8 = 20:00 UTC hari sebelumnya)
+    if (path === "/cron/daily-reset" && method === "GET") {
+      const { secret } = query;
+      if (secret !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const now = new Date().toISOString();
+      await Promise.all([
+        // 1. Set status BBLM -> masih update
+        setJson("bblm-status", { status: "updating", updatedAt: now, resetBy: "cron-04:00" }),
+        // 2. Hapus snapshot harga (harga coret hilang, harga kembali normal)
+        setJson("price-snapshot-prev", { date: null, prices: {} }),
+        setJson("price-snapshot-current", { date: null, prices: {} }),
+      ]);
+      return send({
+        success: true,
+        message: "Daily reset berhasil: status BBLM -> masih update, harga coret direset",
+        resetAt: now,
+        actions: ["bblm-status -> updating", "price-snapshot-prev -> cleared", "price-snapshot-current -> cleared"]
+      });
+    }
+
     return send({ error: "Not found" }, 404);
   } catch (err) {
     return send({ error: "Internal server error", detail: String(err) }, 500);
