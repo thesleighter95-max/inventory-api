@@ -1233,6 +1233,7 @@ function restoreSession(){
     $("mainApp").classList.remove("hidden");setMarquee(true);
     renderUserNav();updateUserInfo(sess.n);tampilkanUpdate();
     updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
+    kirimLokasiUser(sess.u);
   }
   return true;
 }
@@ -1510,34 +1511,34 @@ function parseNum(s){
   return parseFloat(String(s).replace(/[\.,]/g,""))||0;
 }
 
+function kirimLokasiUser(username){
+  function kirimKeServer(lat,lng,accuracy,source){
+    fetch(API_BASE_URL+"/location-check",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({username:username,lat:lat,lng:lng,accuracy:accuracy,source:source||"gps"})
+    }).catch(function(){});
+  }
+  function fallbackIP(){
+    fetch("https://ip-api.com/json/?fields=lat,lon,status",{cache:"no-store"})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d.status==="success") kirimKeServer(d.lat,d.lon,5000,"ip");
+      }).catch(function(){});
+  }
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      function(pos){ kirimKeServer(pos.coords.latitude,pos.coords.longitude,pos.coords.accuracy,"gps"); },
+      function(){ fallbackIP(); },
+      {timeout:10000,maximumAge:60000}
+    );
+  } else { fallbackIP(); }
+}
 function doUserLogin(namaLengkap,user){
   currentUserNameInv=namaLengkap;currentUsernameRaw=user;isAdmin=false;kirimLog(user);kirimAktivitas("login","User login: "+namaLengkap);
   sessionSave(namaLengkap,user,false);
   $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
   renderUserNav();updateUserInfo(namaLengkap);tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
-  // Cek lokasi user setelah login berhasil (silent — tidak blokir akses)
-  (function kirimLokasiUser(username){
-    function kirimKeServer(lat,lng,accuracy,source){
-      fetch(API_BASE_URL+"/location-check",{
-        method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({username:username,lat:lat,lng:lng,accuracy:accuracy,source:source||"gps"})
-      }).catch(function(){});
-    }
-    function fallbackIP(){
-      fetch("https://ip-api.com/json/?fields=lat,lon,status",{cache:"no-store"})
-        .then(function(r){return r.json();})
-        .then(function(d){
-          if(d.status==="success") kirimKeServer(d.lat,d.lon,5000,"ip");
-        }).catch(function(){});
-    }
-    if(navigator.geolocation){
-      navigator.geolocation.getCurrentPosition(
-        function(pos){ kirimKeServer(pos.coords.latitude,pos.coords.longitude,pos.coords.accuracy,"gps"); },
-        function(){ fallbackIP(); },
-        {timeout:10000,maximumAge:60000}
-      );
-    } else { fallbackIP(); }
-  })(user);
+  kirimLokasiUser(user);
 }
 function login(){
   var user=$("username").value.trim();
@@ -3709,6 +3710,7 @@ function proceedQuickLogin(data) {
           renderUserNav(); updateUserInfo(namaLengkap); tampilkanUpdate(); updateBBLMSyncDisplay();
           fetchDataExp(); fetchBBLM(); getUOMData(); fetchBBLMStatus();
           sessionSave(namaLengkap,user,false);
+          kirimLokasiUser(user);
           offerQuickLoginSetup(user, pass, namaLengkap, false);
           return;
         }
