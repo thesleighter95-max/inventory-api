@@ -1250,7 +1250,7 @@ function login(){
     if(pass===ADMIN_PASSWORD){
       currentUserNameInv="Admin";isAdmin=true;kirimLog("admin");kirimAktivitas("login","Admin login");
       $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
-      renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();
+      renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();checkMorningReset();
       loadMaintenanceStatus();
       return;
     }else{errorEl.innerText="Password admin salah!";return}
@@ -1553,6 +1553,29 @@ function setBblmStatus(status){
   }).catch(function(){showToast("Gagal menghubungi server","error");});
 }
 function escHtml(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+/* ---- Morning Auto Reset ---- */
+function checkMorningReset(){
+  if(!isAdmin)return;
+  var now=new Date();
+  var witaHour=(now.getUTCHours()+8)%24;
+  if(witaHour<4)return;
+  fetch(API_BASE_URL+"/morning-reset-status")
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.done)return;
+      fetch(API_BASE_URL+"/morning-reset",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({adminPassword:ADMIN_PASSWORD})
+      }).then(function(r){return r.json();}).then(function(res){
+        if(res.success){
+          renderBBLMBanner({status:"updating",updatedAt:res.executedAt});
+          if(typeof loadHargaCoretStatus==="function")setTimeout(loadHargaCoretStatus,800);
+          showToast("⏰ Reset pagi otomatis: BBLM → Masih Update & Harga Coret direset","success");
+        }
+      }).catch(function(){});
+    }).catch(function(){});
+}
 /* =====================================================
    MAINTENANCE MODE
    ===================================================== */
@@ -3325,7 +3348,7 @@ function proceedQuickLogin(data) {
     $("loginPage").classList.add("hidden");
     $("mainApp").classList.remove("hidden"); setMarquee(true);
     renderAdminNav(); updateUserInfo("Admin"); tampilkanUpdate();
-    updateBBLMSyncDisplay(); fetchDataExp(); loadAdminData(); fetchBBLM(); getUOMData(); fetchBBLMStatus();
+    updateBBLMSyncDisplay(); fetchDataExp(); loadAdminData(); fetchBBLM(); getUOMData(); fetchBBLMStatus(); checkMorningReset();
     return;
   }
   // Regular user quick login — tetap verifikasi via Google Sheets untuk keamanan
