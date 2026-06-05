@@ -1108,6 +1108,18 @@ loadCurrentSetting();
       return;
     }
 
+
+    // DELETE /location-warnings — hapus semua log peringatan lokasi (bukan semua log)
+    if (path === "/location-warnings" && method === "DELETE") {
+      const { adminPassword } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const logs = await getJson("activity-logs", []);
+      const filtered = logs.filter(l => l.type !== "location-warning" && !(l.action && l.action.includes("LOKASI DI LUAR")));
+      const removed = logs.length - filtered.length;
+      await setJson("activity-logs", filtered);
+      return send({ success: true, message: removed + " log peringatan lokasi berhasil dihapus", removed });
+    }
+
     return send({ error: "Not found" }, 404);
   } catch (err) {
     return send({ error: "Internal server error", detail: String(err) }, 500);
