@@ -706,6 +706,222 @@ loadStatus();
     }
 
 
+
+    // GET /dashboard — halaman dashboard admin
+    if (path === "/dashboard" && method === "GET") {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.status(200).end(`<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Admin - PDA Mini Mataram</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0f172a;min-height:100vh;padding:16px;color:#e2e8f0}
+h1{font-size:18px;font-weight:700;color:#fff}
+.sub{color:#64748b;font-size:12px;margin-bottom:20px;margin-top:2px}
+.login-card{background:#1e293b;border-radius:14px;padding:28px 24px;max-width:360px;margin:60px auto}
+.login-card h1{text-align:center;margin-bottom:4px}
+.login-card .sub{text-align:center;margin-bottom:20px}
+label{display:block;font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:6px}
+input[type=password]{width:100%;padding:11px 14px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;font-size:14px;color:#e2e8f0;outline:none}
+input:focus{border-color:#3b82f6}
+.btn{display:block;width:100%;padding:12px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-top:14px}
+.btn:active{background:#2563eb}
+.btn-sm{display:inline-block;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;margin-right:6px;margin-top:6px}
+.btn-blue{background:#1d4ed8;color:#fff}
+.btn-red{background:#dc2626;color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.card{background:#1e293b;border-radius:12px;padding:16px}
+.card.full{grid-column:1/-1}
+.card-label{font-size:11px;color:#64748b;font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.card-val{font-size:28px;font-weight:800;color:#fff;line-height:1}
+.card-sub{font-size:11px;color:#64748b;margin-top:4px}
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.badge-green{background:#14532d;color:#4ade80}
+.badge-red{background:#450a0a;color:#f87171}
+.badge-yellow{background:#422006;color:#fb923c}
+.badge-blue{background:#1e3a5f;color:#60a5fa}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.dot-green{background:#4ade80}
+.dot-red{background:#f87171}
+.dot-yellow{background:#fb923c}
+.log-row{padding:8px 0;border-bottom:1px solid #1e293b;font-size:12px;display:flex;gap:8px}
+.log-row:last-child{border:none}
+.log-time{color:#64748b;min-width:85px}
+.log-user{color:#60a5fa;font-weight:600;min-width:70px}
+.log-action{color:#e2e8f0}
+.refresh-info{font-size:11px;color:#475569;text-align:right;margin-bottom:8px}
+.section-title{font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.action-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.spin{animation:spin 1s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err{color:#f87171;font-size:13px;text-align:center;margin-top:12px}
+</style>
+</head>
+<body>
+
+<div id="loginWrap">
+  <div class="login-card">
+    <h1>🛡️ Dashboard Admin</h1>
+    <div class="sub">PDA Mini Mataram</div>
+    <label>Password Admin</label>
+    <input type="password" id="pwdInput" placeholder="Masukkan password admin" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn" onclick="doLogin()">Masuk</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<div id="dashWrap" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+    <div>
+      <h1>🛡️ Dashboard Admin</h1>
+      <div class="sub">PDA Mini Mataram · <span id="lastRefresh">memuat...</span></div>
+    </div>
+    <button class="btn-sm btn-blue" onclick="loadAll()" style="margin-top:4px">⟳ Refresh</button>
+  </div>
+
+  <div class="grid" id="statsGrid">
+    <div class="card"><div class="card-label">📦 Total Produk</div><div class="card-val" id="vProduk">—</div><div class="card-sub" id="vProdukSub"></div></div>
+    <div class="card"><div class="card-label">👥 Total User</div><div class="card-val" id="vUser">—</div><div class="card-sub" id="vUserSub"></div></div>
+    <div class="card"><div class="card-label">📊 Aktivitas Hari Ini</div><div class="card-val" id="vScan">—</div><div class="card-sub" id="vScanSub"></div></div>
+    <div class="card"><div class="card-label">📋 Status BBLM</div><div class="card-val" style="font-size:18px" id="vBblm">—</div><div class="card-sub" id="vBblmSub"></div></div>
+    <div class="card full"><div class="card-label">🏷️ Status Promo</div><div id="vPromo">—</div></div>
+    <div class="card full"><div class="card-label">🤖 Cron Reset Otomatis</div><div id="vCron">—</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="section-title">⚡ Aksi Cepat</div>
+    <div class="action-row">
+      <button class="btn-sm btn-blue" onclick="window.open('/api/upload-harga','_blank')">📤 Upload Harga</button>
+      <button class="btn-sm btn-blue" onclick="doBackup()">💾 Download Backup</button>
+      <button class="btn-sm btn-red" onclick="if(confirm('Reset cron sekarang?'))doCronReset()">🔄 Jalankan Cron Sekarang</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">📝 Aktivitas Terbaru</div>
+    <div id="vLogs"><div style="color:#475569;font-size:13px">Memuat...</div></div>
+  </div>
+</div>
+
+<script>
+let pwd = "";
+
+function doLogin() {
+  const v = document.getElementById("pwdInput").value.trim();
+  if (!v) { document.getElementById("loginErr").textContent = "Password wajib diisi"; return; }
+  pwd = v;
+  document.getElementById("loginWrap").style.display = "none";
+  document.getElementById("dashWrap").style.display = "block";
+  loadAll();
+  setInterval(loadAll, 30000);
+}
+
+async function loadAll() {
+  document.getElementById("lastRefresh").textContent = "memuat...";
+  try {
+    const [bblm, users, logs, bblmStatus, syncPrices, cronStatus] = await Promise.all([
+      fetch("/api/bblm").then(r=>r.json()).catch(()=>({})),
+      fetch("/api/users?adminPassword="+encodeURIComponent(pwd)).then(r=>r.json()).catch(()=>({})),
+      fetch("/api/activity-log?adminPassword="+encodeURIComponent(pwd)+"&limit=200").then(r=>r.json()).catch(()=>({})),
+      fetch("/api/bblm-status").then(r=>r.json()).catch(()=>({})),
+      fetch("/api/sync-prices").then(r=>r.json()).catch(()=>({})),
+      fetch("/api/cron/status").then(r=>r.json()).catch(()=>({})),
+    ]);
+
+    // Total produk
+    const totalProduk = bblm.totalProducts ?? 0;
+    document.getElementById("vProduk").textContent = totalProduk.toLocaleString("id-ID");
+    document.getElementById("vProdukSub").textContent = bblm.updatedAt ? "Update: "+fmtDate(bblm.updatedAt) : "Belum ada data";
+
+    // Total user
+    const totalUser = users.users?.length ?? 0;
+    const suspended = users.users?.filter(u=>u.suspended).length ?? 0;
+    document.getElementById("vUser").textContent = totalUser;
+    document.getElementById("vUserSub").textContent = suspended > 0 ? suspended+" ditangguhkan" : "Semua aktif";
+
+    // Aktivitas hari ini
+    const today = new Date().toISOString().slice(0,10);
+    const todayLogs = (logs.logs||[]).filter(l=>l.createdAt&&l.createdAt.startsWith(today));
+    document.getElementById("vScan").textContent = todayLogs.length;
+    const uniqueUsers = [...new Set(todayLogs.map(l=>l.username))];
+    document.getElementById("vScanSub").textContent = uniqueUsers.length > 0 ? uniqueUsers.length+" user aktif hari ini" : "Belum ada aktivitas";
+
+    // Status BBLM
+    const isUpdating = bblmStatus.status === "updating";
+    document.getElementById("vBblm").innerHTML = isUpdating
+      ? '<span class="dot dot-yellow"></span><span style="color:#fb923c">Masih Update</span>'
+      : '<span class="dot dot-green"></span><span style="color:#4ade80">Sudah Update</span>';
+    document.getElementById("vBblmSub").textContent = bblmStatus.updatedAt ? fmtDate(bblmStatus.updatedAt) : "";
+
+    // Status promo
+    const highest = syncPrices.highest || {};
+    const hasHighest = (highest.count||0) > 0;
+    const diffCount = syncPrices.diffCount || 0;
+    document.getElementById("vPromo").innerHTML = hasHighest
+      ? `<span class="badge badge-green">✅ PROMO AKTIF</span> <span style="font-size:13px;color:#94a3b8;margin-left:8px">${diffCount} produk harga turun · Referensi: ${highest.count?.toLocaleString("id-ID")} produk</span>`
+      : `<span class="badge badge-red">❌ TIDAK AKTIF</span> <span style="font-size:13px;color:#64748b;margin-left:8px">Harga tertinggi belum dibangun</span>`;
+
+    // Cron status
+    const lastRun = cronStatus.lastRun;
+    const nextRun = cronStatus.nextRunWITA;
+    document.getElementById("vCron").innerHTML = lastRun
+      ? `<div style="margin-bottom:6px"><span class="badge badge-green">✅ Terakhir jalan</span> <span style="font-size:13px;color:#94a3b8;margin-left:8px">${fmtDate(lastRun.runAt)}</span></div>
+         <div style="font-size:12px;color:#64748b">Berikutnya: ${nextRun||"-"}</div>`
+      : `<span class="badge badge-yellow">⚠️ Belum pernah jalan</span> <span style="font-size:12px;color:#64748b;margin-left:8px">Berikutnya: ${nextRun||"-"}</span>`;
+
+    // Recent logs
+    const recentLogs = (logs.logs||[]).slice(0,10);
+    if (recentLogs.length) {
+      document.getElementById("vLogs").innerHTML = recentLogs.map(l=>`
+        <div class="log-row">
+          <span class="log-time">${fmtTime(l.createdAt)}</span>
+          <span class="log-user">${l.username||"-"}</span>
+          <span class="log-action">${l.action||""}${l.detail?" · "+l.detail:""}</span>
+        </div>`).join("");
+    } else {
+      document.getElementById("vLogs").innerHTML = '<div style="color:#475569;font-size:13px;padding:8px 0">Belum ada aktivitas</div>';
+    }
+
+    document.getElementById("lastRefresh").textContent = "Update: "+new Date().toLocaleTimeString("id-ID",{timeZone:"Asia/Makassar"})+" WITA";
+  } catch(e) {
+    document.getElementById("lastRefresh").textContent = "Gagal memuat: "+e.message;
+  }
+}
+
+function fmtDate(iso) {
+  if (!iso) return "-";
+  return new Date(iso).toLocaleString("id-ID",{timeZone:"Asia/Makassar",day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})+" WITA";
+}
+function fmtTime(iso) {
+  if (!iso) return "-";
+  return new Date(iso).toLocaleString("id-ID",{timeZone:"Asia/Makassar",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+}
+
+async function doBackup() {
+  const url = "/api/backup?adminPassword="+encodeURIComponent(pwd);
+  const res = await fetch(url);
+  const blob = await res.blob();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "backup-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();
+}
+
+async function doCronReset() {
+  const res = await fetch("/api/cron/daily-reset?secret="+encodeURIComponent(pwd));
+  const j = await res.json();
+  alert(j.success ? "✅ Cron berhasil dijalankan!" : "❌ "+j.message);
+  if (j.success) loadAll();
+}
+</script>
+</body>
+</html>`);
+      return;
+    }
+
     // GET /cron/daily-reset?secret=ADMIN_PASSWORD
     // Dipanggil oleh cron-job.org setiap jam 04:00 WITA (UTC+8 = 20:00 UTC hari sebelumnya)
     if (path === "/cron/daily-reset" && method === "GET") {
