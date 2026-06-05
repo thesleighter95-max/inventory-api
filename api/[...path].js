@@ -736,11 +736,36 @@ loadStatus();
         setJson("price-snapshot-prev", { date: null, prices: {} }),
         setJson("price-snapshot-current", { date: null, prices: {} }),
       ]);
+      // Simpan log eksekusi cron
+      const cronLogs = await getJson("cron-logs", []);
+      cronLogs.unshift({ runAt: now, success: true, actions: ["bblm-status -> updating", "price-snapshot-prev -> cleared", "price-snapshot-current -> cleared"] });
+      if (cronLogs.length > 30) cronLogs.length = 30;
+      await setJson("cron-logs", cronLogs);
       return send({
         success: true,
         message: "Daily reset berhasil: status BBLM -> masih update, harga coret direset",
         resetAt: now,
         actions: ["bblm-status -> updating", "price-snapshot-prev -> cleared", "price-snapshot-current -> cleared"]
+      });
+    }
+
+
+    // GET /cron/status — cek riwayat eksekusi cron (tanpa auth untuk kemudahan monitoring)
+    if (path === "/cron/status" && method === "GET") {
+      const logs = await getJson("cron-logs", []);
+      const last = logs[0] ?? null;
+      const now = new Date();
+      // Hitung eksekusi berikutnya (jam 20:00 UTC = 04:00 WITA)
+      const next = new Date(now);
+      next.setUTCHours(20, 0, 0, 0);
+      if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
+      return send({
+        success: true,
+        lastRun: last ? { runAt: last.runAt, success: last.success, actions: last.actions } : null,
+        nextRun: next.toISOString(),
+        nextRunWITA: next.toLocaleString("id-ID", { timeZone: "Asia/Makassar", dateStyle: "full", timeStyle: "short" }),
+        totalLogs: logs.length,
+        recentLogs: logs.slice(0, 7)
       });
     }
 
