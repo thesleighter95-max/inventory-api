@@ -768,6 +768,80 @@ loadStatus();
       });
     }
 
+
+    // Haversine formula — hitung jarak (km) antara dua koordinat
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+                Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+                Math.sin(dLon/2)*Math.sin(dLon/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    // GET /company-location — ambil setting lokasi perusahaan
+    if (path === "/company-location" && method === "GET") {
+      const loc = await getJson("company-location", { lat: null, lng: null, radiusKm: 1, name: "Perusahaan" });
+      return send({ success: true, ...loc });
+    }
+
+    // POST /company-location — set lokasi perusahaan (admin)
+    if (path === "/company-location" && method === "POST") {
+      const { adminPassword, lat, lng, radiusKm, name } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      if (lat === undefined || lng === undefined) return send({ success: false, message: "lat dan lng wajib diisi" }, 400);
+      const data = {
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
+        radiusKm: parseFloat(radiusKm ?? 1),
+        name: name ?? "Perusahaan",
+        updatedAt: new Date().toISOString()
+      };
+      await setJson("company-location", data);
+      return send({ success: true, ...data });
+    }
+
+    // POST /location-check — cek lokasi user, catat peringatan jika di luar radius
+    if (path === "/location-check" && method === "POST") {
+      const { username, lat, lng, accuracy } = body;
+      if (!username) return send({ success: false, message: "username wajib diisi" }, 400);
+      if (lat === undefined || lng === undefined) return send({ success: false, message: "lat dan lng wajib diisi" }, 400);
+
+      const company = await getJson("company-location", { lat: null, lng: null, radiusKm: 1, name: "Perusahaan" });
+
+      if (company.lat === null || company.lng === null) {
+        return send({ success: true, status: "unconfigured", message: "Lokasi perusahaan belum diatur oleh admin" });
+      }
+
+      const distKm = haversine(parseFloat(lat), parseFloat(lng), company.lat, company.lng);
+      const distM = Math.round(distKm * 1000);
+      const isInRadius = distKm <= company.radiusKm;
+
+      if (!isInRadius) {
+        // Catat peringatan ke activity log
+        const logs = await getJson("activity-logs", []);
+        logs.unshift({
+          username,
+          action: "⚠️ LOKASI DI LUAR RADIUS",
+          detail: distM + "m dari " + company.name + " (batas: " + (company.radiusKm * 1000) + "m)" + (accuracy ? " · akurasi GPS: " + Math.round(accuracy) + "m" : ""),
+          createdAt: new Date().toISOString(),
+          type: "location-warning"
+        });
+        if (logs.length > 1000) logs.length = 1000;
+        await setJson("activity-logs", logs);
+      }
+
+      return send({
+        success: true,
+        isInRadius,
+        distanceM: distM,
+        radiusM: Math.round(company.radiusKm * 1000),
+        companyName: company.name,
+        status: isInRadius ? "dalam_radius" : "di_luar_radius"
+      });
+    }
+
     return send({ error: "Not found" }, 404);
   } catch (err) {
     return send({ error: "Internal server error", detail: String(err) }, 500);
