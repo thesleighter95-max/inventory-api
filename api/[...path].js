@@ -533,23 +533,6 @@ loadStatus();
       const today = new Date().toISOString().slice(0, 10);
       const prices = {};
       items.forEach(({ barcode, price }) => { if (barcode) prices[barcode] = Number(price) || 0; });
-      // Auto-rotate: jika hari berganti, otomatis simpan harga current sebagai acuan harga coret (prev)
-      const existingCurrent = await getJson("price-snapshot-current", { date: null, prices: {} });
-      if (existingCurrent.date && existingCurrent.date !== today && Object.keys(existingCurrent.prices || {}).length > 0) {
-        const existingPrev = await getJson("price-snapshot-prev", { date: null, prices: {} });
-        if (!existingPrev.date || existingPrev.date <= existingCurrent.date) {
-          await setJson("price-snapshot-prev", existingCurrent);
-        }
-        // Simpan ke riwayat harga per tanggal
-        const snapIdx = await getJson("price-snapshots-index", []);
-        if (!snapIdx.some(s => s.date === existingCurrent.date)) {
-          await setJson(`price-snapshot:${existingCurrent.date}`, existingCurrent);
-          snapIdx.unshift({ date: existingCurrent.date, count: Object.keys(existingCurrent.prices || {}).length });
-          if (snapIdx.length > 60) snapIdx.length = 60;
-          await setJson("price-snapshots-index", snapIdx);
-          await updateHighestSnapshot(existingCurrent.prices);
-        }
-      }
       await setJson("price-snapshot-current", { date: today, prices });
       // Selalu update highest agar harga naik langsung tercermin (tidak tunggu hari berganti)
       await updateHighestSnapshot(prices);
