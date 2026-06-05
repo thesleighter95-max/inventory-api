@@ -1515,6 +1515,15 @@ function doUserLogin(namaLengkap,user){
   sessionSave(namaLengkap,user,false);
   $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
   renderUserNav();updateUserInfo(namaLengkap);tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
+  // Cek lokasi user setelah login berhasil (silent — tidak blokir akses)
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(function(pos){
+      fetch(API_BASE_URL+"/location-check",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({username:user,lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:pos.coords.accuracy})
+      }).catch(function(){});
+    },function(){}, {timeout:10000,maximumAge:60000});
+  }
 }
 function login(){
   var user=$("username").value.trim();
