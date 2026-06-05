@@ -463,6 +463,33 @@ export default async function handler(req) {
       return json({ success: true });
     }
 
+    // GET /morning-reset-status
+    if (path === "/morning-reset-status" && method === "GET") {
+      const log = await getJson(store, "morning-reset-log", { date: null, executedAt: null });
+      const today = new Date().toISOString().slice(0, 10);
+      return json({ success: true, done: log.date === today, date: log.date, executedAt: log.executedAt });
+    }
+
+    // POST /morning-reset
+    if (path === "/morning-reset" && method === "POST") {
+      const { adminPassword } = body;
+      if (adminPassword !== ADMIN_PASSWORD) {
+        return json({ success: false, message: "Unauthorized" }, 403);
+      }
+      const now = new Date();
+      const today = now.toISOString().slice(0, 10);
+      await Promise.all([
+        setJson(store, "bblm-status", { status: "updating", updatedAt: now.toISOString() }),
+        setJson(store, "price-snapshot-prev", { date: null, prices: {} }),
+        setJson(store, "morning-reset-log", { date: today, executedAt: now.toISOString() }),
+      ]);
+      return json({
+        success: true,
+        message: "Reset pagi berhasil: BBLM → Masih Update, Harga Coret → direset",
+        executedAt: now.toISOString(),
+      });
+    }
+
     return json({ error: "Not found" }, 404);
   } catch (err) {
     return json({ error: "Internal server error", detail: String(err) }, 500);
