@@ -7,6 +7,8 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -942,6 +944,88 @@ table td { font-size: 11px; }
         </div>
       </div>
     </div>
+
+    <!-- ╔══════════════════════════════════════════════╗ -->
+    <!-- ║  KELOLA LOKASI PERUSAHAAN — admin only       ║ -->
+    <!-- ╚══════════════════════════════════════════════╝ -->
+    <div id="kelolaLokasiSection" style="margin-top:20px;padding-bottom:30px;">
+      <div style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(217,119,6,0.03));border:1px solid rgba(245,158,11,0.22);border-radius:16px;padding:14px 14px 16px;">
+        <!-- Header toggle -->
+        <div onclick="toggleKelolaLokasi()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;margin-bottom:0;" id="kelolaLokasiHeader">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:28px;height:28px;background:rgba(245,158,11,0.18);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg style="width:15px;height:15px;color:#fbbf24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <div>
+              <p style="font-size:12px;font-weight:800;color:#fbbf24;margin:0;letter-spacing:.5px;">KELOLA LOKASI</p>
+              <p style="font-size:10px;color:#6b7280;margin:2px 0 0;" id="lokasiSubtitle">Atur radius lokasi perusahaan</p>
+            </div>
+          </div>
+          <svg id="lokasiChevron" style="width:16px;height:16px;color:#6b7280;transition:transform 0.2s;transform:rotate(0deg);flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+
+        <!-- Body collapsed by default -->
+        <div id="kelolaLokasiBody" style="display:none;margin-top:14px;">
+
+          <!-- Status info -->
+          <div id="lokasiStatusBox" style="background:rgba(0,0,0,0.25);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:11px;">
+            <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+              <span style="color:#6b7280;">Status</span><span id="lokasiStatusBadge" style="font-weight:700;color:#9ca3af;">Memuat...</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+              <span style="color:#6b7280;">Koordinat</span><span id="lokasiCoordText" style="font-weight:700;color:#f1f5f9;text-align:right;max-width:65%;">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+              <span style="color:#6b7280;">Radius</span><span id="lokasiRadiusText" style="font-weight:700;color:#f1f5f9;">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;">
+              <span style="color:#6b7280;">Diubah</span><span id="lokasiUpdatedText" style="font-weight:700;color:#f1f5f9;text-align:right;max-width:65%;">—</span>
+            </div>
+          </div>
+
+          <!-- Map -->
+          <p style="font-size:10px;color:#6b7280;margin-bottom:6px;">&#128161; Klik peta untuk pindah titik lokasi perusahaan</p>
+          <div id="adminLokasiMap" style="height:220px;border-radius:10px;overflow:hidden;border:1.5px solid rgba(245,158,11,0.3);margin-bottom:12px;"></div>
+
+          <!-- Coord display -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+            <div>
+              <p style="font-size:10px;font-weight:700;color:#94a3b8;margin:0 0 4px;text-transform:uppercase;letter-spacing:.04em;">Latitude</p>
+              <input id="lokasiLat" type="text" readonly style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:7px 10px;font-size:12px;color:#f1f5f9;outline:none;box-sizing:border-box;" placeholder="-8.5839"/>
+            </div>
+            <div>
+              <p style="font-size:10px;font-weight:700;color:#94a3b8;margin:0 0 4px;text-transform:uppercase;letter-spacing:.04em;">Longitude</p>
+              <input id="lokasiLng" type="text" readonly style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:7px 10px;font-size:12px;color:#f1f5f9;outline:none;box-sizing:border-box;" placeholder="116.1039"/>
+            </div>
+          </div>
+
+          <!-- Radius input -->
+          <div style="margin-bottom:10px;">
+            <p style="font-size:10px;font-weight:700;color:#94a3b8;margin:0 0 4px;text-transform:uppercase;letter-spacing:.04em;">Radius (meter)</p>
+            <input id="lokasiRadius" type="number" value="500" min="50" max="50000" oninput="onAdminRadiusChange()" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:7px 10px;font-size:12px;color:#f1f5f9;outline:none;box-sizing:border-box;"/>
+            <p id="lokasiRadiusInfo" style="font-size:10px;color:#93c5fd;background:rgba(29,78,216,0.15);border-radius:6px;padding:6px 10px;margin-top:6px;">Radius: <b>500 meter</b></p>
+          </div>
+
+          <!-- GPS button -->
+          <button onclick="adminUseGPS()" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;border-radius:8px;padding:8px;font-size:11px;font-weight:700;cursor:pointer;margin-bottom:8px;">&#128225; Gunakan GPS Saya</button>
+
+          <!-- Save button -->
+          <button id="btnSaveLokasi" onclick="saveAdminLokasi()" style="width:100%;background:linear-gradient(135deg,rgba(245,158,11,0.35),rgba(217,119,6,0.25));border:1px solid rgba(245,158,11,0.4);color:#fbbf24;border-radius:10px;padding:10px;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:6px;">&#128190; Simpan Lokasi &amp; Radius</button>
+
+          <p id="lokasiSaveMsg" style="font-size:11px;text-align:center;margin:0;display:none;"></p>
+
+          <!-- Location warning logs -->
+          <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <p style="font-size:10px;font-weight:700;color:#f97316;margin:0;text-transform:uppercase;letter-spacing:.5px;">&#9888; Log Peringatan Lokasi</p>
+              <button onclick="loadLokasiWarnings()" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);color:#fbbf24;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;">&#8635; Refresh</button>
+            </div>
+            <div id="lokasiWarningList" style="font-size:11px;color:#4b5563;text-align:center;padding:10px 0;">Klik Refresh untuk memuat...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- PROMO PANEL -->
@@ -1170,6 +1254,173 @@ var STORE_NAME="Lotte Mart Wholesale Mataram";
 var STORE_TAGLINE="";
 /* Lokasi login — diisi otomatis dari IP geolocation saat halaman dibuka */
 var cachedLoginLocation="";
+
+// ===== KELOLA LOKASI ADMIN =====
+var adminLokasiMapObj = null;
+var adminLokasiMarker = null;
+var adminLokasiCircle = null;
+var adminLokasiLat = -8.5839;
+var adminLokasiLng = 116.1039;
+var adminLokasiMapInited = false;
+
+function toggleKelolaLokasi() {
+  var body = document.getElementById('kelolaLokasiBody');
+  var chevron = document.getElementById('lokasiChevron');
+  if (!body) return;
+  var isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+  if (!isOpen && !adminLokasiMapInited) {
+    setTimeout(function() { initAdminLokasiMap(); loadAdminLokasiStatus(); }, 100);
+  }
+}
+
+function initAdminLokasiMap() {
+  if (adminLokasiMapInited || typeof L === 'undefined') return;
+  adminLokasiMapInited = true;
+  adminLokasiMapObj = L.map('adminLokasiMap').setView([adminLokasiLat, adminLokasiLng], 16);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap', maxZoom: 19
+  }).addTo(adminLokasiMapObj);
+  adminLokasiMapObj.on('click', function(e) {
+    adminPlaceMarker(e.latlng.lat, e.latlng.lng);
+  });
+  adminPlaceMarker(adminLokasiLat, adminLokasiLng);
+}
+
+function adminPlaceMarker(lat, lng) {
+  if (!adminLokasiMapObj) return;
+  if (adminLokasiMarker) adminLokasiMapObj.removeLayer(adminLokasiMarker);
+  adminLokasiMarker = L.marker([lat, lng], {
+    icon: L.divIcon({
+      html: '<div style="background:#f59e0b;width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.5)"></div>',
+      iconSize: [14,14], iconAnchor: [7,7]
+    })
+  }).addTo(adminLokasiMapObj);
+  adminLokasiLat = lat; adminLokasiLng = lng;
+  var inp1 = document.getElementById('lokasiLat');
+  var inp2 = document.getElementById('lokasiLng');
+  if (inp1) inp1.value = lat.toFixed(7);
+  if (inp2) inp2.value = lng.toFixed(7);
+  updateAdminCircle();
+}
+
+function updateAdminCircle() {
+  if (!adminLokasiMapObj) return;
+  if (adminLokasiCircle) adminLokasiMapObj.removeLayer(adminLokasiCircle);
+  var r = parseInt(document.getElementById('lokasiRadius').value) || 500;
+  adminLokasiCircle = L.circle([adminLokasiLat, adminLokasiLng], {
+    color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.1, weight: 2, radius: r
+  }).addTo(adminLokasiMapObj);
+}
+
+function onAdminRadiusChange() {
+  var r = parseInt(document.getElementById('lokasiRadius').value) || 500;
+  var info = document.getElementById('lokasiRadiusInfo');
+  if (info) info.innerHTML = 'Radius: <b>' + r.toLocaleString('id-ID') + ' meter</b>';
+  updateAdminCircle();
+}
+
+function adminUseGPS() {
+  if (!navigator.geolocation) { alert('GPS tidak tersedia'); return; }
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    adminPlaceMarker(pos.coords.latitude, pos.coords.longitude);
+    if (adminLokasiMapObj) adminLokasiMapObj.setView([pos.coords.latitude, pos.coords.longitude], 17);
+  }, function(err) { alert('Gagal ambil GPS: ' + err.message); }, { enableHighAccuracy: true });
+}
+
+function loadAdminLokasiStatus() {
+  fetch(API_BASE_URL + '/company-location').then(function(r){return r.json();}).then(function(data) {
+    var badge = document.getElementById('lokasiStatusBadge');
+    var coord = document.getElementById('lokasiCoordText');
+    var radius = document.getElementById('lokasiRadiusText');
+    var updated = document.getElementById('lokasiUpdatedText');
+    var subtitle = document.getElementById('lokasiSubtitle');
+    if (data.lat !== null && data.lat !== undefined) {
+      if (badge) { badge.textContent = 'Aktif'; badge.style.color = '#34d399'; }
+      if (coord) coord.textContent = data.lat.toFixed(6) + ', ' + data.lng.toFixed(6);
+      var rm = Math.round(data.radiusKm * 1000);
+      if (radius) radius.textContent = rm + ' meter';
+      if (updated) updated.textContent = data.updatedAt ? new Date(data.updatedAt).toLocaleString('id-ID') : '—';
+      if (subtitle) subtitle.textContent = 'Radius: ' + rm + 'm — ' + (data.name || 'Perusahaan');
+      var rInp = document.getElementById('lokasiRadius');
+      var rInfo = document.getElementById('lokasiRadiusInfo');
+      if (rInp) rInp.value = rm;
+      if (rInfo) rInfo.innerHTML = 'Radius: <b>' + rm.toLocaleString('id-ID') + ' meter</b>';
+      if (adminLokasiMapInited) {
+        adminPlaceMarker(data.lat, data.lng);
+        if (adminLokasiMapObj) adminLokasiMapObj.setView([data.lat, data.lng], 16);
+      } else {
+        adminLokasiLat = data.lat; adminLokasiLng = data.lng;
+        var inp1 = document.getElementById('lokasiLat');
+        var inp2 = document.getElementById('lokasiLng');
+        if (inp1) inp1.value = data.lat.toFixed(7);
+        if (inp2) inp2.value = data.lng.toFixed(7);
+      }
+    } else {
+      if (badge) { badge.textContent = 'Belum dikonfigurasi'; badge.style.color = '#f87171'; }
+      if (coord) coord.textContent = 'Klik peta untuk atur';
+    }
+  }).catch(function(){});
+}
+
+function saveAdminLokasi() {
+  var lat = parseFloat(document.getElementById('lokasiLat').value);
+  var lng = parseFloat(document.getElementById('lokasiLng').value);
+  var radiusM = parseInt(document.getElementById('lokasiRadius').value) || 500;
+  var msg = document.getElementById('lokasiSaveMsg');
+  if (isNaN(lat) || isNaN(lng)) {
+    if (msg) { msg.style.display='block'; msg.style.color='#f87171'; msg.textContent='Pilih lokasi di peta terlebih dahulu!'; }
+    return;
+  }
+  var btn = document.getElementById('btnSaveLokasi');
+  if (btn) { btn.disabled = true; btn.textContent = 'Menyimpan...'; }
+  fetch(API_BASE_URL + '/company-location', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ adminPassword: ADMIN_PASSWORD, lat: lat, lng: lng, radiusKm: radiusM / 1000, name: 'PDA Mini Mataram' })
+  }).then(function(r){return r.json();}).then(function(data) {
+    if (msg) { msg.style.display='block'; }
+    if (data.success) {
+      if (msg) { msg.style.color='#34d399'; msg.textContent='Lokasi & radius berhasil disimpan!'; }
+      loadAdminLokasiStatus();
+    } else {
+      if (msg) { msg.style.color='#f87171'; msg.textContent='Gagal: ' + (data.message || 'Error'); }
+    }
+    if (btn) { btn.disabled = false; btn.textContent = 'Simpan Lokasi & Radius'; }
+    setTimeout(function(){ if(msg) msg.style.display='none'; }, 4000);
+  }).catch(function(e) {
+    if (msg) { msg.style.display='block'; msg.style.color='#f87171'; msg.textContent='Error: ' + e.message; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Simpan Lokasi & Radius'; }
+  });
+}
+
+function loadLokasiWarnings() {
+  var el = document.getElementById('lokasiWarningList');
+  if (!el) return;
+  el.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:8px;">Memuat...</div>';
+  fetch(API_BASE_URL + '/activity-log?adminPassword=' + encodeURIComponent(ADMIN_PASSWORD) + '&limit=200')
+    .then(function(r){return r.json();})
+    .then(function(data) {
+      if (!data.success) { el.innerHTML = '<div style="color:#f87171;">Gagal memuat log</div>'; return; }
+      var warns = (data.logs || []).filter(function(l){ return l.type === 'location-warning' || (l.action && l.action.indexOf('LOKASI') !== -1); });
+      if (!warns.length) {
+        el.innerHTML = '<div style="background:rgba(52,211,153,0.08);border-radius:8px;padding:10px;text-align:center;color:#34d399;font-size:11px;">Tidak ada peringatan lokasi</div>';
+        return;
+      }
+      el.innerHTML = warns.slice(0, 50).map(function(l) {
+        var dt = new Date(l.createdAt);
+        var ts = dt.toLocaleString('id-ID',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+        return '<div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:8px;padding:8px 10px;margin-bottom:6px;">' +
+          '<div style="display:flex;justify-content:space-between;margin-bottom:2px;">' +
+          '<span style="font-weight:700;color:#818cf8;font-size:11px;">&#128100; ' + l.username + '</span>' +
+          '<span style="color:#6b7280;font-size:10px;">' + ts + '</span></div>' +
+          '<div style="color:#f97316;font-size:11px;font-weight:700;">' + l.action + '</div>' +
+          '<div style="color:#94a3b8;font-size:10px;margin-top:2px;">&#128205; ' + (l.detail||'') + '</div></div>';
+      }).join('');
+    }).catch(function(){ el.innerHTML = '<div style="color:#f87171;font-size:11px;">Error memuat log</div>'; });
+}
+
 function fetchLoginLocation(){
   try{
     var ctrl=typeof AbortController!=="undefined"?new AbortController():null;
