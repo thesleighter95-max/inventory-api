@@ -1018,7 +1018,10 @@ table td { font-size: 11px; }
           <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
               <p style="font-size:10px;font-weight:700;color:#f97316;margin:0;text-transform:uppercase;letter-spacing:.5px;">&#9888; Log Peringatan Lokasi</p>
+              <div style="display:flex;gap:6px;">
               <button onclick="loadLokasiWarnings()" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);color:#fbbf24;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;">&#8635; Refresh</button>
+              <button onclick="hapusLokasiWarnings()" id="btnHapusLokasi" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;">&#128465; Hapus</button>
+            </div>
             </div>
             <div id="lokasiWarningList" style="font-size:11px;color:#4b5563;text-align:center;padding:10px 0;">Klik Refresh untuk memuat...</div>
           </div>
@@ -1392,6 +1395,28 @@ function saveAdminLokasi() {
   }).catch(function(e) {
     if (msg) { msg.style.display='block'; msg.style.color='#f87171'; msg.textContent='Error: ' + e.message; }
     if (btn) { btn.disabled = false; btn.textContent = 'Simpan Lokasi & Radius'; }
+  });
+}
+
+function hapusLokasiWarnings() {
+  if (!confirm('Hapus semua log peringatan lokasi?\nLog aktivitas lain tidak akan terhapus.')) return;
+  var btn = document.getElementById('btnHapusLokasi');
+  if (btn) { btn.disabled = true; btn.textContent = 'Menghapus...'; }
+  fetch(API_BASE_URL + '/location-warnings', {
+    method: 'DELETE',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ adminPassword: ADMIN_PASSWORD })
+  }).then(function(r){return r.json();}).then(function(data) {
+    if (data.success) {
+      var el = document.getElementById('lokasiWarningList');
+      if (el) el.innerHTML = '<div style="background:rgba(52,211,153,0.08);border-radius:8px;padding:10px;text-align:center;color:#34d399;font-size:11px;">' + (data.message || 'Log berhasil dihapus') + '</div>';
+    } else {
+      alert('Gagal: ' + (data.message || 'Error'));
+    }
+    if (btn) { btn.disabled = false; btn.textContent = '\u{1F5D1} Hapus'; }
+  }).catch(function(e) {
+    alert('Error: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '\u{1F5D1} Hapus'; }
   });
 }
 
