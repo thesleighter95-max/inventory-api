@@ -89,7 +89,14 @@ export default async function handler(req, res) {
     if (path === "/healthz" && method === "GET") return send({ status: "ok" });
 
     if (path === "/bblm" && method === "GET") {
-      return send(await getJson("bblm", { hasData: false, gradeNames: [], products: [], totalProducts: 0, updatedAt: null, updatedBy: "", sourceLabel: "" }));
+      const bblmData = await getJson("bblm", { hasData: false, gradeNames: [], products: [], totalProducts: 0, updatedAt: null, updatedBy: "", sourceLabel: "" });
+      if (bblmData.updatedAt) {
+        const etag = '"' + bblmData.updatedAt + '"';
+        res.setHeader("Cache-Control", "public, max-age=1800, stale-while-revalidate=3600");
+        res.setHeader("ETag", etag);
+        if (req.headers["if-none-match"] === etag) return res.status(304).end();
+      }
+      return send(bblmData);
     }
 
     if (path === "/bblm" && method === "POST") {
