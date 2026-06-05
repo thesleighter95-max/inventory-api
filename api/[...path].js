@@ -842,6 +842,272 @@ loadStatus();
       });
     }
 
+
+    // GET /kelola-lokasi — halaman admin kelola lokasi perusahaan & radius
+    if (path === "/kelola-lokasi" && method === "GET") {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      const html = `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kelola Lokasi Perusahaan - PDA Mini Mataram</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0f172a;min-height:100vh;padding:16px;color:#e2e8f0}
+.card{background:#1e293b;border-radius:14px;padding:20px;margin-bottom:14px;border:1px solid #334155}
+h1{font-size:20px;font-weight:800;color:#f1f5f9;margin-bottom:4px}
+.sub{color:#94a3b8;font-size:13px;margin-bottom:20px}
+label{display:block;font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+input[type=text],input[type=number],input[type=password]{width:100%;padding:10px 14px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;font-size:14px;color:#f1f5f9;outline:none}
+input:focus{border-color:#6366f1}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#map{height:280px;border-radius:10px;overflow:hidden;border:2px solid #334155;margin:14px 0}
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;transition:.2s}
+.btn-save{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff}
+.btn-save:disabled{background:#334155;color:#64748b;cursor:not-allowed}
+.btn-gps{background:#0f172a;border:1.5px solid #334155;color:#94a3b8;margin-top:8px;font-size:13px;padding:10px;border-radius:10px;cursor:pointer;width:100%}
+.alert{padding:12px 14px;border-radius:8px;font-size:13px;margin-top:12px;display:none;font-weight:600}
+.ok{background:#052e16;color:#4ade80;border:1px solid #166534}
+.err{background:#2d0a0a;color:#f87171;border:1px solid #7f1d1d}
+.info-box{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px;margin:12px 0}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1e293b;font-size:13px}
+.info-row:last-child{border:none}
+.info-label{color:#94a3b8}
+.info-val{color:#f1f5f9;font-weight:700;text-align:right;max-width:60%}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-ok{background:#052e16;color:#4ade80}
+.badge-off{background:#1e293b;color:#64748b}
+.log-item{padding:10px 0;border-bottom:1px solid #1e293b;font-size:12px}
+.log-item:last-child{border:none}
+.log-action{font-weight:700;color:#f97316}
+.log-detail{color:#94a3b8;margin-top:2px}
+.log-time{color:#475569;font-size:11px;margin-top:2px}
+.log-user{color:#818cf8;font-weight:700}
+.section-title{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{flex:1;padding:10px;text-align:center;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid #334155;color:#64748b;background:#0f172a;transition:.2s}
+.tab.active{background:#6366f1;color:#fff;border-color:#6366f1}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.pin-hint{font-size:12px;color:#64748b;margin-bottom:10px}
+.radius-info{background:#0f2942;border:1px solid #1e40af;border-radius:8px;padding:10px 14px;font-size:12px;color:#93c5fd;margin-top:8px}
+.mt-12{margin-top:12px}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>&#128205; Kelola Lokasi Perusahaan</h1>
+  <div class="sub">PDA Mini Mataram &#8212; Atur koordinat &amp; radius lokasi perusahaan</div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('setting',this)">&#9881; Setting Lokasi</div>
+    <div class="tab" onclick="switchTab('log',this)">&#9888; Log Peringatan</div>
+  </div>
+
+  <!-- TAB SETTING -->
+  <div id="tab-setting" class="tab-content active">
+    <div class="section-title">Status Saat Ini</div>
+    <div class="info-box">
+      <div class="info-row"><span class="info-label">Status</span><span id="statusBadge" class="badge badge-off">Memuat...</span></div>
+      <div class="info-row"><span class="info-label">Nama Perusahaan</span><span class="info-val" id="curName">&#8212;</span></div>
+      <div class="info-row"><span class="info-label">Koordinat</span><span class="info-val" id="curCoord">&#8212;</span></div>
+      <div class="info-row"><span class="info-label">Radius</span><span class="info-val" id="curRadius">&#8212;</span></div>
+      <div class="info-row"><span class="info-label">Terakhir diubah</span><span class="info-val" id="curUpdated">&#8212;</span></div>
+    </div>
+
+    <div class="section-title">Peta &#8212; Klik untuk pilih lokasi perusahaan</div>
+    <p class="pin-hint">&#128161; Klik titik di peta untuk menempatkan pin lokasi. Lingkaran ungu = area radius.</p>
+    <div id="map"></div>
+
+    <div class="row">
+      <div>
+        <label>Latitude</label>
+        <input id="lat" type="text" placeholder="-8.5836" readonly/>
+      </div>
+      <div>
+        <label>Longitude</label>
+        <input id="lng" type="text" placeholder="116.1017" readonly/>
+      </div>
+    </div>
+
+    <div class="mt-12">
+      <label>Radius (meter)</label>
+      <input id="radius" type="number" placeholder="500" value="500" min="50" max="50000" oninput="onRadiusChange()"/>
+      <div class="radius-info" id="radiusInfo">Radius: <b>500 meter</b> dari titik perusahaan</div>
+    </div>
+
+    <div class="mt-12">
+      <label>Nama Perusahaan</label>
+      <input id="namaPerusahaan" type="text" placeholder="PDA Mini Mataram" value="PDA Mini Mataram"/>
+    </div>
+
+    <div class="mt-12">
+      <label>Password Admin</label>
+      <input id="adminPwd" type="password" placeholder="Masukkan password admin"/>
+    </div>
+
+    <div class="alert ok" id="alertOk">&#10003; Lokasi &amp; radius berhasil disimpan!</div>
+    <div class="alert err" id="alertErr"></div>
+
+    <button class="btn btn-save" id="btnSave" onclick="saveLocation()" style="margin-top:14px">&#128190; Simpan Lokasi &amp; Radius</button>
+    <button class="btn-gps" onclick="useMyLocation()">&#128225; Gunakan Lokasi GPS Saya</button>
+  </div>
+
+  <!-- TAB LOG -->
+  <div id="tab-log" class="tab-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span class="section-title" style="margin:0">Log Peringatan Lokasi</span>
+      <button onclick="loadLogs()" style="background:#0f172a;border:1px solid #334155;color:#94a3b8;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer">&#8635; Refresh</button>
+    </div>
+    <label>Password Admin</label>
+    <input id="adminPwdLog" type="password" placeholder="Masukkan password admin" style="margin-bottom:8px"/>
+    <button onclick="loadLogs()" style="background:#6366f1;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;width:100%">&#128269; Tampilkan Log Peringatan</button>
+    <div id="logContainer" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<script>
+var map = L.map('map').setView([-8.5836, 116.1017], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'&copy; OpenStreetMap',maxZoom:19}).addTo(map);
+
+var marker = null, circle = null, currentLat = null, currentLng = null;
+
+function updateCircle(lat, lng, r) {
+  if (circle) map.removeLayer(circle);
+  circle = L.circle([lat, lng], {color:'#6366f1',fillColor:'#6366f1',fillOpacity:0.12,weight:2,radius:r}).addTo(map);
+}
+
+function placeMarker(lat, lng) {
+  if (marker) map.removeLayer(marker);
+  marker = L.marker([lat, lng], {
+    icon: L.divIcon({
+      html: '<div style="background:#6366f1;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5)"></div>',
+      iconSize:[16,16],iconAnchor:[8,8]
+    })
+  }).addTo(map);
+  document.getElementById('lat').value = lat.toFixed(7);
+  document.getElementById('lng').value = lng.toFixed(7);
+  currentLat = lat; currentLng = lng;
+  updateCircle(lat, lng, parseInt(document.getElementById('radius').value) || 500);
+}
+
+map.on('click', function(e) { placeMarker(e.latlng.lat, e.latlng.lng); });
+
+function onRadiusChange() {
+  var r = parseInt(document.getElementById('radius').value) || 500;
+  document.getElementById('radiusInfo').innerHTML = 'Radius: <b>' + r.toLocaleString('id-ID') + ' meter</b> dari titik perusahaan';
+  if (currentLat && currentLng) updateCircle(currentLat, currentLng, r);
+}
+
+async function loadCurrentSetting() {
+  try {
+    var res = await fetch('/api/company-location');
+    var data = await res.json();
+    if (data.lat !== null && data.lat !== undefined) {
+      document.getElementById('statusBadge').className = 'badge badge-ok';
+      document.getElementById('statusBadge').textContent = 'Aktif';
+      document.getElementById('curName').textContent = data.name || 'Perusahaan';
+      document.getElementById('curCoord').textContent = data.lat.toFixed(6) + ', ' + data.lng.toFixed(6);
+      var rm = Math.round(data.radiusKm * 1000);
+      document.getElementById('curRadius').textContent = rm + ' meter';
+      document.getElementById('curUpdated').textContent = data.updatedAt ? new Date(data.updatedAt).toLocaleString('id-ID') : 'Belum pernah';
+      document.getElementById('namaPerusahaan').value = data.name || 'PDA Mini Mataram';
+      document.getElementById('radius').value = rm;
+      document.getElementById('radiusInfo').innerHTML = 'Radius: <b>' + rm.toLocaleString('id-ID') + ' meter</b> dari titik perusahaan';
+      placeMarker(data.lat, data.lng);
+      map.setView([data.lat, data.lng], 16);
+    } else {
+      document.getElementById('statusBadge').className = 'badge badge-off';
+      document.getElementById('statusBadge').textContent = 'Belum dikonfigurasi';
+      document.getElementById('curCoord').textContent = 'Klik peta untuk atur lokasi';
+    }
+  } catch(e) {}
+}
+
+async function saveLocation() {
+  var lat = parseFloat(document.getElementById('lat').value);
+  var lng = parseFloat(document.getElementById('lng').value);
+  var radiusM = parseInt(document.getElementById('radius').value) || 500;
+  var name = document.getElementById('namaPerusahaan').value.trim() || 'PDA Mini Mataram';
+  var pwd = document.getElementById('adminPwd').value.trim();
+  if (isNaN(lat) || isNaN(lng)) { showErr('Klik peta terlebih dahulu untuk memilih lokasi!'); return; }
+  if (!pwd) { showErr('Password admin wajib diisi!'); return; }
+  var btn = document.getElementById('btnSave');
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+  try {
+    var res = await fetch('/api/company-location', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({adminPassword:pwd, lat:lat, lng:lng, radiusKm:radiusM/1000, name:name})
+    });
+    var data = await res.json();
+    if (data.success) { showOk(); loadCurrentSetting(); }
+    else showErr(data.message || 'Gagal menyimpan');
+  } catch(e) { showErr('Error: ' + e.message); }
+  btn.disabled = false; btn.textContent = 'Simpan Lokasi & Radius';
+}
+
+function useMyLocation() {
+  if (!navigator.geolocation) { showErr('GPS tidak tersedia di browser ini'); return; }
+  navigator.geolocation.getCurrentPosition(
+    function(pos) { placeMarker(pos.coords.latitude, pos.coords.longitude); map.setView([pos.coords.latitude, pos.coords.longitude], 17); },
+    function(err) { showErr('Gagal ambil GPS: ' + err.message); },
+    {enableHighAccuracy:true}
+  );
+}
+
+async function loadLogs() {
+  var pwd = document.getElementById('adminPwdLog').value.trim();
+  if (!pwd) { document.getElementById('logContainer').innerHTML = '<div style="color:#f87171;font-size:13px;padding:10px 0">Masukkan password admin untuk melihat log</div>'; return; }
+  document.getElementById('logContainer').innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:10px 0">Memuat log...</div>';
+  try {
+    var res = await fetch('/api/activity-log?adminPassword=' + encodeURIComponent(pwd) + '&limit=200');
+    var data = await res.json();
+    if (!data.success) { document.getElementById('logContainer').innerHTML = '<div style="color:#f87171;font-size:13px">' + (data.message || 'Unauthorized') + '</div>'; return; }
+    var warns = (data.logs || []).filter(function(l){ return l.type === 'location-warning' || (l.action && l.action.includes('LOKASI')); });
+    if (warns.length === 0) {
+      document.getElementById('logContainer').innerHTML = '<div style="color:#4ade80;font-size:13px;padding:20px;text-align:center;background:#052e16;border-radius:8px">Tidak ada peringatan lokasi tercatat</div>';
+      return;
+    }
+    document.getElementById('logContainer').innerHTML = warns.map(function(l){
+      return '<div class="log-item">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+        '<span class="log-user">&#128100; ' + l.username + '</span>' +
+        '<span class="log-action">' + l.action + '</span></div>' +
+        '<div class="log-detail">&#128205; ' + l.detail + '</div>' +
+        '<div class="log-time">' + new Date(l.createdAt).toLocaleString('id-ID') + '</div></div>';
+    }).join('');
+  } catch(e) { document.getElementById('logContainer').innerHTML = '<div style="color:#f87171;font-size:13px">Error: ' + e.message + '</div>'; }
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function showOk() {
+  var a = document.getElementById('alertOk'); a.style.display = 'block';
+  document.getElementById('alertErr').style.display = 'none';
+  setTimeout(function(){ a.style.display = 'none'; }, 4000);
+}
+function showErr(msg) {
+  var a = document.getElementById('alertErr'); a.textContent = msg; a.style.display = 'block';
+  document.getElementById('alertOk').style.display = 'none';
+}
+
+loadCurrentSetting();
+<\/script>
+</body>
+</html>`;
+      res.status(200).end(html);
+      return;
+    }
+
     return send({ error: "Not found" }, 404);
   } catch (err) {
     return send({ error: "Internal server error", detail: String(err) }, 500);
