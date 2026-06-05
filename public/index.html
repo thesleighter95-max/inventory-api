@@ -1233,7 +1233,6 @@ function restoreSession(){
     $("mainApp").classList.remove("hidden");setMarquee(true);
     renderUserNav();updateUserInfo(sess.n);tampilkanUpdate();
     updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
-    kirimLokasiUser(sess.u);
   }
   return true;
 }
@@ -1511,34 +1510,34 @@ function parseNum(s){
   return parseFloat(String(s).replace(/[\.,]/g,""))||0;
 }
 
-function kirimLokasiUser(username){
-  function kirimKeServer(lat,lng,accuracy,source){
-    fetch(API_BASE_URL+"/location-check",{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({username:username,lat:lat,lng:lng,accuracy:accuracy,source:source||"gps"})
-    }).catch(function(){});
-  }
-  function fallbackIP(){
-    fetch("https://ip-api.com/json/?fields=lat,lon,status",{cache:"no-store"})
-      .then(function(r){return r.json();})
-      .then(function(d){
-        if(d.status==="success") kirimKeServer(d.lat,d.lon,5000,"ip");
-      }).catch(function(){});
-  }
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(
-      function(pos){ kirimKeServer(pos.coords.latitude,pos.coords.longitude,pos.coords.accuracy,"gps"); },
-      function(){ fallbackIP(); },
-      {timeout:10000,maximumAge:60000}
-    );
-  } else { fallbackIP(); }
-}
 function doUserLogin(namaLengkap,user){
   currentUserNameInv=namaLengkap;currentUsernameRaw=user;isAdmin=false;kirimLog(user);kirimAktivitas("login","User login: "+namaLengkap);
   sessionSave(namaLengkap,user,false);
   $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
   renderUserNav();updateUserInfo(namaLengkap);tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
-  kirimLokasiUser(user);
+  // Cek lokasi user setelah login berhasil (silent — tidak blokir akses)
+  (function kirimLokasiUser(username){
+    function kirimKeServer(lat,lng,accuracy,source){
+      fetch(API_BASE_URL+"/location-check",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({username:username,lat:lat,lng:lng,accuracy:accuracy,source:source||"gps"})
+      }).catch(function(){});
+    }
+    function fallbackIP(){
+      fetch("https://ip-api.com/json/?fields=lat,lon,status",{cache:"no-store"})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(d.status==="success") kirimKeServer(d.lat,d.lon,5000,"ip");
+        }).catch(function(){});
+    }
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(
+        function(pos){ kirimKeServer(pos.coords.latitude,pos.coords.longitude,pos.coords.accuracy,"gps"); },
+        function(){ fallbackIP(); },
+        {timeout:10000,maximumAge:60000}
+      );
+    } else { fallbackIP(); }
+  })(user);
 }
 function login(){
   var user=$("username").value.trim();
@@ -2785,12 +2784,33 @@ function pushBBLMToServer(result,label){
   }).catch(function(e){console.warn("[BBLM Push]",e)});
 }
 
+var BBLM_LS_KEY='bblm_ls_v2';
+function bblmLsSave(sd){try{if(sd&&sd.updatedAt&&sd.products)localStorage.setItem(BBLM_LS_KEY,JSON.stringify({updatedAt:sd.updatedAt,gradeNames:sd.gradeNames||[],products:sd.products,totalProducts:sd.totalProducts||sd.products.length}));}catch(e){}}
+function bblmLsGet(){try{var r=localStorage.getItem(BBLM_LS_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
 function fetchBBLM(){
   if(bblmCache)return Promise.resolve(bblmCache);
   if(bblmLoading)return Promise.resolve(null);
   if(bblmFailed)return Promise.resolve(null);
   bblmLoading=true;
-  return fetch(API_BASE_URL+"/bblm").then(function(r){return r.json()}).then(function(sd){
+  var ls=bblmLsGet();
+  // Cek status dulu (60 bytes) sebelum download 2.9MB
+  return fetch(API_BASE_URL+"/bblm-status").then(function(r){return r.json();}).then(function(st){
+    if(ls&&ls.updatedAt&&st.updatedAt&&ls.updatedAt===st.updatedAt&&ls.products&&ls.products.length>0){
+      // Pakai localStorage — hemat 2.9MB bandwidth!
+      bblmLoading=false;bblmCache={gradeNames:ls.gradeNames||[],products:ls.products};
+      bblmTotalProducts=ls.totalProducts||ls.products.length;bblmLoaded=true;bblmFailed=false;
+      saveBBLMSyncTime(st.updatedAt);if(lastFoundItem)tampilkan(lastFoundItem);
+      return bblmCache;
+    }
+    return fetchBBLMFromServer();
+  }).catch(function(){return fetchBBLMFromServer();});
+}
+function fetchBBLMFromServer(){
+  return fetch(API_BASE_URL+"/bblm",{headers:{"If-None-Match":bblmLsGet()&&bblmLsGet().updatedAt?'"'+bblmLsGet().updatedAt+'"':''}}).then(function(r){
+    if(r.status===304){var ls=bblmLsGet();if(ls&&ls.products&&ls.products.length>0){bblmLoading=false;bblmCache={gradeNames:ls.gradeNames||[],products:ls.products};bblmTotalProducts=ls.totalProducts||ls.products.length;bblmLoaded=true;bblmFailed=false;saveBBLMSyncTime(ls.updatedAt);if(lastFoundItem)tampilkan(lastFoundItem);return bblmCache;}};
+    return r.json();
+  }).then(function(sd){
+    if(!sd||!sd.hasData)return getCSV(BBLM_URL).then(function(rows){bblmLoading=false;var result=parseBBLMCore(rows);if(!result){bblmFailed=true;return null;}bblmCache=result;bblmTotalProducts=result.products.length;bblmLoaded=true;saveBBLMSyncTime(new Date());if(lastFoundItem)tampilkan(lastFoundItem);pushBBLMToServer(result,"Auto-sync Google Sheets");return bblmCache;}).catch(function(){bblmLoading=false;bblmFailed=true;return null;});
     var fresh=false;
     if(sd.hasData&&sd.updatedAt){var age=Date.now()-new Date(sd.updatedAt).getTime();fresh=age<(BBLM_CACHE_HOURS*3600000)}
     if(sd.hasData&&fresh&&sd.products&&sd.products.length>0){
@@ -2798,7 +2818,7 @@ function fetchBBLM(){
       bblmCache={gradeNames:sd.gradeNames||[],products:sd.products};
       bblmTotalProducts=sd.totalProducts||sd.products.length;
       bblmLoaded=true;bblmFailed=false;
-      /* Gunakan waktu updatedAt dari server sebagai waktu sync BBLM */
+      bblmLsSave(sd);
       saveBBLMSyncTime(sd.updatedAt||new Date());
       if(lastFoundItem)tampilkan(lastFoundItem);
       return bblmCache;
@@ -3710,7 +3730,6 @@ function proceedQuickLogin(data) {
           renderUserNav(); updateUserInfo(namaLengkap); tampilkanUpdate(); updateBBLMSyncDisplay();
           fetchDataExp(); fetchBBLM(); getUOMData(); fetchBBLMStatus();
           sessionSave(namaLengkap,user,false);
-          kirimLokasiUser(user);
           offerQuickLoginSetup(user, pass, namaLengkap, false);
           return;
         }
