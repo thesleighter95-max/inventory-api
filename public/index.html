@@ -4119,7 +4119,7 @@ function renderPromoItems(){
       +(it.name?'<p style="font-size:12px;font-weight:700;color:#e5e7eb;margin:0 0 1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+it.name+'</p>':'')
       +'<p style="font-size:10px;color:#6b7280;margin:0 0 2px;">'+it.barcode+'</p>'
       +'<p style="font-size:9px;color:#34d399;margin:0;">'+savingText+'</p>'
-      +(isExtreme?'<p style="font-size:9px;color:#f97316;margin:2px 0 0;">⚠️ Periksa kebenaran harga tertinggi</p>':'')
+      +(isAdmin&&isExtreme?'<p style="font-size:9px;color:#f97316;margin:2px 0 0;">⚠️ Periksa kebenaran harga tertinggi</p>':'')
       +'</div>'
       +'<div style="text-align:right;flex-shrink:0;">'
       +'<p style="font-size:10px;color:#9ca3af;margin:0;text-decoration:line-through;">Rp '+it.prevPrice.toLocaleString("id-ID")+'</p>'
