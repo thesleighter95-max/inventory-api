@@ -729,15 +729,18 @@ loadStatus();
       if (secret !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
       const now = new Date().toISOString();
       const actions = [
+        "bblm -> cleared",
         "bblm-status -> updating",
         "price-snapshot-prev -> cleared",
         "price-snapshot-current -> cleared",
         "price-snapshot-highest -> cleared"
       ];
       await Promise.all([
-        // 1. Set status BBLM -> masih update
+        // 1. Hapus isi spreadsheet BBLM -> kosong, wajib upload ulang pagi ini
+        setJson("bblm", { hasData: false, gradeNames: [], products: [], totalProducts: 0, updatedAt: null, updatedBy: "", sourceLabel: "" }),
+        // 2. Set status BBLM -> masih update
         setJson("bblm-status", { status: "updating", updatedAt: now, resetBy: "cron-04:00" }),
-        // 2. Hapus semua snapshot harga -> promo hilang, harga kembali normal
+        // 3. Hapus semua snapshot harga -> promo hilang, harga kembali normal
         setJson("price-snapshot-prev", { date: null, prices: {} }),
         setJson("price-snapshot-current", { date: null, prices: {} }),
         setJson("price-snapshot-highest", { prices: {}, updatedAt: null }),
@@ -749,7 +752,7 @@ loadStatus();
       await setJson("cron-logs", cronLogs);
       return send({
         success: true,
-        message: "Daily reset berhasil: status BBLM -> masih update, semua harga coret & promo direset",
+        message: "Daily reset berhasil: data BBLM dihapus, status -> masih update, semua harga coret & promo direset",
         resetAt: now,
         actions
       });
