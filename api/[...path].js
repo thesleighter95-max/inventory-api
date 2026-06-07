@@ -1,4 +1,7 @@
-import { neon } from "@neondatabase/serverless";
+import { neon, neonConfig } from "@neondatabase/serverless";
+
+// Aktifkan connection caching agar tiap request tidak buka koneksi baru ke Neon
+neonConfig.fetchConnectionCache = true;
 
 const sql = neon(process.env.NEON_DATABASE_URL || process.env.DATABASE_URL);
 
@@ -65,6 +68,9 @@ async function updateHighestSnapshot(newPrices) {
     await setJson("price-snapshot-highest", { prices: highest, updatedAt: new Date().toISOString() });
   }
 }
+
+// Jalankan initDb saat cold start, bukan nunggu request pertama
+const dbReadyPromise = initDb().catch(() => {});
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -540,9 +546,24 @@ loadStatus();
       const today = new Date().toISOString().slice(0, 10);
       const prices = {};
       items.forEach(({ barcode, price }) => { if (barcode) prices[barcode] = Number(price) || 0; });
-      await setJson("price-snapshot-current", { date: today, prices });
-      // Selalu update highest agar harga naik langsung tercermin (tidak tunggu hari berganti)
-      await updateHighestSnapshot(prices);
+      // Jalankan setJson(current) dan getJson(highest) secara paralel
+      const [_, existingHighest] = await Promise.all([
+        setJson("price-snapshot-current", { date: today, prices }),
+        getJson("price-snapshot-highest", { prices: {}, updatedAt: null })
+      ]);
+      // Merge highest setelah keduanya selesai (hanya 1 write, bukan 2 round-trip)
+      const highest = existingHighest.prices || {};
+      let updated = 0;
+      for (const [barcode, price] of Object.entries(prices)) {
+        const p = Number(price) || 0;
+        if (p > 0 && (highest[barcode] == null || p > highest[barcode])) {
+          highest[barcode] = p;
+          updated++;
+        }
+      }
+      if (updated > 0) {
+        await setJson("price-snapshot-highest", { prices: highest, updatedAt: new Date().toISOString() });
+      }
       return send({ success: true, saved: Object.keys(prices).length });
     }
 
