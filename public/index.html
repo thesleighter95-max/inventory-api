@@ -586,7 +586,10 @@ table td { font-size: 11px; }
       </div>
       <div id="reader" class="mt-4"></div>
     </div>
-    <div id="lastUpdate" class="text-xs text-pro-text text-right font-medium" style="margin-bottom:2px;"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+      <button id="btnRefreshHarga" onclick="refreshHargaManual()" style="display:none;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid #334155;background:#1e293b;color:#94a3b8;cursor:pointer;transition:all .2s;" onmousedown="this.style.background='#334155'" onmouseup="this.style.background='#1e293b'">⟳ Refresh Harga</button>
+      <div id="lastUpdate" class="text-xs text-pro-text text-right font-medium" style="flex:1;"></div>
+    </div>
     <div id="syncStatus" style="font-size:10px;text-align:right;margin-bottom:14px;min-height:14px;"></div>
     <div id="hasil"></div>
   </div>
@@ -1515,7 +1518,7 @@ function doUserLogin(namaLengkap,user){
   currentUserNameInv=namaLengkap;currentUsernameRaw=user;isAdmin=false;kirimLog(user);kirimAktivitas("login","User login: "+namaLengkap);
   sessionSave(namaLengkap,user,false);
   $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
-  renderUserNav();updateUserInfo(namaLengkap);tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
+  renderUserNav();updateUserInfo(namaLengkap);tampilkanUpdate();var _rb=document.getElementById("btnRefreshHarga");if(_rb)_rb.style.display="block";updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
   // Cek lokasi user setelah login berhasil (silent — tidak blokir akses)
   (function kirimLokasiUser(username){
     function kirimKeServer(lat,lng,accuracy,source){
@@ -1550,7 +1553,7 @@ function login(){
     if(pass===ADMIN_PASSWORD){
       currentUserNameInv="Admin";isAdmin=true;kirimLog("admin");kirimAktivitas("login","Admin login");
       $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
-      renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();checkMorningReset();
+      renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();var _rb=document.getElementById("btnRefreshHarga");if(_rb)_rb.style.display="block";updateBBLMSyncDisplay();fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();checkMorningReset();
       loadMaintenanceStatus();
       return;
     }else{errorEl.innerText="Password admin salah!";return}
@@ -2523,6 +2526,19 @@ function syncAllPrices(data){
 }
 var _cacheBarangTime=0;function getBarang(){if(cacheBarang&&(Date.now()-_cacheBarangTime)<600000)return Promise.resolve(cacheBarang);loadPriceMap();return getCSV(BARANG_URL).then(function(d){cacheBarang=d;_cacheBarangTime=Date.now();syncAllPrices(d);return d})}
 function tampilkanUpdate(){getBarang().then(function(d){$("lastUpdate").innerText="Update: "+(d[0][1]||"-")})}
+function refreshHargaManual(){
+  var btn=document.getElementById("btnRefreshHarga");
+  if(btn){btn.disabled=true;btn.textContent="⏳ Memuat...";}
+  // Reset cache agar getBarang() fetch ulang dari spreadsheet
+  cacheBarang=null;_cacheBarangTime=0;
+  try{sessionStorage.removeItem("sync_meta");}catch(e){}
+  getBarang().then(function(d){
+    $("lastUpdate").innerText="Update: "+(d[0][1]||"-");
+    if(btn){btn.disabled=false;btn.textContent="⟳ Refresh Harga";}
+  }).catch(function(){
+    if(btn){btn.disabled=false;btn.textContent="⟳ Refresh Harga";}
+  });
+}
 function getUOMData(){if(cacheUOM)return Promise.resolve(cacheUOM);return getCSV(UOM_URL).then(function(d){cacheUOM=d;return d})}
 function findUOMByBarcode(barcode){
   if(!cacheUOM||!barcode)return"";
