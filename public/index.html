@@ -2489,15 +2489,24 @@ function formatRupiah(n){if(!n)return"0";return new Intl.NumberFormat("id-ID").f
 function processStock(item){var sr=parseInt((item[4]||"").replace(/[^0-9]/g,""))||0,nm=item[2].toUpperCase(),fs=sr,us="";if(/\d+([.,]\d+)?\s*KG\s*$/i.test(nm))fs=sr;else if(/KG\s*$/i.test(nm)){fs=sr/1000;us=" Kg"}var fd;if(us===" Kg")fd=fs.toLocaleString("id-ID",{minimumFractionDigits:3,maximumFractionDigits:3});else fd=fs.toLocaleString("id-ID");return{value:fs,display:fd+us}}
 
 function syncAllPrices(data){
-  var items=[];
+  var items=[];var checksum=0;
   for(var i=1;i<data.length;i++){
     var bc=(data[i][1]||"").trim();
     var pr=parseFloat(String(data[i][3]||"").replace(/[^0-9.]/g,""))||0;
-    if(bc&&pr>0)items.push({barcode:bc,price:pr});
+    if(bc&&pr>0){items.push({barcode:bc,price:pr});checksum+=pr;}
   }
   if(!items.length)return;
+  var today=new Date().toISOString().slice(0,10);
+  try{
+    var m=JSON.parse(sessionStorage.getItem("sync_meta")||"null");
+    // Skip sync ke server jika hari sama, jumlah produk sama, dan total harga sama
+    // Jika ada 1 harga berubah → checksum berubah → sync ulang otomatis
+    if(m&&m.date===today&&m.count===items.length&&m.checksum===checksum)return;
+  }catch(e){}
   fetch(API_BASE_URL+"/sync-prices",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:items})}).then(function(r){return r.json()}).then(function(res){
-    if(res&&res.saved>0&&typeof showToast==="function"){}
+    if(res&&res.saved>0){
+      try{sessionStorage.setItem("sync_meta",JSON.stringify({date:today,count:items.length,checksum:checksum}));}catch(e){}
+    }
   }).catch(function(){});
 }
 var _cacheBarangTime=0;function getBarang(){if(cacheBarang&&(Date.now()-_cacheBarangTime)<600000)return Promise.resolve(cacheBarang);loadPriceMap();return getCSV(BARANG_URL).then(function(d){cacheBarang=d;_cacheBarangTime=Date.now();syncAllPrices(d);return d})}
