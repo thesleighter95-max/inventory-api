@@ -586,7 +586,8 @@ table td { font-size: 11px; }
       </div>
       <div id="reader" class="mt-4"></div>
     </div>
-    <div id="lastUpdate" class="text-xs text-pro-text text-right mb-4 font-medium"></div>
+    <div id="lastUpdate" class="text-xs text-pro-text text-right font-medium" style="margin-bottom:2px;"></div>
+    <div id="syncStatus" style="font-size:10px;text-align:right;margin-bottom:14px;min-height:14px;"></div>
     <div id="hasil"></div>
   </div>
 
@@ -2488,6 +2489,13 @@ function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items
 function formatRupiah(n){if(!n)return"0";return new Intl.NumberFormat("id-ID").format(parseInt(n.toString().replace(/[^0-9]/g,""))||0)}
 function processStock(item){var sr=parseInt((item[4]||"").replace(/[^0-9]/g,""))||0,nm=item[2].toUpperCase(),fs=sr,us="";if(/\d+([.,]\d+)?\s*KG\s*$/i.test(nm))fs=sr;else if(/KG\s*$/i.test(nm)){fs=sr/1000;us=" Kg"}var fd;if(us===" Kg")fd=fs.toLocaleString("id-ID",{minimumFractionDigits:3,maximumFractionDigits:3});else fd=fs.toLocaleString("id-ID");return{value:fs,display:fd+us}}
 
+function updateSyncIndicator(status,timeStr){
+  var el=document.getElementById("syncStatus");if(!el)return;
+  if(status==="loading")el.innerHTML='<span style="color:#6b7280">⏳ Menyinkron harga ke server...</span>';
+  else if(status==="ok")el.innerHTML='<span style="color:#4ade80">✅ Harga disinkron: '+timeStr+'</span>';
+  else if(status==="cached")el.innerHTML='<span style="color:#34d399">✅ Harga disinkron: '+timeStr+'</span>';
+  else if(status==="error")el.innerHTML='<span style="color:#f87171">⚠️ Gagal sinkron ke server</span>';
+}
 function syncAllPrices(data){
   var items=[];var checksum=0;
   for(var i=1;i<data.length;i++){
@@ -2499,15 +2507,19 @@ function syncAllPrices(data){
   var today=new Date().toISOString().slice(0,10);
   try{
     var m=JSON.parse(sessionStorage.getItem("sync_meta")||"null");
-    // Skip sync ke server jika hari sama, jumlah produk sama, dan total harga sama
-    // Jika ada 1 harga berubah → checksum berubah → sync ulang otomatis
-    if(m&&m.date===today&&m.count===items.length&&m.checksum===checksum)return;
+    if(m&&m.date===today&&m.count===items.length&&m.checksum===checksum){
+      updateSyncIndicator("cached",m.time||"—");
+      return;
+    }
   }catch(e){}
+  updateSyncIndicator("loading");
   fetch(API_BASE_URL+"/sync-prices",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:items})}).then(function(r){return r.json()}).then(function(res){
     if(res&&res.saved>0){
-      try{sessionStorage.setItem("sync_meta",JSON.stringify({date:today,count:items.length,checksum:checksum}));}catch(e){}
+      var now=new Date().toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Makassar"});
+      try{sessionStorage.setItem("sync_meta",JSON.stringify({date:today,count:items.length,checksum:checksum,time:now+" WITA"}));}catch(e){}
+      updateSyncIndicator("ok",now+" WITA");
     }
-  }).catch(function(){});
+  }).catch(function(){updateSyncIndicator("error");});
 }
 var _cacheBarangTime=0;function getBarang(){if(cacheBarang&&(Date.now()-_cacheBarangTime)<600000)return Promise.resolve(cacheBarang);loadPriceMap();return getCSV(BARANG_URL).then(function(d){cacheBarang=d;_cacheBarangTime=Date.now();syncAllPrices(d);return d})}
 function tampilkanUpdate(){getBarang().then(function(d){$("lastUpdate").innerText="Update: "+(d[0][1]||"-")})}
