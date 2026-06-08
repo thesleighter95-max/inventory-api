@@ -827,9 +827,16 @@ loadStatus();
             pg_size_pretty(pg_total_relation_size('kv_store')) AS total_size,
             pg_size_pretty(pg_relation_size('kv_store')) AS table_size,
             pg_size_pretty(pg_indexes_size('kv_store')) AS index_size,
-            (SELECT count(*) FROM kv_store)::int AS row_count
+            (SELECT count(*) FROM kv_store)::int AS row_count,
+            pg_database_size(current_database()) AS db_bytes_raw,
+            pg_size_pretty(pg_database_size(current_database())) AS db_size_pretty
         `;
         const tbl = tableStats[0] || {};
+        // Neon free tier = 512 MB = 536870912 bytes
+        const NEON_FREE_LIMIT = 536870912;
+        const dbBytes = parseInt(tbl.db_bytes_raw || 0);
+        const freeBytes = Math.max(0, NEON_FREE_LIMIT - dbBytes);
+        const usedPercent = Math.min(100, ((dbBytes / NEON_FREE_LIMIT) * 100).toFixed(1));
         const totalBytes = rows.reduce((s, r) => s + (r.value_bytes || 0), 0);
         // In-memory cache status
         const cacheKeys = [..._memCache.keys()];
@@ -847,7 +854,14 @@ loadStatus();
             rowCount: tbl.row_count || rows.length,
             totalValueBytes: totalBytes,
             totalValueKB: (totalBytes / 1024).toFixed(2),
-            totalValueMB: (totalBytes / 1024 / 1024).toFixed(3)
+            totalValueMB: (totalBytes / 1024 / 1024).toFixed(3),
+            dbBytes: dbBytes,
+            dbSizePretty: tbl.db_size_pretty || "-",
+            freeBytes: freeBytes,
+            freeSizePretty: (freeBytes / 1048576).toFixed(1) + " MB",
+            usedPercent: parseFloat(usedPercent),
+            limitBytes: 536870912,
+            limitPretty: "512 MB"
           },
           keys: rows.map(r => ({
             key: r.key,
