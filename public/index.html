@@ -1555,7 +1555,7 @@ function togglePwdVisibility(inputId,btnId){
 }
 
 var CHANGE_PWD_URL="https://script.google.com/macros/s/AKfycbxlc1Taj-EeOgFJ2gj27bXRbd5npcvEXev_K12NaUMioaAmfRRkjWwWAd6DBkV5Px7zAg/exec";
-var BBLM_CACHE_HOURS=999999;
+var BBLM_CACHE_HOURS=1;
 var bblmCache=null,bblmLoaded=false,bblmLoading=false,bblmFailed=false,bblmTotalProducts=0;
 var lastBblmProduct=null,lastBblmMatchType="";
 var cacheUOM=null;
@@ -3000,85 +3000,68 @@ function parseBBLMCore(rows){
   return{gradeNames:gradeNames,products:products};
 }
 
-function pushBBLMToServer(result,label){
-  fetch(API_BASE_URL+"/bblm",{
-    method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({gradeNames:result.gradeNames,products:result.products,sourceLabel:label||"Browser sync",updatedBy:currentUserNameInv||"auto"})
-  }).catch(function(e){console.warn("[BBLM Push]",e)});
+function pushBBLMToServer(){
+  // Dinonaktifkan — BBLM sekarang live dari Google Sheets, tidak disimpan ke server
 }
 
 var BBLM_LS_KEY='bblm_ls_v2';
 function bblmLsSave(sd){try{if(sd&&sd.updatedAt&&sd.products)localStorage.setItem(BBLM_LS_KEY,JSON.stringify({updatedAt:sd.updatedAt,gradeNames:sd.gradeNames||[],products:sd.products,totalProducts:sd.totalProducts||sd.products.length}));}catch(e){}}
 function bblmLsGet(){try{var r=localStorage.getItem(BBLM_LS_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
 function fetchBBLM(){
+  // LANGSUNG dari Google Sheets — tidak lewat server
   if(bblmCache)return Promise.resolve(bblmCache);
   if(bblmLoading)return Promise.resolve(null);
   if(bblmFailed)return Promise.resolve(null);
   bblmLoading=true;
+  // Cek localStorage: jika masih fresh (< BBLM_CACHE_HOURS jam) pakai cache lokal
   var ls=bblmLsGet();
-  // Cek status dulu (60 bytes) sebelum download 2.9MB
-  return fetch(API_BASE_URL+"/bblm-status").then(function(r){return r.json();}).then(function(st){
-    if(ls&&ls.updatedAt&&st.updatedAt&&ls.updatedAt===st.updatedAt&&ls.products&&ls.products.length>0){
-      // Pakai localStorage — hemat 2.9MB bandwidth!
-      bblmLoading=false;bblmCache={gradeNames:ls.gradeNames||[],products:ls.products};
-      bblmTotalProducts=ls.totalProducts||ls.products.length;bblmLoaded=true;bblmFailed=false;
-      saveBBLMSyncTime(st.updatedAt);if(lastFoundItem)tampilkan(lastFoundItem);
-      return bblmCache;
-    }
-    return fetchBBLMFromServer();
-  }).catch(function(){return fetchBBLMFromServer();});
-}
-function fetchBBLMFromServer(){
-  return fetch(API_BASE_URL+"/bblm",{headers:{"If-None-Match":bblmLsGet()&&bblmLsGet().updatedAt?'"'+bblmLsGet().updatedAt+'"':''}}).then(function(r){
-    if(r.status===304){var ls=bblmLsGet();if(ls&&ls.products&&ls.products.length>0){bblmLoading=false;bblmCache={gradeNames:ls.gradeNames||[],products:ls.products};bblmTotalProducts=ls.totalProducts||ls.products.length;bblmLoaded=true;bblmFailed=false;saveBBLMSyncTime(ls.updatedAt);if(lastFoundItem)tampilkan(lastFoundItem);return bblmCache;}};
-    return r.json();
-  }).then(function(sd){
-    if(!sd||!sd.hasData)return getCSV(BBLM_URL).then(function(rows){bblmLoading=false;var result=parseBBLMCore(rows);if(!result){bblmFailed=true;return null;}bblmCache=result;bblmTotalProducts=result.products.length;bblmLoaded=true;saveBBLMSyncTime(new Date());if(lastFoundItem)tampilkan(lastFoundItem);pushBBLMToServer(result,"Auto-sync Google Sheets");return bblmCache;}).catch(function(){bblmLoading=false;bblmFailed=true;return null;});
-    var fresh=false;
-    if(sd.hasData&&sd.updatedAt){var age=Date.now()-new Date(sd.updatedAt).getTime();fresh=age<(BBLM_CACHE_HOURS*3600000)}
-    if(sd.hasData&&fresh&&sd.products&&sd.products.length>0){
+  if(ls&&ls.updatedAt&&ls.products&&ls.products.length>0){
+    var age=Date.now()-new Date(ls.updatedAt).getTime();
+    if(age<(BBLM_CACHE_HOURS*3600000)){
       bblmLoading=false;
-      bblmCache={gradeNames:sd.gradeNames||[],products:sd.products};
-      bblmTotalProducts=sd.totalProducts||sd.products.length;
+      bblmCache={gradeNames:ls.gradeNames||[],products:ls.products};
+      bblmTotalProducts=ls.totalProducts||ls.products.length;
       bblmLoaded=true;bblmFailed=false;
-      bblmLsSave(sd);
-      saveBBLMSyncTime(sd.updatedAt||new Date());
+      saveBBLMSyncTime(ls.updatedAt);
+      if(lastFoundItem)tampilkan(lastFoundItem);
+      return Promise.resolve(bblmCache);
+    }
+  }
+  // Cache habis / tidak ada → ambil langsung dari Google Sheets
+  return getCSVFresh(BBLM_URL).then(function(rows){
+    bblmLoading=false;
+    var result=parseBBLMCore(rows);
+    if(!result){
+      // Gagal parse tapi ada cache lama → pakai cache lama daripada error
+      if(ls&&ls.products&&ls.products.length>0){
+        bblmCache={gradeNames:ls.gradeNames||[],products:ls.products};
+        bblmTotalProducts=ls.products.length;bblmLoaded=true;
+        saveBBLMSyncTime(ls.updatedAt);
+        if(lastFoundItem)tampilkan(lastFoundItem);
+        return bblmCache;
+      }
+      bblmFailed=true;return null;
+    }
+    var now=new Date();
+    bblmCache=result;bblmTotalProducts=result.products.length;bblmLoaded=true;bblmFailed=false;
+    bblmLsSave({updatedAt:now.toISOString(),gradeNames:result.gradeNames,products:result.products,totalProducts:result.products.length});
+    saveBBLMSyncTime(now);
+    if(lastFoundItem)tampilkan(lastFoundItem);
+    return bblmCache;
+  }).catch(function(){
+    bblmLoading=false;
+    // Fallback ke cache lama jika ada
+    if(ls&&ls.products&&ls.products.length>0){
+      bblmCache={gradeNames:ls.gradeNames||[],products:ls.products};
+      bblmTotalProducts=ls.products.length;bblmLoaded=true;
+      saveBBLMSyncTime(ls.updatedAt);
       if(lastFoundItem)tampilkan(lastFoundItem);
       return bblmCache;
     }
-    return getCSV(BBLM_URL).then(function(rows){
-      bblmLoading=false;
-      var result=parseBBLMCore(rows);
-      if(!result){
-        if(sd.hasData){
-          bblmCache={gradeNames:sd.gradeNames||[],products:sd.products};
-          bblmTotalProducts=sd.totalProducts||sd.products.length;
-          bblmLoaded=true;
-          saveBBLMSyncTime(sd.updatedAt||new Date());
-          if(lastFoundItem)tampilkan(lastFoundItem);
-          return bblmCache;
-        }
-        bblmFailed=true;return null;
-      }
-      bblmCache=result;bblmTotalProducts=result.products.length;bblmLoaded=true;
-      saveBBLMSyncTime(new Date());
-      if(lastFoundItem)tampilkan(lastFoundItem);
-      pushBBLMToServer(result,"Auto-sync Google Sheets");
-      return bblmCache;
-    });
-  }).catch(function(){
-    return getCSV(BBLM_URL).then(function(rows){
-      bblmLoading=false;
-      var result=parseBBLMCore(rows);
-      if(!result){bblmFailed=true;return null}
-      bblmCache=result;bblmTotalProducts=result.products.length;bblmLoaded=true;
-      saveBBLMSyncTime(new Date());
-      if(lastFoundItem)tampilkan(lastFoundItem);
-      pushBBLMToServer(result,"Auto-sync Google Sheets");
-      return bblmCache;
-    }).catch(function(){bblmLoading=false;bblmFailed=true;return null});
+    bblmFailed=true;return null;
   });
 }
+// fetchBBLMFromServer dihapus — BBLM sekarang langsung dari Google Sheets
 
 function findBBLMByBarcode(barcode){if(!bblmCache||!barcode)return null;var bc=barcode.trim();for(var i=0;i<bblmCache.products.length;i++){if(bblmCache.products[i].barcode.trim()===bc)return bblmCache.products[i]}var bcS=bc.replace(/^0+/,"");for(var i=0;i<bblmCache.products.length;i++){if(bblmCache.products[i].barcode.trim().replace(/^0+/,"")===bcS)return bblmCache.products[i]}if(bc.length>=8){for(var i=0;i<bblmCache.products.length;i++){var pb=bblmCache.products[i].barcode.trim();if(pb.length>=8&&(pb.indexOf(bc)!==-1||bc.indexOf(pb)!==-1))return bblmCache.products[i]}}return null}
 function findBBLMByName(searchName){
@@ -3343,9 +3326,9 @@ function syncBBLMFromSheets(){
     var isEmpty=result.products.length===0;
     setDriveSyncStatus(isEmpty?"Data BBLM dikosongkan/direset ("+ts+")":"Berhasil! "+result.products.length+" produk BBLM diperbarui ("+ts+")","success");
     saveBBLMSyncTime(now);
+    bblmLsSave({updatedAt:now.toISOString(),gradeNames:result.gradeNames,products:result.products,totalProducts:result.products.length});
     if(lastFoundItem)tampilkan(lastFoundItem);
     showToast(isEmpty?"Data BBLM berhasil direset/dikosongkan!":"BBLM diperbarui! "+result.products.length+" produk dari Google Sheets","success");
-    pushBBLMToServer(result,"Manual sync Google Sheets");
   }).catch(function(e){
     setDriveSyncStatus("Gagal: "+e.message,"error");
     showToast("Sync gagal: "+e.message,"error");
