@@ -1118,6 +1118,84 @@ table td { font-size: 11px; }
     </div>
   </div>
 
+
+  <!-- ╔════════════════════════════════════════════════════╗ -->
+  <!-- ║  SERVER NEO PANEL — admin only                    ║ -->
+  <!-- ╚════════════════════════════════════════════════════╝ -->
+  <div id="neoPanel" class="panel-container max-w-sm mx-auto px-4 pt-4 pb-24">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <h2 style="font-size:18px;font-weight:800;color:#fff;margin:0;">&#128202; Server Neo</h2>
+        <p style="font-size:11px;color:#64748b;margin:2px 0 0;">Neon DB &middot; <span id="neoLastUpdate">-</span></p>
+      </div>
+      <button onclick="loadNeoStatus()" id="neoRefreshBtn" style="background:rgba(124,58,237,0.15);border:1.5px solid rgba(124,58,237,0.35);border-radius:10px;padding:8px 12px;color:#a78bfa;font-size:12px;font-weight:700;cursor:pointer;">&#8635; Refresh</button>
+    </div>
+
+    <!-- Storage Gauge -->
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Kapasitas Storage</span>
+        <span id="neoUsedPercent" style="font-size:13px;font-weight:800;color:#a78bfa;">-</span>
+      </div>
+      <!-- Bar -->
+      <div style="background:rgba(255,255,255,0.08);border-radius:100px;height:10px;overflow:hidden;margin-bottom:10px;">
+        <div id="neoBar" style="height:100%;border-radius:100px;width:0%;transition:width 0.8s ease;background:linear-gradient(90deg,#7c3aed,#a78bfa);"></div>
+      </div>
+      <!-- Used / Free -->
+      <div style="display:flex;justify-content:space-between;">
+        <div style="text-align:left;">
+          <p style="font-size:10px;color:#64748b;margin:0 0 2px;font-weight:600;">TERPAKAI</p>
+          <p id="neoUsedSize" style="font-size:16px;font-weight:800;color:#fff;margin:0;">-</p>
+        </div>
+        <div style="text-align:right;">
+          <p style="font-size:10px;color:#64748b;margin:0 0 2px;font-weight:600;">SISA / LIMIT</p>
+          <p id="neoFreeSize" style="font-size:16px;font-weight:800;color:#4ade80;margin:0;">- / 512 MB</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px;">
+        <p style="font-size:10px;color:#64748b;margin:0 0 4px;font-weight:600;text-transform:uppercase;">Table Size</p>
+        <p id="neoTableSize" style="font-size:18px;font-weight:800;color:#fff;margin:0;">-</p>
+        <p style="font-size:10px;color:#64748b;margin:3px 0 0;">kv_store data</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px;">
+        <p style="font-size:10px;color:#64748b;margin:0 0 4px;font-weight:600;text-transform:uppercase;">Index Size</p>
+        <p id="neoIndexSize" style="font-size:18px;font-weight:800;color:#fff;margin:0;">-</p>
+        <p style="font-size:10px;color:#64748b;margin:3px 0 0;">kv_store index</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px;">
+        <p style="font-size:10px;color:#64748b;margin:0 0 4px;font-weight:600;text-transform:uppercase;">Total Keys</p>
+        <p id="neoRowCount" style="font-size:18px;font-weight:800;color:#fff;margin:0;">-</p>
+        <p style="font-size:10px;color:#64748b;margin:3px 0 0;">baris di DB</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px;">
+        <p style="font-size:10px;color:#64748b;margin:0 0 4px;font-weight:600;text-transform:uppercase;">Cache RAM</p>
+        <p id="neoCacheCount" style="font-size:18px;font-weight:800;color:#a78bfa;margin:0;">-</p>
+        <p style="font-size:10px;color:#64748b;margin:3px 0 0;">key di memori</p>
+      </div>
+    </div>
+
+    <!-- Per-key breakdown -->
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;margin-bottom:12px;">
+      <p style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin:0 0 12px;">Detail per Key</p>
+      <div id="neoKeyList" style="font-size:12px;color:#94a3b8;">Memuat...</div>
+    </div>
+
+    <!-- Cache info -->
+    <div id="neoCacheBlock" style="background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.2);border-radius:14px;padding:14px;display:none;">
+      <p style="font-size:11px;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:.5px;margin:0 0 10px;">&#9889; In-Memory Cache</p>
+      <div id="neoCacheList" style="font-size:12px;color:#94a3b8;"></div>
+    </div>
+
+    <!-- Auto-refresh badge -->
+    <div style="text-align:center;margin-top:12px;">
+      <span style="font-size:10px;color:#475569;">Auto-refresh setiap 30 detik</span>
+    </div>
+  </div>
   <div id="expiredPanel" class="panel-container">
    <div class="p-4">
      <header class="header-floating-expired mx-auto max-w-6xl px-6 py-5 mb-5 fade-in" style="margin-top:4px;">
@@ -1607,14 +1685,100 @@ function renderAdminNav(){
     '<div id="navPromo" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'promo\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#dc2626;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg><span class="text-[9px] font-semibold">Promo</span></div>'+
     '<div id="navExpired" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'expired\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[10px] font-medium">Expired</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="window.open(\'https://pog-mataram.netlify.app/\',\'_blank\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span class="text-[10px] font-medium">POG</span></div>'+
-    '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="openNeoMonitor()" style="position:relative;"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg><span class="text-[9px] font-semibold" style="color:#a78bfa;">Server Neo</span></div>'+
+    '<div id="navNeo" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="openNeoMonitor()"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#7c3aed;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg><span class="text-[9px] font-semibold" style="color:#a78bfa;">Server Neo</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
 }
 function openNeoMonitor(){
   if(!isAdmin){alert('Akses hanya untuk admin!');return;}
-  var url=API_BASE_URL+'/neo-monitor?adminPassword='+encodeURIComponent(ADMIN_PASSWORD);
-  window.open(url,'_blank');
+  switchMainTab('neo');
+}
+var _neoAutoRefresh=null;
+function loadNeoStatus(){
+  if(!isAdmin)return;
+  var btn=document.getElementById('neoRefreshBtn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Memuat...';}
+  fetch(API_BASE_URL+'/neo-status?adminPassword='+encodeURIComponent(ADMIN_PASSWORD))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d.success){console.error('Neo status error',d.message);return;}
+      var db=d.db||{};
+      var now=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Makassar'});
+      // Update last refresh
+      var luEl=document.getElementById('neoLastUpdate');if(luEl)luEl.textContent='Update '+now+' WITA';
+      // Storage bar & sizes
+      var pct=parseFloat(db.usedPercent||0);
+      var barEl=document.getElementById('neoBar');
+      if(barEl){
+        var color=pct<50?'linear-gradient(90deg,#16a34a,#4ade80)':pct<80?'linear-gradient(90deg,#b45309,#fbbf24)':'linear-gradient(90deg,#b91c1c,#f87171)';
+        barEl.style.width=pct+'%';barEl.style.background=color;
+      }
+      var pctEl=document.getElementById('neoUsedPercent');
+      if(pctEl){
+        var pctColor=pct<50?'#4ade80':pct<80?'#fbbf24':'#f87171';
+        pctEl.style.color=pctColor;pctEl.textContent=pct+'%';
+      }
+      var uEl=document.getElementById('neoUsedSize');if(uEl)uEl.textContent=db.dbSizePretty||'-';
+      var fEl=document.getElementById('neoFreeSize');if(fEl)fEl.textContent=(db.freeSizePretty||'-')+' / '+db.limitPretty;
+      // Stats
+      var ts=document.getElementById('neoTableSize');if(ts)ts.textContent=db.tableSize||'-';
+      var is=document.getElementById('neoIndexSize');if(is)is.textContent=db.indexSize||'-';
+      var rc=document.getElementById('neoRowCount');if(rc)rc.textContent=(db.rowCount||0);
+      var cc=document.getElementById('neoCacheCount');if(cc)cc.textContent=(d.cache&&d.cache.hitKeys)||0;
+      // Per-key list
+      var keys=d.keys||[];
+      var maxKB=keys.length?Math.max.apply(null,keys.map(function(k){return parseFloat(k.kb);})):1;
+      var klEl=document.getElementById('neoKeyList');
+      if(klEl){
+        if(!keys.length){klEl.innerHTML='<em style="color:#475569">Tidak ada data</em>';}
+        else{
+          klEl.innerHTML=keys.map(function(k){
+            var kb=parseFloat(k.kb);var pctBar=Math.min(100,(kb/maxKB)*100).toFixed(0);
+            var barColor=kb>500?'#f87171':kb>100?'#fbbf24':'#60a5fa';
+            var upd=k.updatedAt?new Date(k.updatedAt).toLocaleDateString('id-ID',{day:'numeric',month:'short',timeZone:'Asia/Makassar'}):'-';
+            return '<div style="margin-bottom:10px;">'
+              +'<div style="display:flex;justify-content:space-between;margin-bottom:3px;">'
+              +'<span style="font-weight:600;color:#e2e8f0;font-size:11px;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+k.key+'</span>'
+              +'<span style="font-weight:700;color:'+barColor+';font-size:11px;">'+kb+' KB</span>'
+              +'</div>'
+              +'<div style="background:rgba(255,255,255,0.06);border-radius:4px;height:4px;overflow:hidden;">'
+              +'<div style="width:'+pctBar+'%;height:100%;background:'+barColor+';border-radius:4px;"></div>'
+              +'</div>'
+              +'<div style="font-size:9px;color:#475569;margin-top:2px;">Update: '+upd+'</div>'
+              +'</div>';
+          }).join('');
+        }
+      }
+      // Cache detail
+      var cacheKeys=(d.cache&&d.cache.keys)||[];
+      var cbEl=document.getElementById('neoCacheBlock');
+      var clEl=document.getElementById('neoCacheList');
+      if(cbEl&&clEl){
+        if(cacheKeys.length){
+          cbEl.style.display='block';
+          clEl.innerHTML=cacheKeys.map(function(c){
+            return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);">'
+              +'<span style="color:#e2e8f0;font-size:11px;">'+c.key+'</span>'
+              +'<span style="color:#a78bfa;font-weight:700;font-size:11px;">TTL: '+c.ttlLeft+'s</span>'
+              +'</div>';
+          }).join('');
+        } else {
+          cbEl.style.display='none';
+        }
+      }
+      if(btn){btn.disabled=false;btn.textContent='⟳ Refresh';}
+      // Auto-refresh 30 detik
+      if(!_neoAutoRefresh){
+        _neoAutoRefresh=setInterval(function(){
+          if($("neoPanel").classList.contains("active"))loadNeoStatus();
+          else{clearInterval(_neoAutoRefresh);_neoAutoRefresh=null;}
+        },30000);
+      }
+    })
+    .catch(function(e){
+      if(btn){btn.disabled=false;btn.textContent='⟳ Refresh';}
+      console.error('loadNeoStatus error',e);
+    });
 }
 function updateUserInfo(n){$("displayName").innerText=n;$("displayInitial").innerText=n.charAt(0).toUpperCase()}
 function loadAdminData(){
@@ -2492,6 +2656,7 @@ function switchMainTab(tab){
   else if(tab==="expired"){$("expiredPanel").classList.add("active");document.body.classList.add("light-mode");activateNav("navExpired");setMarquee(false);lucide.createIcons();kirimAktivitas("tab_expired","Buka panel Expired")}
   else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();loadBarcodeNotFound();if(_bnfInterval)clearInterval(_bnfInterval);_bnfInterval=setInterval(loadBarcodeNotFound,180000);}
   else if(tab==="promo"){$("promoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navPromo");setMarquee(false);loadPromoList();}
+  else if(tab==="neo"){$("neoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navNeo");setMarquee(false);loadNeoStatus();}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
 function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items-center justify-center p-10 text-pro-text"><svg class="animate-spin h-6 w-6 text-pro-main mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-xs">'+(t||"Memuat...")+'</span></div>'}
