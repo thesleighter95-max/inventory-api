@@ -1607,8 +1607,14 @@ function renderAdminNav(){
     '<div id="navPromo" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'promo\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#dc2626;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg><span class="text-[9px] font-semibold">Promo</span></div>'+
     '<div id="navExpired" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'expired\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[10px] font-medium">Expired</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="window.open(\'https://pog-mataram.netlify.app/\',\'_blank\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span class="text-[10px] font-medium">POG</span></div>'+
+    '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="openNeoMonitor()" style="position:relative;"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg><span class="text-[9px] font-semibold" style="color:#a78bfa;">Server Neo</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
+}
+function openNeoMonitor(){
+  if(!isAdmin){alert('Akses hanya untuk admin!');return;}
+  var url=API_BASE_URL+'/neo-monitor?adminPassword='+encodeURIComponent(ADMIN_PASSWORD);
+  window.open(url,'_blank');
 }
 function updateUserInfo(n){$("displayName").innerText=n;$("displayInitial").innerText=n.charAt(0).toUpperCase()}
 function loadAdminData(){
