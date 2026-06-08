@@ -30,26 +30,63 @@ async function parseBody(req) {
 }
 
 async function getJson(key, defaultValue) {
+  if (_CACHEABLE.has(key)) {
+    const hit = cacheGet(key);
+    if (hit !== undefined) return hit;
+  }
   try {
     await initDb();
     const rows = await sql`SELECT value FROM kv_store WHERE key = ${key}`;
-    if (!rows.length || rows[0].value === null) return defaultValue;
-    return rows[0].value;
+    const val = (!rows.length || rows[0].value === null) ? defaultValue : rows[0].value;
+    if (_CACHEABLE.has(key)) cacheSet(key, val);
+    return val;
   } catch {
     return defaultValue;
   }
 }
 
 async function setJson(key, data) {
+  cacheInvalidate(key);
   await initDb();
   await sql`INSERT INTO kv_store (key, value, updated_at)
     VALUES (${key}, ${JSON.stringify(data)}, NOW())
     ON CONFLICT (key) DO UPDATE SET value = ${JSON.stringify(data)}, updated_at = NOW()`;
+  if (_CACHEABLE.has(key)) cacheSet(key, data);
 }
 
 async function deleteKey(key) {
   await initDb();
   await sql`DELETE FROM kv_store WHERE key = ${key}`;
+  cacheInvalidate(key);
+}
+
+// ============================================================
+// IN-MEMORY CACHE (module-level, survives warm Vercel instances)
+// Reduces DB reads untuk key yang sering dibaca
+// ============================================================
+const _memCache = new Map();
+const _CACHE_TTL = 5 * 60 * 1000; // 5 menit
+
+const _CACHEABLE = new Set([
+  "price-snapshot-current","price-snapshot-prev","price-snapshot-highest",
+  "promo-excluded","company-location","maintenance","bblm-status","sync-meta",
+  "users","bblm"
+]);
+
+function cacheGet(key) {
+  const e = _memCache.get(key);
+  if (!e) return undefined;
+  if (Date.now() > e.exp) { _memCache.delete(key); return undefined; }
+  return e.val;
+}
+function cacheSet(key, val) {
+  _memCache.set(key, { val, exp: Date.now() + _CACHE_TTL });
+}
+function cacheInvalidate(key) {
+  _memCache.delete(key);
+  if (["price-snapshot-current","price-snapshot-highest","promo-excluded"].includes(key)) {
+    _memCache.delete("__promo_etag");
+  }
 }
 
 // Update price-snapshot-highest: simpan harga tertinggi per produk dari semua snapshot
@@ -234,7 +271,11 @@ export default async function handler(req, res) {
       return send({ success: true });
     }
 
-    if (path === "/maintenance" && method === "GET") return send(await getJson("maintenance", { active: false, message: "", updatedAt: null }));
+    if (path === "/maintenance" && method === "GET") {
+      const data = await getJson("maintenance", { active: false, message: "", updatedAt: null });
+      res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+      return send(data);
+    }
 
     if (path === "/maintenance" && method === "POST") {
       const { adminPassword, active, message } = body;
@@ -510,6 +551,15 @@ loadStatus();
       return send({ success: true, saved: count, message: count.toLocaleString("id-ID") + " harga berhasil disimpan sebagai acuan. Sekarang update spreadsheet — harga coret akan tampil otomatis." });
     }
 
+    // GET /sync-prices/check — ringan, cek apakah perlu kirim ulang data harga (hemat bandwidth)
+    if (path === "/sync-prices/check" && method === "GET") {
+      const { date, count } = query;
+      const syncMeta = await getJson("sync-meta", { date: null, count: 0 });
+      const needSync = !date || !count || syncMeta.date !== date || syncMeta.count !== parseInt(count, 10);
+      res.setHeader("Cache-Control", "no-store");
+      return send({ needSync, serverDate: syncMeta.date || null, serverCount: syncMeta.count || 0 });
+    }
+
     if (path === "/sync-prices" && method === "GET") {
       const [current, prev, highest] = await Promise.all([
         getJson("price-snapshot-current", { date: null, prices: {} }),
@@ -519,23 +569,28 @@ loadStatus();
       const cPrices = current.prices || {};
       const pPrices = prev.prices || {};
       const hPrices = highest.prices || {};
-      // diffCount: produk yang harga tertingginya > harga terbaru (akan tampil harga coret)
       const diffCount = Object.keys(hPrices).filter(bc => {
-        const hp = hPrices[bc];
-        const cp = cPrices[bc];
+        const hp = hPrices[bc]; const cp = cPrices[bc];
         return hp != null && cp != null && hp > cp;
       }).length;
-      // diffCountManual: dari acuan manual saja
       const diffCountManual = Object.keys(pPrices).filter(bc => {
-        const pp = pPrices[bc];
-        const cp = cPrices[bc];
+        const pp = pPrices[bc]; const cp = cPrices[bc];
         return pp != null && cp != null && pp > cp;
       }).length;
+      const cCount = Object.keys(cPrices).length;
+      const etag = '"sp-' + (current.date||"null") + "-" + (prev.date||"null") + "-" + cCount + '"';
+      res.setHeader("ETag", etag);
+      res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+      if (req.headers["if-none-match"] === etag) return res.status(304).end();
+      const syncMeta = await getJson("sync-meta", { date: null, count: 0 });
+      const today = new Date().toISOString().slice(0, 10);
+      const needSync = syncMeta.date !== today || syncMeta.count !== cCount;
       return send({ success: true,
-        current: { date: current.date, count: Object.keys(cPrices).length },
+        current: { date: current.date, count: cCount },
         prev: { date: prev.date, count: Object.keys(pPrices).length, diffCount: diffCountManual },
         highest: { count: Object.keys(hPrices).length, updatedAt: highest.updatedAt, diffCount },
-        diffCount
+        diffCount,
+        needSync
       });
     }
 
@@ -546,12 +601,23 @@ loadStatus();
       const today = new Date().toISOString().slice(0, 10);
       const prices = {};
       items.forEach(({ barcode, price }) => { if (barcode) prices[barcode] = Number(price) || 0; });
-      // Jalankan setJson(current) dan getJson(highest) secara paralel
+      const incomingCount = Object.keys(prices).length;
+
+      // OPTIMASI BANDWIDTH: skip DB write jika tanggal + jumlah produk sudah sama
+      // (semua user baca dari spreadsheet yang sama → data identik)
+      const syncMeta = await getJson("sync-meta", { date: null, count: 0 });
+      if (syncMeta.date === today && syncMeta.count === incomingCount) {
+        return send({ success: true, saved: incomingCount, skipped: true });
+      }
+
+      // Data baru atau jumlah produk berubah → simpan ke DB
       const [_, existingHighest] = await Promise.all([
         setJson("price-snapshot-current", { date: today, prices }),
         getJson("price-snapshot-highest", { prices: {}, updatedAt: null })
       ]);
-      // Merge highest setelah keduanya selesai (hanya 1 write, bukan 2 round-trip)
+      // Update sync-meta agar request berikutnya bisa di-skip
+      await setJson("sync-meta", { date: today, count: incomingCount });
+
       const highest = existingHighest.prices || {};
       let updated = 0;
       for (const [barcode, price] of Object.entries(prices)) {
@@ -564,7 +630,7 @@ loadStatus();
       if (updated > 0) {
         await setJson("price-snapshot-highest", { prices: highest, updatedAt: new Date().toISOString() });
       }
-      return send({ success: true, saved: Object.keys(prices).length });
+      return send({ success: true, saved: incomingCount, skipped: false });
     }
 
     if (path === "/product-request" && method === "POST") {
@@ -673,6 +739,10 @@ loadStatus();
         getJson("price-snapshot-current", { date: null, prices: {} }),
         getJson("promo-excluded", { barcodes: [] })
       ]);
+      const etag = '"pl-' + (highest.updatedAt||"null") + "-" + (current.date||"null") + "-" + (excluded.updatedAt||"null") + '"';
+      res.setHeader("ETag", etag);
+      res.setHeader("Cache-Control", "public, max-age=120, stale-while-revalidate=600");
+      if (req.headers["if-none-match"] === etag) return res.status(304).end();
       const hPrices = highest.prices || {};
       const cPrices = current.prices || {};
       const excludedSet = new Set(excluded.barcodes || []);
@@ -814,6 +884,7 @@ loadStatus();
     // GET /company-location — ambil setting lokasi perusahaan
     if (path === "/company-location" && method === "GET") {
       const loc = await getJson("company-location", { lat: null, lng: null, radiusKm: 1, name: "Perusahaan" });
+      res.setHeader("Cache-Control", "public, max-age=300, stale-while-revalidate=3600");
       return send({ success: true, ...loc });
     }
 
