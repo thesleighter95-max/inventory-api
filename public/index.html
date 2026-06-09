@@ -2702,20 +2702,10 @@ function syncAllPrices(data){
 var _cacheBarangTime=0;function getBarang(){if(cacheBarang&&(Date.now()-_cacheBarangTime)<600000)return Promise.resolve(cacheBarang);loadPriceMap();return getCSV(BARANG_URL).then(function(d){cacheBarang=d;_cacheBarangTime=Date.now();syncAllPrices(d);return d})}
 var _autoRefreshTimer=null;
 function tampilkanUpdate(){
-  // Tampilkan tombol refresh dan mulai auto-refresh 3 menit
+  // Sync manual & admin-only — auto-refresh otomatis dimatikan
   var _rb=document.getElementById("btnRefreshHarga");if(_rb)_rb.style.display=isAdmin?"block":"none";
-  if(!_autoRefreshTimer){
-    _autoRefreshTimer=setInterval(function(){
-      // Auto-refresh: reset cache lalu ambil harga terbaru dari spreadsheet
-      cacheBarang=null;_cacheBarangTime=0;
-      try{sessionStorage.removeItem("sync_meta");}catch(e){}
-      getBarang().then(function(d){
-        $("lastUpdate").innerText="Update: "+(d[0][1]||"-");
-      }).catch(function(){});
-    },180000); // 3 menit
-  }
-  getBarang().then(function(d){$("lastUpdate").innerText="Update: "+(d[0][1]||"-")});
   if(!isAdmin)startPriceRefreshPoller();
+  getBarang().then(function(d){$("lastUpdate").innerText="Update: "+(d[0][1]||"-")});
 }
 var _priceRefreshPollTs=0,_priceRefreshPollTimer=null;
 function startPriceRefreshPoller(){
