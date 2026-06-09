@@ -65,7 +65,7 @@ async function deleteKey(key) {
 // Reduces DB reads untuk key yang sering dibaca
 // ============================================================
 const _memCache = new Map();
-const _CACHE_TTL = 5 * 60 * 1000; // 5 menit
+const _CACHE_TTL = 60 * 1000; // 1 menit
 
 const _CACHEABLE = new Set([
   "price-snapshot-current","price-snapshot-prev","price-snapshot-highest",
@@ -1505,6 +1505,15 @@ loadCurrentSetting();
       const removed = logs.length - filtered.length;
       await setJson("activity-logs", filtered);
       return send({ success: true, message: removed + " log peringatan lokasi berhasil dihapus", removed });
+    }
+
+
+    // POST /price-snapshot/refresh — admin clear cache agar semua user dapat harga terbaru
+    if (path === "/price-snapshot/refresh" && method === "POST") {
+      const { adminPassword } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      ["price-snapshot-current","price-snapshot-prev","price-snapshot-highest","sync-meta","__promo_etag"].forEach(k => _memCache.delete(k));
+      return send({ success: true, message: "Cache harga diperbarui. Semua user akan mendapat data terbaru." });
     }
 
     return send({ error: "Not found" }, 404);
