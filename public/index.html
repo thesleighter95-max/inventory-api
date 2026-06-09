@@ -2703,7 +2703,7 @@ var _cacheBarangTime=0;function getBarang(){if(cacheBarang&&(Date.now()-_cacheBa
 var _autoRefreshTimer=null;
 function tampilkanUpdate(){
   // Tampilkan tombol refresh dan mulai auto-refresh 3 menit
-  var _rb=document.getElementById("btnRefreshHarga");if(_rb)_rb.style.display="block";
+  var _rb=document.getElementById("btnRefreshHarga");if(_rb)_rb.style.display=isAdmin?"block":"none";
   if(!_autoRefreshTimer){
     _autoRefreshTimer=setInterval(function(){
       // Auto-refresh: reset cache lalu ambil harga terbaru dari spreadsheet
@@ -2715,13 +2715,31 @@ function tampilkanUpdate(){
     },180000); // 3 menit
   }
   getBarang().then(function(d){$("lastUpdate").innerText="Update: "+(d[0][1]||"-")});
+  if(!isAdmin)startPriceRefreshPoller();
+}
+var _priceRefreshPollTs=0,_priceRefreshPollTimer=null;
+function startPriceRefreshPoller(){
+  if(_priceRefreshPollTimer)return;
+  _priceRefreshPollTimer=setInterval(function(){
+    fetch(API_BASE_URL+"/price-refresh-ts",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){
+      var ts=d.ts||0;
+      if(_priceRefreshPollTs===0){_priceRefreshPollTs=ts;return;}
+      if(ts>_priceRefreshPollTs){
+        _priceRefreshPollTs=ts;
+        cacheBarang=null;_cacheBarangTime=0;
+        try{sessionStorage.removeItem("sync_meta");}catch(e){}
+        getBarang().then(function(d){$("lastUpdate").innerText="Update: "+(d[0][1]||"-");});
+      }
+    }).catch(function(){});
+  },30000);
 }
 function refreshHargaManual(){
   var btn=document.getElementById("btnRefreshHarga");
   if(btn){btn.disabled=true;btn.textContent="⏳ Memuat...";}
-  // Reset cache agar getBarang() fetch ulang dari spreadsheet
   cacheBarang=null;_cacheBarangTime=0;
   try{sessionStorage.removeItem("sync_meta");}catch(e){}
+  // Admin: invalidate server cache agar semua user dapat data terbaru
+  fetch(API_BASE_URL+"/price-snapshot/refresh",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:ADMIN_PASSWORD})}).catch(function(){});
   getBarang().then(function(d){
     $("lastUpdate").innerText="Update: "+(d[0][1]||"-");
     if(btn){btn.disabled=false;btn.textContent="⟳ Refresh Harga";}
