@@ -3323,8 +3323,7 @@ async function refreshCacheHarga(){
   try{
     var res=await fetch(API_BASE_URL+"/price-snapshot/refresh",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:ADMIN_PASSWORD})});
     var data=await res.json();
-    if(data.success){alert("Cache harga diperbarui!
-Semua user akan mendapat harga terbaru.");}
+    if(data.success){alert("Cache harga diperbarui! Semua user akan mendapat harga terbaru.");}
     else{alert("Gagal: "+(data.message||"Error"));}
   }catch(e){alert("Gagal refresh cache: "+e.message);}
   btn.disabled=false;
