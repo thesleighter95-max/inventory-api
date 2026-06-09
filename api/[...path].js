@@ -65,7 +65,7 @@ async function deleteKey(key) {
 // Reduces DB reads untuk key yang sering dibaca
 // ============================================================
 const _memCache = new Map();
-const _CACHE_TTL = 60 * 1000; // 1 menit
+const _CACHE_TTL = 5 * 60 * 1000; // 5 menit
 
 const _CACHEABLE = new Set([
   "price-snapshot-current","price-snapshot-prev","price-snapshot-highest",
