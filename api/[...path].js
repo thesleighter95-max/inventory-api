@@ -1513,7 +1513,15 @@ loadCurrentSetting();
       const { adminPassword } = body;
       if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
       ["price-snapshot-current","price-snapshot-prev","price-snapshot-highest","sync-meta","__promo_etag"].forEach(k => _memCache.delete(k));
+      await setJson("price-refresh-ts", { ts: Date.now() });
       return send({ success: true, message: "Cache harga diperbarui. Semua user akan mendapat data terbaru." });
+    }
+
+    // GET /price-refresh-ts — sinyal kapan admin terakhir refresh cache (untuk auto-reload user)
+    if (path === "/price-refresh-ts" && method === "GET") {
+      const sig = await getJson("price-refresh-ts", { ts: 0 });
+      res.setHeader("Cache-Control", "no-store");
+      return send({ ts: sig.ts || 0 });
     }
 
     return send({ error: "Not found" }, 404);
