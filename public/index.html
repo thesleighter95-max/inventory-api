@@ -630,6 +630,10 @@ table td { font-size: 11px; }
         <input id="driveFileInput" class="hidden">
       </div>
       <div id="driveSyncStatus" class="drive-status"></div>
+      <button id="btnRefreshCache" onclick="refreshCacheHarga()" style="margin-top:8px;width:100%;background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;border-radius:10px;padding:9px 12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;font-weight:700;transition:all 0.2s;">
+        <svg style="width:13px;height:13px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        Perbarui Cache Harga untuk Semua User
+      </button>
       <div id="driveSyncInfo" class="text-[10px] text-gray-600 mt-2 hidden">
         <span id="driveSyncFileName" class="font-semibold text-emerald-400/70"></span>
         <span id="driveSyncTime" class="ml-2"></span>
@@ -3311,6 +3315,21 @@ function handleBBLMFileUpload(input){
   reader.readAsArrayBuffer(file);
 }
 
+async function refreshCacheHarga(){
+  var btn=$("btnRefreshCache");
+  if(!btn)return;
+  btn.disabled=true;
+  btn.innerHTML='<svg class="animate-spin" style="width:13px;height:13px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Memperbarui cache...';
+  try{
+    var res=await fetch(API_BASE_URL+"/price-snapshot/refresh",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:ADMIN_PASSWORD})});
+    var data=await res.json();
+    if(data.success){alert("Cache harga diperbarui!
+Semua user akan mendapat harga terbaru.");}
+    else{alert("Gagal: "+(data.message||"Error"));}
+  }catch(e){alert("Gagal refresh cache: "+e.message);}
+  btn.disabled=false;
+  btn.innerHTML='<svg style="width:13px;height:13px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Perbarui Cache Harga untuk Semua User';
+}
 function setDriveSyncStatus(msg,type){var s=$("driveSyncStatus");s.textContent=msg;s.className="drive-status "+(type||"loading")}
 
 function syncBBLMFromSheets(){
