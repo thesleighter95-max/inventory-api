@@ -3340,11 +3340,25 @@ async function refreshCacheHarga(){
   btn.innerHTML='<svg style="width:13px;height:13px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Perbarui Cache Harga untuk Semua User';
 }
 function lupaPasword(){
-  var u=(document.getElementById("username")||{value:""}).value.trim();
-  var idGmd=u||"(isi username dulu)";
+  var modal=document.getElementById("lupaPasswordModal");
+  var inp=document.getElementById("lupaPasswordInput");
+  var prefill=(document.getElementById("username")||{value:""}).value.trim();
+  if(inp)inp.value=prefill;
+  if(modal){modal.style.display="flex";setTimeout(function(){if(inp)inp.focus();},100);}
+}
+function tutupLupaPassword(){
+  var modal=document.getElementById("lupaPasswordModal");
+  if(modal)modal.style.display="none";
+}
+function kirimLupaPassword(){
+  var inp=document.getElementById("lupaPasswordInput");
+  var idGmd=(inp?inp.value.trim():"");
+  if(!idGmd){inp.style.borderColor="rgba(239,68,68,0.6)";inp.placeholder="ID GMD tidak boleh kosong!";return;}
+  inp.style.borderColor="rgba(99,102,241,0.3)";
   var msg="tolong reset password saya : "+idGmd+" terimakasih";
   var url="https://wa.me/6281536089020?text="+encodeURIComponent(msg);
   window.open(url,"_blank");
+  tutupLupaPassword();
 }
 function setDriveSyncStatus(msg,type){var s=$("driveSyncStatus");s.textContent=msg;s.className="drive-status "+(type||"loading")}
 
@@ -4452,5 +4466,27 @@ function loadExcludedList(){
   .catch(function(e){el.innerHTML='<p style="font-size:10px;color:#f87171;">Error: '+e.message+'</p>';});
 }
 </script>
+
+  <!-- POPUP LUPA PASSWORD -->
+  <div id="lupaPasswordModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)tutupLupaPassword()">
+    <div style="background:#1e293b;border:1px solid rgba(99,102,241,0.3);border-radius:20px;padding:24px;width:100%;max-width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="width:44px;height:44px;background:rgba(99,102,241,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+          <svg style="width:22px;height:22px;color:#818cf8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+        <p style="font-size:15px;font-weight:700;color:#e2e8f0;margin:0;">Lupa Password</p>
+        <p style="font-size:11px;color:#64748b;margin:4px 0 0;">Masukkan ID GMD kamu, kami kirimkan permintaan reset ke admin via WhatsApp</p>
+      </div>
+      <label style="font-size:10px;font-weight:700;color:#94a3b8;display:block;margin-bottom:6px;letter-spacing:.5px;">ID GMD</label>
+      <input id="lupaPasswordInput" type="text" placeholder="Contoh: GMD12345" style="width:100%;background:#0f172a;border:1px solid rgba(99,102,241,0.3);border-radius:10px;padding:11px 14px;color:#e2e8f0;font-size:13px;font-weight:600;outline:none;box-sizing:border-box;" onkeypress="if(event.key==='Enter')kirimLupaPassword()">
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button onclick="tutupLupaPassword()" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;border-radius:10px;padding:11px;font-size:12px;font-weight:600;cursor:pointer;">Batal</button>
+        <button onclick="kirimLupaPassword()" style="flex:2;background:linear-gradient(135deg,#25d366,#128c7e);border:none;color:#fff;border-radius:10px;padding:11px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+          <svg style="width:14px;height:14px" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Kirim ke Admin
+        </button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
