@@ -18,6 +18,33 @@ async function initDb() {
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "00000";
 const SNAP_PASSWORD = process.env.SNAP_PASSWORD || "00000";
+const SHEET_URL_USERS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUOmxLN_--OjkRvb543vpKK5wyL-zcNl67dfDlCPzN28tuBXD2IDEhyJxR8yKqC7CvcHGVj5tSPAD2/pub?gid=0&single=true&output=csv";
+
+// Parse CSV baris menjadi array of {username,password,namaLengkap,suspended}
+async function fetchSheetUsers() {
+  const cacheKey = "__sheet_users";
+  const cached = _memCache.get(cacheKey);
+  if (cached && cached.exp > Date.now()) return cached.val;
+  try {
+    const r = await fetch(SHEET_URL_USERS);
+    const text = await r.text();
+    const rows = text.trim().split("\n").map(l => l.split(",").map(c => c.trim().replace(/^"|"$/g,"")));
+    if (!rows.length) return [];
+    const header = rows[0].map(c => c.toLowerCase());
+    const uIdx = header.indexOf("username"), pIdx = header.indexOf("password"),
+          nIdx = header.indexOf("name"), sIdx = header.indexOf("status");
+    const users = rows.slice(1).filter(r => r[uIdx]).map(r => ({
+      username: r[uIdx] || "",
+      password: r[pIdx] || "",
+      namaLengkap: r[nIdx] || r[uIdx] || "",
+      suspended: (r[sIdx]||"").toLowerCase() === "suspended" || (r[sIdx]||"").toLowerCase() === "nonaktif"
+    }));
+    _memCache.set(cacheKey, { val: users, exp: Date.now() + _CACHE_TTL });
+    return users;
+  } catch(e) {
+    return [];
+  }
+}
 
 async function parseBody(req) {
   return new Promise((resolve) => {
@@ -200,9 +227,19 @@ export default async function handler(req, res) {
     if (path === "/login" && method === "POST") {
       const { username, password } = body;
       if (!username || !password) return send({ success: false, message: "username dan password wajib diisi" }, 400);
-      const users = await getJson("users", []);
-      const user = users.find(u => u.username === username.trim() && u.password === password.trim());
-      if (!user) return send({ success: false, notFound: true, message: "User tidak ditemukan di server" }, 404);
+      const uname = username.trim();
+      // Gabung sheet + DB: DB override sheet (untuk password yang di-reset admin)
+      const [sheetUsers, dbUsers] = await Promise.all([fetchSheetUsers(), getJson("users", [])]);
+      const dbMap = {};
+      dbUsers.forEach(u => { dbMap[u.username] = u; });
+      // Cari di DB dulu (override), lalu fallback ke sheet
+      let user = dbMap[uname];
+      if (!user) {
+        const su = sheetUsers.find(u => u.username === uname);
+        if (su) user = su;
+      }
+      if (!user) return send({ success: false, notFound: true, message: "User tidak ditemukan" }, 404);
+      if (user.password.trim() !== password.trim()) return send({ success: false, notFound: true, message: "Username atau password salah" }, 401);
       if (user.suspended) return send({ success: false, suspended: true, message: "Akun ditangguhkan oleh admin" }, 403);
       return send({ success: true, namaLengkap: user.namaLengkap || user.username });
     }
