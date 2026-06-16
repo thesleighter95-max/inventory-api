@@ -1332,7 +1332,7 @@ function restoreSession(){
     $("mainApp").classList.remove("hidden");setMarquee(true);
     renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();
     updateBBLMSyncDisplay();fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();
-    loadMaintenanceStatus();
+    loadMaintenanceStatus();loadPwResetRequests();
   }else{
     currentUserNameInv=sess.n;currentUsernameRaw=sess.u;isAdmin=false;
     $("mainApp").classList.remove("hidden");setMarquee(true);
@@ -2677,7 +2677,7 @@ function switchMainTab(tab){
   var ns=document.querySelectorAll("#navContainer .nav-item");for(var n=0;n<ns.length;n++){ns[n].classList.remove("active");ns[n].classList.add("text-gray-500");var ind=ns[n].querySelector(".nav-indicator");if(ind)ind.style.opacity="0"}
   if(_bnfInterval){clearInterval(_bnfInterval);_bnfInterval=null;}if(tab==="inventory"){$("inventoryPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navInventory");setMarquee(true);kirimAktivitas("tab_inventory","Buka panel Inventory")}
   else if(tab==="expired"){$("expiredPanel").classList.add("active");document.body.classList.add("light-mode");activateNav("navExpired");setMarquee(false);lucide.createIcons();kirimAktivitas("tab_expired","Buka panel Expired")}
-  else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();loadBarcodeNotFound();if(_bnfInterval)clearInterval(_bnfInterval);_bnfInterval=setInterval(loadBarcodeNotFound,180000);}
+  else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();loadBarcodeNotFound();if(isAdmin)loadPwResetRequests();if(_bnfInterval)clearInterval(_bnfInterval);_bnfInterval=setInterval(loadBarcodeNotFound,180000);}
   else if(tab==="promo"){$("promoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navPromo");setMarquee(false);loadPromoList();}
   else if(tab==="neo"){$("neoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navNeo");setMarquee(false);loadNeoStatus();}
 }
@@ -3976,7 +3976,7 @@ function proceedQuickLogin(data) {
     $("loginPage").classList.add("hidden");
     $("mainApp").classList.remove("hidden"); setMarquee(true);
     renderAdminNav(); updateUserInfo("Admin"); tampilkanUpdate();
-    updateBBLMSyncDisplay(); fetchDataExp(); loadAdminData(); fetchBBLM(); getUOMData(); fetchBBLMStatus(); checkMorningReset();
+    updateBBLMSyncDisplay(); fetchDataExp(); loadAdminData(); fetchBBLM(); getUOMData(); fetchBBLMStatus(); checkMorningReset(); loadPwResetRequests();
     return;
   }
   // Regular user quick login — tetap verifikasi via Google Sheets untuk keamanan
@@ -4021,7 +4021,7 @@ function proceedQuickLogin(data) {
         kirimLog("admin"); kirimAktivitas("login", "Admin login");
         $("loginPage").classList.add("hidden"); $("mainApp").classList.remove("hidden"); setMarquee(true);
         renderAdminNav(); updateUserInfo("Admin"); tampilkanUpdate(); updateBBLMSyncDisplay();
-        fetchDataExp(); loadAdminData(); fetchBBLM(); getUOMData(); fetchBBLMStatus();
+        fetchDataExp(); loadAdminData(); fetchBBLM(); getUOMData(); fetchBBLMStatus(); loadPwResetRequests();
         sessionSave("Admin","admin",true);
         offerQuickLoginSetup("admin", pass, "Admin", true);
         return;
