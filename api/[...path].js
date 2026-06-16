@@ -1561,6 +1561,38 @@ loadCurrentSetting();
       return send({ ts: sig.ts || 0 });
     }
 
+    // POST /password-reset-request — user kirim permintaan reset password
+    if (path === "/password-reset-request" && method === "POST") {
+      const { username } = body;
+      if (!username) return send({ success: false, message: "username wajib diisi" }, 400);
+      const requests = await getJson("pw-reset-requests", []);
+      const existing = requests.findIndex(r => r.username === username);
+      const entry = { username, requestedAt: new Date().toISOString(), handled: false };
+      if (existing >= 0) requests[existing] = entry;
+      else requests.unshift(entry);
+      if (requests.length > 50) requests.length = 50;
+      await setJson("pw-reset-requests", requests);
+      return send({ success: true });
+    }
+
+    // GET /password-reset-requests — admin lihat daftar permintaan reset password
+    if (path === "/password-reset-requests" && method === "GET") {
+      if (query.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const requests = await getJson("pw-reset-requests", []);
+      return send({ success: true, requests: requests.filter(r => !r.handled) });
+    }
+
+    // PATCH /password-reset-requests/:username — tandai sudah ditangani
+    const pwResetMatch = path.match(/^\/password-reset-requests\/([^/]+)$/);
+    if (pwResetMatch && method === "PATCH") {
+      if (body.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const uname = decodeURIComponent(pwResetMatch[1]);
+      const requests = await getJson("pw-reset-requests", []);
+      const idx = requests.findIndex(r => r.username === uname);
+      if (idx >= 0) { requests[idx].handled = true; await setJson("pw-reset-requests", requests); }
+      return send({ success: true });
+    }
+
     return send({ error: "Not found" }, 404);
   } catch (err) {
     return send({ error: "Internal server error", detail: String(err) }, 500);
