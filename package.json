@@ -1,1 +1,8 @@
-{"name":"pda-mini-mataram","version":"1.0.0","type":"module","dependencies":{"@neondatabase/serverless":"^0.10.4"}}
+{
+  "name": "pda-mini-mataram",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
