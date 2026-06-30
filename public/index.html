@@ -1219,7 +1219,76 @@ table td { font-size: 11px; }
       <span style="font-size:10px;color:#475569;">Auto-refresh setiap 30 detik</span>
     </div>
   </div>
-  <div id="expiredPanel" class="panel-container">
+  
+  <!-- ╔════════════════════════════════════════════════════╗ -->
+  <!-- ║  UPLOAD FOTO BBLM PANEL                           ║ -->
+  <!-- ╚════════════════════════════════════════════════════╝ -->
+  <div id="fotoBblmPanel" class="panel-container max-w-sm mx-auto px-4 pt-4 pb-24">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <h2 style="font-size:18px;font-weight:800;color:#fff;margin:0;">&#128247; Upload Foto BBLM</h2>
+        <p style="font-size:11px;color:#64748b;margin:2px 0 0;">Scan barcode &middot; Ambil foto &middot; Export Excel</p>
+      </div>
+      <button id="fbExportBtn" onclick="fbExportExcel()" style="background:rgba(34,197,94,0.15);border:1.5px solid rgba(34,197,94,0.35);border-radius:10px;padding:8px 12px;color:#4ade80;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">&#128229; Export Excel</button>
+    </div>
+    <!-- Count + Clear -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:20px;padding:4px 14px;font-size:12px;color:#a5b4fc;font-weight:700;">Total: <span id="fbCount">0</span> item</div>
+      <button onclick="fbRefreshList()" style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:5px 10px;color:#818cf8;font-size:11px;cursor:pointer;">&#8635; Refresh</button>
+      <button onclick="fbClearAll()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:5px 10px;color:#f87171;font-size:11px;cursor:pointer;">&#128465; Hapus Semua</button>
+    </div>
+    <!-- Form Section -->
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;margin-bottom:12px;">
+      <p style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin:0 0 10px;">&#128270; Input Data Baru</p>
+      <!-- Scanner area -->
+      <div id="fbReader" style="width:100%;border-radius:10px;overflow:hidden;margin-bottom:8px;"></div>
+      <!-- Barcode row -->
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input id="fbBarcode" type="text" inputmode="numeric" placeholder="Scan atau ketik barcode..." style="flex:1;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 12px;color:#fff;font-size:14px;outline:none;min-width:0;" onkeydown="if(event.key==='Enter')fbLookupBarcode(this.value.trim());">
+        <button onclick="fbStartScan()" style="background:rgba(99,102,241,0.2);border:1.5px solid rgba(99,102,241,0.4);border-radius:10px;padding:10px 13px;color:#a5b4fc;font-size:18px;cursor:pointer;flex-shrink:0;" title="Scan Barcode">&#9638;</button>
+        <button onclick="fbLookupBarcode(document.getElementById('fbBarcode').value.trim())" style="background:rgba(99,102,241,0.15);border:1.5px solid rgba(99,102,241,0.3);border-radius:10px;padding:10px 12px;color:#a5b4fc;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">Cari</button>
+      </div>
+      <!-- PROD_CD + STK QTY -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:3px;">PROD_CD</label>
+          <input id="fbProdCd" type="text" readonly placeholder="-" style="width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;color:#94a3b8;font-size:12px;font-family:monospace;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:3px;">STK QTY</label>
+          <input id="fbStkQty" type="number" placeholder="0" style="width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 10px;color:#fff;font-size:13px;box-sizing:border-box;">
+        </div>
+      </div>
+      <!-- PROD_NM -->
+      <div style="margin-bottom:10px;">
+        <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:3px;">PROD_NM</label>
+        <input id="fbProdNm" type="text" placeholder="Nama barang (otomatis dari barcode)" style="width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 12px;color:#fff;font-size:13px;box-sizing:border-box;outline:none;">
+      </div>
+      <!-- Photo -->
+      <div style="margin-bottom:12px;">
+        <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:6px;">FOTO DISPLAY</label>
+        <button onclick="document.getElementById('fbPhotoInput').click()" style="width:100%;background:rgba(234,179,8,0.1);border:1.5px dashed rgba(234,179,8,0.45);border-radius:10px;padding:12px;color:#fbbf24;font-size:13px;font-weight:600;cursor:pointer;">&#128247; Ambil Foto / Pilih dari Galeri</button>
+        <input id="fbPhotoInput" type="file" accept="image/*" capture="environment" style="display:none;" onchange="fbPhotoSelected(this)">
+        <input id="fbPhotoData" type="hidden" value="">
+        <div id="fbPhotoPreviewWrap" style="display:none;margin-top:8px;text-align:center;">
+          <img id="fbPhotoPreview" style="max-width:100%;max-height:180px;border-radius:10px;object-fit:cover;border:2px solid rgba(234,179,8,0.35);" alt="preview">
+          <p style="font-size:10px;color:#64748b;margin:4px 0 0;">Foto terpilih &#183; Klik tombol di atas untuk ganti</p>
+        </div>
+      </div>
+      <!-- Submit -->
+      <button id="fbSubmitBtn" onclick="fbSubmitItem()" style="width:100%;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:12px;padding:14px;color:#fff;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:0.5px;box-shadow:0 4px 15px rgba(99,102,241,0.35);">&#128190; Simpan</button>
+    </div>
+    <!-- Loading -->
+    <div id="fbLoading" style="display:none;justify-content:center;padding:16px;color:#64748b;font-size:13px;gap:8px;align-items:center;">
+      <svg style="width:16px;height:16px;animation:spin 1s linear infinite;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"></circle><path fill="currentColor" opacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+      Memuat data...
+    </div>
+    <!-- List -->
+    <div id="fbListContainer"></div>
+  </div>
+
+<div id="expiredPanel" class="panel-container">
    <div class="p-4">
      <header class="header-floating-expired mx-auto max-w-6xl px-6 py-5 mb-5 fade-in" style="margin-top:4px;">
       <div class="flex items-center gap-3">
@@ -1698,7 +1767,8 @@ function renderUserNav(){
     '<div id="navPromo" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'promo\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#dc2626;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg><span class="text-[9px] font-semibold">Promo</span></div>'+
     '<div id="navExpired" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'expired\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[10px] font-medium">Expired</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="window.open(\'https://pog-mataram.netlify.app/\',\'_blank\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span class="text-[10px] font-medium">POG</span></div>'+
-    '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
+    '<div id="navFotoBblm" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'fotobblm\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#f59e0b;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="text-[9px] font-semibold" style="color:#fbbf24;">Foto BBLM</span></div>\'+
+'<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
 }
 function renderAdminNav(){
@@ -1709,7 +1779,8 @@ function renderAdminNav(){
     '<div id="navExpired" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'expired\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[10px] font-medium">Expired</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="window.open(\'https://pog-mataram.netlify.app/\',\'_blank\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span class="text-[10px] font-medium">POG</span></div>'+
     '<div id="navNeo" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="openNeoMonitor()"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#7c3aed;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg><span class="text-[9px] font-semibold" style="color:#a78bfa;">Server Neo</span></div>'+
-    '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
+    '<div id="navFotoBblm" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'fotobblm\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#f59e0b;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="text-[9px] font-semibold" style="color:#fbbf24;">Foto BBLM</span></div>\'+
+'<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
 }
 function openNeoMonitor(){
@@ -2680,6 +2751,7 @@ function switchMainTab(tab){
   else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();loadBarcodeNotFound();if(isAdmin)loadPwResetRequests();if(_bnfInterval)clearInterval(_bnfInterval);_bnfInterval=setInterval(loadBarcodeNotFound,180000);}
   else if(tab==="promo"){$("promoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navPromo");setMarquee(false);loadPromoList();}
   else if(tab==="neo"){$("neoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navNeo");setMarquee(false);loadNeoStatus();}
+  else if(tab==="fotobblm"){$("fotoBblmPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navFotoBblm");setMarquee(false);loadFotoBblmList();}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
 function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items-center justify-center p-10 text-pro-text"><svg class="animate-spin h-6 w-6 text-pro-main mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-xs">'+(t||"Memuat...")+'</span></div>'}
@@ -4518,6 +4590,300 @@ function loadExcludedList(){
   })
   .catch(function(e){el.innerHTML='<p style="font-size:10px;color:#f87171;">Error: '+e.message+'</p>';});
 }
+
+
+/* ============================================================
+   UPLOAD FOTO BBLM — fungsi lengkap
+   ============================================================ */
+var fbItems = [];
+var _fbPhotoMap = {};
+var _fbScanner = null;
+
+function loadFotoBblmList() {
+  var ld = document.getElementById("fbLoading");
+  if(ld) ld.style.display = "flex";
+  document.getElementById("fbListContainer").innerHTML = "";
+  fetch(API_BASE_URL + "/bblm-foto")
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      fbItems = d.items || [];
+      var cnt = document.getElementById("fbCount");
+      if(cnt) cnt.textContent = fbItems.length;
+      fbRenderList();
+    })
+    .catch(function(){ showToast("Gagal memuat data foto BBLM","error"); })
+    .finally(function(){ var ld=document.getElementById("fbLoading"); if(ld) ld.style.display="none"; });
+}
+
+function fbRefreshList() { loadFotoBblmList(); }
+
+function fbRenderList() {
+  var c = document.getElementById("fbListContainer");
+  if(!c) return;
+  if(!fbItems.length) {
+    c.innerHTML = '<div style="text-align:center;padding:32px 16px;color:#64748b;"><div style="font-size:36px;margin-bottom:8px;">📭</div><p style="font-weight:700;margin:0;">Belum ada data</p><p style="font-size:11px;margin:4px 0 0;">Scan barcode dan ambil foto untuk mulai</p></div>';
+    return;
+  }
+  var html = "";
+  for(var i = 0; i < fbItems.length; i++) {
+    var it = fbItems[i];
+    var pid = "fbThumb_" + it.id;
+    var photoHtml;
+    if(_fbPhotoMap[it.id]) {
+      photoHtml = '<img src="'+_fbPhotoMap[it.id]+'" style="width:64px;height:48px;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="fbOpenPhotoModal(''+it.id+'')" alt="foto">';
+    } else if(it.hasPhoto) {
+      photoHtml = '<div id="'+pid+'" onclick="fbLoadPhoto(''+it.id+'')" style="width:64px;height:48px;background:#1e293b;border:1px dashed #334155;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:9px;color:#64748b;text-align:center;line-height:1.3;">Muat<br>Foto</div>';
+    } else {
+      photoHtml = '<div style="width:64px;height:48px;background:#0f172a;border:1px dashed #1e293b;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#334155;text-align:center;line-height:1.3;">No<br>Foto</div>';
+    }
+    html += '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;">'
+      + '<div style="flex-shrink:0;">'+photoHtml+'</div>'
+      + '<div style="flex:1;min-width:0;">'
+        + '<p style="margin:0 0 2px;font-size:12px;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+fbEsc(it.prodNm||'(nama kosong)')+'</p>'
+        + '<p style="margin:0 0 2px;font-size:11px;color:#64748b;font-family:monospace;">'+fbEsc(it.barcode)+'</p>'
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+          + '<span style="font-size:10px;color:#94a3b8;">CD: <b style="color:#cbd5e1;">'+fbEsc(it.prodCd||'-')+'</b></span>'
+          + '<span style="font-size:10px;color:#94a3b8;">STK: <b style="color:#4ade80;">'+fbEsc(it.stkQty||'0')+'</b></span>'
+        + '</div>'
+        + '<p style="margin:2px 0 0;font-size:10px;color:#475569;">'+fbEsc(it.username||'')+(it.username?' · ':'')+fbFmtDt(it.capturedAt)+'</p>'
+      + '</div>'
+      + '<button onclick="fbDeleteItem(''+it.id+'')" style="flex-shrink:0;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:5px 8px;color:#f87171;font-size:12px;cursor:pointer;" title="Hapus">&#10005;</button>'
+      + '</div>';
+  }
+  c.innerHTML = html;
+}
+
+function fbEsc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function fbFmtDt(iso){ if(!iso) return "-"; try{ var d=new Date(iso); return d.toLocaleDateString("id-ID")+", "+d.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"}); }catch(e){ return "-"; } }
+
+function fbLoadPhoto(id) {
+  var el = document.getElementById("fbThumb_"+id);
+  if(el) el.innerHTML = "...";
+  fetch(API_BASE_URL + "/bblm-foto/" + id + "/photo")
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d.success && d.fotoBase64){ _fbPhotoMap[id]=d.fotoBase64; fbRenderList(); } })
+    .catch(function(){});
+}
+
+function fbOpenPhotoModal(id) {
+  var src = _fbPhotoMap[id];
+  if(!src) return;
+  var modal = document.createElement("div");
+  modal.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;";
+  modal.onclick = function(){ document.body.removeChild(modal); };
+  modal.innerHTML = '<img src="'+src+'" style="max-width:95vw;max-height:90vh;border-radius:12px;object-fit:contain;">';
+  document.body.appendChild(modal);
+}
+
+function fbStartScan() {
+  var rd = document.getElementById("fbReader");
+  if(!rd) return;
+  rd.innerHTML = "";
+  var ls = document.createElement("div"); ls.className = "scanner-laser"; rd.appendChild(ls);
+  if(_fbScanner){ try{ _fbScanner.stop(); }catch(e){} }
+  _fbScanner = new Html5Qrcode("fbReader");
+  var fmt = [Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E];
+  var cfg = {fps:10,qrbox:function(vw,vh){var s=Math.floor(Math.min(vw,vh)*0.75);return{width:s,height:Math.floor(s/2)};},aspectRatio:1.0,formatsToSupport:fmt};
+  _fbScanner.start({facingMode:"environment"},cfg,function(dt){
+    document.getElementById("fbBarcode").value = dt;
+    if(navigator.vibrate) navigator.vibrate(100);
+    _fbScanner.stop().then(function(){ rd.innerHTML=""; fbLookupBarcode(dt); });
+  }).catch(function(e){ console.error("fbScan:",e); rd.innerHTML=""; });
+}
+
+function fbLookupBarcode(bc) {
+  bc = (bc||"").trim();
+  if(!bc) return;
+  document.getElementById("fbProdNm").value = "Mencari...";
+  document.getElementById("fbProdCd").value = "";
+  document.getElementById("fbStkQty").value = "";
+  getBarang().then(function(data) {
+    var found = null;
+    for(var i = 1; i < data.length; i++) {
+      var row = data[i];
+      if(row && row[1] && row[1].trim() === bc) { found = row; break; }
+    }
+    if(found) {
+      document.getElementById("fbProdNm").value = found[2] || "";
+      document.getElementById("fbProdCd").value = found[0] || "";
+      var rawQty = (found[4]||"").toString().replace(/[^0-9.,]/g,"").replace(",",".");
+      document.getElementById("fbStkQty").value = rawQty ? Math.round(parseFloat(rawQty)) : "";
+      showToast("Barang ditemukan: " + (found[2]||bc), "success");
+    } else {
+      document.getElementById("fbProdNm").value = "";
+      showToast("Barcode tidak ditemukan di data inventory", "error");
+    }
+  }).catch(function(){ document.getElementById("fbProdNm").value = ""; showToast("Gagal cari data inventory","error"); });
+}
+
+function fbPhotoSelected(input) {
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement("canvas");
+      var MAX = 800;
+      var w = img.width, h = img.height;
+      if(w > MAX){ h = Math.round(h*MAX/w); w = MAX; }
+      if(h > MAX){ w = Math.round(w*MAX/h); h = MAX; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      var compressed = canvas.toDataURL("image/jpeg", 0.65);
+      document.getElementById("fbPhotoPreview").src = compressed;
+      document.getElementById("fbPhotoPreviewWrap").style.display = "block";
+      document.getElementById("fbPhotoData").value = compressed;
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function fbSubmitItem() {
+  var barcode = (document.getElementById("fbBarcode").value||"").trim();
+  var prodNm  = (document.getElementById("fbProdNm").value||"").trim();
+  var prodCd  = (document.getElementById("fbProdCd").value||"").trim();
+  var stkQty  = (document.getElementById("fbStkQty").value||"").trim();
+  var fotoData = document.getElementById("fbPhotoData").value;
+  if(!barcode){ showToast("Masukkan atau scan barcode terlebih dahulu","error"); return; }
+  var btn = document.getElementById("fbSubmitBtn");
+  btn.disabled = true; btn.textContent = "Menyimpan...";
+  fetch(API_BASE_URL + "/bblm-foto", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({ barcode:barcode, prodNm:prodNm, prodCd:prodCd, stkQty:stkQty, username:currentUsernameRaw||currentUserNameInv||"" })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d1){
+    if(!d1.success) throw new Error(d1.message||"Gagal simpan");
+    var newId = d1.id;
+    if(fotoData) {
+      btn.textContent = "Upload foto...";
+      return fetch(API_BASE_URL + "/bblm-foto/" + newId + "/photo", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ fotoBase64: fotoData })
+      }).then(function(){ _fbPhotoMap[newId] = fotoData; return newId; });
+    }
+    return newId;
+  })
+  .then(function(){
+    document.getElementById("fbBarcode").value = "";
+    document.getElementById("fbProdNm").value = "";
+    document.getElementById("fbProdCd").value = "";
+    document.getElementById("fbStkQty").value = "";
+    document.getElementById("fbPhotoData").value = "";
+    document.getElementById("fbPhotoPreviewWrap").style.display = "none";
+    document.getElementById("fbPhotoInput").value = "";
+    showToast("Berhasil disimpan!","success");
+    loadFotoBblmList();
+  })
+  .catch(function(e){ showToast("Gagal: " + e.message,"error"); })
+  .finally(function(){ btn.disabled=false; btn.innerHTML="&#128190; Simpan"; });
+}
+
+function fbDeleteItem(id) {
+  if(!confirm("Hapus item ini?")) return;
+  fetch(API_BASE_URL + "/bblm-foto/" + id, {method:"DELETE"})
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d.success){ delete _fbPhotoMap[id]; showToast("Dihapus","success"); loadFotoBblmList(); } else showToast("Gagal hapus","error"); })
+    .catch(function(e){ showToast("Error: "+e.message,"error"); });
+}
+
+function fbClearAll() {
+  if(!confirm("Hapus SEMUA data Upload Foto BBLM?\n\nTindakan ini tidak dapat dibatalkan!")) return;
+  var pw = prompt("Password admin:");
+  if(pw === null) return;
+  fetch(API_BASE_URL + "/bblm-foto/clear", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({ adminPassword: pw })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){ if(d.success){ _fbPhotoMap={}; showToast("Semua data dihapus","success"); loadFotoBblmList(); } else showToast("Gagal: "+(d.message||""), "error"); })
+  .catch(function(e){ showToast("Error: "+e.message,"error"); });
+}
+
+function fbExportExcel() {
+  if(!fbItems.length){ showToast("Tidak ada data untuk diekspor","error"); return; }
+  var btn = document.getElementById("fbExportBtn");
+  btn.disabled = true; btn.textContent = "⏳ Memuat ExcelJS...";
+
+  function doExport() {
+    var workbook = new ExcelJS.Workbook();
+    workbook.creator = "PDA Mini Mataram";
+    var sheet = workbook.addWorksheet("Upload Foto BBLM");
+    sheet.columns = [
+      {header:"PROD_CD", key:"prodCd", width:15},
+      {header:"Barcode", key:"barcode", width:22},
+      {header:"PROD_NM", key:"prodNm", width:45},
+      {header:"Foto Display", key:"foto", width:22},
+      {header:"STK QTY", key:"stkQty", width:12}
+    ];
+    var hRow = sheet.getRow(1);
+    hRow.font = {bold:true, size:11, color:{argb:"FFFFFFFF"}};
+    hRow.fill = {type:"pattern", pattern:"solid", fgColor:{argb:"FF1E293B"}};
+    hRow.alignment = {vertical:"middle", horizontal:"center"};
+    hRow.height = 24;
+
+    function processNext(i) {
+      if(i >= fbItems.length) {
+        btn.textContent = "⏳ Menyimpan file...";
+        workbook.xlsx.writeBuffer().then(function(buf){
+          var blob = new Blob([buf], {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = "Upload_Foto_BBLM_" + new Date().toISOString().slice(0,10) + ".xlsx";
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showToast("File Excel berhasil diunduh!","success");
+        }).catch(function(e){ showToast("Gagal buat file: "+e.message,"error"); console.error(e); })
+        .finally(function(){ btn.disabled=false; btn.innerHTML="&#128229; Export Excel"; });
+        return;
+      }
+      var it = fbItems[i];
+      btn.textContent = "⏳ " + (i+1) + "/" + fbItems.length;
+      var rowNum = i + 2;
+      var row = sheet.addRow({prodCd:it.prodCd||"", barcode:it.barcode||"", prodNm:it.prodNm||"", foto:"", stkQty:it.stkQty||""});
+      row.height = 80;
+      row.alignment = {vertical:"middle"};
+
+      function addPhotoAndNext(b64) {
+        if(b64) {
+          try {
+            var ext = b64.startsWith("data:image/png") ? "png" : "jpeg";
+            var raw = b64.split(",")[1] || b64;
+            var imgId = workbook.addImage({base64:raw, extension:ext});
+            sheet.addImage(imgId, {tl:{col:3, row:rowNum-1}, br:{col:4, row:rowNum}, editAs:"oneCell"});
+          } catch(imgErr){ console.warn("addImage err:", imgErr); }
+        }
+        processNext(i+1);
+      }
+
+      var cached = _fbPhotoMap[it.id];
+      if(cached) { addPhotoAndNext(cached); return; }
+      if(it.hasPhoto) {
+        fetch(API_BASE_URL + "/bblm-foto/" + it.id + "/photo")
+          .then(function(r){ return r.json(); })
+          .then(function(pd){ if(pd.success && pd.fotoBase64){ _fbPhotoMap[it.id]=pd.fotoBase64; addPhotoAndNext(pd.fotoBase64); } else addPhotoAndNext(null); })
+          .catch(function(){ addPhotoAndNext(null); });
+      } else { addPhotoAndNext(null); }
+    }
+    processNext(0);
+  }
+
+  if(typeof ExcelJS !== "undefined") {
+    btn.textContent = "⏳ Proses data...";
+    doExport();
+  } else {
+    var s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js";
+    s.onload = function(){ btn.textContent = "⏳ Proses data..."; doExport(); };
+    s.onerror = function(){ showToast("Gagal load ExcelJS, cek koneksi internet","error"); btn.disabled=false; btn.innerHTML="&#128229; Export Excel"; };
+    document.head.appendChild(s);
+  }
+}
+/* ============================================================ */
+
 </script>
 
   <!-- POPUP LUPA PASSWORD -->
