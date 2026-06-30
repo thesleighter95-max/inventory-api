@@ -4861,12 +4861,11 @@ function fbExportExcel() {
 
       var cached = _fbPhotoMap[it.id];
       if(cached) { addPhotoAndNext(cached); return; }
-      if(it.hasPhoto) {
-        fetch(API_BASE_URL + "/bblm-foto/" + it.id + "/photo")
-          .then(function(r){ return r.json(); })
-          .then(function(pd){ if(pd.success && pd.fotoBase64){ _fbPhotoMap[it.id]=pd.fotoBase64; addPhotoAndNext(pd.fotoBase64); } else addPhotoAndNext(null); })
-          .catch(function(){ addPhotoAndNext(null); });
-      } else { addPhotoAndNext(null); }
+      // Always try to fetch photo (hasPhoto flag may be stale due to eventual consistency)
+      fetch(API_BASE_URL + "/bblm-foto/" + it.id + "/photo")
+        .then(function(r){ return r.json(); })
+        .then(function(pd){ if(pd.success && pd.fotoBase64){ _fbPhotoMap[it.id]=pd.fotoBase64; addPhotoAndNext(pd.fotoBase64); } else addPhotoAndNext(null); })
+        .catch(function(){ addPhotoAndNext(null); });
     }
     processNext(0);
   }
