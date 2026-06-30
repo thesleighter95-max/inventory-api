@@ -1238,6 +1238,73 @@ loadCurrentSetting();
       return json({ success: true });
     }
 
+
+    // ── BBLM FOTO routes ──────────────────────────────────────────────────
+
+    // POST /bblm-foto/clear — clear all (must be before :id match)
+    if (path === "/bblm-foto/clear" && method === "POST") {
+      if (body.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
+      const list = await getJson("bblm-foto", []);
+      const store = getInventoryStore();
+      await Promise.all(list.map(it => store.delete("bblm-foto-photo-" + it.id).catch(() => {})));
+      await setJson("bblm-foto", []);
+      return json({ success: true, deleted: list.length });
+    }
+
+    // GET /bblm-foto — list metadata (no photos embedded)
+    if (path === "/bblm-foto" && method === "GET") {
+      const list = await getJson("bblm-foto", []);
+      return json({ success: true, count: list.length, items: list });
+    }
+
+    // POST /bblm-foto — add item (photo stored separately)
+    if (path === "/bblm-foto" && method === "POST") {
+      const { barcode, prodCd, prodNm, stkQty, username } = body;
+      if (!barcode) return json({ success: false, message: "barcode wajib diisi" }, 400);
+      const id = Date.now().toString() + Math.random().toString(36).slice(2, 6);
+      const list = await getJson("bblm-foto", []);
+      const newItem = {
+        id, barcode: barcode || "", prodCd: prodCd || "", prodNm: prodNm || "",
+        stkQty: stkQty || "", username: username || "",
+        capturedAt: new Date().toISOString(), hasPhoto: false
+      };
+      list.push(newItem);
+      await setJson("bblm-foto", list);
+      return json({ success: true, id, item: newItem });
+    }
+
+    // /bblm-foto/:id/photo — GET or POST photo
+    const bblmFotoPhotoMatch = path.match(/^\/bblm-foto\/([^/]+)\/photo$/);
+    if (bblmFotoPhotoMatch) {
+      const id = bblmFotoPhotoMatch[1];
+      const store = getInventoryStore();
+      if (method === "GET") {
+        const photo = await store.get("bblm-foto-photo-" + id);
+        if (!photo) return json({ success: false, message: "foto tidak ditemukan" }, 404);
+        return json({ success: true, fotoBase64: photo });
+      }
+      if (method === "POST") {
+        const { fotoBase64 } = body;
+        if (!fotoBase64) return json({ success: false, message: "fotoBase64 wajib" }, 400);
+        await store.set("bblm-foto-photo-" + id, fotoBase64);
+        const list = await getJson("bblm-foto", []);
+        const idx = list.findIndex(it => it.id === id);
+        if (idx >= 0) { list[idx].hasPhoto = true; await setJson("bblm-foto", list); }
+        return json({ success: true });
+      }
+    }
+
+    // DELETE /bblm-foto/:id
+    const bblmFotoDelMatch = path.match(/^\/bblm-foto\/([^/]+)$/);
+    if (bblmFotoDelMatch && method === "DELETE") {
+      const id = bblmFotoDelMatch[1];
+      const list = await getJson("bblm-foto", []);
+      const newList = list.filter(it => it.id !== id);
+      await setJson("bblm-foto", newList);
+      try { const store = getInventoryStore(); await store.delete("bblm-foto-photo-" + id); } catch {}
+      return json({ success: true });
+    }
+
     return json({ error: "Not found" }, 404);
   } catch (err) {
     return json({ error: "Internal server error", detail: String(err) }, 500);
