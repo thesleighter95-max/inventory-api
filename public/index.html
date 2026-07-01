@@ -1265,6 +1265,30 @@ table td { font-size: 11px; }
         <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:3px;">PROD_NM</label>
         <input id="fbProdNm" type="text" placeholder="Nama barang (otomatis dari barcode)" style="width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 12px;color:#fff;font-size:13px;box-sizing:border-box;outline:none;">
       </div>
+
+      <!-- Category + Posisi Selectors -->
+      <div style="margin-bottom:10px;">
+        <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:6px;">CATEGORY</label>
+        <input type="hidden" id="fbCategoryVal" value="">
+        <div id="fbCatPills" style="display:flex;flex-wrap:wrap;gap:5px;">
+          <button data-v="BISCUIT/SNACKS" onclick="fbPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">BISCUIT/SNACKS</button>
+          <button data-v="SAUS & SPICES" onclick="fbPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">SAUS & SPICES</button>
+          <button data-v="BULK PRODUCT" onclick="fbPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">BULK PRODUCT</button>
+          <button data-v="DRINKS" onclick="fbPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">DRINKS</button>
+          <button data-v="MILK / COFFEE / TEA" onclick="fbPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">MILK / COFFEE / TEA</button>
+          <button data-v="HnB" onclick="fbPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">HnB</button>
+          <button data-v="HOME CARE" onclick="fbPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">HOME CARE</button>
+          <button data-v="DAIRY" onclick="fbPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">DAIRY</button>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:6px;">POSISI</label>
+        <input type="hidden" id="fbPosisiVal" value="">
+        <div id="fbPosPills" style="display:flex;flex-wrap:wrap;gap:5px;">
+          <button data-v="B2B" onclick="fbPickPos(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">B2B</button>
+          <button data-v="B2C" onclick="fbPickPos(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">B2C</button>
+        </div>
+      </div>
       <!-- Photo -->
       <div style="margin-bottom:12px;">
         <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:6px;">FOTO DISPLAY</label>
@@ -1285,6 +1309,7 @@ table td { font-size: 11px; }
       Memuat data...
     </div>
     <!-- List -->
+    <div id="fbFilterBar" style="margin-bottom:6px;"></div>
     <div id="fbListContainer"></div>
   </div>
 
@@ -4599,6 +4624,110 @@ var fbItems = [];
 var _fbPhotoMap = {};
 var _fbNoPhoto = {};
 var _fbScanner = null;
+var _fbFilterCat = "";
+var _fbFilterPos = "";
+
+function fbPickCat(btn) {
+  var cur = document.getElementById("fbCategoryVal").value;
+  var val = btn.getAttribute("data-v");
+  var same = (cur === val);
+  document.getElementById("fbCategoryVal").value = same ? "" : val;
+  document.querySelectorAll("#fbCatPills button").forEach(function(b){
+    var sel = !same && b.getAttribute("data-v") === val;
+    b.style.background    = sel ? "rgba(99,102,241,0.3)"   : "rgba(255,255,255,0.06)";
+    b.style.borderColor   = sel ? "#818cf8"                : "rgba(255,255,255,0.12)";
+    b.style.color         = sel ? "#c7d2fe"                : "#94a3b8";
+    b.style.fontWeight    = sel ? "700"                    : "500";
+  });
+}
+
+function fbPickPos(btn) {
+  var cur = document.getElementById("fbPosisiVal").value;
+  var val = btn.getAttribute("data-v");
+  var same = (cur === val);
+  document.getElementById("fbPosisiVal").value = same ? "" : val;
+  document.querySelectorAll("#fbPosPills button").forEach(function(b){
+    var sel = !same && b.getAttribute("data-v") === val;
+    b.style.background    = sel ? "rgba(34,197,94,0.2)"   : "rgba(255,255,255,0.06)";
+    b.style.borderColor   = sel ? "#4ade80"                : "rgba(255,255,255,0.12)";
+    b.style.color         = sel ? "#86efac"                : "#94a3b8";
+    b.style.fontWeight    = sel ? "700"                    : "500";
+  });
+}
+
+function fbResetCatPos() {
+  var cv = document.getElementById("fbCategoryVal");
+  var pv = document.getElementById("fbPosisiVal");
+  if(cv) cv.value = "";
+  if(pv) pv.value = "";
+  ["#fbCatPills button","#fbPosPills button"].forEach(function(sel){
+    document.querySelectorAll(sel).forEach(function(b){
+      b.style.background = "rgba(255,255,255,0.06)";
+      b.style.borderColor = "rgba(255,255,255,0.12)";
+      b.style.color = "#94a3b8";
+      b.style.fontWeight = "500";
+    });
+  });
+}
+
+function fbGetFilteredItems() {
+  return fbItems.filter(function(it){
+    if(_fbFilterCat && (it.category||"") !== _fbFilterCat) return false;
+    if(_fbFilterPos && (it.posisi||"") !== _fbFilterPos) return false;
+    return true;
+  });
+}
+
+function fbRenderFilterBar() {
+  var el = document.getElementById("fbFilterBar");
+  if(!el) return;
+  var cats = [];
+  var poss = [];
+  fbItems.forEach(function(it){
+    if(it.category && cats.indexOf(it.category) < 0) cats.push(it.category);
+    if(it.posisi && poss.indexOf(it.posisi) < 0) poss.push(it.posisi);
+  });
+  if(!cats.length && !poss.length){ el.innerHTML=""; return; }
+  var h = "";
+  var PILLB = "display:inline-block;font-size:10px;font-weight:600;border-radius:16px;padding:3px 9px;cursor:pointer;margin-bottom:3px;border:1px solid;";
+  // POSISI filter
+  if(poss.length) {
+    h += '<div style="margin-bottom:5px;">'
+      + '<span style="font-size:9px;color:#475569;text-transform:uppercase;font-weight:700;margin-right:5px;">Posisi:</span>';
+    var posAll = _fbFilterPos==="" ? "background:rgba(99,102,241,0.3);border-color:#818cf8;color:#c7d2fe;" : "background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.10);color:#64748b;";
+    h += '<span style="' + PILLB + posAll + '" data-pos="" onclick="fbSetFilterPos(this)">Semua</span> ';
+    poss.forEach(function(p){
+      var act = _fbFilterPos===p ? "background:rgba(34,197,94,0.2);border-color:#4ade80;color:#86efac;" : "background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.10);color:#64748b;";
+      h += '<span style="' + PILLB + act + '" data-pos="' + p + '" onclick="fbSetFilterPos(this)">' + p + '</span> ';
+    });
+    h += "</div>";
+  }
+  // CATEGORY filter
+  if(cats.length) {
+    h += '<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">'
+      + '<span style="font-size:9px;color:#475569;text-transform:uppercase;font-weight:700;">Cat:</span>';
+    var catAll = _fbFilterCat==="" ? "background:rgba(99,102,241,0.3);border-color:#818cf8;color:#c7d2fe;" : "background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.10);color:#64748b;";
+    h += '<span style="' + PILLB + catAll + '" data-cat="" onclick="fbSetFilterCat(this)">Semua</span>';
+    cats.forEach(function(c){
+      var act = _fbFilterCat===c ? "background:rgba(234,179,8,0.2);border-color:#fbbf24;color:#fde68a;" : "background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.10);color:#64748b;";
+      h += '<span style="' + PILLB + act + '" data-cat="' + c + '" onclick="fbSetFilterCat(this)">' + c + '</span>';
+    });
+    h += "</div>";
+  }
+  el.innerHTML = h;
+}
+
+function fbSetFilterPos(el) {
+  _fbFilterPos = el.getAttribute("data-pos") || "";
+  fbRenderFilterBar();
+  fbRenderList();
+}
+
+function fbSetFilterCat(el) {
+  _fbFilterCat = el.getAttribute("data-cat") || "";
+  fbRenderFilterBar();
+  fbRenderList();
+}
 
 function loadFotoBblmList() {
   var ld = document.getElementById("fbLoading");
@@ -4608,8 +4737,8 @@ function loadFotoBblmList() {
     .then(function(r){ return r.json(); })
     .then(function(d){
       fbItems = d.items || [];
-      var cnt = document.getElementById("fbCount");
-      if(cnt) cnt.textContent = fbItems.length;
+      _fbFilterCat = "";
+      _fbFilterPos = "";
       fbRenderList();
       fbAutoLoadAllPhotos();
     })
@@ -4647,8 +4776,12 @@ function fbRenderList() {
     return;
   }
   var html = "";
-  for(var i = 0; i < fbItems.length; i++) {
-    var it = fbItems[i];
+  fbRenderFilterBar();
+  var visItems = fbGetFilteredItems();
+  var cnt2 = document.getElementById("fbCount");
+  if(cnt2) cnt2.textContent = visItems.length + (visItems.length !== fbItems.length ? "/" + fbItems.length : "") + " item";
+  for(var i = 0; i < visItems.length; i++) {
+    var it = visItems[i];
     var pid = "fbThumb_" + it.id;
     var photoHtml;
     if(_fbPhotoMap[it.id]) {
@@ -4666,6 +4799,8 @@ function fbRenderList() {
         + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
           + '<span style="font-size:10px;color:#94a3b8;">CD: <b style="color:#cbd5e1;">'+fbEsc(it.prodCd||'-')+'</b></span>'
           + '<span style="font-size:10px;color:#94a3b8;">STK: <b style="color:#4ade80;">'+fbEsc(it.stkQty||'0')+'</b></span>'
+          + (it.category ? '<span style="font-size:10px;background:rgba(234,179,8,0.15);border:1px solid rgba(234,179,8,0.3);color:#fde68a;border-radius:10px;padding:1px 6px;">'+fbEsc(it.category)+'</span>' : '')
+          + (it.posisi   ? '<span style="font-size:10px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#c7d2fe;border-radius:10px;padding:1px 6px;">'+fbEsc(it.posisi)+'</span>' : '')
         + '</div>'
         + '<p style="margin:2px 0 0;font-size:10px;color:#475569;">'+fbEsc(it.username||'')+(it.username?' · ':'')+fbFmtDt(it.capturedAt)+'</p>'
       + '</div>'
@@ -4957,17 +5092,19 @@ function fbPhotoSelected(input) {
 }
 
 function fbSubmitItem() {
-  var barcode = (document.getElementById("fbBarcode").value||"").trim();
-  var prodNm  = (document.getElementById("fbProdNm").value||"").trim();
-  var prodCd  = (document.getElementById("fbProdCd").value||"").trim();
-  var stkQty  = (document.getElementById("fbStkQty").value||"").trim();
+  var barcode  = (document.getElementById("fbBarcode").value||"").trim();
+  var prodNm   = (document.getElementById("fbProdNm").value||"").trim();
+  var prodCd   = (document.getElementById("fbProdCd").value||"").trim();
+  var stkQty   = (document.getElementById("fbStkQty").value||"").trim();
   var fotoData = document.getElementById("fbPhotoData").value;
+  var category = (document.getElementById("fbCategoryVal")||{}).value||"";
+  var posisi   = (document.getElementById("fbPosisiVal")||{}).value||"";
   if(!barcode){ showToast("Masukkan atau scan barcode terlebih dahulu","error"); return; }
   var btn = document.getElementById("fbSubmitBtn");
   btn.disabled = true; btn.textContent = "Menyimpan...";
   fetch(API_BASE_URL + "/bblm-foto", {
     method:"POST", headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({ barcode:barcode, prodNm:prodNm, prodCd:prodCd, stkQty:stkQty, username:currentUsernameRaw||currentUserNameInv||"" })
+    body:JSON.stringify({ barcode:barcode, prodNm:prodNm, prodCd:prodCd, stkQty:stkQty, category:category, posisi:posisi, username:currentUsernameRaw||currentUserNameInv||"" })
   })
   .then(function(r){ return r.json(); })
   .then(function(d1){
@@ -4990,6 +5127,7 @@ function fbSubmitItem() {
     document.getElementById("fbPhotoData").value = "";
     document.getElementById("fbPhotoPreviewWrap").style.display = "none";
     document.getElementById("fbPhotoInput").value = "";
+    fbResetCatPos();
     showToast("Berhasil disimpan!","success");
     loadFotoBblmList();
   })
@@ -5024,6 +5162,8 @@ function fbExportExcel() {
   btn.disabled = true; btn.textContent = "⏳ Memuat ExcelJS...";
 
   function doExport() {
+    var exportItems = fbGetFilteredItems();
+    if(!exportItems.length){ showToast("Tidak ada data untuk di-export","error"); btn.disabled=false; btn.innerHTML="&#128229; Export Excel"; return; }
     var workbook = new ExcelJS.Workbook();
     workbook.creator = "PDA Mini Mataram";
     var sheet = workbook.addWorksheet("Upload Foto BBLM");
@@ -5031,6 +5171,8 @@ function fbExportExcel() {
       {header:"PROD_CD", key:"prodCd", width:15},
       {header:"Barcode", key:"barcode", width:22},
       {header:"PROD_NM", key:"prodNm", width:45},
+      {header:"CATEGORY", key:"category", width:22},
+      {header:"POSISI", key:"posisi", width:10},
       {header:"Foto Display", key:"foto", width:22},
       {header:"STK QTY", key:"stkQty", width:12}
     ];
@@ -5041,7 +5183,7 @@ function fbExportExcel() {
     hRow.height = 24;
 
     function processNext(i) {
-      if(i >= fbItems.length) {
+      if(i >= exportItems.length) {
         btn.textContent = "⏳ Menyimpan file...";
         workbook.xlsx.writeBuffer().then(function(buf){
           var blob = new Blob([buf], {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
@@ -5056,10 +5198,10 @@ function fbExportExcel() {
         .finally(function(){ btn.disabled=false; btn.innerHTML="&#128229; Export Excel"; });
         return;
       }
-      var it = fbItems[i];
-      btn.textContent = "⏳ " + (i+1) + "/" + fbItems.length;
+      var it = exportItems[i];
+      btn.textContent = "⏳ " + (i+1) + "/" + exportItems.length;
       var rowNum = i + 2;
-      var row = sheet.addRow({prodCd:it.prodCd||"", barcode:it.barcode||"", prodNm:it.prodNm||"", foto:"", stkQty:it.stkQty||""});
+      var row = sheet.addRow({prodCd:it.prodCd||"", barcode:it.barcode||"", prodNm:it.prodNm||"", category:it.category||"", posisi:it.posisi||"", foto:"", stkQty:it.stkQty||""});
       row.height = 80;
       row.alignment = {vertical:"middle"};
 
@@ -5069,7 +5211,7 @@ function fbExportExcel() {
             var ext = b64.startsWith("data:image/png") ? "png" : "jpeg";
             var raw = b64.split(",")[1] || b64;
             var imgId = workbook.addImage({base64:raw, extension:ext});
-            sheet.addImage(imgId, {tl:{col:3, row:rowNum-1}, br:{col:4, row:rowNum}, editAs:"oneCell"});
+            sheet.addImage(imgId, {tl:{col:5, row:rowNum-1}, br:{col:6, row:rowNum}, editAs:"oneCell"});
           } catch(imgErr){ console.warn("addImage err:", imgErr); }
         }
         processNext(i+1);
