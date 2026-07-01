@@ -5612,61 +5612,129 @@ function fbExportPPT(exportItems){
   }
 }
 function generatePptx(exportItems){
-  var catOrder=[],catMap={};
+  // Group by category, preserve order
+  var catOrder=[], catMap={};
   exportItems.forEach(function(it){
     var cat=it.category||'(Tanpa Category)';
     if(!catMap[cat]){catMap[cat]=[];catOrder.push(cat);}
     catMap[cat].push(it);
   });
+
+  // Posisi label: show only if all items share same posisi
   var allPos=exportItems.map(function(it){return it.posisi||'';});
   var posLabel=allPos.every(function(p){return p===allPos[0];})?allPos[0]:'';
+
   var pptx=new PptxGenJS();
-  pptx.layout='LAYOUT_WIDE';
-  var COLS=4,mL=0.28,mR=0.28,avail=13.33-mL-mR,gap=0.10;
-  var colW=(avail-(COLS-1)*gap)/COLS;
-  var colX=[];for(var c=0;c<COLS;c++)colX.push(mL+c*(colW+gap));
-  var PHOTO_Y=1.08,PHOTO_H=2.85;
-  var NAME_Y=PHOTO_Y+PHOTO_H+0.05,NAME_H=0.50;
-  var BOX1_Y=NAME_Y+NAME_H+0.04,BOX1_H=0.72;
-  var BOX2_Y=BOX1_Y+BOX1_H+0.04,BOX2_H=0.72;
+  pptx.layout='LAYOUT_WIDE'; // 13.33" x 7.5"
+
+  // Layout constants
+  var COLS=4, ROWS=2, PER_PAGE=COLS*ROWS; // 8 items per slide
+  var mL=0.28, mR=0.28;
+  var avail=13.33-mL-mR;  // 12.77"
+  var gap=0.10;
+  var colW=(avail-(COLS-1)*gap)/COLS; // ~3.12"
+  var colX=[]; for(var cc=0;cc<COLS;cc++) colX.push(mL+cc*(colW+gap));
+
+  // Vertical positions
+  var TITLE_Y=0.10, TITLE_H=0.42;
+  var LINE_Y=0.57;
+  var CAT_Y=0.62, CAT_H=0.32;
+  var PHOTO_H=2.22, NAME_H=0.42, ROW_GAP=0.10;
+  // Row 0 starts at 1.00", Row 1 starts after row0 photo+name+gap
+  var ROW0_Y=1.00;
+  var ROW1_Y=ROW0_Y+PHOTO_H+NAME_H+ROW_GAP; // ~3.74"
+
   catOrder.forEach(function(cat){
     var items=catMap[cat];
-    for(var ps=0;ps<items.length;ps+=COLS){
+    for(var ps=0;ps<items.length;ps+=PER_PAGE){
       var slide=pptx.addSlide();
       slide.background={color:'FFFFFF'};
-      slide.addText([{text:'■ Report Implementation New Price Card BBLM',options:{bold:true,fontSize:15,color:'111111'}}],
-        {x:mL,y:0.12,w:10.0,h:0.40,fontFace:'Arial',valign:'middle'});
-      if(posLabel) slide.addText(posLabel,{x:10.8,y:0.12,w:2.2,h:0.40,fontFace:'Arial',fontSize:14,bold:true,italic:true,color:'111111',align:'right',valign:'middle'});
-      slide.addShape(pptx.ShapeType.line,{x:mL,y:0.57,w:13.33-mL-mR,h:0,line:{color:'333333',width:1}});
-      slide.addText('※ '+cat,{x:mL,y:0.64,w:12,h:0.36,fontFace:'Arial',fontSize:13,bold:true,color:'222222',valign:'middle'});
-      var pageItems=items.slice(ps,ps+COLS);
-      for(var i=0;i<COLS;i++){
-        var x=colX[i];var it=pageItems[i];
-        if(it){
-          var b64=_fbPhotoMap[it.id];
-          if(b64){
-            var ext=b64.startsWith('data:image/png')?'png':'jpeg';
-            var raw=b64.split(',')[1]||b64;
-            try{slide.addImage({data:ext+';base64,'+raw,x:x,y:PHOTO_Y,w:colW,h:PHOTO_H,sizing:{type:'contain',w:colW,h:PHOTO_H}});}
-            catch(e2){
-              slide.addShape(pptx.ShapeType.rect,{x:x,y:PHOTO_Y,w:colW,h:PHOTO_H,fill:{color:'F0F0F0'},line:{color:'BBBBBB',width:0.5}});
-              slide.addText('(foto error)',{x:x,y:PHOTO_Y,w:colW,h:PHOTO_H,fontSize:8,color:'888888',align:'center',valign:'middle'});
+
+      // ── Title (top-left) ──
+      slide.addText(
+        [{text:'■ Report Implementation New Price Card BBLM',
+          options:{bold:true,fontSize:15,color:'111111',fontFace:'Arial Narrow'}}],
+        {x:mL,y:TITLE_Y,w:10.2,h:TITLE_H,valign:'middle'}
+      );
+
+      // ── Posisi (top-right, italic bold) ──
+      if(posLabel){
+        slide.addText(posLabel,{
+          x:10.65,y:TITLE_Y,w:2.4,h:TITLE_H,
+          fontFace:'Arial',fontSize:14,bold:true,italic:true,
+          color:'111111',align:'right',valign:'middle'
+        });
+      }
+
+      // ── Horizontal separator line ──
+      slide.addShape(pptx.ShapeType.line,{
+        x:mL,y:LINE_Y,w:13.33-mL-mR,h:0,
+        line:{color:'333333',width:1.2}
+      });
+
+      // ── Category header ──
+      slide.addText('※ '+cat,{
+        x:mL,y:CAT_Y,w:12,h:CAT_H,
+        fontFace:'Arial',fontSize:13,bold:true,color:'222222',valign:'middle'
+      });
+
+      // ── Render 2 rows × 4 columns ──
+      for(var row=0;row<ROWS;row++){
+        var photoY=(row===0)?ROW0_Y:ROW1_Y;
+        var nameY=photoY+PHOTO_H+0.04;
+        for(var col=0;col<COLS;col++){
+          var idx2=ps+row*COLS+col;
+          var x=colX[col];
+          var it=(idx2<items.length)?items[idx2]:null;
+
+          if(it){
+            // Photo
+            var b64=_fbPhotoMap[it.id];
+            if(b64){
+              var ext=b64.startsWith('data:image/png')?'png':'jpeg';
+              var raw=b64.split(',')[1]||b64;
+              try{
+                slide.addImage({
+                  data:ext+';base64,'+raw,
+                  x:x,y:photoY,w:colW,h:PHOTO_H,
+                  sizing:{type:'cover',w:colW,h:PHOTO_H}
+                });
+                // Thin border over the image
+                slide.addShape(pptx.ShapeType.rect,{
+                  x:x,y:photoY,w:colW,h:PHOTO_H,
+                  fill:{type:'none'},line:{color:'BBBBBB',width:0.5}
+                });
+              }catch(e2){
+                slide.addShape(pptx.ShapeType.rect,{x:x,y:photoY,w:colW,h:PHOTO_H,fill:{color:'F0F0F0'},line:{color:'BBBBBB',width:0.5}});
+                slide.addText('(foto error)',{x:x,y:photoY,w:colW,h:PHOTO_H,fontSize:8,color:'888888',align:'center',valign:'middle'});
+              }
+            }else{
+              // No photo
+              slide.addShape(pptx.ShapeType.rect,{x:x,y:photoY,w:colW,h:PHOTO_H,fill:{color:'F0F0F0'},line:{color:'CCCCCC',width:0.5}});
+              slide.addText('(no photo)',{x:x,y:photoY,w:colW,h:PHOTO_H,fontSize:8,color:'AAAAAA',align:'center',valign:'middle'});
             }
+            // Product name box
+            slide.addText(it.prodNm||it.barcode||'',{
+              x:x,y:nameY,w:colW,h:NAME_H,
+              fontFace:'Arial',fontSize:7.5,color:'111111',
+              align:'center',valign:'middle',wrap:true,
+              border:[
+                {type:'solid',color:'888888',pt:0.75},
+                {type:'solid',color:'888888',pt:0.75},
+                {type:'solid',color:'888888',pt:0.75},
+                {type:'solid',color:'888888',pt:0.75}
+              ]
+            });
           }else{
-            slide.addShape(pptx.ShapeType.rect,{x:x,y:PHOTO_Y,w:colW,h:PHOTO_H,fill:{color:'F5F5F5'},line:{color:'CCCCCC',width:0.5}});
-            slide.addText('(no photo)',{x:x,y:PHOTO_Y,w:colW,h:PHOTO_H,fontSize:8,color:'AAAAAA',align:'center',valign:'middle'});
+            // Empty slot
+            slide.addShape(pptx.ShapeType.rect,{x:x,y:photoY,w:colW,h:PHOTO_H,fill:{color:'F8F8F8'},line:{color:'E0E0E0',width:0.5}});
+            slide.addShape(pptx.ShapeType.rect,{x:x,y:nameY,w:colW,h:NAME_H,fill:{color:'F8F8F8'},line:{color:'CCCCCC',width:0.5}});
           }
-          slide.addText(it.prodNm||it.barcode||'',{x:x,y:NAME_Y,w:colW,h:NAME_H,fontSize:8.5,color:'111111',align:'center',valign:'middle',wrap:true,fontFace:'Arial',
-            border:[{type:'solid',color:'AAAAAA',pt:0.5},{type:'solid',color:'AAAAAA',pt:0.5},{type:'solid',color:'AAAAAA',pt:0.5},{type:'solid',color:'AAAAAA',pt:0.5}]});
-        }else{
-          slide.addShape(pptx.ShapeType.rect,{x:x,y:PHOTO_Y,w:colW,h:PHOTO_H,fill:{color:'FAFAFA'},line:{color:'EEEEEE',width:0.5}});
-          slide.addShape(pptx.ShapeType.rect,{x:x,y:NAME_Y,w:colW,h:NAME_H,fill:{color:'FFFFFF'},line:{color:'AAAAAA',width:0.5}});
         }
-        slide.addShape(pptx.ShapeType.rect,{x:x,y:BOX1_Y,w:colW,h:BOX1_H,fill:{color:'FFFFFF'},line:{color:'AAAAAA',width:0.5}});
-        slide.addShape(pptx.ShapeType.rect,{x:x,y:BOX2_Y,w:colW,h:BOX2_H,fill:{color:'FFFFFF'},line:{color:'AAAAAA',width:0.5}});
       }
     }
   });
+
   pptx.writeFile({fileName:'BBLM_Report_'+new Date().toISOString().slice(0,10)+'.pptx'})
     .then(function(){showToast('File PPT berhasil diunduh!','success');})
     .catch(function(e){showToast('Gagal simpan PPT: '+e.message,'error');});
