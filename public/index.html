@@ -1228,9 +1228,12 @@ table td { font-size: 11px; }
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
       <div>
         <h2 style="font-size:18px;font-weight:800;color:#fff;margin:0;">&#128247; Upload Foto BBLM</h2>
-        <p style="font-size:11px;color:#64748b;margin:2px 0 0;">Scan barcode &middot; Ambil foto &middot; Export Excel</p>
+        <p style="font-size:11px;color:#64748b;margin:2px 0 0;">Scan barcode &middot; Ambil foto &middot; Export</p>
       </div>
-      <button id="fbExportBtn" onclick="fbShowExportModal()" style="background:rgba(34,197,94,0.15);border:1.5px solid rgba(34,197,94,0.35);border-radius:10px;padding:8px 12px;color:#4ade80;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">&#128229; Export Excel</button>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button id="fbExportBtn" onclick="fbShowExcelModal()" style="background:rgba(34,197,94,0.15);border:1.5px solid rgba(34,197,94,0.35);border-radius:10px;padding:8px 10px;color:#4ade80;font-size:11px;font-weight:700;cursor:pointer;">&#128229; Excel</button>
+        <button id="fbExportPptBtn" onclick="fbShowPptModal()" style="background:rgba(99,102,241,0.15);border:1.5px solid rgba(99,102,241,0.35);border-radius:10px;padding:8px 10px;color:#a5b4fc;font-size:11px;font-weight:700;cursor:pointer;">&#128202; PPT</button>
+      </div>
     </div>
     <!-- Count + Clear -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -1317,7 +1320,7 @@ table td { font-size: 11px; }
 <div id="fbExportModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
   <div style="width:100%;max-width:480px;background:#1a1f2e;border-radius:18px 18px 0 0;padding:20px 18px 32px;max-height:82vh;overflow-y:auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <div><h3 style="font-size:15px;font-weight:800;color:#fff;margin:0;">&#128228; Export Excel</h3><p style="font-size:11px;color:#64748b;margin:2px 0 0;">Pilih data yang akan di-export</p></div>
+      <div><h3 id="fbExportModalTitle" style="font-size:15px;font-weight:800;color:#fff;margin:0;">&#128228; Export Excel</h3><p style="font-size:11px;color:#64748b;margin:2px 0 0;">Pilih data yang akan di-export</p></div>
       <button onclick="document.getElementById('fbExportModal').style.display='none'" style="background:rgba(255,255,255,0.08);border:none;border-radius:8px;width:32px;height:32px;color:#94a3b8;font-size:18px;cursor:pointer;line-height:1;">&#215;</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;" id="fbExportModeList">
@@ -1342,7 +1345,61 @@ table td { font-size: 11px; }
     <div id="fbExportSub" style="display:none;margin-bottom:14px;max-height:220px;overflow-y:auto;"></div>
     <div style="display:flex;gap:8px;">
       <button onclick="document.getElementById('fbExportModal').style.display='none'" style="flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:13px;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer;">Batal</button>
-      <button onclick="fbDoExportFiltered()" style="flex:2;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;padding:13px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(34,197,94,0.3);">&#128229; Mulai Export</button>
+      <button id="fbExportDoBtn" onclick="fbDoExportFiltered()" style="flex:2;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;padding:13px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(34,197,94,0.3);">&#128229; Mulai Export</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EDIT ITEM MODAL ═══ -->
+<div id="fbEditModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
+  <div style="width:100%;max-width:480px;background:#1a1f2e;border-radius:18px 18px 0 0;padding:20px 18px 32px;max-height:88vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div><h3 style="font-size:15px;font-weight:800;color:#fff;margin:0;">&#9999; Edit Item</h3><p style="font-size:11px;color:#64748b;margin:2px 0 0;">Update data item yang sudah tersimpan</p></div>
+      <button onclick="document.getElementById('fbEditModal').style.display='none'" style="background:rgba(255,255,255,0.08);border:none;border-radius:8px;width:32px;height:32px;color:#94a3b8;font-size:18px;cursor:pointer;line-height:1;">&#215;</button>
+    </div>
+    <input type="hidden" id="fbEditId">
+    <div style="margin-bottom:10px;">
+      <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Nama Produk</label>
+      <input id="fbEditNm" type="text" style="width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:8px;padding:9px 12px;color:#fff;font-size:13px;box-sizing:border-box;outline:none;">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">STK QTY</label>
+      <input id="fbEditQty" type="number" style="width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:8px;padding:9px 12px;color:#fff;font-size:13px;box-sizing:border-box;outline:none;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:6px;">Category</label>
+      <input type="hidden" id="fbEditCatVal" value="">
+      <div id="fbEditCatPills" style="display:flex;flex-wrap:wrap;gap:5px;">
+        <button data-v="BISCUIT/SNACKS" onclick="fbEditPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">BISCUIT/SNACKS</button>
+        <button data-v="SAUS &amp; SPICES" onclick="fbEditPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">SAUS &amp; SPICES</button>
+        <button data-v="BULK PRODUCT" onclick="fbEditPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">BULK PRODUCT</button>
+        <button data-v="DRINKS" onclick="fbEditPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">DRINKS</button>
+        <button data-v="MILK / COFFEE / TEA" onclick="fbEditPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">MILK / COFFEE / TEA</button>
+        <button data-v="HnB" onclick="fbEditPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">HnB</button>
+        <button data-v="HOME CARE" onclick="fbEditPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">HOME CARE</button>
+        <button data-v="DAIRY" onclick="fbEditPickCat(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">DAIRY</button>
+      </div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:6px;">Posisi</label>
+      <input type="hidden" id="fbEditPosVal" value="">
+      <div id="fbEditPosPills" style="display:flex;flex-wrap:wrap;gap:5px;">
+        <button data-v="B2B" onclick="fbEditPickPos(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">B2B</button>
+        <button data-v="B2C" onclick="fbEditPickPos(this)" style="font-size:11px;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">B2C</button>
+      </div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:6px;">Foto (opsional — biarkan kosong jika tidak diganti)</label>
+      <button onclick="document.getElementById('fbEditPhotoInput').click()" style="width:100%;background:rgba(234,179,8,0.08);border:1.5px dashed rgba(234,179,8,0.35);border-radius:10px;padding:10px;color:#fbbf24;font-size:12px;font-weight:600;cursor:pointer;">&#128247; Ganti Foto</button>
+      <input id="fbEditPhotoInput" type="file" accept="image/*" capture="environment" style="display:none;" onchange="fbEditPhotoSelected(this)">
+      <input id="fbEditPhotoData" type="hidden" value="">
+      <div id="fbEditPhotoPreviewWrap" style="display:none;margin-top:8px;text-align:center;">
+        <img id="fbEditPhotoPreview" style="max-width:100%;max-height:140px;border-radius:10px;object-fit:cover;border:2px solid rgba(234,179,8,0.35);" alt="preview">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="document.getElementById('fbEditModal').style.display='none'" style="flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:13px;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer;">Batal</button>
+      <button id="fbEditSaveBtn" onclick="fbSaveEdit()" style="flex:2;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:10px;padding:13px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(99,102,241,0.3);">&#128190; Simpan Perubahan</button>
     </div>
   </div>
 </div>
@@ -4838,7 +4895,10 @@ function fbRenderList() {
         + '</div>'
         + '<p style="margin:2px 0 0;font-size:10px;color:#475569;">'+fbEsc(it.username||'')+(it.username?' · ':'')+fbFmtDt(it.capturedAt)+'</p>'
       + '</div>'
-      + '<button data-fid="'+it.id+'" onclick="fbDeleteItem(this.dataset.fid)" style="flex-shrink:0;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:5px 8px;color:#f87171;font-size:12px;cursor:pointer;" title="Hapus">&#10005;</button>'
+      + '<div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">'
+        + '<button data-fid="'+it.id+'" onclick="fbEditItem(this.dataset.fid)" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:5px 8px;color:#a5b4fc;font-size:12px;cursor:pointer;" title="Edit">&#9999;</button>'
+        + '<button data-fid="'+it.id+'" onclick="fbDeleteItem(this.dataset.fid)" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:5px 8px;color:#f87171;font-size:12px;cursor:pointer;" title="Hapus">&#10005;</button>'
+      + '</div>'
       + '</div>';
   }
   c.innerHTML = html;
@@ -5292,7 +5352,8 @@ function fbDoExportFiltered() {
   }
   if(!selectedItems||!selectedItems.length){ showToast("Tidak ada item yang dipilih","error"); return; }
   document.getElementById('fbExportModal').style.display = 'none';
-  fbExportExcelItems(selectedItems);
+  if(_fbExportFormat === 'ppt') fbExportPPT(selectedItems);
+  else fbExportExcelItems(selectedItems);
 }
 
 function fbExportExcel() { fbShowExportModal(); }
@@ -5393,6 +5454,223 @@ function fbExportExcelItems(exportItems) {
   }
 }
 /* ============================================================ */
+
+
+/* ══════════════════════════════════════
+   EDIT ITEM FUNCTIONS
+══════════════════════════════════════ */
+var _fbExportFormat = 'excel';
+function fbShowExcelModal(){ _fbExportFormat='excel'; fbShowExportModal(); }
+function fbShowPptModal(){   _fbExportFormat='ppt';   fbShowExportModal(); }
+function fbShowExportModal(){
+  if(!fbItems.length){ showToast('Tidak ada data untuk diekspor','error'); return; }
+  var radios=document.querySelectorAll('input[name="fbExportMode"]');
+  if(radios.length) radios[0].checked=true;
+  document.getElementById('fbExportSub').style.display='none';
+  document.getElementById('fbExportCountAll').textContent=fbItems.length+' item';
+  var title=document.getElementById('fbExportModalTitle');
+  var doBtn=document.getElementById('fbExportDoBtn');
+  if(title) title.innerHTML=_fbExportFormat==='ppt'?'&#128202; Export PowerPoint':'&#128228; Export Excel';
+  if(doBtn) doBtn.innerHTML=_fbExportFormat==='ppt'?'&#128202; Buat Presentasi':'&#128229; Mulai Export';
+  document.getElementById('fbExportModal').style.display='flex';
+}
+function fbEditItem(id){
+  var it=fbItems.find(function(x){return x.id===id;});
+  if(!it) return;
+  document.getElementById('fbEditId').value=id;
+  document.getElementById('fbEditNm').value=it.prodNm||'';
+  document.getElementById('fbEditQty').value=it.stkQty||'';
+  var catVal=it.category||'';
+  document.getElementById('fbEditCatVal').value=catVal;
+  document.querySelectorAll('#fbEditCatPills button').forEach(function(b){
+    var sel=b.dataset.v===catVal;
+    b.style.background=sel?'rgba(234,179,8,0.2)':'rgba(255,255,255,0.06)';
+    b.style.color=sel?'#fde68a':'#94a3b8';
+    b.style.border=sel?'1px solid rgba(234,179,8,0.5)':'1px solid rgba(255,255,255,0.12)';
+  });
+  var posVal=it.posisi||'';
+  document.getElementById('fbEditPosVal').value=posVal;
+  document.querySelectorAll('#fbEditPosPills button').forEach(function(b){
+    var sel=b.dataset.v===posVal;
+    b.style.background=sel?'rgba(99,102,241,0.25)':'rgba(255,255,255,0.06)';
+    b.style.color=sel?'#a5b4fc':'#94a3b8';
+    b.style.border=sel?'1px solid rgba(99,102,241,0.5)':'1px solid rgba(255,255,255,0.12)';
+  });
+  document.getElementById('fbEditPhotoData').value='';
+  document.getElementById('fbEditPhotoPreviewWrap').style.display='none';
+  document.getElementById('fbEditPhotoInput').value='';
+  document.getElementById('fbEditModal').style.display='flex';
+}
+function fbEditPickCat(btn){
+  var cur=document.getElementById('fbEditCatVal').value;
+  var val=btn.dataset.v; var same=cur===val;
+  document.getElementById('fbEditCatVal').value=same?'':val;
+  document.querySelectorAll('#fbEditCatPills button').forEach(function(b){
+    var sel=!same&&b.dataset.v===val;
+    b.style.background=sel?'rgba(234,179,8,0.2)':'rgba(255,255,255,0.06)';
+    b.style.color=sel?'#fde68a':'#94a3b8';
+    b.style.border=sel?'1px solid rgba(234,179,8,0.5)':'1px solid rgba(255,255,255,0.12)';
+  });
+}
+function fbEditPickPos(btn){
+  var cur=document.getElementById('fbEditPosVal').value;
+  var val=btn.dataset.v; var same=cur===val;
+  document.getElementById('fbEditPosVal').value=same?'':val;
+  document.querySelectorAll('#fbEditPosPills button').forEach(function(b){
+    var sel=!same&&b.dataset.v===val;
+    b.style.background=sel?'rgba(99,102,241,0.25)':'rgba(255,255,255,0.06)';
+    b.style.color=sel?'#a5b4fc':'#94a3b8';
+    b.style.border=sel?'1px solid rgba(99,102,241,0.5)':'1px solid rgba(255,255,255,0.12)';
+  });
+}
+function fbEditPhotoSelected(input){
+  var file=input.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var maxW=1200,maxH=900,w=img.width,h=img.height;
+      if(w>maxW){h=Math.round(h*(maxW/w));w=maxW;}
+      if(h>maxH){w=Math.round(w*(maxH/h));h=maxH;}
+      var canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      var compressed=canvas.toDataURL('image/jpeg',0.82);
+      document.getElementById('fbEditPhotoPreview').src=compressed;
+      document.getElementById('fbEditPhotoPreviewWrap').style.display='block';
+      document.getElementById('fbEditPhotoData').value=compressed;
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function fbSaveEdit(){
+  var id=document.getElementById('fbEditId').value;
+  var prodNm=(document.getElementById('fbEditNm').value||'').trim();
+  var stkQty=(document.getElementById('fbEditQty').value||'').trim();
+  var category=document.getElementById('fbEditCatVal').value;
+  var posisi=document.getElementById('fbEditPosVal').value;
+  var fotoData=document.getElementById('fbEditPhotoData').value;
+  if(!id) return;
+  var btn=document.getElementById('fbEditSaveBtn');
+  btn.disabled=true; btn.textContent='Menyimpan...';
+  fetch(API_BASE_URL+'/bblm-foto/'+id,{
+    method:'PATCH',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({prodNm,stkQty,category,posisi})
+  }).then(function(r){return r.json();})
+  .then(function(d){
+    if(!d.success) throw new Error(d.message||'Gagal update');
+    var it=fbItems.find(function(x){return x.id===id;});
+    if(it){it.prodNm=prodNm;it.stkQty=stkQty;it.category=category;it.posisi=posisi;}
+    if(fotoData){
+      btn.textContent='Upload foto...';
+      return fetch(API_BASE_URL+'/bblm-foto/'+id+'/photo',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({fotoBase64:fotoData})
+      }).then(function(){_fbPhotoMap[id]=fotoData;});
+    }
+  })
+  .then(function(){
+    showToast('Item berhasil diupdate!','success');
+    document.getElementById('fbEditModal').style.display='none';
+    fbRenderList();
+  })
+  .catch(function(e){showToast('Gagal: '+e.message,'error');})
+  .finally(function(){btn.disabled=false;btn.innerHTML='&#128190; Simpan Perubahan';});
+}
+/* ══════════════════════════════════════
+   PPT EXPORT
+══════════════════════════════════════ */
+function fbExportPPT(exportItems){
+  var btn=document.getElementById('fbExportPptBtn');
+  btn.disabled=true; btn.textContent='⏳ Muat...';
+  function doGenPPT(){
+    var toFetch=exportItems.filter(function(it){return !_fbPhotoMap[it.id]&&!_fbNoPhoto[it.id];});
+    var fetched=0;
+    btn.textContent='⏳ Foto...';
+    function afterPhotos(){
+      btn.textContent='⏳ PPT...';
+      try{generatePptx(exportItems);}
+      catch(e){showToast('Gagal PPT: '+e.message,'error');console.error(e);}
+      btn.disabled=false; btn.innerHTML='&#128202; PPT';
+    }
+    if(!toFetch.length){afterPhotos();return;}
+    toFetch.forEach(function(it){
+      fetch(API_BASE_URL+'/bblm-foto/'+it.id+'/photo')
+        .then(function(r){return r.json();})
+        .then(function(pd){if(pd.success&&pd.fotoBase64)_fbPhotoMap[it.id]=pd.fotoBase64;else _fbNoPhoto[it.id]=true;})
+        .catch(function(){_fbNoPhoto[it.id]=true;})
+        .finally(function(){fetched++;if(fetched===toFetch.length)afterPhotos();});
+    });
+  }
+  if(typeof PptxGenJS!=='undefined'){doGenPPT();}
+  else{
+    var s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
+    s.onload=function(){doGenPPT();};
+    s.onerror=function(){showToast('Gagal load library PPT','error');btn.disabled=false;btn.innerHTML='&#128202; PPT';};
+    document.head.appendChild(s);
+  }
+}
+function generatePptx(exportItems){
+  var catOrder=[],catMap={};
+  exportItems.forEach(function(it){
+    var cat=it.category||'(Tanpa Category)';
+    if(!catMap[cat]){catMap[cat]=[];catOrder.push(cat);}
+    catMap[cat].push(it);
+  });
+  var allPos=exportItems.map(function(it){return it.posisi||'';});
+  var posLabel=allPos.every(function(p){return p===allPos[0];})?allPos[0]:'';
+  var pptx=new PptxGenJS();
+  pptx.layout='LAYOUT_WIDE';
+  var COLS=4,mL=0.28,mR=0.28,avail=13.33-mL-mR,gap=0.10;
+  var colW=(avail-(COLS-1)*gap)/COLS;
+  var colX=[];for(var c=0;c<COLS;c++)colX.push(mL+c*(colW+gap));
+  var PHOTO_Y=1.08,PHOTO_H=2.85;
+  var NAME_Y=PHOTO_Y+PHOTO_H+0.05,NAME_H=0.50;
+  var BOX1_Y=NAME_Y+NAME_H+0.04,BOX1_H=0.72;
+  var BOX2_Y=BOX1_Y+BOX1_H+0.04,BOX2_H=0.72;
+  catOrder.forEach(function(cat){
+    var items=catMap[cat];
+    for(var ps=0;ps<items.length;ps+=COLS){
+      var slide=pptx.addSlide();
+      slide.background={color:'FFFFFF'};
+      slide.addText([{text:'■ Report Implementation New Price Card BBLM',options:{bold:true,fontSize:15,color:'111111'}}],
+        {x:mL,y:0.12,w:10.0,h:0.40,fontFace:'Arial',valign:'middle'});
+      if(posLabel) slide.addText(posLabel,{x:10.8,y:0.12,w:2.2,h:0.40,fontFace:'Arial',fontSize:14,bold:true,italic:true,color:'111111',align:'right',valign:'middle'});
+      slide.addShape(pptx.ShapeType.line,{x:mL,y:0.57,w:13.33-mL-mR,h:0,line:{color:'333333',width:1}});
+      slide.addText('※ '+cat,{x:mL,y:0.64,w:12,h:0.36,fontFace:'Arial',fontSize:13,bold:true,color:'222222',valign:'middle'});
+      var pageItems=items.slice(ps,ps+COLS);
+      for(var i=0;i<COLS;i++){
+        var x=colX[i];var it=pageItems[i];
+        if(it){
+          var b64=_fbPhotoMap[it.id];
+          if(b64){
+            var ext=b64.startsWith('data:image/png')?'png':'jpeg';
+            var raw=b64.split(',')[1]||b64;
+            try{slide.addImage({data:ext+';base64,'+raw,x:x,y:PHOTO_Y,w:colW,h:PHOTO_H,sizing:{type:'contain',w:colW,h:PHOTO_H}});}
+            catch(e2){
+              slide.addShape(pptx.ShapeType.rect,{x:x,y:PHOTO_Y,w:colW,h:PHOTO_H,fill:{color:'F0F0F0'},line:{color:'BBBBBB',width:0.5}});
+              slide.addText('(foto error)',{x:x,y:PHOTO_Y,w:colW,h:PHOTO_H,fontSize:8,color:'888888',align:'center',valign:'middle'});
+            }
+          }else{
+            slide.addShape(pptx.ShapeType.rect,{x:x,y:PHOTO_Y,w:colW,h:PHOTO_H,fill:{color:'F5F5F5'},line:{color:'CCCCCC',width:0.5}});
+            slide.addText('(no photo)',{x:x,y:PHOTO_Y,w:colW,h:PHOTO_H,fontSize:8,color:'AAAAAA',align:'center',valign:'middle'});
+          }
+          slide.addText(it.prodNm||it.barcode||'',{x:x,y:NAME_Y,w:colW,h:NAME_H,fontSize:8.5,color:'111111',align:'center',valign:'middle',wrap:true,fontFace:'Arial',
+            border:[{type:'solid',color:'AAAAAA',pt:0.5},{type:'solid',color:'AAAAAA',pt:0.5},{type:'solid',color:'AAAAAA',pt:0.5},{type:'solid',color:'AAAAAA',pt:0.5}]});
+        }else{
+          slide.addShape(pptx.ShapeType.rect,{x:x,y:PHOTO_Y,w:colW,h:PHOTO_H,fill:{color:'FAFAFA'},line:{color:'EEEEEE',width:0.5}});
+          slide.addShape(pptx.ShapeType.rect,{x:x,y:NAME_Y,w:colW,h:NAME_H,fill:{color:'FFFFFF'},line:{color:'AAAAAA',width:0.5}});
+        }
+        slide.addShape(pptx.ShapeType.rect,{x:x,y:BOX1_Y,w:colW,h:BOX1_H,fill:{color:'FFFFFF'},line:{color:'AAAAAA',width:0.5}});
+        slide.addShape(pptx.ShapeType.rect,{x:x,y:BOX2_Y,w:colW,h:BOX2_H,fill:{color:'FFFFFF'},line:{color:'AAAAAA',width:0.5}});
+      }
+    }
+  });
+  pptx.writeFile({fileName:'BBLM_Report_'+new Date().toISOString().slice(0,10)+'.pptx'})
+    .then(function(){showToast('File PPT berhasil diunduh!','success');})
+    .catch(function(e){showToast('Gagal simpan PPT: '+e.message,'error');});
+}
 
 </script>
 
