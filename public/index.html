@@ -5208,25 +5208,35 @@ function fbShowExportSub(mode) {
   sub.style.display = 'block';
   if(mode === 'category') {
     var cats = [];
-    fbItems.forEach(function(i){ if(i.category && cats.indexOf(i.category)<0) cats.push(i.category); });
+    fbItems.forEach(function(i){
+      var c = i.category||""; // termasuk item tanpa category
+      if(cats.indexOf(c)<0) cats.push(c);
+    });
+    cats.sort();
     sub.innerHTML = '<p style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;margin:0 0 8px;">Pilih Category:</p>'
       + cats.map(function(c){
-          var cnt = fbItems.filter(function(i){return i.category===c;}).length;
+          var cnt = fbItems.filter(function(i){return (i.category||"")===c;}).length;
+          var label = c || '(Tanpa Category)';
           return '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:4px;cursor:pointer;">'
             +'<input type="checkbox" name="fbExCat" value="'+escHtml(c)+'" checked style="accent-color:#6366f1;width:15px;height:15px;">'
-            +'<span style="font-size:12px;color:#e2e8f0;flex:1;">'+escHtml(c)+'</span>'
+            +'<span style="font-size:12px;color:'+(!c?'#94a3b8':'#e2e8f0')+';flex:1;">'+escHtml(label)+'</span>'
             +'<span style="font-size:10px;color:#64748b;">'+cnt+' item</span>'
             +'</label>';
         }).join('');
   } else if(mode === 'posisi') {
     var poss = [];
-    fbItems.forEach(function(i){ if(i.posisi && poss.indexOf(i.posisi)<0) poss.push(i.posisi); });
+    fbItems.forEach(function(i){
+      var p = i.posisi||""; // termasuk item tanpa posisi
+      if(poss.indexOf(p)<0) poss.push(p);
+    });
+    poss.sort();
     sub.innerHTML = '<p style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;margin:0 0 8px;">Pilih Posisi:</p>'
       + poss.map(function(p){
-          var cnt = fbItems.filter(function(i){return i.posisi===p;}).length;
+          var cnt = fbItems.filter(function(i){return (i.posisi||"")===p;}).length;
+          var label = p || '(Tanpa Posisi)';
           return '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:4px;cursor:pointer;">'
             +'<input type="checkbox" name="fbExPos" value="'+escHtml(p)+'" checked style="accent-color:#6366f1;width:15px;height:15px;">'
-            +'<span style="font-size:12px;color:#e2e8f0;flex:1;">'+escHtml(p)+'</span>'
+            +'<span style="font-size:12px;color:'+(!p?'#94a3b8':'#e2e8f0')+';flex:1;">'+escHtml(label)+'</span>'
             +'<span style="font-size:10px;color:#64748b;">'+cnt+' item</span>'
             +'</label>';
         }).join('');
