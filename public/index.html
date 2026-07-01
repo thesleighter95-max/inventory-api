@@ -5347,8 +5347,7 @@ function fbExportExcelItems(exportItems) {
             // col 4 = "Foto Display" (0-indexed), row uses actualRow-1 (0-indexed)
             sheet.addImage(imgId, {
               tl:{col:4, row:actualRow-1},
-              br:{col:5, row:actualRow},
-              editAs:"oneCell"
+              ext:{width:130, height:100}
             });
           } catch(imgErr){ console.warn("addImage err:", imgErr); }
         }
