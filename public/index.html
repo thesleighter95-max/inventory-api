@@ -1270,7 +1270,7 @@ table td { font-size: 11px; }
       </div>
 
       <!-- Category + Posisi Selectors -->
-      <div style="margin-bottom:10px;">
+      <div id="fbCatSection" style="margin-bottom:10px;display:none;">
         <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:6px;">CATEGORY</label>
         <input type="hidden" id="fbCategoryVal" value="">
         <div id="fbCatPills" style="display:flex;flex-wrap:wrap;gap:5px;">
@@ -4763,12 +4763,11 @@ function fbRenderCatPills(containerId, hiddenId, handlerName, cats) {
 }
 
 function fbLoadCategories() {
+  var section = document.getElementById("fbCatSection");
+  if (section && !document.getElementById("fbCategoryVal").value) section.style.display = "none";
   fbGetCategoryList().then(function(cats) {
-    fbRenderCatPills("fbCatPills", "fbCategoryVal", "fbPickCat", cats);
     fbRenderCatPills("fbEditCatPills", "fbEditCatVal", "fbEditPickCat", cats);
   }).catch(function() {
-    var el1 = document.getElementById("fbCatPills");
-    if (el1) el1.innerHTML = '<span style="font-size:11px;color:#f87171;">Gagal memuat kategori</span>';
     var el2 = document.getElementById("fbEditCatPills");
     if (el2) el2.innerHTML = '<span style="font-size:11px;color:#f87171;">Gagal memuat kategori</span>';
   });
@@ -4801,6 +4800,8 @@ function fbResetCatPos() {
       b.style.fontWeight = "500";
     });
   });
+  var section = document.getElementById("fbCatSection");
+  if (section) section.style.display = "none";
 }
 
 function fbGetFilteredItems() {
@@ -5226,12 +5227,18 @@ function fbLookupBarcode(bc) {
 
 function fbAutoSelectCategory(val) {
   document.getElementById("fbCategoryVal").value = val || "";
+  var section = document.getElementById("fbCatSection");
+  if (!val) {
+    if (section) section.style.display = "none";
+    return;
+  }
   fbGetCategoryList().then(function(cats) {
     fbRenderCatPills("fbCatPills", "fbCategoryVal", "fbPickCat", cats);
     if (val && cats.indexOf(val) === -1) {
       var el = document.getElementById("fbCatPills");
       if (el) el.insertAdjacentHTML("beforeend", '<button data-v="' + fbEsc(val) + '" onclick="fbPickCat(this)" style="font-size:11px;font-weight:700;color:#c7d2fe;background:rgba(99,102,241,0.3);border:1px solid #818cf8;border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">' + fbEsc(val) + '</button>');
     }
+    if (section) section.style.display = "block";
   });
 }
 
