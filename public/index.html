@@ -4630,9 +4630,9 @@ function fbRenderList() {
     var pid = "fbThumb_" + it.id;
     var photoHtml;
     if(_fbPhotoMap[it.id]) {
-      photoHtml = '<img src="'+_fbPhotoMap[it.id]+'" style="width:64px;height:48px;object-fit:cover;border-radius:8px;cursor:pointer;" onclick="fbOpenPhotoModal(''+it.id+'')" alt="foto">';
+      photoHtml = '<img src="'+_fbPhotoMap[it.id]+'" style="width:64px;height:48px;object-fit:cover;border-radius:8px;cursor:pointer;" data-fid="'+it.id+'" onclick="fbOpenPhotoModal(this.dataset.fid)" alt="foto">';
     } else if(it.hasPhoto) {
-      photoHtml = '<div id="'+pid+'" onclick="fbLoadPhoto(''+it.id+'')" style="width:64px;height:48px;background:#1e293b;border:1px dashed #334155;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:9px;color:#64748b;text-align:center;line-height:1.3;">Muat<br>Foto</div>';
+      photoHtml = '<div id="'+pid+'" data-fid="'+it.id+'" onclick="fbLoadPhoto(this.dataset.fid)" style="width:64px;height:48px;background:#1e293b;border:1px dashed #334155;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:9px;color:#64748b;text-align:center;line-height:1.3;">Muat<br>Foto</div>';
     } else {
       photoHtml = '<div style="width:64px;height:48px;background:#0f172a;border:1px dashed #1e293b;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#334155;text-align:center;line-height:1.3;">No<br>Foto</div>';
     }
@@ -4647,7 +4647,7 @@ function fbRenderList() {
         + '</div>'
         + '<p style="margin:2px 0 0;font-size:10px;color:#475569;">'+fbEsc(it.username||'')+(it.username?' · ':'')+fbFmtDt(it.capturedAt)+'</p>'
       + '</div>'
-      + '<button onclick="fbDeleteItem(''+it.id+'')" style="flex-shrink:0;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:5px 8px;color:#f87171;font-size:12px;cursor:pointer;" title="Hapus">&#10005;</button>'
+      + '<button data-fid="'+it.id+'" onclick="fbDeleteItem(this.dataset.fid)" style="flex-shrink:0;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:5px 8px;color:#f87171;font-size:12px;cursor:pointer;" title="Hapus">&#10005;</button>'
       + '</div>';
   }
   c.innerHTML = html;
