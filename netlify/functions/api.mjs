@@ -1259,13 +1259,14 @@ loadCurrentSetting();
 
     // POST /bblm-foto — add item (photo stored separately)
     if (path === "/bblm-foto" && method === "POST") {
-      const { barcode, prodCd, prodNm, stkQty, username } = body;
+      const { barcode, prodCd, prodNm, stkQty, category, posisi, username } = body;
       if (!barcode) return json({ success: false, message: "barcode wajib diisi" }, 400);
       const id = Date.now().toString() + Math.random().toString(36).slice(2, 6);
       const list = await getJson("bblm-foto", []);
       const newItem = {
         id, barcode: barcode || "", prodCd: prodCd || "", prodNm: prodNm || "",
-        stkQty: stkQty || "", username: username || "",
+        stkQty: stkQty || "", category: category || "", posisi: posisi || "",
+        username: username || "",
         capturedAt: new Date().toISOString(), hasPhoto: false
       };
       list.push(newItem);
