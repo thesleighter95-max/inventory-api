@@ -4733,7 +4733,8 @@ function fbGetCategoryList() {
       if (!row) continue;
       var val = (row[7] || "").toString().trim();
       if (!val) continue;
-      if (val.toUpperCase() === "#N/A") continue;
+      var valUp = val.toUpperCase();
+      if (valUp === "#N/A" || valUp === "CATEGORY" || valUp === "KATEGORI") continue;
       if (!seen[val]) { seen[val] = true; cats.push(val); }
     }
     cats.sort(function(a, b) { return a.localeCompare(b); });
@@ -5211,12 +5212,27 @@ function fbLookupBarcode(bc) {
       document.getElementById("fbProdCd").value = found[0] || "";
       var rawQty = (found[4]||"").toString().replace(/[^0-9.,]/g,"").replace(",",".");
       document.getElementById("fbStkQty").value = rawQty ? Math.round(parseFloat(rawQty)) : "";
+      var catVal = (found[7]||"").toString().trim();
+      if(catVal.toUpperCase()==="#N/A") catVal="";
+      fbAutoSelectCategory(catVal);
       showToast("Barang ditemukan: " + (found[2]||bc), "success");
     } else {
       document.getElementById("fbProdNm").value = "";
+      fbAutoSelectCategory("");
       showToast("Barcode tidak ditemukan di data inventory", "error");
     }
   }).catch(function(){ document.getElementById("fbProdNm").value = ""; showToast("Gagal cari data inventory","error"); });
+}
+
+function fbAutoSelectCategory(val) {
+  document.getElementById("fbCategoryVal").value = val || "";
+  fbGetCategoryList().then(function(cats) {
+    fbRenderCatPills("fbCatPills", "fbCategoryVal", "fbPickCat", cats);
+    if (val && cats.indexOf(val) === -1) {
+      var el = document.getElementById("fbCatPills");
+      if (el) el.insertAdjacentHTML("beforeend", '<button data-v="' + fbEsc(val) + '" onclick="fbPickCat(this)" style="font-size:11px;font-weight:700;color:#c7d2fe;background:rgba(99,102,241,0.3);border:1px solid #818cf8;border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">' + fbEsc(val) + '</button>');
+    }
+  });
 }
 
 function fbPhotoSelected(input) {
