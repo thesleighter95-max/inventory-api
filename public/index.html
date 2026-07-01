@@ -1230,7 +1230,7 @@ table td { font-size: 11px; }
         <h2 style="font-size:18px;font-weight:800;color:#fff;margin:0;">&#128247; Upload Foto BBLM</h2>
         <p style="font-size:11px;color:#64748b;margin:2px 0 0;">Scan barcode &middot; Ambil foto &middot; Export Excel</p>
       </div>
-      <button id="fbExportBtn" onclick="fbExportExcel()" style="background:rgba(34,197,94,0.15);border:1.5px solid rgba(34,197,94,0.35);border-radius:10px;padding:8px 12px;color:#4ade80;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">&#128229; Export Excel</button>
+      <button id="fbExportBtn" onclick="fbShowExportModal()" style="background:rgba(34,197,94,0.15);border:1.5px solid rgba(34,197,94,0.35);border-radius:10px;padding:8px 12px;color:#4ade80;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">&#128229; Export Excel</button>
     </div>
     <!-- Count + Clear -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -1312,6 +1312,40 @@ table td { font-size: 11px; }
     <div id="fbFilterBar" style="margin-bottom:6px;"></div>
     <div id="fbListContainer"></div>
   </div>
+
+<!-- ═══ EXPORT FILTER MODAL ═══ -->
+<div id="fbExportModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
+  <div style="width:100%;max-width:480px;background:#1a1f2e;border-radius:18px 18px 0 0;padding:20px 18px 32px;max-height:82vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div><h3 style="font-size:15px;font-weight:800;color:#fff;margin:0;">&#128228; Export Excel</h3><p style="font-size:11px;color:#64748b;margin:2px 0 0;">Pilih data yang akan di-export</p></div>
+      <button onclick="document.getElementById('fbExportModal').style.display='none'" style="background:rgba(255,255,255,0.08);border:none;border-radius:8px;width:32px;height:32px;color:#94a3b8;font-size:18px;cursor:pointer;line-height:1;">&#215;</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;" id="fbExportModeList">
+      <label style="display:flex;align-items:center;gap:10px;padding:11px 12px;background:rgba(255,255,255,0.05);border:1.5px solid rgba(99,102,241,0.35);border-radius:10px;cursor:pointer;">
+        <input type="radio" name="fbExportMode" value="all" checked onchange="fbShowExportSub(this.value)" style="accent-color:#6366f1;width:16px;height:16px;">
+        <span style="font-size:13px;color:#e2e8f0;font-weight:600;">Semua Data</span>
+        <span style="font-size:11px;color:#64748b;margin-left:auto;" id="fbExportCountAll">0 item</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:11px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;cursor:pointer;">
+        <input type="radio" name="fbExportMode" value="category" onchange="fbShowExportSub(this.value)" style="accent-color:#6366f1;width:16px;height:16px;">
+        <span style="font-size:13px;color:#e2e8f0;font-weight:600;">&#127991; Berdasarkan Category</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:11px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;cursor:pointer;">
+        <input type="radio" name="fbExportMode" value="posisi" onchange="fbShowExportSub(this.value)" style="accent-color:#6366f1;width:16px;height:16px;">
+        <span style="font-size:13px;color:#e2e8f0;font-weight:600;">&#128205; Berdasarkan Posisi</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:11px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;cursor:pointer;">
+        <input type="radio" name="fbExportMode" value="checklist" onchange="fbShowExportSub(this.value)" style="accent-color:#6366f1;width:16px;height:16px;">
+        <span style="font-size:13px;color:#e2e8f0;font-weight:600;">&#9745; Pilih Manual (Ceklist)</span>
+      </label>
+    </div>
+    <div id="fbExportSub" style="display:none;margin-bottom:14px;max-height:220px;overflow-y:auto;"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="document.getElementById('fbExportModal').style.display='none'" style="flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:13px;color:#94a3b8;font-size:13px;font-weight:700;cursor:pointer;">Batal</button>
+      <button onclick="fbDoExportFiltered()" style="flex:2;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:10px;padding:13px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(34,197,94,0.3);">&#128229; Mulai Export</button>
+    </div>
+  </div>
+</div>
 
 <div id="expiredPanel" class="panel-container">
    <div class="p-4">
@@ -5100,6 +5134,9 @@ function fbSubmitItem() {
   var category = (document.getElementById("fbCategoryVal")||{}).value||"";
   var posisi   = (document.getElementById("fbPosisiVal")||{}).value||"";
   if(!barcode){ showToast("Masukkan atau scan barcode terlebih dahulu","error"); return; }
+  if(!category){ showToast("Pilih CATEGORY terlebih dahulu","error"); return; }
+  if(!posisi){ showToast("Pilih POSISI terlebih dahulu","error"); return; }
+  if(!fotoData){ showToast("Ambil foto terlebih dahulu","error"); return; }
   var btn = document.getElementById("fbSubmitBtn");
   btn.disabled = true; btn.textContent = "Menyimpan...";
   fetch(API_BASE_URL + "/bblm-foto", {
@@ -5156,31 +5193,108 @@ function fbClearAll() {
   .catch(function(e){ showToast("Error: "+e.message,"error"); });
 }
 
-function fbExportExcel() {
+function fbShowExportModal() {
   if(!fbItems.length){ showToast("Tidak ada data untuk diekspor","error"); return; }
+  var radios = document.querySelectorAll('input[name="fbExportMode"]');
+  if(radios.length) radios[0].checked = true;
+  document.getElementById('fbExportSub').style.display = 'none';
+  document.getElementById('fbExportCountAll').textContent = fbItems.length + ' item';
+  document.getElementById('fbExportModal').style.display = 'flex';
+}
+
+function fbShowExportSub(mode) {
+  var sub = document.getElementById('fbExportSub');
+  if(mode === 'all') { sub.style.display = 'none'; sub.innerHTML = ''; return; }
+  sub.style.display = 'block';
+  if(mode === 'category') {
+    var cats = [];
+    fbItems.forEach(function(i){ if(i.category && cats.indexOf(i.category)<0) cats.push(i.category); });
+    sub.innerHTML = '<p style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;margin:0 0 8px;">Pilih Category:</p>'
+      + cats.map(function(c){
+          var cnt = fbItems.filter(function(i){return i.category===c;}).length;
+          return '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:4px;cursor:pointer;">'
+            +'<input type="checkbox" name="fbExCat" value="'+escHtml(c)+'" checked style="accent-color:#6366f1;width:15px;height:15px;">'
+            +'<span style="font-size:12px;color:#e2e8f0;flex:1;">'+escHtml(c)+'</span>'
+            +'<span style="font-size:10px;color:#64748b;">'+cnt+' item</span>'
+            +'</label>';
+        }).join('');
+  } else if(mode === 'posisi') {
+    var poss = [];
+    fbItems.forEach(function(i){ if(i.posisi && poss.indexOf(i.posisi)<0) poss.push(i.posisi); });
+    sub.innerHTML = '<p style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;margin:0 0 8px;">Pilih Posisi:</p>'
+      + poss.map(function(p){
+          var cnt = fbItems.filter(function(i){return i.posisi===p;}).length;
+          return '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:4px;cursor:pointer;">'
+            +'<input type="checkbox" name="fbExPos" value="'+escHtml(p)+'" checked style="accent-color:#6366f1;width:15px;height:15px;">'
+            +'<span style="font-size:12px;color:#e2e8f0;flex:1;">'+escHtml(p)+'</span>'
+            +'<span style="font-size:10px;color:#64748b;">'+cnt+' item</span>'
+            +'</label>';
+        }).join('');
+  } else if(mode === 'checklist') {
+    sub.innerHTML = '<p style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;margin:0 0 8px;">Pilih Item:</p>'
+      + fbItems.map(function(it){
+          return '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:4px;cursor:pointer;">'
+            +'<input type="checkbox" name="fbExItem" value="'+it.id+'" checked style="accent-color:#6366f1;width:15px;height:15px;">'
+            +'<span style="font-size:12px;color:#e2e8f0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escHtml(it.prodNm||it.barcode||'')+'</span>'
+            +(it.category?'<span style="font-size:9px;color:#a5b4fc;">'+escHtml(it.category)+'</span>':'')
+            +'</label>';
+        }).join('');
+  }
+}
+
+function fbDoExportFiltered() {
+  var modeEl = document.querySelector('input[name="fbExportMode"]:checked');
+  if(!modeEl){ showToast("Pilih mode export","error"); return; }
+  var mode = modeEl.value;
+  var selectedItems;
+  if(mode === 'all') {
+    selectedItems = fbItems.slice();
+  } else if(mode === 'category') {
+    var selCats = Array.prototype.map.call(document.querySelectorAll('input[name="fbExCat"]:checked'), function(el){return el.value;});
+    if(!selCats.length){ showToast("Pilih minimal satu category","error"); return; }
+    selectedItems = fbItems.filter(function(i){ return selCats.indexOf(i.category||"")>=0; });
+  } else if(mode === 'posisi') {
+    var selPos = Array.prototype.map.call(document.querySelectorAll('input[name="fbExPos"]:checked'), function(el){return el.value;});
+    if(!selPos.length){ showToast("Pilih minimal satu posisi","error"); return; }
+    selectedItems = fbItems.filter(function(i){ return selPos.indexOf(i.posisi||"")>=0; });
+  } else if(mode === 'checklist') {
+    var selIds = {};
+    document.querySelectorAll('input[name="fbExItem"]:checked').forEach(function(el){selIds[el.value]=true;});
+    if(!Object.keys(selIds).length){ showToast("Pilih minimal satu item","error"); return; }
+    selectedItems = fbItems.filter(function(i){ return selIds[i.id]; });
+  }
+  if(!selectedItems||!selectedItems.length){ showToast("Tidak ada item yang dipilih","error"); return; }
+  document.getElementById('fbExportModal').style.display = 'none';
+  fbExportExcelItems(selectedItems);
+}
+
+function fbExportExcel() { fbShowExportModal(); }
+
+function fbExportExcelItems(exportItems) {
   var btn = document.getElementById("fbExportBtn");
   btn.disabled = true; btn.textContent = "⏳ Memuat ExcelJS...";
 
   function doExport() {
-    var exportItems = fbGetFilteredItems();
     if(!exportItems.length){ showToast("Tidak ada data untuk di-export","error"); btn.disabled=false; btn.innerHTML="&#128229; Export Excel"; return; }
     var workbook = new ExcelJS.Workbook();
     workbook.creator = "PDA Mini Mataram";
     var sheet = workbook.addWorksheet("Upload Foto BBLM");
+    // CATEGORY kolom pertama, POSISI kolom terakhir
     sheet.columns = [
-      {header:"PROD_CD", key:"prodCd", width:15},
-      {header:"Barcode", key:"barcode", width:22},
-      {header:"PROD_NM", key:"prodNm", width:45},
-      {header:"CATEGORY", key:"category", width:22},
-      {header:"POSISI", key:"posisi", width:10},
-      {header:"Foto Display", key:"foto", width:22},
-      {header:"STK QTY", key:"stkQty", width:12}
+      {header:"CATEGORY",    key:"category", width:22},
+      {header:"PROD_CD",     key:"prodCd",   width:15},
+      {header:"Barcode",     key:"barcode",  width:22},
+      {header:"PROD_NM",     key:"prodNm",   width:45},
+      {header:"Foto Display",key:"foto",     width:22},
+      {header:"STK QTY",    key:"stkQty",   width:12},
+      {header:"POSISI",      key:"posisi",   width:10}
     ];
     var hRow = sheet.getRow(1);
     hRow.font = {bold:true, size:11, color:{argb:"FFFFFFFF"}};
     hRow.fill = {type:"pattern", pattern:"solid", fgColor:{argb:"FF1E293B"}};
     hRow.alignment = {vertical:"middle", horizontal:"center"};
     hRow.height = 24;
+    hRow.commit();
 
     function processNext(i) {
       if(i >= exportItems.length) {
@@ -5193,17 +5307,26 @@ function fbExportExcel() {
           a.download = "Upload_Foto_BBLM_" + new Date().toISOString().slice(0,10) + ".xlsx";
           document.body.appendChild(a); a.click(); document.body.removeChild(a);
           URL.revokeObjectURL(url);
-          showToast("File Excel berhasil diunduh!","success");
+          showToast("File Excel berhasil diunduh! ("+exportItems.length+" item)","success");
         }).catch(function(e){ showToast("Gagal buat file: "+e.message,"error"); console.error(e); })
         .finally(function(){ btn.disabled=false; btn.innerHTML="&#128229; Export Excel"; });
         return;
       }
       var it = exportItems[i];
       btn.textContent = "⏳ " + (i+1) + "/" + exportItems.length;
-      var rowNum = i + 2;
-      var row = sheet.addRow({prodCd:it.prodCd||"", barcode:it.barcode||"", prodNm:it.prodNm||"", category:it.category||"", posisi:it.posisi||"", foto:"", stkQty:it.stkQty||""});
-      row.height = 80;
-      row.alignment = {vertical:"middle"};
+      var dataRow = sheet.addRow({
+        category:it.category||"",
+        prodCd:it.prodCd||"",
+        barcode:it.barcode||"",
+        prodNm:it.prodNm||"",
+        foto:"",
+        stkQty:it.stkQty||"",
+        posisi:it.posisi||""
+      });
+      dataRow.height = 80;
+      dataRow.alignment = {vertical:"middle"};
+      dataRow.commit();
+      var actualRow = dataRow.number; // 1-indexed actual row number
 
       function addPhotoAndNext(b64) {
         if(b64) {
@@ -5211,7 +5334,12 @@ function fbExportExcel() {
             var ext = b64.startsWith("data:image/png") ? "png" : "jpeg";
             var raw = b64.split(",")[1] || b64;
             var imgId = workbook.addImage({base64:raw, extension:ext});
-            sheet.addImage(imgId, {tl:{col:5, row:rowNum-1}, br:{col:6, row:rowNum}, editAs:"oneCell"});
+            // col 4 = "Foto Display" (0-indexed), row uses actualRow-1 (0-indexed)
+            sheet.addImage(imgId, {
+              tl:{col:4, row:actualRow-1},
+              br:{col:5, row:actualRow},
+              editAs:"oneCell"
+            });
           } catch(imgErr){ console.warn("addImage err:", imgErr); }
         }
         processNext(i+1);
@@ -5219,7 +5347,6 @@ function fbExportExcel() {
 
       var cached = _fbPhotoMap[it.id];
       if(cached) { addPhotoAndNext(cached); return; }
-      // Always try to fetch photo (hasPhoto flag may be stale due to eventual consistency)
       fetch(API_BASE_URL + "/bblm-foto/" + it.id + "/photo")
         .then(function(r){ return r.json(); })
         .then(function(pd){ if(pd.success && pd.fotoBase64){ _fbPhotoMap[it.id]=pd.fotoBase64; addPhotoAndNext(pd.fotoBase64); } else addPhotoAndNext(null); })
