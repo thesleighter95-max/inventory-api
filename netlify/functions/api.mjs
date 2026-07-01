@@ -1295,8 +1295,24 @@ loadCurrentSetting();
       }
     }
 
-    // DELETE /bblm-foto/:id
+    // PATCH /bblm-foto/:id — update metadata
     const bblmFotoDelMatch = path.match(/^\/bblm-foto\/([^/]+)$/);
+    if (bblmFotoDelMatch && method === "PATCH") {
+      const id = bblmFotoDelMatch[1];
+      const { prodNm, stkQty, category, posisi } = body;
+      const list = await getJson("bblm-foto", []);
+      const idx = list.findIndex(it => it.id === id);
+      if (idx < 0) return json({ success: false, message: "Item tidak ditemukan" }, 404);
+      if (prodNm   !== undefined) list[idx].prodNm   = prodNm;
+      if (stkQty   !== undefined) list[idx].stkQty   = stkQty;
+      if (category !== undefined) list[idx].category = category;
+      if (posisi   !== undefined) list[idx].posisi   = posisi;
+      list[idx].updatedAt = new Date().toISOString();
+      await setJson("bblm-foto", list);
+      return json({ success: true, item: list[idx] });
+    }
+
+    // DELETE /bblm-foto/:id
     if (bblmFotoDelMatch && method === "DELETE") {
       const id = bblmFotoDelMatch[1];
       const list = await getJson("bblm-foto", []);
