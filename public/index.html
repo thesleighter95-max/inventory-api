@@ -5084,9 +5084,26 @@ function fbLookupBarcode(bc) {
   document.getElementById("fbStkQty").value = "";
   getBarang().then(function(data) {
     var found = null;
+    var bcN = normalizeBarcode(bc);
+    // Pass 1: exact match
     for(var i = 1; i < data.length; i++) {
-      var row = data[i];
-      if(row && row[1] && row[1].trim() === bc) { found = row; break; }
+      if(data[i] && (data[i][1]||"").trim() === bc) { found = data[i]; break; }
+    }
+    // Pass 2: strip leading zeros both sides
+    if(!found) {
+      for(var i = 1; i < data.length; i++) {
+        if(data[i] && normalizeBarcode(data[i][1]) === bcN) { found = data[i]; break; }
+      }
+    }
+    // Pass 3: numeric compare (handles extra/missing zeros mid-string)
+    if(!found) {
+      var bcNum = parseInt(bcN, 10);
+      if(!isNaN(bcNum) && bcNum > 0) {
+        for(var i = 1; i < data.length; i++) {
+          var dbNum = parseInt(normalizeBarcode(data[i] && data[i][1]), 10);
+          if(!isNaN(dbNum) && dbNum === bcNum) { found = data[i]; break; }
+        }
+      }
     }
     if(found) {
       document.getElementById("fbProdNm").value = found[2] || "";
