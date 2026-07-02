@@ -1306,6 +1306,7 @@ table td { font-size: 11px; }
     </div>
     <!-- List -->
     <div id="fbFilterBar" style="margin-bottom:6px;"></div>
+    <div id="fbSelectBar"></div>
     <div id="fbListContainer"></div>
   </div>
 
@@ -4699,6 +4700,7 @@ function loadExcludedList(){
    ============================================================ */
 var fbItems = [];
 var _fbPhotoMap = {};
+var _fbSelected = {};
 var _fbNoPhoto = {};
 var _fbScanner = null;
 var _fbFilterCat = "";
@@ -4873,6 +4875,7 @@ function loadFotoBblmList() {
       fbItems = d.items || [];
       _fbFilterCat = "";
       _fbFilterPos = "";
+      _fbSelected = {};
       fbRenderList();
       fbAutoLoadAllPhotos();
     })
@@ -4925,7 +4928,10 @@ function fbRenderList() {
     } else {
       photoHtml = '<div id="'+pid+'" data-fid="'+it.id+'" onclick="fbLoadPhoto(this.dataset.fid)" style="width:64px;height:48px;background:#1e293b;border:1px dashed #334155;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:9px;color:#64748b;text-align:center;line-height:1.3;">Muat<br>Foto</div>';
     }
-    html += '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;">'
+    var isSel = !!_fbSelected[String(it.id)];
+    var chkHtml = '<input type="checkbox" data-fid="'+it.id+'" '+(isSel?'checked':'')+' onchange="fbToggleSelectItem(this.dataset.fid,this.checked)" style="width:17px;height:17px;accent-color:#6366f1;margin-top:2px;cursor:pointer;">';
+    html += '<div style="background:'+(isSel?'rgba(99,102,241,0.08)':'rgba(255,255,255,0.04)')+';border:1px solid '+(isSel?'rgba(99,102,241,0.35)':'rgba(255,255,255,0.08)')+';border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start;">'
+      + '<div style="flex-shrink:0;padding-top:2px;">'+chkHtml+'</div>'
       + '<div style="flex-shrink:0;">'+photoHtml+'</div>'
       + '<div style="flex:1;min-width:0;">'
         + '<p style="margin:0 0 2px;font-size:12px;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+fbEsc(it.prodNm||'(nama kosong)')+'</p>'
@@ -4940,11 +4946,135 @@ function fbRenderList() {
       + '</div>'
       + '<div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">'
         + '<button data-fid="'+it.id+'" onclick="fbEditItem(this.dataset.fid)" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:5px 8px;color:#a5b4fc;font-size:12px;cursor:pointer;" title="Edit">&#9999;</button>'
+        + '<button data-fid="'+it.id+'" onclick="fbDownloadOneClick(this.dataset.fid)" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:5px 8px;color:#4ade80;font-size:12px;cursor:pointer;" title="Unduh Foto">&#11015;</button>'
         + '<button data-fid="'+it.id+'" onclick="fbDeleteItem(this.dataset.fid)" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:5px 8px;color:#f87171;font-size:12px;cursor:pointer;" title="Hapus">&#10005;</button>'
       + '</div>'
       + '</div>';
   }
   c.innerHTML = html;
+  fbRenderSelectBar();
+}
+
+function fbRenderSelectBar() {
+  var el = document.getElementById("fbSelectBar");
+  if(!el) return;
+  if(!fbItems.length) { el.innerHTML = ""; return; }
+  var visItems = fbGetFilteredItems();
+  var selIds = Object.keys(_fbSelected).filter(function(id){ return _fbSelected[id]; });
+  var allChecked = visItems.length > 0 && visItems.every(function(it){ return _fbSelected[String(it.id)]; });
+  var disAttr = selIds.length === 0 ? 'disabled' : '';
+  var disOpac = selIds.length === 0 ? '0.45' : '1';
+  el.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 10px;margin-bottom:8px;flex-wrap:wrap;">'
+    + '<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">'
+      + '<input type="checkbox" id="fbSelectAllChk" '+(allChecked?'checked':'')+' onchange="fbToggleSelectAll(this.checked)" style="width:16px;height:16px;accent-color:#6366f1;cursor:pointer;">'
+      + 'Pilih Semua <span style="color:#818cf8;font-weight:700;">('+selIds.length+' dipilih)</span>'
+    + '</label>'
+    + '<div style="display:flex;gap:6px;">'
+      + '<button id="fbDownloadSelBtn" '+disAttr+' onclick="fbDownloadSelected()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:6px 11px;color:#4ade80;font-size:11px;font-weight:700;cursor:pointer;opacity:'+disOpac+';">&#11015; Unduh</button>'
+      + '<button id="fbDeleteSelBtn" '+disAttr+' onclick="fbDeleteSelected()" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:6px 11px;color:#f87171;font-size:11px;font-weight:700;cursor:pointer;opacity:'+disOpac+';">&#128465; Hapus</button>'
+    + '</div>'
+  + '</div>';
+}
+
+function fbToggleSelectItem(id, checked) {
+  _fbSelected[String(id)] = checked;
+  fbRenderSelectBar();
+}
+
+function fbToggleSelectAll(checked) {
+  var visItems = fbGetFilteredItems();
+  visItems.forEach(function(it){ _fbSelected[String(it.id)] = checked; });
+  fbRenderList();
+}
+
+function fbGetExtFromDataUrl(dataUrl) {
+  var m = /^data:image\/([a-zA-Z0-9]+);base64,/.exec(dataUrl || "");
+  if(!m) return "jpg";
+  var ext = m[1].toLowerCase();
+  if(ext === "jpeg") ext = "jpg";
+  return ext;
+}
+
+function fbTriggerDownload(dataUrl, filename) {
+  var a = document.createElement("a");
+  a.href = dataUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function fbDownloadOnePromise(it) {
+  return new Promise(function(resolve) {
+    var src = _fbPhotoMap[it.id];
+    if(src) {
+      fbTriggerDownload(src, (it.prodCd || it.id || "foto") + "." + fbGetExtFromDataUrl(src));
+      resolve(true);
+      return;
+    }
+    fetch(API_BASE_URL + "/bblm-foto/" + it.id + "/photo")
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(d.success && d.fotoBase64) {
+          _fbPhotoMap[it.id] = d.fotoBase64;
+          fbTriggerDownload(d.fotoBase64, (it.prodCd || it.id || "foto") + "." + fbGetExtFromDataUrl(d.fotoBase64));
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      })
+      .catch(function(){ resolve(false); });
+  });
+}
+
+function fbDownloadOneClick(id) {
+  var it = fbItems.filter(function(x){ return String(x.id) === String(id); })[0];
+  if(!it) return;
+  fbDownloadOnePromise(it).then(function(ok){
+    if(ok) showToast("Foto diunduh: " + (it.prodCd || it.id), "success");
+    else showToast("Foto tidak tersedia untuk item ini", "error");
+  });
+}
+
+function fbDownloadSelected() {
+  var ids = Object.keys(_fbSelected).filter(function(id){ return _fbSelected[id]; });
+  if(!ids.length) { showToast("Pilih minimal 1 item dulu", "error"); return; }
+  var items = fbItems.filter(function(it){ return ids.indexOf(String(it.id)) >= 0; });
+  var idx = 0, okCount = 0;
+  function next() {
+    if(idx >= items.length) {
+      showToast("Selesai unduh " + okCount + "/" + items.length + " foto", "success");
+      return;
+    }
+    var it = items[idx++];
+    fbDownloadOnePromise(it).then(function(ok){
+      if(ok) okCount++;
+      setTimeout(next, 400);
+    });
+  }
+  next();
+}
+
+function fbDeleteSelected() {
+  var ids = Object.keys(_fbSelected).filter(function(id){ return _fbSelected[id]; });
+  if(!ids.length) { showToast("Pilih minimal 1 item dulu", "error"); return; }
+  if(!confirm("Hapus " + ids.length + " item terpilih?\n\nTindakan ini tidak dapat dibatalkan!")) return;
+  var idx = 0, okCount = 0;
+  function next() {
+    if(idx >= ids.length) {
+      _fbSelected = {};
+      showToast("Berhasil hapus " + okCount + "/" + ids.length + " item", "success");
+      loadFotoBblmList();
+      return;
+    }
+    var id = ids[idx++];
+    fetch(API_BASE_URL + "/bblm-foto/" + id, { method: "DELETE" })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if(d.success){ delete _fbPhotoMap[id]; okCount++; } next(); })
+      .catch(function(){ next(); });
+  }
+  next();
 }
 
 function fbEsc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
