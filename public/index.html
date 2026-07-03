@@ -4705,6 +4705,32 @@ var _fbNoPhoto = {};
 var _fbScanner = null;
 var _fbFilterCat = "";
 var _fbFilterPos = "";
+var _fbFilterDate = "";
+var _fbDownloaded = {};
+
+function fbLoadDownloadedState() {
+  try {
+    var raw = localStorage.getItem("fb_downloaded");
+    if(raw) { var arr=JSON.parse(raw); arr.forEach(function(id){ _fbDownloaded[String(id)]=true; }); }
+  } catch(e) {}
+}
+function fbMarkDownloaded(id) {
+  _fbDownloaded[String(id)] = true;
+  try { localStorage.setItem("fb_downloaded", JSON.stringify(Object.keys(_fbDownloaded))); } catch(e) {}
+}
+function fbDateStr(iso) {
+  if(!iso) return "";
+  var d=new Date(iso);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function fbTodayStr() {
+  var d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function fbYesterdayStr() {
+  var d=new Date(Date.now()-86400000);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
 
 function fbPickCat(btn) {
   var cur = document.getElementById("fbCategoryVal").value;
@@ -4810,6 +4836,7 @@ function fbGetFilteredItems() {
   return fbItems.filter(function(it){
     if(_fbFilterCat && (it.category||"") !== _fbFilterCat) return false;
     if(_fbFilterPos && (it.posisi||"") !== _fbFilterPos) return false;
+    if(_fbFilterDate && fbDateStr(it.capturedAt) !== _fbFilterDate) return false;
     return true;
   });
 }
@@ -4850,7 +4877,37 @@ function fbRenderFilterBar() {
     });
     h += "</div>";
   }
+  // DATE filter
+  var allDates = [];
+  fbItems.forEach(function(it){
+    var ds = fbDateStr(it.capturedAt);
+    if(ds && allDates.indexOf(ds) < 0) allDates.push(ds);
+  });
+  allDates.sort(function(a,b){ return a > b ? -1 : 1; });
+  if(allDates.length > 0) {
+    var today = fbTodayStr();
+    var yesterday = fbYesterdayStr();
+    h += '<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:5px;">'
+      + '<span style="font-size:9px;color:#475569;text-transform:uppercase;font-weight:700;margin-right:2px;">Tgl:</span>';
+    var dtAll = _fbFilterDate==="" ? "background:rgba(99,102,241,0.3);border-color:#818cf8;color:#c7d2fe;" : "background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.10);color:#64748b;";
+    h += '<span style="'+PILLB+dtAll+'" data-dt="" onclick="fbSetFilterDate(this)">Semua</span>';
+    allDates.forEach(function(ds){
+      var label;
+      if(ds === today) label = "&#128197; Hari Ini";
+      else if(ds === yesterday) label = "&#128337; Kemarin";
+      else { var p=ds.split("-"); label = p[2]+"/"+p[1]; }
+      var act = _fbFilterDate===ds ? "background:rgba(56,189,248,0.2);border-color:#38bdf8;color:#7dd3fc;" : "background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.10);color:#64748b;";
+      h += '<span style="'+PILLB+act+'" data-dt="'+ds+'" onclick="fbSetFilterDate(this)">'+label+'</span>';
+    });
+    h += "</div>";
+  }
   el.innerHTML = h;
+}
+
+function fbSetFilterDate(el) {
+  _fbFilterDate = el.getAttribute("data-dt") || "";
+  fbRenderFilterBar();
+  fbRenderList();
 }
 
 function fbSetFilterPos(el) {
@@ -4875,7 +4932,9 @@ function loadFotoBblmList() {
       fbItems = d.items || [];
       _fbFilterCat = "";
       _fbFilterPos = "";
+      _fbFilterDate = "";
       _fbSelected = {};
+      fbLoadDownloadedState();
       fbRenderList();
       fbAutoLoadAllPhotos();
     })
@@ -4942,6 +5001,7 @@ function fbRenderList() {
           + (it.category ? '<span style="font-size:10px;background:rgba(234,179,8,0.15);border:1px solid rgba(234,179,8,0.3);color:#fde68a;border-radius:10px;padding:1px 6px;">'+fbEsc(it.category)+'</span>' : '')
           + (it.posisi   ? '<span style="font-size:10px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#c7d2fe;border-radius:10px;padding:1px 6px;">'+fbEsc(it.posisi)+'</span>' : '')
         + '</div>'
+        + (_fbDownloaded[String(it.id)] ? '<span style="display:inline-block;margin-top:3px;font-size:9px;font-weight:700;color:#4ade80;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:1px 6px;">&#10003; Sudah Diunduh</span>' : '<span style="display:inline-block;margin-top:3px;font-size:9px;font-weight:600;color:#64748b;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:1px 6px;">&#128247; Belum Diunduh</span>')
         + '<p style="margin:2px 0 0;font-size:10px;color:#475569;">'+fbEsc(it.username||'')+(it.username?' · ':'')+fbFmtDt(it.capturedAt)+'</p>'
       + '</div>'
       + '<div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">'
@@ -5010,6 +5070,7 @@ function fbDownloadOnePromise(it) {
     var src = _fbPhotoMap[it.id];
     if(src) {
       fbTriggerDownload(src, (it.prodCd || it.id || "foto") + "." + fbGetExtFromDataUrl(src));
+      fbMarkDownloaded(it.id);
       resolve(true);
       return;
     }
@@ -5019,6 +5080,7 @@ function fbDownloadOnePromise(it) {
         if(d.success && d.fotoBase64) {
           _fbPhotoMap[it.id] = d.fotoBase64;
           fbTriggerDownload(d.fotoBase64, (it.prodCd || it.id || "foto") + "." + fbGetExtFromDataUrl(d.fotoBase64));
+          fbMarkDownloaded(it.id);
           resolve(true);
         } else {
           resolve(false);
@@ -5032,7 +5094,7 @@ function fbDownloadOneClick(id) {
   var it = fbItems.filter(function(x){ return String(x.id) === String(id); })[0];
   if(!it) return;
   fbDownloadOnePromise(it).then(function(ok){
-    if(ok) showToast("Foto diunduh: " + (it.prodCd || it.id), "success");
+    if(ok) { showToast("Foto diunduh: " + (it.prodCd || it.id), "success"); fbRenderList(); }
     else showToast("Foto tidak tersedia untuk item ini", "error");
   });
 }
@@ -5045,6 +5107,7 @@ function fbDownloadSelected() {
   function next() {
     if(idx >= items.length) {
       showToast("Selesai unduh " + okCount + "/" + items.length + " foto", "success");
+      fbRenderList();
       return;
     }
     var it = items[idx++];
