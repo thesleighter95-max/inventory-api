@@ -1248,13 +1248,26 @@ loadCurrentSetting();
       const store = getInventoryStore();
       await Promise.all(list.map(it => store.delete("bblm-foto-photo-" + it.id).catch(() => {})));
       await setJson("bblm-foto", []);
+      await setJson("bblm-foto-downloaded", []);
       return json({ success: true, deleted: list.length });
+    }
+
+    // POST /bblm-foto/mark-downloaded — tandai item sudah diunduh
+    if (path === "/bblm-foto/mark-downloaded" && method === "POST") {
+      const { ids } = body;
+      if (!Array.isArray(ids) || ids.length === 0) return json({ success: false, message: "ids wajib array" }, 400);
+      const current = await getJson("bblm-foto-downloaded", []);
+      const set = new Set(current.map(String));
+      ids.forEach(id => set.add(String(id)));
+      await setJson("bblm-foto-downloaded", [...set]);
+      return json({ success: true, total: set.size });
     }
 
     // GET /bblm-foto — list metadata (no photos embedded)
     if (path === "/bblm-foto" && method === "GET") {
       const list = await getJson("bblm-foto", []);
-      return json({ success: true, count: list.length, items: list });
+      const downloadedIds = await getJson("bblm-foto-downloaded", []);
+      return json({ success: true, count: list.length, items: list, downloadedIds });
     }
 
     // POST /bblm-foto — add item (photo stored separately)
