@@ -4708,15 +4708,13 @@ var _fbFilterPos = "";
 var _fbFilterDate = "";
 var _fbDownloaded = {};
 
-function fbLoadDownloadedState() {
-  try {
-    var raw = localStorage.getItem("fb_downloaded");
-    if(raw) { var arr=JSON.parse(raw); arr.forEach(function(id){ _fbDownloaded[String(id)]=true; }); }
-  } catch(e) {}
-}
 function fbMarkDownloaded(id) {
   _fbDownloaded[String(id)] = true;
-  try { localStorage.setItem("fb_downloaded", JSON.stringify(Object.keys(_fbDownloaded))); } catch(e) {}
+  fetch(API_BASE_URL + "/bblm-foto/mark-downloaded", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ ids: [String(id)] })
+  }).catch(function(){});
 }
 function fbDateStr(iso) {
   if(!iso) return "";
@@ -4934,7 +4932,8 @@ function loadFotoBblmList() {
       _fbFilterPos = "";
       _fbFilterDate = "";
       _fbSelected = {};
-      fbLoadDownloadedState();
+      _fbDownloaded = {};
+      (d.downloadedIds || []).forEach(function(id){ _fbDownloaded[String(id)] = true; });
       fbRenderList();
       fbAutoLoadAllPhotos();
     })
