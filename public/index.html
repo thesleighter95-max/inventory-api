@@ -3149,33 +3149,33 @@ function submitProposeOrder(){
   var qty=parseInt((qtyEl&&qtyEl.value)||"0")||0;
   if(qty<=0){showToast("Isi jumlah usulan order terlebih dahulu","error");if(qtyEl)qtyEl.focus();return;}
   var btn=document.getElementById("btnProposeOrder");
-  if(btn){btn.disabled=true;btn.textContent="⏳ Mengirim...";}
-  // Waktu WITA (UTC+8)
   var now=new Date();
   var wita=new Date(now.getTime()+8*3600000);
   var pad=function(n){return String(n).padStart(2,"0")};
   var tsWita=wita.getUTCFullYear()+"-"+pad(wita.getUTCMonth()+1)+"-"+pad(wita.getUTCDate())
     +" "+pad(wita.getUTCHours())+":"+pad(wita.getUTCMinutes())+":"+pad(wita.getUTCSeconds())+" WITA";
+  var namaBarang=lastFoundItem[2];
   var payload={
     action:"propose_order",
     barcode:lastFoundItem[1],
-    nama_barang:lastFoundItem[2],
+    nama_barang:namaBarang,
     harga:lastFoundItem[3],
     propose_qty:qty,
     request_by:currentUserNameInv||"Unknown",
     timestamp:tsWita
   };
-  var _proposeTarget=PROPOSE_URL||SUBMIT_URL;
-  fetch(_proposeTarget,{method:"POST",body:JSON.stringify(payload)})
-  .then(function(){
-    showToast("Propose order berhasil! "+qty+" unit ("+lastFoundItem[2]+")","success");
-    if(btn){btn.textContent="✅ Terkirim";}
-    if(qtyEl)qtyEl.value="";
-    kirimAktivitas("propose_order",lastFoundItem[2]+" ("+qty+"x)");
-  }).catch(function(){
-    showToast("Gagal mengirim. Periksa koneksi.","error");
-    if(btn){btn.disabled=false;btn.textContent="📋 PROPOSE ORDER";}
-  });
+  // Langsung notif & reset — tidak tunggu Apps Script
+  showToast("✅ Propose "+qty+" unit terkirim!","success");
+  if(btn){btn.textContent="✅ Terkirim";btn.style.background="linear-gradient(135deg,#065f46,#059669)";btn.disabled=true;}
+  if(qtyEl)qtyEl.value="";
+  kirimAktivitas("propose_order",namaBarang+" ("+qty+"x)");
+  // Kirim ke Apps Script di background
+  var _t=PROPOSE_URL||SUBMIT_URL;
+  fetch(_t,{method:"POST",body:JSON.stringify(payload)}).catch(function(){});
+  // Reset tampilan tombol setelah 3 detik
+  setTimeout(function(){
+    if(btn){btn.textContent="📋 Propose";btn.style.background="";btn.disabled=false;}
+  },3000);
 }
 function updateSubmitBadge(){var b=$("submitBadge");if(submitCount>0){b.classList.remove("hidden");b.textContent=submitCount>99?"99+":submitCount;b.style.animation="none";b.offsetHeight;b.style.animation=""}else b.classList.add("hidden")}
 function renderSessionLog(){var l=$("sessionLogList");if(!submitSessionLog.length){l.innerHTML='<div class="text-center text-gray-600 text-xs py-4">Belum ada cetakan</div>';return}var h="";for(var i=0;i<submitSessionLog.length;i++){var lg=submitSessionLog[i];h+='<div class="session-log-item"><div class="flex justify-between items-start"><div class="flex-1 min-w-0"><p class="text-xs font-bold text-white truncate">'+lg.nama+'</p><div class="flex items-center gap-2 mt-1"><span class="text-[10px] text-emerald-400 font-semibold">Rp '+lg.harga+'</span><span class="text-[10px] text-gray-600">|</span><span class="text-[10px] text-amber-400 font-semibold">'+lg.qty+'x cetak</span></div><p class="text-[10px] text-gray-600 font-mono mt-1">'+lg.barcode+'</p></div><span class="text-[10px] text-gray-500 font-medium whitespace-nowrap ml-2">'+lg.time+'</span></div></div>'}l.innerHTML=h}
