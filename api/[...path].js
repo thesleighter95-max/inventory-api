@@ -1,7 +1,4 @@
-import { neon, neonConfig } from "@neondatabase/serverless";
-
-// Aktifkan connection caching agar tiap request tidak buka koneksi baru ke Neon
-neonConfig.fetchConnectionCache = true;
+import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.NEON_DATABASE_URL || process.env.DATABASE_URL);
 
