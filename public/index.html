@@ -1514,6 +1514,7 @@ function restoreSession(){
   return true;
 }
 var SUBMIT_URL="https://script.google.com/macros/s/AKfycbzvS76WTW9sbJvy9Tp-MSEA6qyQJiiTmu8_8DG3yHzKFMjCHIf2E204VuwOmLLG0GOrtA/exec";
+var PROPOSE_URL=""; // Isi setelah deploy Apps Script dari spreadsheet produk
 var allDataExp=[],filteredDataExp=[],currentPageExp=1,perPageExp=10,sortState={type:null,order:"asc"};
 var SHEET_URL_EXP="https://docs.google.com/spreadsheets/d/e/2PACX-1vREz2JiEJyESnFIyafKyu9cYUaUQxlf2zMdYCYgTVY2_AZX5jbHokHVeRv9EZnOhkIGlFDG0I68h2j3/pub?gid=0&single=true&output=csv";
 var BARANG_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQDjvI11W1lTv4vSQ-u1kjKVKjLyp0yozo0SgAfHc_3eQbV2oHmMxz-9ZVu0zBycgzTdn_rSRCPGRm1/pub?output=csv";
@@ -3164,7 +3165,8 @@ function submitProposeOrder(){
     request_by:currentUserNameInv||"Unknown",
     timestamp:tsWita
   };
-  fetch(SUBMIT_URL,{method:"POST",body:JSON.stringify(payload)})
+  var _proposeTarget=PROPOSE_URL||SUBMIT_URL;
+  fetch(_proposeTarget,{method:"POST",body:JSON.stringify(payload)})
   .then(function(){
     showToast("Propose order berhasil! "+qty+" unit ("+lastFoundItem[2]+")","success");
     if(btn){btn.textContent="✅ Terkirim";}
