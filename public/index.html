@@ -3165,9 +3165,8 @@ function submitProposeOrder(){
     timestamp:tsWita
   };
   fetch(SUBMIT_URL,{method:"POST",body:JSON.stringify(payload)})
-  .then(function(r){return r.json()})
-  .then(function(res){
-    showToast("Propose order berhasil dikirim! ("+qty+" unit)","success");
+  .then(function(){
+    showToast("Propose order berhasil! "+qty+" unit ("+lastFoundItem[2]+")","success");
     if(btn){btn.textContent="✅ Terkirim";}
     if(qtyEl)qtyEl.value="";
     kirimAktivitas("propose_order",lastFoundItem[2]+" ("+qty+"x)");
