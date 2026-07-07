@@ -3149,26 +3149,28 @@ function submitProposeOrder(){
   if(qty<=0){showToast("Isi jumlah usulan order terlebih dahulu","error");if(qtyEl)qtyEl.focus();return;}
   var btn=document.getElementById("btnProposeOrder");
   if(btn){btn.disabled=true;btn.textContent="⏳ Mengirim...";}
-  fetch(API_BASE_URL+"/propose-order",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      barcode:lastFoundItem[1],
-      namaBarang:lastFoundItem[2],
-      harga:lastFoundItem[3],
-      qty:qty,
-      username:currentUserNameInv||"Unknown"
-    })
-  }).then(function(r){return r.json()}).then(function(res){
-    if(res.success){
-      showToast("Propose order berhasil dikirim! ("+qty+" unit)","success");
-      if(btn){btn.textContent="✅ Terkirim";}
-      if(qtyEl)qtyEl.value="";
-      kirimAktivitas("propose_order",lastFoundItem[2]+" ("+qty+"x)");
-    }else{
-      showToast(res.message||"Gagal mengirim","error");
-      if(btn){btn.disabled=false;btn.textContent="📋 PROPOSE ORDER";}
-    }
+  // Waktu WITA (UTC+8)
+  var now=new Date();
+  var wita=new Date(now.getTime()+8*3600000);
+  var pad=function(n){return String(n).padStart(2,"0")};
+  var tsWita=wita.getUTCFullYear()+"-"+pad(wita.getUTCMonth()+1)+"-"+pad(wita.getUTCDate())
+    +" "+pad(wita.getUTCHours())+":"+pad(wita.getUTCMinutes())+":"+pad(wita.getUTCSeconds())+" WITA";
+  var payload={
+    action:"propose_order",
+    barcode:lastFoundItem[1],
+    nama_barang:lastFoundItem[2],
+    harga:lastFoundItem[3],
+    propose_qty:qty,
+    request_by:currentUserNameInv||"Unknown",
+    timestamp:tsWita
+  };
+  fetch(SUBMIT_URL,{method:"POST",body:JSON.stringify(payload)})
+  .then(function(r){return r.json()})
+  .then(function(res){
+    showToast("Propose order berhasil dikirim! ("+qty+" unit)","success");
+    if(btn){btn.textContent="✅ Terkirim";}
+    if(qtyEl)qtyEl.value="";
+    kirimAktivitas("propose_order",lastFoundItem[2]+" ("+qty+"x)");
   }).catch(function(){
     showToast("Gagal mengirim. Periksa koneksi.","error");
     if(btn){btn.disabled=false;btn.textContent="📋 PROPOSE ORDER";}
