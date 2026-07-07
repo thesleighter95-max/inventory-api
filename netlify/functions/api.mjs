@@ -1335,7 +1335,52 @@ loadCurrentSetting();
       return json({ success: true });
     }
 
-    return json({ error: "Not found" }, 404);
+  
+  // POST /propose-order — user kirim usulan order, simpan ke Netlify Blobs
+  if (path === "/propose-order" && method === "POST") {
+    const { barcode, namaBarang, qty, username, harga } = body;
+    if (!barcode || !qty || !username) return json({ success: false, message: "barcode, qty, dan username wajib diisi" }, 400);
+    const list = await getJson("propose-orders", []);
+    list.unshift({
+      id: randomUUID(),
+      barcode: String(barcode).trim(),
+      namaBarang: String(namaBarang || "").trim(),
+      harga: Number(harga) || 0,
+      qty: Number(qty),
+      username: String(username).trim(),
+      timestamp: new Date().toLocaleString("id-ID", { timeZone: "Asia/Makassar" }),
+      createdAt: new Date().toISOString(),
+      status: "pending"
+    });
+    if (list.length > 1000) list.length = 1000;
+    await setJson("propose-orders", list);
+    return json({ success: true, message: "Propose order berhasil dikirim" });
+  }
+
+  // GET /propose-orders — admin lihat semua usulan order
+  if (path === "/propose-orders" && method === "GET") {
+    if (query.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
+    const list = await getJson("propose-orders", []);
+    const showDone = query.showDone === "1";
+    return json({ success: true, total: list.length, orders: showDone ? list : list.filter(o => o.status !== "done") });
+  }
+
+  // PATCH /propose-order/:id/done — admin tandai selesai
+  const proposeDoneMatch = path.match(/^\/propose-order\/([^/]+)\/done$/);
+  if (proposeDoneMatch && method === "PATCH") {
+    const { adminPassword } = body;
+    if (adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
+    const id = proposeDoneMatch[1];
+    const list = await getJson("propose-orders", []);
+    const idx = list.findIndex(o => o.id === id);
+    if (idx === -1) return json({ success: false, message: "Order tidak ditemukan" }, 404);
+    list[idx].status = "done";
+    list[idx].doneAt = new Date().toISOString();
+    await setJson("propose-orders", list);
+    return json({ success: true });
+  }
+
+  return json({ error: "Not found" }, 404);
   } catch (err) {
     return json({ error: "Internal server error", detail: String(err) }, 500);
   }
