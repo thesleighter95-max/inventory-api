@@ -1336,7 +1336,7 @@ loadCurrentSetting();
     }
 
   
-  // POST /propose-order — user kirim usulan order, simpan ke Netlify Blobs
+  // v2 — POST /propose-order — user kirim usulan order, simpan ke Netlify Blobs
   if (path === "/propose-order" && method === "POST") {
     const { barcode, namaBarang, qty, username, harga } = body;
     if (!barcode || !qty || !username) return json({ success: false, message: "barcode, qty, dan username wajib diisi" }, 400);
