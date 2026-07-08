@@ -1003,6 +1003,21 @@ loadData(true);
       return json({ success: true, lastRun: last ? { runAt: last.runAt, success: last.success, actions: last.actions } : null, nextRun: next.toISOString(), nextRunWITA: next.toLocaleString("id-ID", { timeZone: "Asia/Makassar", dateStyle: "full", timeStyle: "short" }), totalLogs: logs.length, recentLogs: logs.slice(0, 7) });
     }
 
+
+    // GET /gallery-setting — cek apakah fitur share foto aktif
+    if (path === "/gallery-setting" && method === "GET") {
+      const s = await getJson("gallery-setting", { active: false });
+      return json({ success: true, active: s.active ?? false });
+    }
+
+    // POST /gallery-setting — admin toggle aktif/nonaktif
+    if (path === "/gallery-setting" && method === "POST") {
+      const { adminPassword, active } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
+      await setJson("gallery-setting", { active: !!active });
+      return json({ success: true, active: !!active });
+    }
+
     // GET /company-location
     if (path === "/company-location" && method === "GET") {
       const loc = await getJson("company-location", { lat: null, lng: null, radiusKm: 1, name: "Perusahaan" });
