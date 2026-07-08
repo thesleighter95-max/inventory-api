@@ -1395,6 +1395,69 @@ loadCurrentSetting();
     return json({ success: true });
   }
 
+
+  // ─────────────────────────────────────────────────────────────
+  // GALERI PENGUNJUNG — Expo mobile app photo uploads
+  // ─────────────────────────────────────────────────────────────
+
+  // POST /gallery-upload — Expo app kirim foto (base64)
+  if (path === "/gallery-upload" && method === "POST") {
+    const { fotoBase64, filename, createdAt, username } = body;
+    if (!fotoBase64) return json({ success: false, message: "fotoBase64 wajib diisi" }, 400);
+    const id = randomUUID();
+    const store = getInventoryStore();
+    await store.set("gallery-photo-" + id, fotoBase64);
+    const meta = await getJson("gallery-photos-meta", []);
+    meta.unshift({
+      id,
+      filename: filename || "photo.jpg",
+      username: username || "pengunjung",
+      createdAt: createdAt || Date.now(),
+      uploadedAt: new Date().toISOString()
+    });
+    if (meta.length > 500) meta.length = 500;
+    await setJson("gallery-photos-meta", meta);
+    return json({ success: true, id });
+  }
+
+  // GET /gallery-photos — admin list semua foto
+  if (path === "/gallery-photos" && method === "GET") {
+    if (query.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
+    const meta = await getJson("gallery-photos-meta", []);
+    return json({ success: true, total: meta.length, photos: meta });
+  }
+
+  // GET /gallery-photo/:id — ambil foto base64
+  if (path.match(/^\/gallery-photo\/[^/]+$/) && method === "GET") {
+    if (query.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
+    const id = path.split("/").pop();
+    const store = getInventoryStore();
+    const fotoBase64 = await store.get("gallery-photo-" + id);
+    if (!fotoBase64) return json({ success: false, message: "Foto tidak ditemukan" }, 404);
+    return json({ success: true, fotoBase64 });
+  }
+
+  // DELETE /gallery-photo/:id — admin hapus foto
+  if (path.match(/^\/gallery-photo\/[^/]+$/) && method === "DELETE") {
+    if (body.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
+    const id = path.split("/").pop();
+    const store = getInventoryStore();
+    await store.delete("gallery-photo-" + id).catch(() => {});
+    const meta = await getJson("gallery-photos-meta", []);
+    await setJson("gallery-photos-meta", meta.filter(m => m.id !== id));
+    return json({ success: true });
+  }
+
+  // DELETE /gallery-photos/all — admin hapus semua
+  if (path === "/gallery-photos/all" && method === "DELETE") {
+    if (body.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
+    const meta = await getJson("gallery-photos-meta", []);
+    const store = getInventoryStore();
+    await Promise.all(meta.map(m => store.delete("gallery-photo-" + m.id).catch(() => {})));
+    await setJson("gallery-photos-meta", []);
+    return json({ success: true, deleted: meta.length });
+  }
+
   return json({ error: "Not found" }, 404);
   } catch (err) {
     return json({ error: "Internal server error", detail: String(err) }, 500);
