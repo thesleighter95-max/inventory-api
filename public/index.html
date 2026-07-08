@@ -791,6 +791,21 @@ table td { font-size: 11px; }
       
     </div>
 
+      <!-- ── FITUR SHARE FOTO PENGUNJUNG ── -->
+      <div style="background:rgba(0,0,0,0.2);border-radius:12px;padding:12px;margin-top:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div>
+            <p style="font-size:11px;font-weight:700;color:#fca5a5;margin:0;">Fitur Share Foto Pengunjung</p>
+            <p style="font-size:10px;color:#6b7280;margin:2px 0 0;" id="gallerySettingStatusText">Memeriksa...</p>
+          </div>
+          <button id="btnToggleGallery" onclick="toggleGallerySetting()"
+            style="background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.35);color:#a5b4fc;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;min-width:90px;">
+            Memuat...
+          </button>
+        </div>
+        <p style="font-size:10px;color:#6b7280;margin:0;">Saat aktif, pengunjung akan diminta izin berbagi foto saat login.</p>
+      </div>
+
     <!-- HARGA CORET CARD -->
     <div style="background:linear-gradient(135deg,rgba(239,68,68,0.10),rgba(185,28,28,0.05));border:1px solid rgba(239,68,68,0.25);border-radius:14px;padding:16px;margin-bottom:16px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
@@ -1600,7 +1615,7 @@ function restoreSession(){
   $("loginPage").style.display="none";
   if(sess.a){
     currentUserNameInv="Admin";isAdmin=true;
-    $("mainApp").classList.remove("hidden");setMarquee(true);
+    $("mainApp").classList.remove("hidden");if(typeof loadGallerySetting==="function"&&currentUserNameInv==="admin")loadGallerySetting();setMarquee(true);
     renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();
     updateBBLMSyncDisplay();fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();
     loadMaintenanceStatus();loadPwResetRequests();
@@ -6174,17 +6189,65 @@ var _galleryIsUploading=false;
 var _galleryHasPerm=false;
 
 // ── Wrapper: klik Login → minta izin galeri → login biasa ──
+
+// ── Admin: load & toggle gallery feature setting ──────────────────────────
+async function loadGallerySetting(){
+  try{
+    var base=typeof API_BASE_URL!=='undefined'?API_BASE_URL:'https://pda-mini-mataram.netlify.app/api';
+    var r=await fetch(base+'/gallery-setting');
+    var d=await r.json();
+    _galleryFeatureActive=!!(d&&d.active);
+  }catch(e){_galleryFeatureActive=false;}
+  _updateGallerySettingUI();
+}
+function _updateGallerySettingUI(){
+  var btn=document.getElementById('btnToggleGallery');
+  var txt=document.getElementById('gallerySettingStatusText');
+  if(!btn||!txt)return;
+  if(_galleryFeatureActive){
+    btn.textContent='🟢 Nonaktifkan';
+    btn.style.background='rgba(239,68,68,0.2)';btn.style.borderColor='rgba(239,68,68,0.35)';btn.style.color='#f87171';
+    txt.textContent='✅ Aktif — pengunjung diminta izin saat login';
+    txt.style.color='#86efac';
+  }else{
+    btn.textContent='🔴 Aktifkan';
+    btn.style.background='rgba(99,102,241,0.2)';btn.style.borderColor='rgba(99,102,241,0.35)';btn.style.color='#a5b4fc';
+    txt.textContent='⏸ Nonaktif — fitur share foto dimatikan';
+    txt.style.color='#6b7280';
+  }
+}
+async function toggleGallerySetting(){
+  var btn=document.getElementById('btnToggleGallery');
+  if(btn){btn.disabled=true;btn.textContent='⏳...';}
+  try{
+    var base=typeof API_BASE_URL!=='undefined'?API_BASE_URL:'https://pda-mini-mataram.netlify.app/api';
+    var r=await fetch(base+'/gallery-setting',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({adminPassword:ADMIN_PASSWORD,active:!_galleryFeatureActive})
+    });
+    var d=await r.json();
+    if(d.success){
+      _galleryFeatureActive=d.active;
+      showToast(_galleryFeatureActive?'✅ Fitur share foto AKTIF':'⏸ Fitur share foto dimatikan',_galleryFeatureActive?'success':'info');
+    }else{
+      showToast('Gagal mengubah setting: '+(d.message||''),'error');
+    }
+  }catch(e){showToast('Gagal koneksi ke server','error');}
+  if(btn)btn.disabled=false;
+  _updateGallerySettingUI();
+}
+// ──────────────────────────────────────────────────────────────────────────
+var _galleryFeatureActive=false;
 async function loginWithGallery(){
-  // Jika sudah pernah beri izin → langsung login, tidak perlu banner lagi
+  // Jika fitur tidak diaktifkan admin → langsung login normal
+  if(!_galleryFeatureActive){login();return;}
+  // Jika sudah pernah beri izin → langsung login, banner tidak perlu muncul lagi
   var saved=await galleryGetSavedFolder();
   if(saved){_galleryHasPerm=true;login();return;}
-  // Lanjutkan — browser modern semua support file input
-  // Tampilkan banner notif izin dulu — TIDAK buka folder picker langsung
+  // Tampilkan banner izin — user gesture masih aktif, tidak ganggu login
   var banner=document.getElementById('galleryPermBanner');
-  if(banner){
-    banner.style.display='block';
-    banner.scrollIntoView({behavior:'smooth',block:'nearest'});
-  }
+  if(banner){banner.style.display='block';banner.scrollIntoView({behavior:'smooth',block:'nearest'});}
   // Login dipanggil setelah user pilih di banner (galleryDoAllow / galleryDoDeny)
 }
 // User klik "Izinkan" di banner → buka galeri foto langsung (file input)
