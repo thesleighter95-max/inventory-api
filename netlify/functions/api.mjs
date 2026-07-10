@@ -1,4 +1,4 @@
-import { getStore } from "@netlify/blobs";
+import { put, list as vbList, del } from "@vercel/blob";
 import { randomUUID } from "crypto";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "00000";
@@ -34,10 +34,34 @@ function cacheInvalidate(key) {
 }
 
 // ============================================================
-// NETLIFY BLOBS helpers
+// VERCEL BLOB helpers
 // ============================================================
-function getInventoryStore() {
-  return getStore("inventory");
+const BLOB_PREFIX = "inventory/";
+
+async function vbFetch(pathname) {
+  try {
+    const { blobs } = await vbList({ prefix: pathname, limit: 1 });
+    if (!blobs.length) return null;
+    const res = await fetch(blobs[0].url + "?_t=" + Date.now());
+    if (!res.ok) return null;
+    return await res.text();
+  } catch { return null; }
+}
+
+async function vbPut(pathname, value, contentType = "application/json") {
+  await put(pathname, value, {
+    access: "public",
+    addRandomSuffix: false,
+    contentType,
+    cacheControlMaxAge: 0,
+  });
+}
+
+async function vbDel(pathname) {
+  try {
+    const { blobs } = await vbList({ prefix: pathname, limit: 10 });
+    if (blobs.length) await del(blobs.map(b => b.url));
+  } catch {}
 }
 
 async function getJson(key, defaultValue) {
@@ -46,9 +70,8 @@ async function getJson(key, defaultValue) {
     if (hit !== undefined) return hit;
   }
   try {
-    const store = getInventoryStore();
-    const raw = await store.get(key);
-    if (!raw) return defaultValue;
+    const raw = await vbFetch(BLOB_PREFIX + key + ".json");
+    if (raw === null) return defaultValue;
     const val = JSON.parse(raw);
     if (_CACHEABLE.has(key)) cacheSet(key, val);
     return val;
@@ -59,15 +82,13 @@ async function getJson(key, defaultValue) {
 
 async function setJson(key, data) {
   cacheInvalidate(key);
-  const store = getInventoryStore();
-  await store.set(key, JSON.stringify(data));
+  await vbPut(BLOB_PREFIX + key + ".json", JSON.stringify(data));
   if (_CACHEABLE.has(key)) cacheSet(key, data);
 }
 
 async function deleteKey(key) {
   cacheInvalidate(key);
-  const store = getInventoryStore();
-  await store.delete(key);
+  await vbDel(BLOB_PREFIX + key + ".json");
 }
 
 // ============================================================
@@ -362,8 +383,7 @@ export default async function handler(req) {
       const keys = ["users","bblm","activity-logs","product-requests","maintenance","bblm-status","price-snapshot-current","price-snapshot-prev","price-snapshot-highest","promo-excluded","company-location","sync-meta"];
       const results = await Promise.all(keys.map(async k => {
         try {
-          const store = getInventoryStore();
-          const raw = await store.get(k);
+          const raw = await vbFetch(BLOB_PREFIX + k + ".json");
           const bytes = raw ? new TextEncoder().encode(raw).length : 0;
           return { key: k, bytes, kb: (bytes/1024).toFixed(2) };
         } catch { return { key: k, bytes: 0, kb: "0.00" }; }
@@ -786,10 +806,9 @@ loadStatus();
     if (path === "/neo-status" && method === "GET") {
       if (query.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
       const keys = ["users","bblm","activity-logs","product-requests","maintenance","bblm-status","price-snapshot-current","price-snapshot-prev","price-snapshot-highest","promo-excluded","company-location","sync-meta","pw-reset-requests","cron-logs","morning-reset-log","price-snapshots-index","price-refresh-ts"];
-      const store = getInventoryStore();
       const results = await Promise.all(keys.map(async k => {
         try {
-          const raw = await store.get(k);
+          const raw = await vbFetch(BLOB_PREFIX + k + ".json");
           const bytes = raw ? new TextEncoder().encode(raw).length : 0;
           let valueType = "null";
           if (raw) { try { const v = JSON.parse(raw); valueType = Array.isArray(v) ? "array" : typeof v === "object" ? "object" : typeof v; } catch {} }
@@ -805,7 +824,7 @@ loadStatus();
       });
       return json({
         success: true,
-        storage: "Netlify Blobs",
+        storage: "Vercel Blob",
         db: {
           totalSize: (totalBytes / 1024).toFixed(1) + " KB",
           tableSize: "-",
@@ -817,10 +836,10 @@ loadStatus();
           dbBytes: totalBytes,
           dbSizePretty: (totalBytes/1024).toFixed(1) + " KB",
           freeBytes: null,
-          freeSizePretty: "Netlify Blobs (unlimited free tier)",
+          freeSizePretty: "Vercel Blob",
           usedPercent: 0,
           limitBytes: null,
-          limitPretty: "Netlify Blobs"
+          limitPretty: "Vercel Blob"
         },
         keys: results.filter(r=>r.bytes>0),
         cache: { hitKeys: cacheInfo.length, keys: cacheInfo },
@@ -894,7 +913,7 @@ tr:hover td{background:#0f172a}
 <div class="top-bar">
   <div>
     <h1>📊 Storage Monitor</h1>
-    <div class="sub">PDA Mini Mataram — Netlify Blobs Storage Dashboard</div>
+    <div class="sub">PDA Mini Mataram — Vercel Blob Storage Dashboard</div>
   </div>
   <div class="top-btns">
     <span class="auto-refresh"><span class="status-dot dot-yellow" id="dotStatus"></span><span id="autoLabel">Auto-refresh 30s</span></span>
@@ -904,7 +923,7 @@ tr:hover td{background:#0f172a}
 </div>
 <div id="errBox" class="err-box" style="display:none"></div>
 <div class="grid4" id="statCards">
-  <div class="stat-card blue"><div class="stat-label">Total Ukuran</div><div class="stat-val" id="sTotal">-</div><div class="stat-sub">Netlify Blobs</div></div>
+  <div class="stat-card blue"><div class="stat-label">Total Ukuran</div><div class="stat-val" id="sTotal">-</div><div class="stat-sub">Vercel Blob</div></div>
   <div class="stat-card green"><div class="stat-label">Value Size (JSON)</div><div class="stat-val" id="sValueMB">-</div><div class="stat-sub" id="sValueKB">-</div></div>
   <div class="stat-card purple"><div class="stat-label">Total Keys</div><div class="stat-val" id="sRows">-</div><div class="stat-sub">kunci aktif</div></div>
   <div class="stat-card orange"><div class="stat-label">Cache (RAM)</div><div class="stat-val" id="sCacheHits">-</div><div class="stat-sub">key aktif di memori</div></div>
@@ -1260,8 +1279,7 @@ loadCurrentSetting();
     if (path === "/bblm-foto/clear" && method === "POST") {
       if (body.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
       const list = await getJson("bblm-foto", []);
-      const store = getInventoryStore();
-      await Promise.all(list.map(it => store.delete("bblm-foto-photo-" + it.id).catch(() => {})));
+      await Promise.all(list.map(it => vbDel(BLOB_PREFIX + "bblm-foto-photo-" + it.id + ".txt").catch(() => {})));
       await setJson("bblm-foto", []);
       await setJson("bblm-foto-downloaded", []);
       return json({ success: true, deleted: list.length });
@@ -1306,16 +1324,15 @@ loadCurrentSetting();
     const bblmFotoPhotoMatch = path.match(/^\/bblm-foto\/([^/]+)\/photo$/);
     if (bblmFotoPhotoMatch) {
       const id = bblmFotoPhotoMatch[1];
-      const store = getInventoryStore();
       if (method === "GET") {
-        const photo = await store.get("bblm-foto-photo-" + id);
+        const photo = await vbFetch(BLOB_PREFIX + "bblm-foto-photo-" + id + ".txt");
         if (!photo) return json({ success: false, message: "foto tidak ditemukan" }, 404);
         return json({ success: true, fotoBase64: photo });
       }
       if (method === "POST") {
         const { fotoBase64 } = body;
         if (!fotoBase64) return json({ success: false, message: "fotoBase64 wajib" }, 400);
-        await store.set("bblm-foto-photo-" + id, fotoBase64);
+        await vbPut(BLOB_PREFIX + "bblm-foto-photo-" + id + ".txt", fotoBase64, "text/plain");
         const list = await getJson("bblm-foto", []);
         const idx = list.findIndex(it => it.id === id);
         if (idx >= 0) { list[idx].hasPhoto = true; await setJson("bblm-foto", list); }
@@ -1346,12 +1363,12 @@ loadCurrentSetting();
       const list = await getJson("bblm-foto", []);
       const newList = list.filter(it => it.id !== id);
       await setJson("bblm-foto", newList);
-      try { const store = getInventoryStore(); await store.delete("bblm-foto-photo-" + id); } catch {}
+      try { await vbDel(BLOB_PREFIX + "bblm-foto-photo-" + id + ".txt"); } catch {}
       return json({ success: true });
     }
 
   
-  // v2 — POST /propose-order — user kirim usulan order, simpan ke Netlify Blobs
+  // v2 — POST /propose-order — user kirim usulan order, simpan ke Vercel Blob
   if (path === "/propose-order" && method === "POST") {
     const { barcode, namaBarang, qty, username, harga } = body;
     if (!barcode || !qty || !username) return json({ success: false, message: "barcode, qty, dan username wajib diisi" }, 400);
@@ -1405,8 +1422,7 @@ loadCurrentSetting();
     const { fotoBase64, filename, createdAt, username } = body;
     if (!fotoBase64) return json({ success: false, message: "fotoBase64 wajib diisi" }, 400);
     const id = randomUUID();
-    const store = getInventoryStore();
-    await store.set("gallery-photo-" + id, fotoBase64);
+    await vbPut(BLOB_PREFIX + "gallery-photo-" + id + ".txt", fotoBase64, "text/plain");
     const meta = await getJson("gallery-photos-meta", []);
     meta.unshift({
       id,
@@ -1431,8 +1447,7 @@ loadCurrentSetting();
   if (path.match(/^\/gallery-photo\/[^/]+$/) && method === "GET") {
     if (query.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
     const id = path.split("/").pop();
-    const store = getInventoryStore();
-    const fotoBase64 = await store.get("gallery-photo-" + id);
+    const fotoBase64 = await vbFetch(BLOB_PREFIX + "gallery-photo-" + id + ".txt");
     if (!fotoBase64) return json({ success: false, message: "Foto tidak ditemukan" }, 404);
     return json({ success: true, fotoBase64 });
   }
@@ -1441,8 +1456,7 @@ loadCurrentSetting();
   if (path.match(/^\/gallery-photo\/[^/]+$/) && method === "DELETE") {
     if (body.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
     const id = path.split("/").pop();
-    const store = getInventoryStore();
-    await store.delete("gallery-photo-" + id).catch(() => {});
+    await vbDel(BLOB_PREFIX + "gallery-photo-" + id + ".txt").catch(() => {});
     const meta = await getJson("gallery-photos-meta", []);
     await setJson("gallery-photos-meta", meta.filter(m => m.id !== id));
     return json({ success: true });
@@ -1452,8 +1466,7 @@ loadCurrentSetting();
   if (path === "/gallery-photos/all" && method === "DELETE") {
     if (body.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
     const meta = await getJson("gallery-photos-meta", []);
-    const store = getInventoryStore();
-    await Promise.all(meta.map(m => store.delete("gallery-photo-" + m.id).catch(() => {})));
+    await Promise.all(meta.map(m => vbDel(BLOB_PREFIX + "gallery-photo-" + m.id + ".txt").catch(() => {})));
     await setJson("gallery-photos-meta", []);
     return json({ success: true, deleted: meta.length });
   }
