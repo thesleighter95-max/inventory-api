@@ -133,24 +133,24 @@ async function updateHighestSnapshot(newPrices) {
 // Jalankan initDb saat cold start, bukan nunggu request pertama
 const dbReadyPromise = initDb().catch(() => {});
 
-// Simple CSV parser with quote support
+// CSV parser
 function parseCSV(text) {
-  const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim());
-  if (lines.length < 2) return [];
-  const parseRow = (line) => {
-    const cols = []; let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
-      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
-      else cur += c;
+  var rawLines = text.replace(/\r/g, '').split('\n').filter(function(l){return l.trim();});
+  if (rawLines.length < 2) return [];
+  var parseRow = function(line) {
+    var cols = [], cur = '', inQ = false;
+    for (var ci = 0; ci < line.length; ci++) {
+      var ch = line[ci];
+      if (ch === '"') { if (inQ && line[ci+1] === '"') { cur += '"'; ci++; } else inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else cur += ch;
     }
     cols.push(cur.trim()); return cols;
   };
-  const headers = parseRow(lines[0]);
-  return lines.slice(1).filter(l => l.trim()).map(line => {
-    const vals = parseRow(line); const row = {};
-    headers.forEach((h, i) => { row[h] = vals[i] || ''; });
+  var headers = parseRow(rawLines[0]);
+  return rawLines.slice(1).filter(function(l){return l.trim();}).map(function(line) {
+    var vals = parseRow(line), row = {};
+    headers.forEach(function(h, idx){ row[h] = vals[idx] || ''; });
     return row;
   });
 }
@@ -1711,6 +1711,12 @@ loadCurrentSetting();
       return send({ success: true, total: cleaned.length });
     }
 
+    // GET /absensi/sheet-url — retrieve stored Google Sheets URL
+    if (path === "/absensi/sheet-url" && method === "GET") {
+      const url = await getJson("absensi-sheet-url", "");
+      return send({ success: true, url });
+    }
+
     // POST /absensi/sheet-url — save Google Sheets URL
     if (path === "/absensi/sheet-url" && method === "POST") {
       const { adminPassword, url } = body;
@@ -1719,141 +1725,111 @@ loadCurrentSetting();
       return send({ success: true });
     }
 
-        // GET /absensi/sheet-url — get stored sheet URL + last sync time
-    if (path === "/absensi/sheet-url" && method === "GET") {
-      const url = await getJson("absensi-sheet-url", "");
-      const syncTime = await getJson("absensi-sync-time", "");
-      return send({ success: true, url, syncTime });
-    }
-
-        // POST /absensi/sync-employees — server-side fetch CSV from Google Sheets
+        // POST /absensi/sync-employees
     if (path === "/absensi/sync-employees" && method === "POST") {
-      const { adminPassword, sheetUrl } = body;
-      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
-      if (!sheetUrl) return send({ success: false, message: "sheetUrl wajib diisi" }, 400);
-      const sheetIdMatch = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
-      let employees = [];
+      var spBody = body;
+      if (spBody.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      if (!spBody.sheetUrl) return send({ success: false, message: "sheetUrl wajib diisi" }, 400);
+      var spUrl = String(spBody.sheetUrl);
+      var spIdMatch = spUrl.match(/\/spreadsheets\/d\/([A-Za-z0-9_-]+)/);
+      var spEmployees = [];
       try {
-        if (sheetIdMatch) {
-          const sheetId = sheetIdMatch[1];
-          const gidMatch = sheetUrl.match(/[#&?]gid=(\d+)/);
-          const gid = gidMatch ? gidMatch[1] : '0';
-          const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
-          const resp = await fetch(csvUrl, { redirect: 'follow' });
-          if (!resp.ok) return send({ success: false, message: `Gagal fetch spreadsheet (HTTP ${resp.status}). Pastikan di-share public.` }, 502);
-          const csvText = await resp.text();
-          const rows = parseCSV(csvText);
-          employees = rows.map(row => {
-            const barcode  = String(row['Emp_no_barcode']||row['barcode']||row['BARCODE']||row['ID Barcode']||'').trim();
-            const empId    = String(row['Employee Id']||row['employee_id']||row['EMP_ID']||barcode).trim();
-            const name     = String(row['Emp_nm']||row['Employee Name']||row['Nama']||row['NAME']||'').trim().toUpperCase();
-            const division = String(row['Div']||row['Division']||row['Divisi']||row['DEPT']||'').trim();
-            const note     = String(row['Note1']||row['Note']||'').trim();
-            return { barcode, empId, name, division, note };
-          }).filter(e => e.barcode && e.name);
+        if (spIdMatch) {
+          var spId = spIdMatch[1];
+          var spGidM = spUrl.match(/[#&?]gid=([0-9]+)/);
+          var spGid = spGidM ? spGidM[1] : '0';
+          var spCsvUrl = 'https://docs.google.com/spreadsheets/d/' + spId + '/export?format=csv&gid=' + spGid;
+          var spResp = await fetch(spCsvUrl, { redirect: 'follow' });
+          if (!spResp.ok) return send({ success: false, message: 'Gagal fetch spreadsheet (HTTP ' + spResp.status + '). Pastikan sudah di-share "Anyone with the link".' }, 502);
+          var spCsv = await spResp.text();
+          var spRows = parseCSV(spCsv);
+          spEmployees = spRows.map(function(row) {
+            var barcode  = String(row['Emp_no_barcode'] || row['barcode'] || row['BARCODE'] || row['ID Barcode'] || '').trim();
+            var empId    = String(row['Employee Id'] || row['employee_id'] || row['EMP_ID'] || barcode).trim();
+            var name     = String(row['Emp_nm'] || row['Employee Name'] || row['Nama'] || row['NAME'] || '').trim().toUpperCase();
+            var division = String(row['Div'] || row['Division'] || row['Divisi'] || row['DEPT'] || '').trim();
+            var note     = String(row['Note1'] || row['Note'] || '').trim();
+            return { barcode: barcode, empId: empId, name: name, division: division, note: note };
+          }).filter(function(e){ return e.barcode && e.name; });
         } else {
-          const resp = await fetch(sheetUrl + '?action=getEmployees', { redirect: 'follow' });
-          if (!resp.ok) return send({ success: false, message: `Gagal fetch GAS (HTTP ${resp.status})` }, 502);
-          const data = await resp.json();
-          const rows = Array.isArray(data) ? data : (data.employees||data.data||[]);
-          employees = rows.map(row => ({
-            barcode:  String(row['Emp_no_barcode']||row['barcode']||row['employee_id']||'').trim(),
-            empId:    String(row['Employee Id']||row['employee_id']||'').trim(),
-            name:     String(row['Emp_nm']||row['Employee Name']||row['name']||'').trim().toUpperCase(),
-            division: String(row['Div']||row['division']||'').trim(),
-            note:     String(row['Note1']||row['note']||'').trim()
-          })).filter(e => e.barcode && e.name);
+          var gasResp = await fetch(spUrl + '?action=getEmployees', { redirect: 'follow' });
+          if (!gasResp.ok) return send({ success: false, message: 'Gagal fetch GAS (HTTP ' + gasResp.status + ')' }, 502);
+          var gasData = await gasResp.json();
+          var gasRows = Array.isArray(gasData) ? gasData : (gasData.employees || gasData.data || []);
+          spEmployees = gasRows.map(function(row) {
+            return {
+              barcode:  String(row['Emp_no_barcode'] || row['barcode'] || row['employee_id'] || '').trim(),
+              empId:    String(row['Employee Id'] || row['employee_id'] || '').trim(),
+              name:     String(row['Emp_nm'] || row['Employee Name'] || row['name'] || '').trim().toUpperCase(),
+              division: String(row['Div'] || row['division'] || '').trim(),
+              note:     String(row['Note1'] || row['note'] || '').trim()
+            };
+          }).filter(function(e){ return e.barcode && e.name; });
         }
-      } catch (fetchErr) { return send({ success: false, message: 'Fetch error: '+fetchErr.message }, 502); }
-      if (!employees.length) return send({ success: false, message: 'Tidak ada data valid. Periksa kolom: Emp_no_barcode, Emp_nm.' }, 400);
-      await setJson("absensi-employees", employees);
-      await setJson("absensi-sheet-url", sheetUrl);
-      const syncTime = new Date().toISOString();
-      await setJson("absensi-sync-time", syncTime);
-      return send({ success: true, total: employees.length, syncTime });
+      } catch (spErr) {
+        return send({ success: false, message: 'Fetch error: ' + spErr.message }, 502);
+      }
+      if (!spEmployees.length) return send({ success: false, message: 'Tidak ada data valid. Periksa kolom: Emp_no_barcode dan Emp_nm.' }, 400);
+      await setJson("absensi-employees", spEmployees);
+      await setJson("absensi-sheet-url", spUrl);
+      var spSyncTime = new Date().toISOString();
+      await setJson("absensi-sync-time", spSyncTime);
+      return send({ success: true, total: spEmployees.length, syncTime: spSyncTime });
     }
 
-    // GET /absensi/sheet-url
-    if (path === "/absensi/sheet-url" && method === "GET") {
-      const url = await getJson("absensi-sheet-url", "");
-      const syncTime = await getJson("absensi-sync-time", "");
-      return send({ success: true, url, syncTime });
+    // GET /absensi/sync-time
+    if (path === "/absensi/sync-time" && method === "GET") {
+      var stUrl = await getJson("absensi-sheet-url", "");
+      var stTime = await getJson("absensi-sync-time", "");
+      return send({ success: true, url: stUrl, syncTime: stTime });
     }
 
-    // GET /absensi/summary?date=YYYY-MM-DD
+    // GET /absensi/summary
     if (path === "/absensi/summary" && method === "GET") {
-      const date = (query.date || new Date().toISOString().substring(0,10));
-      const records = await getJson(`absensi-records-${date}`, []);
-      const employees = await getJson("absensi-employees", []);
-      // Build per-employee lookup
-      const empMap = {};
-      employees.forEach(e => {
+      var sumDate = query.date || new Date().toISOString().substring(0, 10);
+      var sumKey = 'absensi-records-' + sumDate;
+      var sumResults = await Promise.all([ getJson(sumKey, []), getJson("absensi-employees", []) ]);
+      var sumRecords = sumResults[0], sumEmployees = sumResults[1];
+      var empMap = {};
+      sumEmployees.forEach(function(e) {
         if (e.barcode) empMap[e.barcode] = e;
-        if (e.empId)   empMap[e.empId]   = empMap[e.empId] || e;
+        if (e.empId && !empMap[e.empId]) empMap[e.empId] = e;
       });
-      // Group records by employeeId
-      const grouped = {};
-      records.forEach(r => {
-        const key = r.employeeId || r.id || '?';
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(r);
+      var grouped = {};
+      sumRecords.forEach(function(r) {
+        var k = r.employeeId || r.id || '?';
+        if (!grouped[k]) grouped[k] = [];
+        grouped[k].push(r);
       });
-      // Build summary rows
-      const summary = Object.entries(grouped).map(([empId, recs]) => {
-        const emp = empMap[empId] || {};
-        const sorted = recs.slice().sort((a,b) => (a.timestamp||0)-(b.timestamp||0));
-        const inRecs  = sorted.filter(r => r.status === 'In');
-        const outRecs = sorted.filter(r => r.status === 'Out');
-        const firstIn  = inRecs.length  ? inRecs[0].timeStr  : null;
-        const lastOut  = outRecs.length ? outRecs[outRecs.length-1].timeStr : null;
-        // Compute on-duty / off-duty from alternating pairs
-        let totalOnDuty = 0, totalOffDuty = 0;
-        for (let i = 0; i < sorted.length - 1; i++) {
-          const cur  = sorted[i];
-          const next = sorted[i+1];
-          const mins = Math.round(((next.timestamp||0)-(cur.timestamp||0))/60000);
-          if (cur.status === 'In')  totalOnDuty  += mins;
-          else                      totalOffDuty += mins;
+      var summary = [];
+      Object.keys(grouped).forEach(function(empId) {
+        var recs = grouped[empId];
+        var emp = empMap[empId] || {};
+        var sorted = recs.slice().sort(function(a,b){ return (a.timestamp||0)-(b.timestamp||0); });
+        var inRecs  = sorted.filter(function(r){ return r.status === 'In'; });
+        var outRecs = sorted.filter(function(r){ return r.status === 'Out'; });
+        var firstIn = inRecs.length  ? inRecs[0].timeStr : null;
+        var lastOut = outRecs.length ? outRecs[outRecs.length-1].timeStr : null;
+        var totOn = 0, totOff = 0;
+        for (var si = 0; si < sorted.length - 1; si++) {
+          var mins = Math.round(((sorted[si+1].timestamp||0)-(sorted[si].timestamp||0))/60000);
+          if (sorted[si].status === 'In') totOn += mins; else totOff += mins;
         }
-        return {
-          employeeId:   empId,
-          employeeName: emp.name || null,
-          division:     emp.division || null,
-          date,
-          records:      sorted.map(r => ({ timeStr: r.timeStr, status: r.status, timestamp: r.timestamp })),
-          firstIn,
-          lastOut,
-          totalOnDuty,
-          totalOffDuty,
-          scanCount:    sorted.length,
-          status:       inRecs.length > 0 ? 'Hadir' : 'Tidak Hadir'
-        };
+        summary.push({ employeeId: empId, employeeName: emp.name||null, division: emp.division||null,
+          date: sumDate, records: sorted.map(function(r){ return {timeStr:r.timeStr,status:r.status,timestamp:r.timestamp}; }),
+          firstIn: firstIn, lastOut: lastOut, totalOnDuty: totOn, totalOffDuty: totOff,
+          scanCount: sorted.length, status: inRecs.length > 0 ? 'Hadir' : 'Tidak Hadir' });
       });
-      // Also include registered employees with 0 scans (absent)
-      employees.forEach(emp => {
-        const key = emp.barcode || emp.empId;
+      sumEmployees.forEach(function(emp) {
+        var key = emp.barcode || emp.empId;
         if (key && !grouped[key]) {
-          summary.push({
-            employeeId:   emp.barcode || emp.empId,
-            employeeName: emp.name,
-            division:     emp.division || null,
-            date,
-            records:      [],
-            firstIn:      null,
-            lastOut:      null,
-            totalOnDuty:  0,
-            totalOffDuty: 0,
-            scanCount:    0,
-            status:       'Tidak Hadir'
-          });
+          summary.push({ employeeId: key, employeeName: emp.name, division: emp.division||null,
+            date: sumDate, records: [], firstIn: null, lastOut: null, totalOnDuty: 0, totalOffDuty: 0,
+            scanCount: 0, status: 'Tidak Hadir' });
         }
       });
-      summary.sort((a,b) => {
-        const na = a.employeeName||a.employeeId||'';
-        const nb = b.employeeName||b.employeeId||'';
-        return na.localeCompare(nb);
-      });
-      return send({ success: true, date, total: summary.length, summary });
+      summary.sort(function(a,b){ return (a.employeeName||a.employeeId||'').localeCompare(b.employeeName||b.employeeId||''); });
+      return send({ success: true, date: sumDate, total: summary.length, summary: summary });
     }
 
         return send({ error: "Not found" }, 404);
