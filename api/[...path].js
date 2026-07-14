@@ -1,95 +1,14 @@
-import { neon } from "@neondatabase/serverless";
-
-const sql = neon(process.env.NEON_DATABASE_URL || process.env.DATABASE_URL);
-
-let dbReady = false;
-async function initDb() {
-  if (dbReady) return;
-  await sql`CREATE TABLE IF NOT EXISTS kv_store (
-    key TEXT PRIMARY KEY,
-    value JSONB,
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-  )`;
-  dbReady = true;
-}
+import { put, list as vbList, del } from "@vercel/blob";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "00000";
 const SNAP_PASSWORD = process.env.SNAP_PASSWORD || "00000";
 const SHEET_URL_USERS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUOmxLN_--OjkRvb543vpKK5wyL-zcNl67dfDlCPzN28tuBXD2IDEhyJxR8yKqC7CvcHGVj5tSPAD2/pub?gid=0&single=true&output=csv";
 
-// Parse CSV baris menjadi array of {username,password,namaLengkap,suspended}
-async function fetchSheetUsers() {
-  const cacheKey = "__sheet_users";
-  const cached = _memCache.get(cacheKey);
-  if (cached && cached.exp > Date.now()) return cached.val;
-  try {
-    const r = await fetch(SHEET_URL_USERS);
-    const text = await r.text();
-    const rows = text.trim().split("\n").map(l => l.split(",").map(c => c.trim().replace(/^"|"$/g,"")));
-    if (!rows.length) return [];
-    const header = rows[0].map(c => c.toLowerCase());
-    const uIdx = header.indexOf("username"), pIdx = header.indexOf("password"),
-          nIdx = header.indexOf("name"), sIdx = header.indexOf("status");
-    const users = rows.slice(1).filter(r => r[uIdx]).map(r => ({
-      username: r[uIdx] || "",
-      password: r[pIdx] || "",
-      namaLengkap: r[nIdx] || r[uIdx] || "",
-      suspended: (r[sIdx]||"").toLowerCase() === "suspended" || (r[sIdx]||"").toLowerCase() === "nonaktif"
-    }));
-    _memCache.set(cacheKey, { val: users, exp: Date.now() + _CACHE_TTL });
-    return users;
-  } catch(e) {
-    return [];
-  }
-}
-
-async function parseBody(req) {
-  return new Promise((resolve) => {
-    let data = "";
-    req.on("data", chunk => { data += chunk; });
-    req.on("end", () => {
-      try { resolve(JSON.parse(data)); } catch { resolve({}); }
-    });
-  });
-}
-
-async function getJson(key, defaultValue) {
-  if (_CACHEABLE.has(key)) {
-    const hit = cacheGet(key);
-    if (hit !== undefined) return hit;
-  }
-  try {
-    await initDb();
-    const rows = await sql`SELECT value FROM kv_store WHERE key = ${key}`;
-    const val = (!rows.length || rows[0].value === null) ? defaultValue : rows[0].value;
-    if (_CACHEABLE.has(key)) cacheSet(key, val);
-    return val;
-  } catch {
-    return defaultValue;
-  }
-}
-
-async function setJson(key, data) {
-  cacheInvalidate(key);
-  await initDb();
-  await sql`INSERT INTO kv_store (key, value, updated_at)
-    VALUES (${key}, ${JSON.stringify(data)}, NOW())
-    ON CONFLICT (key) DO UPDATE SET value = ${JSON.stringify(data)}, updated_at = NOW()`;
-  if (_CACHEABLE.has(key)) cacheSet(key, data);
-}
-
-async function deleteKey(key) {
-  await initDb();
-  await sql`DELETE FROM kv_store WHERE key = ${key}`;
-  cacheInvalidate(key);
-}
-
 // ============================================================
 // IN-MEMORY CACHE (module-level, survives warm Vercel instances)
-// Reduces DB reads untuk key yang sering dibaca
 // ============================================================
 const _memCache = new Map();
-const _CACHE_TTL = 5 * 60 * 1000; // 5 menit
+const _CACHE_TTL = 5 * 60 * 1000;
 
 const _CACHEABLE = new Set([
   "price-snapshot-current","price-snapshot-prev","price-snapshot-highest",
@@ -113,6 +32,102 @@ function cacheInvalidate(key) {
   }
 }
 
+// ============================================================
+// VERCEL BLOB helpers
+// ============================================================
+const BLOB_PREFIX = "inventory/";
+
+async function vbFetch(pathname) {
+  try {
+    const { blobs } = await vbList({ prefix: pathname, limit: 1 });
+    if (!blobs.length) return null;
+    const res = await fetch(blobs[0].url + "?_t=" + Date.now());
+    if (!res.ok) return null;
+    return await res.text();
+  } catch { return null; }
+}
+
+async function vbPut(pathname, value, contentType = "application/json") {
+  await put(pathname, value, {
+    access: "public",
+    addRandomSuffix: false,
+    contentType,
+    cacheControlMaxAge: 0,
+  });
+}
+
+async function vbDel(pathname) {
+  try {
+    const { blobs } = await vbList({ prefix: pathname, limit: 10 });
+    if (blobs.length) await del(blobs.map(b => b.url));
+  } catch {}
+}
+
+async function getJson(key, defaultValue) {
+  if (_CACHEABLE.has(key)) {
+    const hit = cacheGet(key);
+    if (hit !== undefined) return hit;
+  }
+  try {
+    const raw = await vbFetch(BLOB_PREFIX + key + ".json");
+    if (raw === null) return defaultValue;
+    const val = JSON.parse(raw);
+    if (_CACHEABLE.has(key)) cacheSet(key, val);
+    return val;
+  } catch {
+    return defaultValue;
+  }
+}
+
+async function setJson(key, data) {
+  cacheInvalidate(key);
+  await vbPut(BLOB_PREFIX + key + ".json", JSON.stringify(data));
+  if (_CACHEABLE.has(key)) cacheSet(key, data);
+}
+
+async function deleteKey(key) {
+  cacheInvalidate(key);
+  await vbDel(BLOB_PREFIX + key + ".json");
+}
+
+// ============================================================
+// SHEET USERS helper
+// ============================================================
+async function fetchSheetUsers() {
+  const cacheKey = "__sheet_users";
+  const cached = _memCache.get(cacheKey);
+  if (cached && cached.exp > Date.now()) return cached.val;
+  try {
+    const r = await fetch(SHEET_URL_USERS);
+    const text = await r.text();
+    const rows = text.trim().split("\n").map(l => l.split(",").map(c => c.trim().replace(/^"|"$/g,"")));
+    if (!rows.length) return [];
+    const header = rows[0].map(c => c.toLowerCase());
+    const uIdx = header.indexOf("username"), pIdx = header.indexOf("password"),
+          nIdx = header.indexOf("name"), sIdx = header.indexOf("status");
+    const users = rows.slice(1).filter(r => r[uIdx]).map(r => ({
+      username: r[uIdx] || "",
+      password: r[pIdx] || "",
+      namaLengkap: r[nIdx] || r[uIdx] || "",
+      suspended: (r[sIdx]||"").toLowerCase() === "suspended" || (r[sIdx]||"").toLowerCase() === "nonaktif"
+    }));
+    _memCache.set(cacheKey, { val: users, exp: Date.now() + _CACHE_TTL });
+    return users;
+  } catch {
+    return [];
+  }
+}
+
+async function parseBody(req) {
+  return new Promise((resolve) => {
+    let data = "";
+    req.on("data", chunk => { data += chunk; });
+    req.on("end", () => {
+      try { resolve(JSON.parse(data)); } catch { resolve({}); }
+    });
+  });
+}
+
 // Update price-snapshot-highest: simpan harga tertinggi per produk dari semua snapshot
 async function updateHighestSnapshot(newPrices) {
   const existing = await getJson("price-snapshot-highest", { prices: {}, updatedAt: null });
@@ -129,9 +144,6 @@ async function updateHighestSnapshot(newPrices) {
     await setJson("price-snapshot-highest", { prices: highest, updatedAt: new Date().toISOString() });
   }
 }
-
-// Jalankan initDb saat cold start, bukan nunggu request pertama
-const dbReadyPromise = initDb().catch(() => {});
 
 // CSV parser
 function parseCSV(text) {
