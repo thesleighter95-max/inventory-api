@@ -1616,14 +1616,17 @@ table td { font-size: 11px; }
     <!-- ADMIN SECTION -->
     <div id="absensiAdminSection" style="display:none;flex-shrink:0;">
 
-      <!-- Block 1: Sumber Data Karyawan -->
-      <button onclick="toggleEmpAdmin()" style="width:100%;background:#0d0d1e;border:none;border-top:2px solid #1a2a4a;border-bottom:1px solid #1a2a4a;color:#6a8cff;padding:9px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;text-align:left;">&#9660; Sumber Data Karyawan (Google Spreadsheet)</button>
+      <!-- Block 1: Koneksi GAS -->
+      <button onclick="toggleEmpAdmin()" style="width:100%;background:#0d0d1e;border:none;border-top:2px solid #1a2a4a;border-bottom:1px solid #1a2a4a;color:#6a8cff;padding:9px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;text-align:left;">&#9660; Koneksi Spreadsheet (Google Apps Script)</button>
       <div id="empAdminPanel" style="display:none;background:#090912;padding:14px;border-bottom:1px solid #1a2a4a;">
-        <p style="font-size:10px;color:#334466;margin:0 0 8px;font-family:monospace;">Spreadsheet harus di-share: <b style="color:#556699;">Anyone with the link &rarr; Viewer</b></p>
+        <p style="font-size:10px;color:#334466;margin:0 0 8px;font-family:monospace;">Tempel URL Web App Google Apps Script dari spreadsheet absensi Anda.</p>
         <div style="display:flex;gap:6px;margin-bottom:6px;">
-          <input id="absensiSheetUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/..." value="https://docs.google.com/spreadsheets/d/1eFYULqon7cFvF_ZZRIacwA1dSSWqLt0fyZc3tracg8U/edit?gid=0#gid=0"
+          <input id="absensiGasUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec"
             style="flex:1;background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:8px 10px;font-size:10px;color:#88aacc;font-family:monospace;outline:none;">
-          <button id="abseSyncBtn" onclick="absensiSyncFromSpreadsheet()" style="background:#1a4a3a;border:1px solid #2a6a4a;color:#00cc88;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:monospace;flex-shrink:0;">Sync</button>
+          <button onclick="absensiSaveGasUrl()" style="background:#1a4a3a;border:1px solid #2a6a4a;color:#00cc88;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:monospace;flex-shrink:0;">Simpan</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <button onclick="absensiTestGas()" style="background:#1a2a4a;border:1px solid #2a4a7a;color:#88aacc;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">&#128268; Test &amp; Muat Karyawan</button>
         </div>
         <p id="absensiSyncInfo" style="font-size:10px;color:#445577;font-family:monospace;margin:0 0 10px;"></p>
         <p style="font-size:10px;font-weight:700;color:#6a8cff;margin:0 0 6px;text-transform:uppercase;letter-spacing:1px;">&#128101; Daftar Karyawan</p>
@@ -4873,15 +4876,28 @@ function updateAbsensiSyncStatus(state,msg){
 
 function absensiRefreshEmployees(){
   updateAbsensiSyncStatus('syncing','Memuat...');
-  fetch(API_BASE_URL+'/absensi-employees')
-  .then(function(r){return r.json();})
-  .then(function(j){
-    var count=j.employees?j.employees.length:0;
-    if($('absensiEmpCount'))$('absensiEmpCount').textContent=count+' karyawan';
-    updateAbsensiSyncStatus('online',count+' karyawan terdaftar');
-    renderAbsensiEmpList(j.employees||[]);
-  })
-  .catch(function(){updateAbsensiSyncStatus('error','Gagal memuat data');});
+  var url=_gasUrl||(localStorage.getItem('absensi_gas_url')||'');
+  if(url){
+    fetch(url+'?action=getEmployees')
+    .then(function(r){return r.json();})
+    .then(function(j){
+      var count=j.employees?j.employees.length:0;
+      if($('absensiEmpCount'))$('absensiEmpCount').textContent=count+' karyawan';
+      updateAbsensiSyncStatus('online',count+' karyawan terdaftar');
+      renderAbsensiEmpList(j.employees||[]);
+    })
+    .catch(function(e){updateAbsensiSyncStatus('error','GAS Error: '+e.message);});
+  }else{
+    fetch(API_BASE_URL+'/absensi-employees')
+    .then(function(r){return r.json();})
+    .then(function(j){
+      var count=j.employees?j.employees.length:0;
+      if($('absensiEmpCount'))$('absensiEmpCount').textContent=count+' karyawan';
+      updateAbsensiSyncStatus('online',count+' karyawan terdaftar');
+      renderAbsensiEmpList(j.employees||[]);
+    })
+    .catch(function(){updateAbsensiSyncStatus('error','Gagal memuat data');});
+  }
 }
 
 function submitAbsensi(){
@@ -4892,7 +4908,10 @@ function submitAbsensi(){
   var badge=$('absensiStatusBadge');
   if(msg){msg.textContent='Menyimpan...';msg.style.color='#6688aa';}
   if(badge)badge.style.display='none';
-  fetch(API_BASE_URL+'/absensi/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employeeId:empId})})
+  var _gasU=_gasUrl||(localStorage.getItem('absensi_gas_url')||'');
+  (_gasU
+    ? fetch(_gasU+'?action=scan&employeeId='+encodeURIComponent(empId))
+    : fetch(API_BASE_URL+'/absensi/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employeeId:empId})}))
   .then(function(r){return r.json();})
   .then(function(j){
     if(j.success){
@@ -4959,22 +4978,22 @@ function renderAbsensiResult(j){
 }
 
 var _showEmpAdmin=false;
+var _gasUrl=localStorage.getItem('absensi_gas_url')||'';
 function toggleEmpAdmin(){
   _showEmpAdmin=!_showEmpAdmin;
   var p=$('empAdminPanel');if(!p)return;
   if(_showEmpAdmin){
     p.style.display='block';
-    absensiRefreshEmployees();
-    // Load stored sheet URL and sync info
-    fetch(API_BASE_URL+'/absensi/sheet-url')
-    .then(function(r){return r.json();})
-    .then(function(j){
-      if(j.url&&$('absensiSheetUrl'))$('absensiSheetUrl').value=j.url;
-      if(j.syncTime&&$('absensiSyncInfo')){
-        var d=new Date(j.syncTime);
-        $('absensiSyncInfo').textContent='Sync terakhir: '+d.toLocaleDateString('id-ID')+' '+d.toLocaleTimeString('id-ID');
-      }
-    }).catch(function(){});
+    // Load GAS URL from localStorage
+    _gasUrl=localStorage.getItem('absensi_gas_url')||'';
+    var inp=$('absensiGasUrl');
+    if(inp)inp.value=_gasUrl;
+    if(_gasUrl){
+      absensiRefreshEmployees();
+    }else{
+      var info=$('absensiSyncInfo');
+      if(info)info.textContent='Belum ada URL GAS — tempel URL lalu klik Simpan';
+    }
   }else{
     p.style.display='none';
   }
@@ -5000,39 +5019,46 @@ function renderAbsensiEmpList(employees){
   el.innerHTML=h;
 }
 
-function absensiSyncFromSpreadsheet(){
-  var inp=$('absensiSheetUrl');
+function absensiSaveGasUrl(){
+  var inp=$('absensiGasUrl');
   var url=inp?inp.value.trim():'';
-  if(!url){showToast('Masukkan URL Google Spreadsheet terlebih dahulu','error');return;}
+  if(!url){showToast('Masukkan URL Google Apps Script terlebih dahulu','error');return;}
+  if(!url.includes('script.google.com')){showToast('URL harus dari script.google.com','error');return;}
+  localStorage.setItem('absensi_gas_url',url);
+  _gasUrl=url;
   var info=$('absensiSyncInfo');
-  if(info)info.textContent='Sedang menyinkronkan data...';
-  updateAbsensiSyncStatus('syncing','Syncing...');
-  var btn=$('abseSyncBtn');
-  if(btn){btn.disabled=true;btn.textContent='Syncing...';}
-  fetch(API_BASE_URL+'/absensi/sync-employees',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,sheetUrl:url})})
+  if(info)info.textContent='URL disimpan ✔ Klik "Test & Muat Karyawan" untuk verifikasi.';
+  showToast('URL GAS disimpan!','success');
+}
+function absensiTestGas(){
+  var url=_gasUrl||(localStorage.getItem('absensi_gas_url')||'');
+  if(!url){showToast('Simpan URL GAS terlebih dahulu','error');return;}
+  var info=$('absensiSyncInfo');
+  if(info)info.textContent='Menguji koneksi ke Google Apps Script...';
+  updateAbsensiSyncStatus('syncing','Testing...');
+  fetch(url+'?action=getEmployees')
   .then(function(r){return r.json();})
   .then(function(j){
-    if(btn){btn.disabled=false;btn.textContent='Sync';}
     if(j.success){
-      showToast(j.total+' karyawan berhasil disinkronkan dari spreadsheet!','success');
-      updateAbsensiSyncStatus('online',j.total+' karyawan');
-      if($('absensiEmpCount'))$('absensiEmpCount').textContent=j.total+' karyawan';
-      if(info)info.textContent='Sync terakhir: '+new Date().toLocaleDateString('id-ID')+' '+new Date().toLocaleTimeString('id-ID')+' \u00b7 '+j.total+' karyawan';
-      absensiRefreshEmployees();
+      var count=(j.employees||[]).length;
+      showToast(count+' karyawan berhasil dimuat!','success');
+      updateAbsensiSyncStatus('online',count+' karyawan terdaftar');
+      if($('absensiEmpCount'))$('absensiEmpCount').textContent=count+' karyawan';
+      if(info)info.textContent='Terhubung ✔ · '+count+' karyawan dari Spreadsheet';
+      renderAbsensiEmpList(j.employees||[]);
     }else{
-      showToast((j.message||'Gagal sync'),'error');
-      updateAbsensiSyncStatus('error','Gagal');
-      if(info)info.textContent='Gagal: '+(j.message||'Error tidak diketahui');
+      showToast('GAS Error: '+(j.message||'Gagal'),'error');
+      updateAbsensiSyncStatus('error','Error');
+      if(info)info.textContent='Error: '+(j.message||'Gagal');
     }
   })
   .catch(function(e){
-    if(btn){btn.disabled=false;btn.textContent='Sync';}
-    showToast('Error: '+e.message,'error');
-    updateAbsensiSyncStatus('error','Error');
-    if(info)info.textContent='Error: '+e.message;
+    showToast('Gagal: '+e.message,'error');
+    updateAbsensiSyncStatus('error','Gagal');
+    if(info)info.textContent='Gagal: '+e.message;
   });
 }
+function absensiSyncFromSpreadsheet(){}
 
 
 // ===== ABSENSI SUMMARY EXPORT =====
@@ -5055,8 +5081,11 @@ function absensiLoadSummary(){
   var tableDiv=$('absensiSummaryTable');
   if(tableDiv)tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#445577;font-family:monospace;font-size:11px;">Memuat data...</div>';
 
-  fetch(API_BASE_URL+'/absensi/summary?date='+date)
-  .then(function(r){return r.json();})
+  var gasUrl=_gasUrl||(localStorage.getItem('absensi_gas_url')||'');
+  var fetchSummary=gasUrl
+    ? fetch(gasUrl+'?action=getSummary&date='+date).then(function(r){return r.json();})
+    : fetch(API_BASE_URL+'/absensi/summary?date='+date).then(function(r){return r.json();});
+  fetchSummary
   .then(function(j){
     if(btn){btn.disabled=false;btn.textContent='Tampilkan';}
     if(!j.success){
