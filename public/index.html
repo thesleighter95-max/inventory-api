@@ -1576,6 +1576,57 @@ table td { font-size: 11px; }
   </div>
 </div>
 
+<div id="absensiPanel" class="panel-container">
+  <div style="background:#000;min-height:100vh;display:flex;flex-direction:column;overflow-y:auto;">
+
+    <!-- Digital Clock Header -->
+    <div style="background:#000;padding:20px 16px 14px;text-align:center;border-bottom:1px solid #1a1a1a;flex-shrink:0;">
+      <div id="absensiDate" style="font-size:11px;font-weight:700;color:#fff;letter-spacing:4px;text-transform:uppercase;margin-bottom:12px;font-family:monospace;"></div>
+      <div style="display:flex;justify-content:center;align-items:center;gap:2px;">
+        <div id="absensiH" style="font-size:clamp(52px,16vw,80px);font-weight:900;color:#fff;font-family:'Courier New',monospace;min-width:2ch;text-align:center;line-height:1;"></div>
+        <div style="font-size:clamp(40px,12vw,64px);font-weight:900;color:#444;font-family:monospace;line-height:1;padding:0 4px 8px;">&nbsp;&nbsp;</div>
+        <div id="absensiM" style="font-size:clamp(52px,16vw,80px);font-weight:900;color:#fff;font-family:'Courier New',monospace;min-width:2ch;text-align:center;line-height:1;"></div>
+        <div style="font-size:clamp(40px,12vw,64px);font-weight:900;color:#444;font-family:monospace;line-height:1;padding:0 4px 8px;">&nbsp;&nbsp;</div>
+        <div id="absensiS" style="font-size:clamp(52px,16vw,80px);font-weight:900;color:#fff;font-family:'Courier New',monospace;min-width:2ch;text-align:center;line-height:1;"></div>
+      </div>
+    </div>
+
+    <!-- Scan Input -->
+    <div style="background:#0a0a0a;padding:12px 16px;border-bottom:1px solid #1a1a1a;flex-shrink:0;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="absensiInput" type="text" inputmode="numeric" autocomplete="off"
+          placeholder="Scan atau ketik ID karyawan..."
+          onkeydown="if(event.key==='Enter')submitAbsensi()"
+          style="flex:1;background:#111;border:1px solid #333;border-radius:8px;padding:10px 14px;font-size:14px;color:#fff;outline:none;font-family:monospace;letter-spacing:1px;">
+        <button onclick="submitAbsensi()" style="background:#22c55e;border:none;border-radius:8px;padding:10px 18px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;flex-shrink:0;letter-spacing:1px;">SCAN</button>
+      </div>
+    </div>
+
+    <!-- Scan Result -->
+    <div id="absensiResult" style="background:#000;flex-shrink:0;">
+      <div style="text-align:center;padding:30px 16px;color:#333;font-family:monospace;font-size:12px;">Menunggu scan ID karyawan...</div>
+    </div>
+
+    <!-- Admin: Kelola Karyawan -->
+    <div id="absensiAdminSection" style="display:none;padding:12px 16px;border-top:1px solid #1a1a1a;flex-shrink:0;">
+      <button onclick="toggleEmpAdmin()" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);color:#60a5fa;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">&#9660; Kelola Karyawan</button>
+      <div id="empAdminPanel" style="display:none;margin-top:10px;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:10px;padding:12px;">
+        <p style="font-size:10px;font-weight:700;color:#9ca3af;margin:0 0 8px;text-transform:uppercase;letter-spacing:1px;">Tambah Karyawan</p>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <input id="empIdInput" type="text" inputmode="numeric" placeholder="ID (barcode)"
+            style="flex:1;background:#111;border:1px solid #333;border-radius:6px;padding:7px 10px;font-size:12px;color:#fff;outline:none;font-family:monospace;">
+          <input id="empNameInput" type="text" placeholder="Nama Lengkap"
+            style="flex:2;background:#111;border:1px solid #333;border-radius:6px;padding:7px 10px;font-size:12px;color:#fff;outline:none;text-transform:uppercase;">
+        </div>
+        <button onclick="addAbsensiEmployee()" style="background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);color:#34d399;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;margin-bottom:12px;">+ Tambah</button>
+        <p style="font-size:10px;font-weight:700;color:#9ca3af;margin:0 0 6px;text-transform:uppercase;letter-spacing:1px;">Daftar Karyawan</p>
+        <div id="empAdminList"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <div id="toastContainer"></div>
 <div class="watermark">Created by OP</div>
 
@@ -1941,7 +1992,7 @@ function login(){
     if(pass===ADMIN_PASSWORD){
       currentUserNameInv="Admin";isAdmin=true;kirimLog("admin");kirimAktivitas("login","Admin login");loadPwResetRequests();
       $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
-      renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();checkMorningReset();
+      renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();checkMorningReset();if($("absensiAdminSection"))$("absensiAdminSection").style.display="block";
       loadMaintenanceStatus();
       return;
     }else{errorEl.innerText="Password admin salah!";return}
@@ -1986,6 +2037,7 @@ function renderUserNav(){
     '<div id="navExpired" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'expired\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[10px] font-medium">Expired</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="window.open(\'https://pog-mataram.netlify.app/\',\'_blank\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span class="text-[10px] font-medium">POG</span></div>'+
     '<div id="navFotoBblm" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'fotobblm\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#f59e0b;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="text-[9px] font-semibold" style="color:#fbbf24;">Foto BBLM</span></div>'+
+'<div id="navAbsensi" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'absensi\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#3b82f6;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[9px] font-semibold">Absensi</span></div>'+
 '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
 }
@@ -1998,6 +2050,7 @@ function renderAdminNav(){
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="window.open(\'https://pog-mataram.netlify.app/\',\'_blank\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span class="text-[10px] font-medium">POG</span></div>'+
     '<div id="navNeo" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="openNeoMonitor()"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#7c3aed;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg><span class="text-[9px] font-semibold" style="color:#a78bfa;">Server Neo</span></div>'+
     '<div id="navFotoBblm" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'fotobblm\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#f59e0b;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="text-[9px] font-semibold" style="color:#fbbf24;">Foto BBLM</span></div>'+
+'<div id="navAbsensi" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'absensi\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#3b82f6;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[9px] font-semibold">Absensi</span></div>'+
 '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
 }
@@ -2970,6 +3023,7 @@ function switchMainTab(tab){
   else if(tab==="promo"){$("promoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navPromo");setMarquee(false);loadPromoList();}
   else if(tab==="neo"){$("neoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navNeo");setMarquee(false);loadNeoStatus();}
   else if(tab==="fotobblm"){$("fotoBblmPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navFotoBblm");setMarquee(false);loadFotoBblmList();fbLoadCategories();}
+  else if(tab==="absensi"){$("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
 function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items-center justify-center p-10 text-pro-text"><svg class="animate-spin h-6 w-6 text-pro-main mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-xs">'+(t||"Memuat...")+'</span></div>'}
@@ -4769,6 +4823,142 @@ function renderPromoItems(){
   el.innerHTML=h;
 }
 
+
+// ===== ABSENSI SYSTEM =====
+var _absensiClockInterval=null;
+function startAbsensiClock(){
+  if(_absensiClockInterval)return;
+  function tick(){
+    var now=new Date();
+    var days=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+    var months=['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+    var ds=days[now.getDay()]+' '+now.getDate()+' '+months[now.getMonth()]+' '+now.getFullYear();
+    if($('absensiDate'))$('absensiDate').textContent=ds;
+    if($('absensiH'))$('absensiH').textContent=String(now.getHours()).padStart(2,'0');
+    if($('absensiM'))$('absensiM').textContent=String(now.getMinutes()).padStart(2,'0');
+    if($('absensiS'))$('absensiS').textContent=String(now.getSeconds()).padStart(2,'0');
+  }
+  tick();
+  _absensiClockInterval=setInterval(tick,1000);
+}
+function stopAbsensiClock(){if(_absensiClockInterval){clearInterval(_absensiClockInterval);_absensiClockInterval=null;}}
+
+function submitAbsensi(){
+  var inp=$('absensiInput');if(!inp)return;
+  var empId=inp.value.trim();if(!empId)return;
+  inp.value='';inp.focus();
+  var res=$('absensiResult');
+  if(res)res.innerHTML='<div style="padding:16px;text-align:center;color:#9ca3af;font-family:monospace;font-size:12px;">Menyimpan...</div>';
+  fetch(API_BASE_URL+'/absensi/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employeeId:empId})})
+  .then(function(r){return r.json();})
+  .then(function(j){
+    if(j.success)renderAbsensiResult(j);
+    else if(res)res.innerHTML='<div style="padding:16px;color:#f87171;font-family:monospace;font-size:12px;">Error: '+(j.message||'Gagal')+'</div>';
+  })
+  .catch(function(e){if(res)res.innerHTML='<div style="padding:16px;color:#f87171;font-family:monospace;font-size:12px;">Error: '+e.message+'</div>';});
+}
+
+function minsToHMM(m){return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
+
+function renderAbsensiResult(j){
+  var res=$('absensiResult');if(!res)return;
+  var records=j.records||[];
+  var lastStatus=records.length?records[records.length-1].status:'';
+  var totOn=records.reduce(function(s,r){return s+(r.onDutyMinutes||0);},0);
+  var totOff=records.reduce(function(s,r){return s+(r.offDutyMinutes||0);},0);
+  var inC='#22c55e',outC='#f87171';
+  var sc=j.status==='In'?inC:outC;
+  var h='<div style="background:#0a0a0a;padding:10px 16px;border-bottom:1px solid #1a1a1a;">'
+    +'<p style="color:#22c55e;font-size:11px;font-family:monospace;margin:0 0 2px;">: Successfully saved ('+j.status+')...</p>'
+    +'<p style="color:#fff;font-size:13px;font-weight:700;font-family:monospace;margin:0 0 2px;">: '+j.employeeId+'  '+(j.employeeName||'<span style="color:#f97316">ID TIDAK TERDAFTAR</span>')+'</p>'
+    +'<p style="color:'+sc+';font-size:11px;font-family:monospace;margin:0;">(0 °C)</p>'
+    +'</div>'
+    +'<div style="overflow-x:auto;background:#000;">'
+    +'<table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:12px;">'
+    +'<thead><tr style="background:#1a1a1a;">'
+    +'<th style="padding:6px 8px;color:#9ca3af;border:1px solid #222;text-align:center;">Id</th>'
+    +'<th style="padding:6px 8px;color:#9ca3af;border:1px solid #222;text-align:center;">Time</th>'
+    +'<th style="padding:6px 8px;color:#9ca3af;border:1px solid #222;text-align:center;">Status</th>'
+    +'<th style="padding:6px 8px;color:#9ca3af;border:1px solid #222;text-align:right;">On Duty</th>'
+    +'<th style="padding:6px 8px;color:#9ca3af;border:1px solid #222;text-align:right;">Off Duty</th>'
+    +'</tr></thead><tbody>';
+  records.forEach(function(r,idx){
+    var sc2=r.status==='In'?inC:outC;
+    h+='<tr>'
+      +'<td style="padding:5px 8px;color:#e5e7eb;border:1px solid #1a1a1a;text-align:center;">'+(idx+1)+'</td>'
+      +'<td style="padding:5px 8px;color:#e5e7eb;border:1px solid #1a1a1a;text-align:center;">'+r.timeStr+'</td>'
+      +'<td style="padding:5px 8px;text-align:center;border:1px solid #1a1a1a;"><b style="color:'+sc2+';">'+r.status+'</b></td>'
+      +'<td style="padding:5px 8px;color:#e5e7eb;border:1px solid #1a1a1a;text-align:right;">'+(r.onDutyMinutes||0)+'</td>'
+      +'<td style="padding:5px 8px;color:#e5e7eb;border:1px solid #1a1a1a;text-align:right;">'+(r.offDutyMinutes||0)+'</td>'
+      +'</tr>';
+  });
+  var lsc=lastStatus==='In'?inC:outC;
+  h+='<tr style="background:#1a1a1a;font-weight:700;">'
+    +'<td style="padding:6px 8px;color:#fff;border:1px solid #222;text-align:center;">Final</td>'
+    +'<td style="padding:6px 8px;border:1px solid #222;"></td>'
+    +'<td style="padding:6px 8px;text-align:center;border:1px solid #222;"><b style="color:'+lsc+';">'+(lastStatus||'-')+'</b></td>'
+    +'<td style="padding:6px 8px;color:#22c55e;border:1px solid #222;text-align:right;">'+minsToHMM(totOn)+'</td>'
+    +'<td style="padding:6px 8px;color:#f87171;border:1px solid #222;text-align:right;">'+minsToHMM(totOff)+'</td>'
+    +'</tr>'
+    +'</tbody></table></div>';
+  res.innerHTML=h;
+}
+
+var _showEmpAdmin=false;
+function toggleEmpAdmin(){
+  _showEmpAdmin=!_showEmpAdmin;
+  var p=$('empAdminPanel');if(!p)return;
+  if(_showEmpAdmin){p.style.display='block';loadAbsensiEmployees();}
+  else p.style.display='none';
+}
+function loadAbsensiEmployees(){
+  var el=$('empAdminList');if(!el)return;
+  el.innerHTML='<p style="font-size:10px;color:#6b7280;text-align:center;">Memuat...</p>';
+  fetch(API_BASE_URL+'/absensi-employees')
+  .then(function(r){return r.json();})
+  .then(function(j){
+    if(!j.success){el.innerHTML='<p style="color:#f87171;font-size:10px;">Gagal</p>';return;}
+    var emps=j.employees||[];
+    if(!emps.length){el.innerHTML='<p style="font-size:10px;color:#6b7280;text-align:center;padding:12px 0;">Belum ada karyawan terdaftar</p>';return;}
+    var h='';
+    emps.forEach(function(e){
+      var safeId=e.id.replace(/'/g,'');
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1a1a1a;">'
+        +'<div style="flex:1;min-width:0;">'
+        +'<p style="font-size:11px;font-weight:700;color:#e5e7eb;margin:0;font-family:monospace;">'+e.name+'</p>'
+        +'<p style="font-size:9px;color:#6b7280;margin:0;">ID: '+e.id+'</p>'
+        +'</div>'
+        +'<button onclick="deleteAbsensiEmployee(\'' +safeId+ '\')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:6px;padding:3px 8px;font-size:9px;cursor:pointer;">Hapus</button>'
+        +'</div>';
+    });
+    el.innerHTML=h;
+  })
+  .catch(function(e){el.innerHTML='<p style="color:#f87171;font-size:10px;">Error: '+e.message+'</p>';});
+}
+function addAbsensiEmployee(){
+  var id=($('empIdInput')?$('empIdInput').value.trim():'');
+  var name=($('empNameInput')?$('empNameInput').value.trim().toUpperCase():'');
+  if(!id||!name){showToast('ID dan Nama wajib diisi','error');return;}
+  fetch(API_BASE_URL+'/absensi-employee',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,id:id,name:name})})
+  .then(function(r){return r.json();})
+  .then(function(j){
+    if(j.success){showToast('Karyawan berhasil ditambahkan','success');if($('empIdInput'))$('empIdInput').value='';if($('empNameInput'))$('empNameInput').value='';loadAbsensiEmployees();}
+    else showToast(j.message||'Gagal','error');
+  })
+  .catch(function(e){showToast('Error: '+e.message,'error');});
+}
+function deleteAbsensiEmployee(id){
+  if(!confirm('Hapus karyawan ID: '+id+'?'))return;
+  fetch(API_BASE_URL+'/absensi-employee/'+encodeURIComponent(id),{method:'DELETE',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD})})
+  .then(function(r){return r.json();})
+  .then(function(j){
+    if(j.success){showToast('Karyawan dihapus','success');loadAbsensiEmployees();}
+    else showToast(j.message||'Gagal','error');
+  })
+  .catch(function(e){showToast('Error: '+e.message,'error');});
+}
 
 // ===== PROMO EXCLUSION MANAGEMENT =====
 var _excludedPanel=false;
