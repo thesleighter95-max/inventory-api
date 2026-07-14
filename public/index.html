@@ -1579,10 +1579,6 @@ table td { font-size: 11px; }
 <div id="absensiPanel" class="panel-container">
 <style>
 @keyframes absensiColon{0%,49%{opacity:1}50%,100%{opacity:0.1}}
-#absensiPanel .abs-sync-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#2a3a5a;margin-right:5px;vertical-align:middle;}
-#absensiPanel .abs-sync-dot.online{background:#00cc88;box-shadow:0 0 8px rgba(0,204,136,0.4);}
-#absensiPanel .abs-sync-dot.syncing{background:#ffcc44;animation:absensiColon .6s step-end infinite;}
-#absensiPanel .abs-sync-dot.error{background:#ff4444;}
 </style>
   <div style="background:#0f0f1a;min-height:100vh;display:flex;flex-direction:column;">
     <div style="background:#0a0a14;padding:16px 14px 12px;text-align:center;border-bottom:1px solid #1a2a4a;flex-shrink:0;">
@@ -1595,7 +1591,7 @@ table td { font-size: 11px; }
         <div id="absensiS" style="font-size:clamp(52px,16vw,78px);font-weight:900;color:#00cc66;font-family:monospace;min-width:2ch;text-align:center;line-height:1;text-shadow:0 0 20px rgba(0,200,100,0.15);"></div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div id="absensiSyncStatus" style="font-size:10px;font-family:monospace;color:#6688aa;background:#0d1a2a;padding:3px 10px;border-radius:10px;border:1px solid #1a3a5a;"><span class="abs-sync-dot"></span>Offline</div>
+        <div id="absensiSyncStatus" style="font-size:10px;font-family:monospace;color:#6688aa;background:#0d1a2a;padding:3px 10px;border-radius:10px;border:1px solid #1a3a5a;"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#2a3a5a;margin-right:5px;vertical-align:middle;"></span>Offline</div>
         <div id="absensiEmpCount" style="font-size:10px;color:#6a9aff;font-family:monospace;"></div>
         <button onclick="absensiRefreshEmployees()" style="background:#1a3a5a;border:1px solid #2a5a7a;color:#66bbff;border-radius:10px;padding:3px 10px;font-size:10px;cursor:pointer;font-family:monospace;">&#8635; Refresh</button>
       </div>
@@ -1617,30 +1613,18 @@ table td { font-size: 11px; }
       <div style="text-align:center;padding:20px 16px;color:#2a3a5a;font-family:monospace;font-size:11px;">&#9656; belum ada scan hari ini</div>
     </div>
     <div id="absensiAdminSection" style="display:none;flex-shrink:0;">
-      <button onclick="toggleEmpAdmin()" style="width:100%;background:#0d0d1e;border:none;border-top:1px solid #1a2a4a;border-bottom:1px solid #1a2a4a;color:#6688bb;padding:8px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;text-align:left;">&#9660; Admin: Import &amp; Kelola Karyawan</button>
+      <button onclick="toggleEmpAdmin()" style="width:100%;background:#0d0d1e;border:none;border-top:1px solid #1a2a4a;border-bottom:1px solid #1a2a4a;color:#6688bb;padding:8px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;text-align:left;">&#9660; Admin: Sumber Data Karyawan</button>
       <div id="empAdminPanel" style="display:none;background:#090912;padding:14px;border-bottom:1px solid #1a2a4a;">
-        <p style="font-size:10px;font-weight:700;color:#6a8cff;margin:0 0 4px;text-transform:uppercase;letter-spacing:1px;">&#128193; Upload Excel (.xlsx)</p>
-        <p style="font-size:10px;color:#334466;margin:0 0 6px;font-family:monospace;">Kolom: <b style="color:#556699;">Emp_no_barcode</b> | Employee Id | Emp_nm | Div | Note1</p>
-        <div id="absensiDropZone"
-          onclick="document.getElementById('absensiFileInput').click()"
-          ondragover="event.preventDefault();this.style.borderColor='#4a8aff';"
-          ondragleave="this.style.borderColor='#2a3a6a';"
-          ondrop="event.preventDefault();this.style.borderColor='#2a3a6a';absensiHandleXLSX(event.dataTransfer.files[0]);"
-          style="border:2px dashed #2a3a6a;border-radius:10px;padding:14px;text-align:center;cursor:pointer;margin-bottom:10px;transition:border-color 0.2s;background:#0d0d22;">
-          <p style="font-size:12px;color:#445577;font-family:monospace;margin:0;">&#128194; Klik atau drag XLSX ke sini</p>
+        <p style="font-size:11px;color:#8899cc;margin:0 0 4px;font-weight:700;">URL Google Spreadsheet</p>
+        <p style="font-size:10px;color:#334466;margin:0 0 8px;font-family:monospace;">Pastikan spreadsheet sudah di-share: <b style="color:#556699;">Anyone with the link can view</b></p>
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+          <input id="absensiSheetUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/..."
+            style="flex:1;background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:8px 10px;font-size:11px;color:#88aacc;font-family:monospace;outline:none;">
+          <button id="abseSyncBtn" onclick="absensiSyncFromSpreadsheet()" style="background:#1a4a3a;border:1px solid #2a6a4a;color:#00cc88;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:monospace;flex-shrink:0;">Sync</button>
         </div>
-        <input type="file" id="absensiFileInput" accept=".xlsx,.xls" style="display:none" onchange="absensiHandleXLSX(this.files[0])">
-        <p style="font-size:10px;font-weight:700;color:#6a8cff;margin:10px 0 4px;text-transform:uppercase;letter-spacing:1px;">&#128279; Google Sheets (Opsional)</p>
-        <div style="display:flex;gap:6px;margin-bottom:10px;">
-          <input id="absensiSheetUrl" type="url" placeholder="https://script.google.com/macros/s/..."
-            style="flex:1;background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:7px 10px;font-size:11px;color:#88aacc;font-family:monospace;outline:none;">
-          <button onclick="absensiSyncSheet()" style="background:#1a4a3a;border:1px solid #2a6a4a;color:#00cc88;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;flex-shrink:0;">Sync</button>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-          <p style="font-size:10px;font-weight:700;color:#6a8cff;margin:0;text-transform:uppercase;letter-spacing:1px;">&#128101; Daftar Karyawan</p>
-          <span id="absensiEmpCountAdmin" style="font-size:10px;color:#6a9aff;font-family:monospace;"></span>
-        </div>
-        <div id="empAdminList" style="max-height:200px;overflow-y:auto;background:#0d0d22;border-radius:8px;border:1px solid #1a2a4a;padding:4px 8px;"></div>
+        <p id="absensiSyncInfo" style="font-size:10px;color:#445577;font-family:monospace;margin:0 0 10px;"></p>
+        <p style="font-size:10px;font-weight:700;color:#6a8cff;margin:0 0 6px;text-transform:uppercase;letter-spacing:1px;">&#128101; Daftar Karyawan</p>
+        <div id="empAdminList" style="max-height:220px;overflow-y:auto;background:#0d0d22;border-radius:8px;border:1px solid #1a2a4a;padding:4px 8px;"></div>
       </div>
     </div>
   </div>
@@ -3042,7 +3026,7 @@ function switchMainTab(tab){
   else if(tab==="promo"){$("promoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navPromo");setMarquee(false);loadPromoList();}
   else if(tab==="neo"){$("neoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navNeo");setMarquee(false);loadNeoStatus();}
   else if(tab==="fotobblm"){$("fotoBblmPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navFotoBblm");setMarquee(false);loadFotoBblmList();fbLoadCategories();}
-  else if(tab==="absensi"){$("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
+  else if(tab==="absensi"){$("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
 function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items-center justify-center p-10 text-pro-text"><svg class="animate-spin h-6 w-6 text-pro-main mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-xs">'+(t||"Memuat...")+'</span></div>'}
@@ -4863,8 +4847,8 @@ function stopAbsensiClock(){if(_absensiClockInterval){clearInterval(_absensiCloc
 
 function updateAbsensiSyncStatus(state,msg){
   var el=$('absensiSyncStatus');if(!el)return;
-  var dotClass='abs-sync-dot'+(state==='online'?' online':state==='syncing'?' syncing':state==='error'?' error':'');
-  el.innerHTML='<span class="'+dotClass+'"></span>'+(msg||state);
+  var dot='<span class="abs-sync-dot'+(state==='online'?' online':state==='syncing'?' syncing':state==='error'?' error':'')+'" style="display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle;background:'+(state==='online'?'#00cc88':state==='syncing'?'#ffcc44':state==='error'?'#ff4444':'#2a3a5a')+'"></span>';
+  el.innerHTML=dot+(msg||state);
 }
 
 function absensiRefreshEmployees(){
@@ -4874,11 +4858,10 @@ function absensiRefreshEmployees(){
   .then(function(j){
     var count=j.employees?j.employees.length:0;
     if($('absensiEmpCount'))$('absensiEmpCount').textContent=count+' karyawan';
-    if($('absensiEmpCountAdmin'))$('absensiEmpCountAdmin').textContent=count+' terdaftar';
-    updateAbsensiSyncStatus('online','Online \u00b7 '+count+' emp');
+    updateAbsensiSyncStatus('online',count+' karyawan terdaftar');
     renderAbsensiEmpList(j.employees||[]);
   })
-  .catch(function(){updateAbsensiSyncStatus('error','Offline');});
+  .catch(function(){updateAbsensiSyncStatus('error','Gagal memuat data');});
 }
 
 function submitAbsensi(){
@@ -4895,7 +4878,7 @@ function submitAbsensi(){
     if(j.success){
       var isIn=j.status==='In';
       if(msg){
-        msg.textContent=': '+j.employeeId+(j.employeeName?' \u2192 '+j.employeeName:' (ID tidak terdaftar)');
+        msg.textContent=': '+j.employeeId+(j.employeeName?' \u2192 '+j.employeeName:' \u26A0 ID tidak terdaftar di spreadsheet');
         msg.style.color=j.employeeName?'#88aacc':'#ff8844';
       }
       if(badge){
@@ -4922,36 +4905,36 @@ function renderAbsensiResult(j){
   var lastStatus=records.length?records[records.length-1].status:'';
   var totOn=records.reduce(function(s,r){return s+(r.onDutyMinutes||0);},0);
   var totOff=records.reduce(function(s,r){return s+(r.offDutyMinutes||0);},0);
-  var h='<div style="background:#0d0d22;padding:7px 10px;border-bottom:1px solid #1a2a4a;">'
-    +'<span style="font-size:11px;color:#00cc88;font-family:monospace;">\u2713 Successfully saved ('+j.status+')...</span>'
+  var h='<div style="background:#0d0d22;padding:7px 10px 6px;border-bottom:1px solid #1a2a4a;">'
+    +'<span style="font-size:11px;color:#00cc88;font-family:monospace;">\u2713 Saved ('+j.status+')</span>'
+    +(j.employeeName?'<span style="font-size:11px;color:#6688bb;font-family:monospace;margin-left:8px;">\u2014 '+j.employeeName+'</span>':'<span style="font-size:10px;color:#ff8844;font-family:monospace;margin-left:8px;">\u26A0 ID tidak terdaftar</span>')
     +'</div>'
     +'<div style="overflow-x:auto;">'
     +'<table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:12px;">'
     +'<thead><tr style="background:#0d0d22;">'
-    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;font-weight:600;">Id</th>'
-    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;font-weight:600;">Time</th>'
-    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;font-weight:600;">Status</th>'
-    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:right;font-weight:600;">On Duty</th>'
-    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:right;font-weight:600;">Off Duty</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;">Id</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;">Time</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;">Status</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:right;">On Duty</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:right;">Off Duty</th>'
     +'</tr></thead><tbody>';
   records.forEach(function(r,idx){
     var sc=r.status==='In'?inC:outC;
-    h+='<tr style="border-bottom:1px solid #12122a;">'
-      +'<td style="padding:8px;color:#88aacc;border:1px solid #12122a;text-align:center;">'+(idx+1)+'</td>'
-      +'<td style="padding:8px;color:#88ddff;font-weight:600;border:1px solid #12122a;text-align:center;">'+r.timeStr+'</td>'
-      +'<td style="padding:8px;text-align:center;border:1px solid #12122a;"><b style="color:'+sc+';">'+r.status+'</b></td>'
-      +'<td style="padding:8px;color:#ffcc44;font-weight:600;border:1px solid #12122a;text-align:right;">'+(r.onDutyMinutes>0?minsToHMM(r.onDutyMinutes):'0')+'</td>'
-      +'<td style="padding:8px;color:#ff8844;font-weight:600;border:1px solid #12122a;text-align:right;">'+(r.offDutyMinutes>0?minsToHMM(r.offDutyMinutes):'0')+'</td>'
+    h+='<tr>'
+      +'<td style="padding:7px 8px;color:#88aacc;border:1px solid #12122a;text-align:center;">'+(idx+1)+'</td>'
+      +'<td style="padding:7px 8px;color:#88ddff;font-weight:600;border:1px solid #12122a;text-align:center;">'+r.timeStr+'</td>'
+      +'<td style="padding:7px 8px;text-align:center;border:1px solid #12122a;"><b style="color:'+sc+';">'+r.status+'</b></td>'
+      +'<td style="padding:7px 8px;color:#ffcc44;font-weight:600;border:1px solid #12122a;text-align:right;">'+(r.onDutyMinutes>0?minsToHMM(r.onDutyMinutes):'0')+'</td>'
+      +'<td style="padding:7px 8px;color:#ff8844;font-weight:600;border:1px solid #12122a;text-align:right;">'+(r.offDutyMinutes>0?minsToHMM(r.offDutyMinutes):'0')+'</td>'
       +'</tr>';
   });
   var lsc=lastStatus==='In'?inC:outC;
   h+='<tr style="background:#0a0a2a;border-top:2px solid #2a4a7a;">'
-    +'<td colspan="2" style="padding:8px;color:#88bbee;border:1px solid #1a2a4a;font-weight:700;letter-spacing:1px;">Final</td>'
-    +'<td style="padding:8px;text-align:center;border:1px solid #1a2a4a;"><b style="color:'+lsc+';">'+(lastStatus||'\u2014')+'</b></td>'
-    +'<td style="padding:8px;color:#ffcc44;font-weight:700;border:1px solid #1a2a4a;text-align:right;">'+minsToHMM(totOn)+'</td>'
-    +'<td style="padding:8px;color:#ff8844;font-weight:700;border:1px solid #1a2a4a;text-align:right;">'+minsToHMM(totOff)+'</td>'
-    +'</tr>'
-    +'</tbody></table></div>';
+    +'<td colspan="2" style="padding:7px 8px;color:#88bbee;border:1px solid #1a2a4a;font-weight:700;letter-spacing:1px;">Final</td>'
+    +'<td style="padding:7px 8px;text-align:center;border:1px solid #1a2a4a;"><b style="color:'+lsc+';">'+(lastStatus||'\u2014')+'</b></td>'
+    +'<td style="padding:7px 8px;color:#ffcc44;font-weight:700;border:1px solid #1a2a4a;text-align:right;">'+minsToHMM(totOn)+'</td>'
+    +'<td style="padding:7px 8px;color:#ff8844;font-weight:700;border:1px solid #1a2a4a;text-align:right;">'+minsToHMM(totOff)+'</td>'
+    +'</tr></tbody></table></div>';
   res.innerHTML=h;
 }
 
@@ -4959,112 +4942,76 @@ var _showEmpAdmin=false;
 function toggleEmpAdmin(){
   _showEmpAdmin=!_showEmpAdmin;
   var p=$('empAdminPanel');if(!p)return;
-  if(_showEmpAdmin){p.style.display='block';absensiRefreshEmployees();absensiLoadSheetUrl();}
-  else p.style.display='none';
-}
-
-function absensiLoadSheetUrl(){
-  fetch(API_BASE_URL+'/absensi/sheet-url')
-  .then(function(r){return r.json();})
-  .then(function(j){if(j.url&&$('absensiSheetUrl'))$('absensiSheetUrl').value=j.url;})
-  .catch(function(){});
+  if(_showEmpAdmin){
+    p.style.display='block';
+    absensiRefreshEmployees();
+    // Load stored sheet URL and sync info
+    fetch(API_BASE_URL+'/absensi/sheet-url')
+    .then(function(r){return r.json();})
+    .then(function(j){
+      if(j.url&&$('absensiSheetUrl'))$('absensiSheetUrl').value=j.url;
+      if(j.syncTime&&$('absensiSyncInfo')){
+        var d=new Date(j.syncTime);
+        $('absensiSyncInfo').textContent='Sync terakhir: '+d.toLocaleDateString('id-ID')+' '+d.toLocaleTimeString('id-ID');
+      }
+    }).catch(function(){});
+  }else{
+    p.style.display='none';
+  }
 }
 
 function renderAbsensiEmpList(employees){
   var el=$('empAdminList');if(!el)return;
   if(!employees.length){
-    el.innerHTML='<p style="font-size:10px;color:#334466;text-align:center;padding:12px;font-family:monospace;">Belum ada karyawan \u2014 upload XLSX atau sync dari Google Sheets</p>';
+    el.innerHTML='<p style="font-size:11px;color:#334466;text-align:center;padding:14px;font-family:monospace;">Belum ada data \u2014 masukkan URL spreadsheet dan klik Sync</p>';
     return;
   }
   var h='';
-  employees.forEach(function(e){
+  employees.slice(0,50).forEach(function(e){
     var barcode=e.barcode||e.id||'';
-    h+='<div data-barcode="'+barcode+'" style="display:flex;align-items:center;gap:6px;padding:5px 2px;border-bottom:1px solid #1a2a4a;">'
+    h+='<div style="display:flex;align-items:center;gap:6px;padding:5px 2px;border-bottom:1px solid #1a2a4a;">'
       +'<div style="flex:1;min-width:0;">'
-      +'<p style="font-size:11px;font-weight:700;color:#88aacc;margin:0;font-family:monospace;">'+e.name+'</p>'
+      +'<p style="font-size:11px;font-weight:700;color:#88aacc;margin:0;font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+e.name+'</p>'
       +'<p style="font-size:9px;color:#445577;margin:0;font-family:monospace;">'+barcode+(e.division?' \u00b7 '+e.division:'')+'</p>'
       +'</div>'
-      +'<button onclick="deleteAbsensiEmployee(this.closest(\'[data-barcode]\').dataset.barcode)" style="background:transparent;border:1px solid #2a1a1a;color:#445577;border-radius:6px;padding:2px 8px;font-size:9px;cursor:pointer;">\uD83D\uDDD1</button>'
       +'</div>';
   });
+  if(employees.length>50)h+='<p style="font-size:10px;color:#445577;text-align:center;padding:6px;font-family:monospace;">... dan '+(employees.length-50)+' karyawan lainnya</p>';
   el.innerHTML=h;
 }
 
-function absensiHandleXLSX(file){
-  if(!file)return;
-  if(typeof XLSX==='undefined'){showToast('SheetJS belum dimuat','error');return;}
-  showToast('Membaca '+file.name+'...','info');
-  var reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
-      var ws=wb.Sheets[wb.SheetNames[0]];
-      var data=XLSX.utils.sheet_to_json(ws,{defval:''});
-      var employees=[];
-      data.forEach(function(row){
-        var barcode=String(row['Emp_no_barcode']||row['barcode']||row['Barcode']||row['BARCODE']||'').trim();
-        var empId=String(row['Employee Id']||row['employee_id']||row['ID']||row['EMP_ID']||barcode).trim();
-        var name=String(row['Emp_nm']||row['Employee Name']||row['Nama']||row['name']||row['NAME']||'').trim().toUpperCase();
-        var division=String(row['Div']||row['Division']||row['Divisi']||row['DEPT']||'').trim();
-        var note=String(row['Note1']||row['Note']||row['Catatan']||'').trim();
-        if(barcode&&name)employees.push({barcode:barcode,empId:empId||barcode,name:name,division:division,note:note});
-      });
-      if(!employees.length){showToast('Tidak ada data valid. Periksa format kolom.','error');return;}
-      showToast('Ditemukan '+employees.length+' karyawan, menyimpan...','info');
-      absensiUploadEmployees(employees);
-    }catch(err){showToast('Error baca XLSX: '+err.message,'error');}
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function absensiUploadEmployees(employees){
-  fetch(API_BASE_URL+'/absensi/upload-employees',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,employees:employees})})
+function absensiSyncFromSpreadsheet(){
+  var inp=$('absensiSheetUrl');
+  var url=inp?inp.value.trim():'';
+  if(!url){showToast('Masukkan URL Google Spreadsheet terlebih dahulu','error');return;}
+  var info=$('absensiSyncInfo');
+  if(info)info.textContent='Sedang menyinkronkan data...';
+  updateAbsensiSyncStatus('syncing','Syncing...');
+  var btn=$('abseSyncBtn');
+  if(btn){btn.disabled=true;btn.textContent='Syncing...';}
+  fetch(API_BASE_URL+'/absensi/sync-employees',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,sheetUrl:url})})
   .then(function(r){return r.json();})
   .then(function(j){
-    if(j.success){showToast(j.total+' karyawan berhasil diimpor!','success');absensiRefreshEmployees();}
-    else showToast(j.message||'Gagal import','error');
+    if(btn){btn.disabled=false;btn.textContent='Sync';}
+    if(j.success){
+      showToast(j.total+' karyawan berhasil disinkronkan dari spreadsheet!','success');
+      updateAbsensiSyncStatus('online',j.total+' karyawan');
+      if($('absensiEmpCount'))$('absensiEmpCount').textContent=j.total+' karyawan';
+      if(info)info.textContent='Sync terakhir: '+new Date().toLocaleDateString('id-ID')+' '+new Date().toLocaleTimeString('id-ID')+' \u00b7 '+j.total+' karyawan';
+      absensiRefreshEmployees();
+    }else{
+      showToast((j.message||'Gagal sync'),'error');
+      updateAbsensiSyncStatus('error','Gagal');
+      if(info)info.textContent='Gagal: '+(j.message||'Error tidak diketahui');
+    }
   })
-  .catch(function(e){showToast('Error: '+e.message,'error');});
-}
-
-function absensiSyncSheet(){
-  var urlInp=$('absensiSheetUrl');
-  var url=urlInp?urlInp.value.trim():'';
-  if(!url){showToast('Masukkan URL Google Apps Script','error');return;}
-  updateAbsensiSyncStatus('syncing','Fetching...');
-  fetch(API_BASE_URL+'/absensi/sheet-url',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,url:url})}).catch(function(){});
-  fetch(url+'?action=getEmployees',{mode:'cors'})
-  .then(function(r){return r.json();})
-  .then(function(d){
-    var rows=d.employees||d.data||d;
-    if(!Array.isArray(rows)||!rows.length){updateAbsensiSyncStatus('error','Data kosong');showToast('Data dari Sheets kosong atau format tidak sesuai','error');return;}
-    var employees=rows.map(function(row){
-      return {
-        barcode:String(row['Emp_no_barcode']||row['barcode']||row['employee_id']||'').trim(),
-        empId:String(row['Employee Id']||row['employee_id']||'').trim(),
-        name:String(row['Emp_nm']||row['Employee Name']||row['name']||'').trim().toUpperCase(),
-        division:String(row['Div']||row['division']||'').trim()
-      };
-    }).filter(function(e){return e.barcode&&e.name;});
-    if(!employees.length){updateAbsensiSyncStatus('error','Tidak ada data valid');showToast('Tidak ada karyawan valid dari Sheets','error');return;}
-    absensiUploadEmployees(employees);
-  })
-  .catch(function(e){updateAbsensiSyncStatus('error','Gagal');showToast('Gagal fetch dari Sheets: '+e.message,'error');});
-}
-
-function deleteAbsensiEmployee(barcode){
-  if(!barcode){showToast('Barcode tidak valid','error');return;}
-  if(!confirm('Hapus karyawan dengan barcode: '+barcode+'?'))return;
-  fetch(API_BASE_URL+'/absensi-employee/'+encodeURIComponent(barcode),{method:'DELETE',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({adminPassword:ADMIN_PASSWORD})})
-  .then(function(r){return r.json();})
-  .then(function(j){
-    if(j.success){showToast('Karyawan dihapus','success');absensiRefreshEmployees();}
-    else showToast(j.message||'Gagal','error');
-  })
-  .catch(function(e){showToast('Error: '+e.message,'error');});
+  .catch(function(e){
+    if(btn){btn.disabled=false;btn.textContent='Sync';}
+    showToast('Error: '+e.message,'error');
+    updateAbsensiSyncStatus('error','Error');
+    if(info)info.textContent='Error: '+e.message;
+  });
 }
 
 
