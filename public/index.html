@@ -1612,20 +1612,40 @@ table td { font-size: 11px; }
     <div id="absensiResult" style="background:#0a0a1a;flex-shrink:0;overflow-x:auto;">
       <div style="text-align:center;padding:20px 16px;color:#2a3a5a;font-family:monospace;font-size:11px;">&#9656; belum ada scan hari ini</div>
     </div>
+
+    <!-- ADMIN SECTION -->
     <div id="absensiAdminSection" style="display:none;flex-shrink:0;">
-      <button onclick="toggleEmpAdmin()" style="width:100%;background:#0d0d1e;border:none;border-top:1px solid #1a2a4a;border-bottom:1px solid #1a2a4a;color:#6688bb;padding:8px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;text-align:left;">&#9660; Admin: Sumber Data Karyawan</button>
+
+      <!-- Block 1: Sumber Data Karyawan -->
+      <button onclick="toggleEmpAdmin()" style="width:100%;background:#0d0d1e;border:none;border-top:2px solid #1a2a4a;border-bottom:1px solid #1a2a4a;color:#6a8cff;padding:9px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;text-align:left;">&#9660; Sumber Data Karyawan (Google Spreadsheet)</button>
       <div id="empAdminPanel" style="display:none;background:#090912;padding:14px;border-bottom:1px solid #1a2a4a;">
-        <p style="font-size:11px;color:#8899cc;margin:0 0 4px;font-weight:700;">URL Google Spreadsheet</p>
-        <p style="font-size:10px;color:#334466;margin:0 0 8px;font-family:monospace;">Pastikan spreadsheet sudah di-share: <b style="color:#556699;">Anyone with the link can view</b></p>
+        <p style="font-size:10px;color:#334466;margin:0 0 8px;font-family:monospace;">Spreadsheet harus di-share: <b style="color:#556699;">Anyone with the link &rarr; Viewer</b></p>
         <div style="display:flex;gap:6px;margin-bottom:6px;">
-          <input id="absensiSheetUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/..."
-            style="flex:1;background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:8px 10px;font-size:11px;color:#88aacc;font-family:monospace;outline:none;">
+          <input id="absensiSheetUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/..." value="https://docs.google.com/spreadsheets/d/1eFYULqon7cFvF_ZZRIacwA1dSSWqLt0fyZc3tracg8U/edit?gid=0#gid=0"
+            style="flex:1;background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:8px 10px;font-size:10px;color:#88aacc;font-family:monospace;outline:none;">
           <button id="abseSyncBtn" onclick="absensiSyncFromSpreadsheet()" style="background:#1a4a3a;border:1px solid #2a6a4a;color:#00cc88;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:monospace;flex-shrink:0;">Sync</button>
         </div>
         <p id="absensiSyncInfo" style="font-size:10px;color:#445577;font-family:monospace;margin:0 0 10px;"></p>
         <p style="font-size:10px;font-weight:700;color:#6a8cff;margin:0 0 6px;text-transform:uppercase;letter-spacing:1px;">&#128101; Daftar Karyawan</p>
-        <div id="empAdminList" style="max-height:220px;overflow-y:auto;background:#0d0d22;border-radius:8px;border:1px solid #1a2a4a;padding:4px 8px;"></div>
+        <div id="empAdminList" style="max-height:200px;overflow-y:auto;background:#0d0d22;border-radius:8px;border:1px solid #1a2a4a;padding:4px 8px;"></div>
       </div>
+
+      <!-- Block 2: Rekap Absensi -->
+      <button onclick="toggleAbsensiSummary()" style="width:100%;background:#0d0d1e;border:none;border-bottom:1px solid #1a2a4a;color:#00cc88;padding:9px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;text-align:left;">&#9660; Rekap Absensi &amp; Export Spreadsheet</button>
+      <div id="absensiSummaryPanel" style="display:none;background:#090912;padding:14px;border-bottom:1px solid #1a2a4a;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+          <label style="font-size:11px;color:#6688bb;font-family:monospace;font-weight:700;">Tanggal:</label>
+          <input id="absensiSummaryDate" type="date" style="background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:6px 10px;font-size:11px;color:#88aacc;font-family:monospace;outline:none;">
+          <button id="absensiSummaryLoadBtn" onclick="absensiLoadSummary()" style="background:#1a3a7a;border:1px solid #2a5a9a;color:#88ddff;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">Tampilkan</button>
+          <button onclick="absensiExportXLSX()" style="background:#1a4a1a;border:1px solid #2a7a2a;color:#00ff88;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">&#8659; Download Excel</button>
+        </div>
+        <div id="absensiSummaryTotal" style="font-size:11px;color:#6a9aff;font-family:monospace;margin-bottom:8px;min-height:16px;"></div>
+        <div id="absensiSummaryTable" style="max-height:320px;overflow-y:auto;background:#0d0d22;border-radius:8px;border:1px solid #1a2a4a;">
+          <div style="text-align:center;padding:18px;color:#2a3a5a;font-family:monospace;font-size:11px;">Pilih tanggal lalu klik Tampilkan</div>
+        </div>
+        <p style="font-size:10px;color:#334466;font-family:monospace;margin:8px 0 0;">&#9432; File Excel berisi 2 sheet: Summary harian &amp; Detail scan per karyawan &mdash; buka di Google Sheets via File &rarr; Import</p>
+      </div>
+
     </div>
   </div>
 </div>
@@ -3026,7 +3046,7 @@ function switchMainTab(tab){
   else if(tab==="promo"){$("promoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navPromo");setMarquee(false);loadPromoList();}
   else if(tab==="neo"){$("neoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navNeo");setMarquee(false);loadNeoStatus();}
   else if(tab==="fotobblm"){$("fotoBblmPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navFotoBblm");setMarquee(false);loadFotoBblmList();fbLoadCategories();}
-  else if(tab==="absensi"){$("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
+  else if(tab==="absensi"){$("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
 function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items-center justify-center p-10 text-pro-text"><svg class="animate-spin h-6 w-6 text-pro-main mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-xs">'+(t||"Memuat...")+'</span></div>'}
@@ -5014,6 +5034,180 @@ function absensiSyncFromSpreadsheet(){
   });
 }
 
+
+// ===== ABSENSI SUMMARY EXPORT =====
+function absensiFormatDuration(mins){
+  if(!mins||mins<0)return '0:00';
+  return Math.floor(mins/60)+':'+String(mins%60).padStart(2,'0');
+}
+
+function absensiGetSelectedDate(){
+  var el=$('absensiSummaryDate');
+  if(el&&el.value)return el.value;
+  var now=new Date();
+  return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+}
+
+function absensiLoadSummary(){
+  var date=absensiGetSelectedDate();
+  var btn=$('absensiSummaryLoadBtn');
+  if(btn){btn.disabled=true;btn.textContent='Loading...';}
+  var tableDiv=$('absensiSummaryTable');
+  if(tableDiv)tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#445577;font-family:monospace;font-size:11px;">Memuat data...</div>';
+
+  fetch(API_BASE_URL+'/absensi/summary?date='+date)
+  .then(function(r){return r.json();})
+  .then(function(j){
+    if(btn){btn.disabled=false;btn.textContent='Tampilkan';}
+    if(!j.success){
+      if(tableDiv)tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#ff6644;font-family:monospace;font-size:11px;">'+(j.message||'Gagal memuat')+'</div>';
+      return;
+    }
+    renderAbsensiSummaryTable(j.summary||[], date);
+  })
+  .catch(function(e){
+    if(btn){btn.disabled=false;btn.textContent='Tampilkan';}
+    if(tableDiv)tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#ff6644;font-family:monospace;font-size:11px;">Error: '+e.message+'</div>';
+  });
+}
+
+function renderAbsensiSummaryTable(summary, date){
+  var tableDiv=$('absensiSummaryTable');
+  if(!tableDiv)return;
+  var totalStat=$('absensiSummaryTotal');
+  var hadir=summary.filter(function(r){return r.status==='Hadir';}).length;
+  var tidakHadir=summary.filter(function(r){return r.status==='Tidak Hadir';}).length;
+  if(totalStat)totalStat.textContent='Hadir: '+hadir+' | Tidak Hadir: '+tidakHadir+' | Total: '+summary.length;
+
+  if(!summary.length){
+    tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#445577;font-family:monospace;font-size:11px;">Tidak ada data absensi untuk tanggal ini</div>';
+    return;
+  }
+
+  var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:11px;min-width:600px;">'
+    +'<thead><tr style="background:#0d0d22;position:sticky;top:0;">'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">No</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;white-space:nowrap;">ID Barcode</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;white-space:nowrap;">Nama</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;white-space:nowrap;">Divisi</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Jam Masuk</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Jam Keluar</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:right;white-space:nowrap;">On Duty</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:right;white-space:nowrap;">Off Duty</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Scan</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Status</th>'
+    +'</tr></thead><tbody>';
+  summary.forEach(function(r,idx){
+    var statusColor=r.status==='Hadir'?'#00ff88':'#ff6644';
+    h+='<tr style="background:'+(idx%2===0?'#080818':'#0d0d1e')+';">'
+      +'<td style="padding:6px 7px;color:#556688;border:1px solid #12122a;text-align:center;">'+(idx+1)+'</td>'
+      +'<td style="padding:6px 7px;color:#88aacc;border:1px solid #12122a;white-space:nowrap;">'+(r.employeeId||'-')+'</td>'
+      +'<td style="padding:6px 7px;color:#ddeeff;font-weight:600;border:1px solid #12122a;white-space:nowrap;">'+(r.employeeName||'<span style="color:#445577;font-style:italic;">Tidak Terdaftar</span>')+'</td>'
+      +'<td style="padding:6px 7px;color:#8899bb;border:1px solid #12122a;white-space:nowrap;">'+(r.division||'-')+'</td>'
+      +'<td style="padding:6px 7px;color:#00cc88;font-weight:700;border:1px solid #12122a;text-align:center;white-space:nowrap;">'+(r.firstIn||'-')+'</td>'
+      +'<td style="padding:6px 7px;color:#ff8844;font-weight:700;border:1px solid #12122a;text-align:center;white-space:nowrap;">'+(r.lastOut||'-')+'</td>'
+      +'<td style="padding:6px 7px;color:#ffcc44;font-weight:600;border:1px solid #12122a;text-align:right;white-space:nowrap;">'+absensiFormatDuration(r.totalOnDuty)+'</td>'
+      +'<td style="padding:6px 7px;color:#ff8844;border:1px solid #12122a;text-align:right;white-space:nowrap;">'+absensiFormatDuration(r.totalOffDuty)+'</td>'
+      +'<td style="padding:6px 7px;color:#6688bb;border:1px solid #12122a;text-align:center;">'+(r.scanCount||0)+'</td>'
+      +'<td style="padding:6px 7px;border:1px solid #12122a;text-align:center;"><b style="color:'+statusColor+';">'+r.status+'</b></td>'
+      +'</tr>';
+  });
+  h+='</tbody></table></div>';
+  tableDiv.innerHTML=h;
+  // store for export
+  window._absensiSummaryData=summary;
+  window._absensiSummaryDate=date;
+}
+
+function absensiExportXLSX(){
+  var summary=window._absensiSummaryData;
+  var date=window._absensiSummaryDate;
+  if(!summary||!summary.length){showToast('Tampilkan summary dulu','error');return;}
+  if(typeof XLSX==='undefined'){showToast('Library Excel tidak tersedia','error');return;}
+
+  var wb=XLSX.utils.book_new();
+
+  // Sheet 1: Summary harian
+  var aoa=[
+    ['REKAPITULASI ABSENSI KARYAWAN'],
+    ['Tanggal: '+date],
+    ['Digenerate: '+new Date().toLocaleString('id-ID')],
+    [],
+    ['No','ID Barcode','Nama Karyawan','Divisi','Jam Masuk','Jam Keluar','On Duty (HH:MM)','Off Duty (HH:MM)','Jumlah Scan','Status']
+  ];
+  summary.forEach(function(r,i){
+    aoa.push([
+      i+1,
+      r.employeeId||'',
+      r.employeeName||'(Tidak Terdaftar)',
+      r.division||'',
+      r.firstIn||'',
+      r.lastOut||'',
+      absensiFormatDuration(r.totalOnDuty),
+      absensiFormatDuration(r.totalOffDuty),
+      r.scanCount||0,
+      r.status
+    ]);
+  });
+  var hadir=summary.filter(function(r){return r.status==='Hadir';}).length;
+  aoa.push([]);
+  aoa.push(['','','','','','','TOTAL HADIR:',hadir,'TIDAK HADIR:',summary.length-hadir]);
+
+  var ws1=XLSX.utils.aoa_to_sheet(aoa);
+  // Column widths
+  ws1['!cols']=[{wch:4},{wch:14},{wch:26},{wch:12},{wch:10},{wch:10},{wch:14},{wch:14},{wch:10},{wch:12}];
+  // Merge title row
+  ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:9}}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Summary '+date);
+
+  // Sheet 2: Detail scan per karyawan
+  var aoa2=[
+    ['DETAIL SCAN ABSENSI'],
+    ['Tanggal: '+date],
+    [],
+    ['No','ID Barcode','Nama Karyawan','Divisi','Waktu Scan','Status Scan']
+  ];
+  var detailNo=1;
+  summary.forEach(function(r){
+    if(r.records&&r.records.length){
+      r.records.forEach(function(rec){
+        aoa2.push([
+          detailNo++,
+          r.employeeId||'',
+          r.employeeName||'(Tidak Terdaftar)',
+          r.division||'',
+          rec.timeStr||'',
+          rec.status||''
+        ]);
+      });
+    }
+  });
+  var ws2=XLSX.utils.aoa_to_sheet(aoa2);
+  ws2['!cols']=[{wch:4},{wch:14},{wch:26},{wch:12},{wch:12},{wch:10}];
+  ws2['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Detail Scan');
+
+  var fname='Absensi_'+date.replace(/-/g,'_')+'.xlsx';
+  XLSX.writeFile(wb, fname);
+  showToast('File '+fname+' berhasil didownload','success');
+}
+
+
+var _showAbsensiSummary=false;
+function toggleAbsensiSummary(){
+  _showAbsensiSummary=!_showAbsensiSummary;
+  var p=$('absensiSummaryPanel');if(!p)return;
+  if(_showAbsensiSummary){
+    p.style.display='block';
+    // Set today's date as default
+    var now=new Date();
+    var d=$('absensiSummaryDate');
+    if(d&&!d.value){
+      d.value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    }
+    absensiLoadSummary();
+  }else{p.style.display='none';}
+}
 
 // ===== PROMO EXCLUSION MANAGEMENT =====
 var _excludedPanel=false;
