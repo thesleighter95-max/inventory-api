@@ -133,6 +133,28 @@ async function updateHighestSnapshot(newPrices) {
 // Jalankan initDb saat cold start, bukan nunggu request pertama
 const dbReadyPromise = initDb().catch(() => {});
 
+// Simple CSV parser with quote support
+function parseCSV(text) {
+  const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const parseRow = (line) => {
+    const cols = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    cols.push(cur.trim()); return cols;
+  };
+  const headers = parseRow(lines[0]);
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const vals = parseRow(line); const row = {};
+    headers.forEach((h, i) => { row[h] = vals[i] || ''; });
+    return row;
+  });
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
@@ -1689,18 +1711,74 @@ loadCurrentSetting();
       return send({ success: true, total: cleaned.length });
     }
 
-    // GET /absensi/sheet-url — retrieve stored Google Sheets URL
-    if (path === "/absensi/sheet-url" && method === "GET") {
-      const url = await getJson("absensi-sheet-url", "");
-      return send({ success: true, url });
-    }
-
     // POST /absensi/sheet-url — save Google Sheets URL
     if (path === "/absensi/sheet-url" && method === "POST") {
       const { adminPassword, url } = body;
       if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
       await setJson("absensi-sheet-url", String(url || "").trim());
       return send({ success: true });
+    }
+
+        // POST /absensi/sync-employees — server fetches CSV from Google Sheets, saves to DB
+    if (path === "/absensi/sync-employees" && method === "POST") {
+      const { adminPassword, sheetUrl } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      if (!sheetUrl) return send({ success: false, message: "sheetUrl wajib diisi" }, 400);
+
+      const sheetIdMatch = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+      let employees = [];
+
+      try {
+        if (sheetIdMatch) {
+          // Google Sheets URL — fetch CSV server-side (no CORS issue)
+          const sheetId = sheetIdMatch[1];
+          const gidMatch = sheetUrl.match(/[#&?]gid=(\d+)/);
+          const gid = gidMatch ? gidMatch[1] : '0';
+          const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+          const resp = await fetch(csvUrl, { redirect: 'follow' });
+          if (!resp.ok) return send({ success: false, message: `Gagal fetch spreadsheet (HTTP ${resp.status}). Pastikan spreadsheet sudah di-share public.` }, 502);
+          const csvText = await resp.text();
+          const rows = parseCSV(csvText);
+          employees = rows.map(row => {
+            const barcode = String(row['Emp_no_barcode'] || row['barcode'] || row['BARCODE'] || row['ID Barcode'] || '').trim();
+            const empId   = String(row['Employee Id'] || row['employee_id'] || row['EMP_ID'] || barcode).trim();
+            const name    = String(row['Emp_nm'] || row['Employee Name'] || row['Nama'] || row['NAME'] || '').trim().toUpperCase();
+            const division= String(row['Div'] || row['Division'] || row['Divisi'] || row['DEPT'] || '').trim();
+            const note    = String(row['Note1'] || row['Note'] || '').trim();
+            return { barcode, empId, name, division, note };
+          }).filter(e => e.barcode && e.name);
+        } else {
+          // Assume Google Apps Script URL — fetch JSON
+          const resp = await fetch(sheetUrl + '?action=getEmployees', { redirect: 'follow' });
+          if (!resp.ok) return send({ success: false, message: `Gagal fetch GAS (HTTP ${resp.status})` }, 502);
+          const data = await resp.json();
+          const rows = Array.isArray(data) ? data : (data.employees || data.data || []);
+          employees = rows.map(row => ({
+            barcode:  String(row['Emp_no_barcode'] || row['barcode'] || row['employee_id'] || '').trim(),
+            empId:    String(row['Employee Id'] || row['employee_id'] || '').trim(),
+            name:     String(row['Emp_nm'] || row['Employee Name'] || row['name'] || '').trim().toUpperCase(),
+            division: String(row['Div'] || row['division'] || '').trim(),
+            note:     String(row['Note1'] || row['note'] || '').trim()
+          })).filter(e => e.barcode && e.name);
+        }
+      } catch (fetchErr) {
+        return send({ success: false, message: 'Error fetch: ' + fetchErr.message }, 502);
+      }
+
+      if (!employees.length) return send({ success: false, message: 'Tidak ada data karyawan valid. Periksa nama kolom: Emp_no_barcode, Emp_nm.' }, 400);
+
+      await setJson("absensi-employees", employees);
+      await setJson("absensi-sheet-url", sheetUrl);
+      const syncTime = new Date().toISOString();
+      await setJson("absensi-sync-time", syncTime);
+      return send({ success: true, total: employees.length, syncTime });
+    }
+
+    // GET /absensi/sheet-url — get stored sheet URL + last sync time
+    if (path === "/absensi/sheet-url" && method === "GET") {
+      const url = await getJson("absensi-sheet-url", "");
+      const syncTime = await getJson("absensi-sync-time", "");
+      return send({ success: true, url, syncTime });
     }
 
         return send({ error: "Not found" }, 404);
