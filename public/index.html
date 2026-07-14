@@ -1577,53 +1577,72 @@ table td { font-size: 11px; }
 </div>
 
 <div id="absensiPanel" class="panel-container">
-  <div style="background:#000;min-height:100vh;display:flex;flex-direction:column;overflow-y:auto;">
-
-    <!-- Digital Clock Header -->
-    <div style="background:#000;padding:20px 16px 14px;text-align:center;border-bottom:1px solid #1a1a1a;flex-shrink:0;">
-      <div id="absensiDate" style="font-size:11px;font-weight:700;color:#fff;letter-spacing:4px;text-transform:uppercase;margin-bottom:12px;font-family:monospace;"></div>
-      <div style="display:flex;justify-content:center;align-items:center;gap:2px;">
-        <div id="absensiH" style="font-size:clamp(52px,16vw,80px);font-weight:900;color:#fff;font-family:'Courier New',monospace;min-width:2ch;text-align:center;line-height:1;"></div>
-        <div style="font-size:clamp(40px,12vw,64px);font-weight:900;color:#444;font-family:monospace;line-height:1;padding:0 4px 8px;">&nbsp;&nbsp;</div>
-        <div id="absensiM" style="font-size:clamp(52px,16vw,80px);font-weight:900;color:#fff;font-family:'Courier New',monospace;min-width:2ch;text-align:center;line-height:1;"></div>
-        <div style="font-size:clamp(40px,12vw,64px);font-weight:900;color:#444;font-family:monospace;line-height:1;padding:0 4px 8px;">&nbsp;&nbsp;</div>
-        <div id="absensiS" style="font-size:clamp(52px,16vw,80px);font-weight:900;color:#fff;font-family:'Courier New',monospace;min-width:2ch;text-align:center;line-height:1;"></div>
+<style>
+@keyframes absensiColon{0%,49%{opacity:1}50%,100%{opacity:0.1}}
+#absensiPanel .abs-sync-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#2a3a5a;margin-right:5px;vertical-align:middle;}
+#absensiPanel .abs-sync-dot.online{background:#00cc88;box-shadow:0 0 8px rgba(0,204,136,0.4);}
+#absensiPanel .abs-sync-dot.syncing{background:#ffcc44;animation:absensiColon .6s step-end infinite;}
+#absensiPanel .abs-sync-dot.error{background:#ff4444;}
+</style>
+  <div style="background:#0f0f1a;min-height:100vh;display:flex;flex-direction:column;">
+    <div style="background:#0a0a14;padding:16px 14px 12px;text-align:center;border-bottom:1px solid #1a2a4a;flex-shrink:0;">
+      <div id="absensiDate" style="font-size:11px;font-weight:700;color:#6a8cff;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;font-family:monospace;background:#1a1a3e;display:inline-block;padding:3px 14px;border-radius:6px;border:1px solid #2a3a6a;"></div>
+      <div style="display:flex;justify-content:center;align-items:center;gap:0;margin-bottom:10px;">
+        <div id="absensiH" style="font-size:clamp(52px,16vw,78px);font-weight:900;color:#e0f0ff;font-family:monospace;min-width:2ch;text-align:center;line-height:1;text-shadow:0 0 30px rgba(100,180,255,0.15);"></div>
+        <div style="font-size:clamp(40px,12vw,60px);font-weight:900;color:#2a5a9a;font-family:monospace;line-height:1;padding:0 3px 8px;animation:absensiColon 1s step-end infinite;">:</div>
+        <div id="absensiM" style="font-size:clamp(52px,16vw,78px);font-weight:900;color:#e0f0ff;font-family:monospace;min-width:2ch;text-align:center;line-height:1;text-shadow:0 0 30px rgba(100,180,255,0.15);"></div>
+        <div style="font-size:clamp(40px,12vw,60px);font-weight:900;color:#2a5a9a;font-family:monospace;line-height:1;padding:0 3px 8px;animation:absensiColon 1s step-end infinite;">:</div>
+        <div id="absensiS" style="font-size:clamp(52px,16vw,78px);font-weight:900;color:#00cc66;font-family:monospace;min-width:2ch;text-align:center;line-height:1;text-shadow:0 0 20px rgba(0,200,100,0.15);"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div id="absensiSyncStatus" style="font-size:10px;font-family:monospace;color:#6688aa;background:#0d1a2a;padding:3px 10px;border-radius:10px;border:1px solid #1a3a5a;"><span class="abs-sync-dot"></span>Offline</div>
+        <div id="absensiEmpCount" style="font-size:10px;color:#6a9aff;font-family:monospace;"></div>
+        <button onclick="absensiRefreshEmployees()" style="background:#1a3a5a;border:1px solid #2a5a7a;color:#66bbff;border-radius:10px;padding:3px 10px;font-size:10px;cursor:pointer;font-family:monospace;">&#8635; Refresh</button>
       </div>
     </div>
-
-    <!-- Scan Input -->
-    <div style="background:#0a0a0a;padding:12px 16px;border-bottom:1px solid #1a1a1a;flex-shrink:0;">
+    <div style="background:#0a0a1a;padding:12px 14px 10px;border-bottom:1px solid #1a2a3a;flex-shrink:0;">
       <div style="display:flex;gap:8px;align-items:center;">
         <input id="absensiInput" type="text" inputmode="numeric" autocomplete="off"
           placeholder="Scan atau ketik ID karyawan..."
           onkeydown="if(event.key==='Enter')submitAbsensi()"
-          style="flex:1;background:#111;border:1px solid #333;border-radius:8px;padding:10px 14px;font-size:14px;color:#fff;outline:none;font-family:monospace;letter-spacing:1px;">
-        <button onclick="submitAbsensi()" style="background:#22c55e;border:none;border-radius:8px;padding:10px 18px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;flex-shrink:0;letter-spacing:1px;">SCAN</button>
+          style="flex:1;background:#0d0d22;border:1px solid #2a3a6a;border-radius:10px;padding:11px 14px;font-size:15px;color:#88ddff;font-family:monospace;outline:none;letter-spacing:1px;">
+        <button onclick="submitAbsensi()" style="background:#1a3a7a;border:1px solid #2a5a9a;border-radius:10px;padding:11px 18px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;font-family:monospace;letter-spacing:1px;flex-shrink:0;">SCAN</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;min-height:20px;">
+        <span id="absensiScanMsg" style="font-size:12px;color:#445577;font-family:monospace;">&#9654; scan ID karyawan untuk absensi</span>
+        <span id="absensiStatusBadge" style="padding:2px 12px;border-radius:14px;font-weight:700;font-size:11px;letter-spacing:1px;display:none;"></span>
       </div>
     </div>
-
-    <!-- Scan Result -->
-    <div id="absensiResult" style="background:#000;flex-shrink:0;">
-      <div style="text-align:center;padding:30px 16px;color:#333;font-family:monospace;font-size:12px;">Menunggu scan ID karyawan...</div>
+    <div id="absensiResult" style="background:#0a0a1a;flex-shrink:0;overflow-x:auto;">
+      <div style="text-align:center;padding:20px 16px;color:#2a3a5a;font-family:monospace;font-size:11px;">&#9656; belum ada scan hari ini</div>
     </div>
-
-    <!-- Admin: Kelola Karyawan -->
-    <div id="absensiAdminSection" style="display:none;padding:12px 16px;border-top:1px solid #1a1a1a;flex-shrink:0;">
-      <button onclick="toggleEmpAdmin()" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);color:#60a5fa;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">&#9660; Kelola Karyawan</button>
-      <div id="empAdminPanel" style="display:none;margin-top:10px;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:10px;padding:12px;">
-        <p style="font-size:10px;font-weight:700;color:#9ca3af;margin:0 0 8px;text-transform:uppercase;letter-spacing:1px;">Tambah Karyawan</p>
-        <div style="display:flex;gap:6px;margin-bottom:8px;">
-          <input id="empIdInput" type="text" inputmode="numeric" placeholder="ID (barcode)"
-            style="flex:1;background:#111;border:1px solid #333;border-radius:6px;padding:7px 10px;font-size:12px;color:#fff;outline:none;font-family:monospace;">
-          <input id="empNameInput" type="text" placeholder="Nama Lengkap"
-            style="flex:2;background:#111;border:1px solid #333;border-radius:6px;padding:7px 10px;font-size:12px;color:#fff;outline:none;text-transform:uppercase;">
+    <div id="absensiAdminSection" style="display:none;flex-shrink:0;">
+      <button onclick="toggleEmpAdmin()" style="width:100%;background:#0d0d1e;border:none;border-top:1px solid #1a2a4a;border-bottom:1px solid #1a2a4a;color:#6688bb;padding:8px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;text-align:left;">&#9660; Admin: Import &amp; Kelola Karyawan</button>
+      <div id="empAdminPanel" style="display:none;background:#090912;padding:14px;border-bottom:1px solid #1a2a4a;">
+        <p style="font-size:10px;font-weight:700;color:#6a8cff;margin:0 0 4px;text-transform:uppercase;letter-spacing:1px;">&#128193; Upload Excel (.xlsx)</p>
+        <p style="font-size:10px;color:#334466;margin:0 0 6px;font-family:monospace;">Kolom: <b style="color:#556699;">Emp_no_barcode</b> | Employee Id | Emp_nm | Div | Note1</p>
+        <div id="absensiDropZone"
+          onclick="document.getElementById('absensiFileInput').click()"
+          ondragover="event.preventDefault();this.style.borderColor='#4a8aff';"
+          ondragleave="this.style.borderColor='#2a3a6a';"
+          ondrop="event.preventDefault();this.style.borderColor='#2a3a6a';absensiHandleXLSX(event.dataTransfer.files[0]);"
+          style="border:2px dashed #2a3a6a;border-radius:10px;padding:14px;text-align:center;cursor:pointer;margin-bottom:10px;transition:border-color 0.2s;background:#0d0d22;">
+          <p style="font-size:12px;color:#445577;font-family:monospace;margin:0;">&#128194; Klik atau drag XLSX ke sini</p>
         </div>
-        <button onclick="addAbsensiEmployee()" style="background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);color:#34d399;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;width:100%;margin-bottom:12px;">+ Tambah</button>
-        <p style="font-size:10px;font-weight:700;color:#9ca3af;margin:0 0 6px;text-transform:uppercase;letter-spacing:1px;">Daftar Karyawan</p>
-        <div id="empAdminList"></div>
+        <input type="file" id="absensiFileInput" accept=".xlsx,.xls" style="display:none" onchange="absensiHandleXLSX(this.files[0])">
+        <p style="font-size:10px;font-weight:700;color:#6a8cff;margin:10px 0 4px;text-transform:uppercase;letter-spacing:1px;">&#128279; Google Sheets (Opsional)</p>
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <input id="absensiSheetUrl" type="url" placeholder="https://script.google.com/macros/s/..."
+            style="flex:1;background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:7px 10px;font-size:11px;color:#88aacc;font-family:monospace;outline:none;">
+          <button onclick="absensiSyncSheet()" style="background:#1a4a3a;border:1px solid #2a6a4a;color:#00cc88;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;flex-shrink:0;">Sync</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <p style="font-size:10px;font-weight:700;color:#6a8cff;margin:0;text-transform:uppercase;letter-spacing:1px;">&#128101; Daftar Karyawan</p>
+          <span id="absensiEmpCountAdmin" style="font-size:10px;color:#6a9aff;font-family:monospace;"></span>
+        </div>
+        <div id="empAdminList" style="max-height:200px;overflow-y:auto;background:#0d0d22;border-radius:8px;border:1px solid #1a2a4a;padding:4px 8px;"></div>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -4832,8 +4851,7 @@ function startAbsensiClock(){
     var now=new Date();
     var days=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
     var months=['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
-    var ds=days[now.getDay()]+' '+now.getDate()+' '+months[now.getMonth()]+' '+now.getFullYear();
-    if($('absensiDate'))$('absensiDate').textContent=ds;
+    if($('absensiDate'))$('absensiDate').textContent=days[now.getDay()]+' '+now.getDate()+' '+months[now.getMonth()]+' '+now.getFullYear();
     if($('absensiH'))$('absensiH').textContent=String(now.getHours()).padStart(2,'0');
     if($('absensiM'))$('absensiM').textContent=String(now.getMinutes()).padStart(2,'0');
     if($('absensiS'))$('absensiS').textContent=String(now.getSeconds()).padStart(2,'0');
@@ -4843,19 +4861,56 @@ function startAbsensiClock(){
 }
 function stopAbsensiClock(){if(_absensiClockInterval){clearInterval(_absensiClockInterval);_absensiClockInterval=null;}}
 
+function updateAbsensiSyncStatus(state,msg){
+  var el=$('absensiSyncStatus');if(!el)return;
+  var dotClass='abs-sync-dot'+(state==='online'?' online':state==='syncing'?' syncing':state==='error'?' error':'');
+  el.innerHTML='<span class="'+dotClass+'"></span>'+(msg||state);
+}
+
+function absensiRefreshEmployees(){
+  updateAbsensiSyncStatus('syncing','Memuat...');
+  fetch(API_BASE_URL+'/absensi-employees')
+  .then(function(r){return r.json();})
+  .then(function(j){
+    var count=j.employees?j.employees.length:0;
+    if($('absensiEmpCount'))$('absensiEmpCount').textContent=count+' karyawan';
+    if($('absensiEmpCountAdmin'))$('absensiEmpCountAdmin').textContent=count+' terdaftar';
+    updateAbsensiSyncStatus('online','Online \u00b7 '+count+' emp');
+    renderAbsensiEmpList(j.employees||[]);
+  })
+  .catch(function(){updateAbsensiSyncStatus('error','Offline');});
+}
+
 function submitAbsensi(){
   var inp=$('absensiInput');if(!inp)return;
   var empId=inp.value.trim();if(!empId)return;
   inp.value='';inp.focus();
-  var res=$('absensiResult');
-  if(res)res.innerHTML='<div style="padding:16px;text-align:center;color:#9ca3af;font-family:monospace;font-size:12px;">Menyimpan...</div>';
+  var msg=$('absensiScanMsg');
+  var badge=$('absensiStatusBadge');
+  if(msg){msg.textContent='Menyimpan...';msg.style.color='#6688aa';}
+  if(badge)badge.style.display='none';
   fetch(API_BASE_URL+'/absensi/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employeeId:empId})})
   .then(function(r){return r.json();})
   .then(function(j){
-    if(j.success)renderAbsensiResult(j);
-    else if(res)res.innerHTML='<div style="padding:16px;color:#f87171;font-family:monospace;font-size:12px;">Error: '+(j.message||'Gagal')+'</div>';
+    if(j.success){
+      var isIn=j.status==='In';
+      if(msg){
+        msg.textContent=': '+j.employeeId+(j.employeeName?' \u2192 '+j.employeeName:' (ID tidak terdaftar)');
+        msg.style.color=j.employeeName?'#88aacc':'#ff8844';
+      }
+      if(badge){
+        badge.style.display='inline-block';
+        badge.textContent=j.status.toUpperCase();
+        badge.style.background=isIn?'#0a3a2a':'#3a1a0a';
+        badge.style.color=isIn?'#00ff88':'#ff6644';
+        badge.style.border='1px solid '+(isIn?'#00ff8855':'#ff664455');
+      }
+      renderAbsensiResult(j);
+    }else{
+      if(msg){msg.textContent='Error: '+(j.message||'Gagal');msg.style.color='#ff4444';}
+    }
   })
-  .catch(function(e){if(res)res.innerHTML='<div style="padding:16px;color:#f87171;font-family:monospace;font-size:12px;">Error: '+e.message+'</div>';});
+  .catch(function(e){if(msg){msg.textContent='Error: '+e.message;msg.style.color='#ff4444';}});
 }
 
 function minsToHMM(m){return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
@@ -4863,42 +4918,38 @@ function minsToHMM(m){return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
 function renderAbsensiResult(j){
   var res=$('absensiResult');if(!res)return;
   var records=j.records||[];
+  var inC='#00ff88',outC='#ff6644';
   var lastStatus=records.length?records[records.length-1].status:'';
   var totOn=records.reduce(function(s,r){return s+(r.onDutyMinutes||0);},0);
   var totOff=records.reduce(function(s,r){return s+(r.offDutyMinutes||0);},0);
-  var inC='#22c55e',outC='#f87171';
-  var sc=j.status==='In'?inC:outC;
-  var h='<div style="background:#0a0a0a;padding:10px 16px;border-bottom:1px solid #1a1a1a;">'
-    +'<p style="color:#22c55e;font-size:11px;font-family:monospace;margin:0 0 2px;">: Successfully saved ('+j.status+')...</p>'
-    +'<p style="color:#fff;font-size:13px;font-weight:700;font-family:monospace;margin:0 0 2px;">: '+j.employeeId+'  '+(j.employeeName||'<span style="color:#f97316">ID TIDAK TERDAFTAR</span>')+'</p>'
-    +'<p style="color:'+sc+';font-size:11px;font-family:monospace;margin:0;">(0 °C)</p>'
+  var h='<div style="background:#0d0d22;padding:7px 10px;border-bottom:1px solid #1a2a4a;">'
+    +'<span style="font-size:11px;color:#00cc88;font-family:monospace;">\u2713 Successfully saved ('+j.status+')...</span>'
     +'</div>'
-    +'<div style="overflow-x:auto;background:#000;">'
+    +'<div style="overflow-x:auto;">'
     +'<table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:12px;">'
-    +'<thead><tr style="background:#1a1a1a;">'
-    +'<th style="padding:6px 8px;color:#9ca3af;border:1px solid #222;text-align:center;">Id</th>'
-    +'<th style="padding:6px 8px;color:#9ca3af;border:1px solid #222;text-align:center;">Time</th>'
-    +'<th style="padding:6px 8px;color:#9ca3af;border:1px solid #222;text-align:center;">Status</th>'
-    +'<th style="padding:6px 8px;color:#9ca3af;border:1px solid #222;text-align:right;">On Duty</th>'
-    +'<th style="padding:6px 8px;color:#9ca3af;border:1px solid #222;text-align:right;">Off Duty</th>'
+    +'<thead><tr style="background:#0d0d22;">'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;font-weight:600;">Id</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;font-weight:600;">Time</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;font-weight:600;">Status</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:right;font-weight:600;">On Duty</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:right;font-weight:600;">Off Duty</th>'
     +'</tr></thead><tbody>';
   records.forEach(function(r,idx){
-    var sc2=r.status==='In'?inC:outC;
-    h+='<tr>'
-      +'<td style="padding:5px 8px;color:#e5e7eb;border:1px solid #1a1a1a;text-align:center;">'+(idx+1)+'</td>'
-      +'<td style="padding:5px 8px;color:#e5e7eb;border:1px solid #1a1a1a;text-align:center;">'+r.timeStr+'</td>'
-      +'<td style="padding:5px 8px;text-align:center;border:1px solid #1a1a1a;"><b style="color:'+sc2+';">'+r.status+'</b></td>'
-      +'<td style="padding:5px 8px;color:#e5e7eb;border:1px solid #1a1a1a;text-align:right;">'+(r.onDutyMinutes||0)+'</td>'
-      +'<td style="padding:5px 8px;color:#e5e7eb;border:1px solid #1a1a1a;text-align:right;">'+(r.offDutyMinutes||0)+'</td>'
+    var sc=r.status==='In'?inC:outC;
+    h+='<tr style="border-bottom:1px solid #12122a;">'
+      +'<td style="padding:8px;color:#88aacc;border:1px solid #12122a;text-align:center;">'+(idx+1)+'</td>'
+      +'<td style="padding:8px;color:#88ddff;font-weight:600;border:1px solid #12122a;text-align:center;">'+r.timeStr+'</td>'
+      +'<td style="padding:8px;text-align:center;border:1px solid #12122a;"><b style="color:'+sc+';">'+r.status+'</b></td>'
+      +'<td style="padding:8px;color:#ffcc44;font-weight:600;border:1px solid #12122a;text-align:right;">'+(r.onDutyMinutes>0?minsToHMM(r.onDutyMinutes):'0')+'</td>'
+      +'<td style="padding:8px;color:#ff8844;font-weight:600;border:1px solid #12122a;text-align:right;">'+(r.offDutyMinutes>0?minsToHMM(r.offDutyMinutes):'0')+'</td>'
       +'</tr>';
   });
   var lsc=lastStatus==='In'?inC:outC;
-  h+='<tr style="background:#1a1a1a;font-weight:700;">'
-    +'<td style="padding:6px 8px;color:#fff;border:1px solid #222;text-align:center;">Final</td>'
-    +'<td style="padding:6px 8px;border:1px solid #222;"></td>'
-    +'<td style="padding:6px 8px;text-align:center;border:1px solid #222;"><b style="color:'+lsc+';">'+(lastStatus||'-')+'</b></td>'
-    +'<td style="padding:6px 8px;color:#22c55e;border:1px solid #222;text-align:right;">'+minsToHMM(totOn)+'</td>'
-    +'<td style="padding:6px 8px;color:#f87171;border:1px solid #222;text-align:right;">'+minsToHMM(totOff)+'</td>'
+  h+='<tr style="background:#0a0a2a;border-top:2px solid #2a4a7a;">'
+    +'<td colspan="2" style="padding:8px;color:#88bbee;border:1px solid #1a2a4a;font-weight:700;letter-spacing:1px;">Final</td>'
+    +'<td style="padding:8px;text-align:center;border:1px solid #1a2a4a;"><b style="color:'+lsc+';">'+(lastStatus||'\u2014')+'</b></td>'
+    +'<td style="padding:8px;color:#ffcc44;font-weight:700;border:1px solid #1a2a4a;text-align:right;">'+minsToHMM(totOn)+'</td>'
+    +'<td style="padding:8px;color:#ff8844;font-weight:700;border:1px solid #1a2a4a;text-align:right;">'+minsToHMM(totOff)+'</td>'
     +'</tr>'
     +'</tbody></table></div>';
   res.innerHTML=h;
@@ -4908,57 +4959,114 @@ var _showEmpAdmin=false;
 function toggleEmpAdmin(){
   _showEmpAdmin=!_showEmpAdmin;
   var p=$('empAdminPanel');if(!p)return;
-  if(_showEmpAdmin){p.style.display='block';loadAbsensiEmployees();}
+  if(_showEmpAdmin){p.style.display='block';absensiRefreshEmployees();absensiLoadSheetUrl();}
   else p.style.display='none';
 }
-function loadAbsensiEmployees(){
-  var el=$('empAdminList');if(!el)return;
-  el.innerHTML='<p style="font-size:10px;color:#6b7280;text-align:center;">Memuat...</p>';
-  fetch(API_BASE_URL+'/absensi-employees')
+
+function absensiLoadSheetUrl(){
+  fetch(API_BASE_URL+'/absensi/sheet-url')
   .then(function(r){return r.json();})
-  .then(function(j){
-    if(!j.success){el.innerHTML='<p style="color:#f87171;font-size:10px;">Gagal</p>';return;}
-    var emps=j.employees||[];
-    if(!emps.length){el.innerHTML='<p style="font-size:10px;color:#6b7280;text-align:center;padding:12px 0;">Belum ada karyawan terdaftar</p>';return;}
-    var h='';
-    emps.forEach(function(e){
-      var safeId=e.id.replace(/'/g,'');
-      h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1a1a1a;">'
-        +'<div style="flex:1;min-width:0;">'
-        +'<p style="font-size:11px;font-weight:700;color:#e5e7eb;margin:0;font-family:monospace;">'+e.name+'</p>'
-        +'<p style="font-size:9px;color:#6b7280;margin:0;">ID: '+e.id+'</p>'
-        +'</div>'
-        +'<button onclick="deleteAbsensiEmployee(\'' +safeId+ '\')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:6px;padding:3px 8px;font-size:9px;cursor:pointer;">Hapus</button>'
-        +'</div>';
-    });
-    el.innerHTML=h;
-  })
-  .catch(function(e){el.innerHTML='<p style="color:#f87171;font-size:10px;">Error: '+e.message+'</p>';});
+  .then(function(j){if(j.url&&$('absensiSheetUrl'))$('absensiSheetUrl').value=j.url;})
+  .catch(function(){});
 }
-function addAbsensiEmployee(){
-  var id=($('empIdInput')?$('empIdInput').value.trim():'');
-  var name=($('empNameInput')?$('empNameInput').value.trim().toUpperCase():'');
-  if(!id||!name){showToast('ID dan Nama wajib diisi','error');return;}
-  fetch(API_BASE_URL+'/absensi-employee',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,id:id,name:name})})
+
+function renderAbsensiEmpList(employees){
+  var el=$('empAdminList');if(!el)return;
+  if(!employees.length){
+    el.innerHTML='<p style="font-size:10px;color:#334466;text-align:center;padding:12px;font-family:monospace;">Belum ada karyawan \u2014 upload XLSX atau sync dari Google Sheets</p>';
+    return;
+  }
+  var h='';
+  employees.forEach(function(e){
+    var barcode=e.barcode||e.id||'';
+    h+='<div data-barcode="'+barcode+'" style="display:flex;align-items:center;gap:6px;padding:5px 2px;border-bottom:1px solid #1a2a4a;">'
+      +'<div style="flex:1;min-width:0;">'
+      +'<p style="font-size:11px;font-weight:700;color:#88aacc;margin:0;font-family:monospace;">'+e.name+'</p>'
+      +'<p style="font-size:9px;color:#445577;margin:0;font-family:monospace;">'+barcode+(e.division?' \u00b7 '+e.division:'')+'</p>'
+      +'</div>'
+      +'<button onclick="deleteAbsensiEmployee(this.closest(\'[data-barcode]\').dataset.barcode)" style="background:transparent;border:1px solid #2a1a1a;color:#445577;border-radius:6px;padding:2px 8px;font-size:9px;cursor:pointer;">\uD83D\uDDD1</button>'
+      +'</div>';
+  });
+  el.innerHTML=h;
+}
+
+function absensiHandleXLSX(file){
+  if(!file)return;
+  if(typeof XLSX==='undefined'){showToast('SheetJS belum dimuat','error');return;}
+  showToast('Membaca '+file.name+'...','info');
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var data=XLSX.utils.sheet_to_json(ws,{defval:''});
+      var employees=[];
+      data.forEach(function(row){
+        var barcode=String(row['Emp_no_barcode']||row['barcode']||row['Barcode']||row['BARCODE']||'').trim();
+        var empId=String(row['Employee Id']||row['employee_id']||row['ID']||row['EMP_ID']||barcode).trim();
+        var name=String(row['Emp_nm']||row['Employee Name']||row['Nama']||row['name']||row['NAME']||'').trim().toUpperCase();
+        var division=String(row['Div']||row['Division']||row['Divisi']||row['DEPT']||'').trim();
+        var note=String(row['Note1']||row['Note']||row['Catatan']||'').trim();
+        if(barcode&&name)employees.push({barcode:barcode,empId:empId||barcode,name:name,division:division,note:note});
+      });
+      if(!employees.length){showToast('Tidak ada data valid. Periksa format kolom.','error');return;}
+      showToast('Ditemukan '+employees.length+' karyawan, menyimpan...','info');
+      absensiUploadEmployees(employees);
+    }catch(err){showToast('Error baca XLSX: '+err.message,'error');}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function absensiUploadEmployees(employees){
+  fetch(API_BASE_URL+'/absensi/upload-employees',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,employees:employees})})
   .then(function(r){return r.json();})
   .then(function(j){
-    if(j.success){showToast('Karyawan berhasil ditambahkan','success');if($('empIdInput'))$('empIdInput').value='';if($('empNameInput'))$('empNameInput').value='';loadAbsensiEmployees();}
-    else showToast(j.message||'Gagal','error');
+    if(j.success){showToast(j.total+' karyawan berhasil diimpor!','success');absensiRefreshEmployees();}
+    else showToast(j.message||'Gagal import','error');
   })
   .catch(function(e){showToast('Error: '+e.message,'error');});
 }
-function deleteAbsensiEmployee(id){
-  if(!confirm('Hapus karyawan ID: '+id+'?'))return;
-  fetch(API_BASE_URL+'/absensi-employee/'+encodeURIComponent(id),{method:'DELETE',headers:{'Content-Type':'application/json'},
+
+function absensiSyncSheet(){
+  var urlInp=$('absensiSheetUrl');
+  var url=urlInp?urlInp.value.trim():'';
+  if(!url){showToast('Masukkan URL Google Apps Script','error');return;}
+  updateAbsensiSyncStatus('syncing','Fetching...');
+  fetch(API_BASE_URL+'/absensi/sheet-url',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,url:url})}).catch(function(){});
+  fetch(url+'?action=getEmployees',{mode:'cors'})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var rows=d.employees||d.data||d;
+    if(!Array.isArray(rows)||!rows.length){updateAbsensiSyncStatus('error','Data kosong');showToast('Data dari Sheets kosong atau format tidak sesuai','error');return;}
+    var employees=rows.map(function(row){
+      return {
+        barcode:String(row['Emp_no_barcode']||row['barcode']||row['employee_id']||'').trim(),
+        empId:String(row['Employee Id']||row['employee_id']||'').trim(),
+        name:String(row['Emp_nm']||row['Employee Name']||row['name']||'').trim().toUpperCase(),
+        division:String(row['Div']||row['division']||'').trim()
+      };
+    }).filter(function(e){return e.barcode&&e.name;});
+    if(!employees.length){updateAbsensiSyncStatus('error','Tidak ada data valid');showToast('Tidak ada karyawan valid dari Sheets','error');return;}
+    absensiUploadEmployees(employees);
+  })
+  .catch(function(e){updateAbsensiSyncStatus('error','Gagal');showToast('Gagal fetch dari Sheets: '+e.message,'error');});
+}
+
+function deleteAbsensiEmployee(barcode){
+  if(!barcode){showToast('Barcode tidak valid','error');return;}
+  if(!confirm('Hapus karyawan dengan barcode: '+barcode+'?'))return;
+  fetch(API_BASE_URL+'/absensi-employee/'+encodeURIComponent(barcode),{method:'DELETE',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({adminPassword:ADMIN_PASSWORD})})
   .then(function(r){return r.json();})
   .then(function(j){
-    if(j.success){showToast('Karyawan dihapus','success');loadAbsensiEmployees();}
+    if(j.success){showToast('Karyawan dihapus','success');absensiRefreshEmployees();}
     else showToast(j.message||'Gagal','error');
   })
   .catch(function(e){showToast('Error: '+e.message,'error');});
 }
+
 
 // ===== PROMO EXCLUSION MANAGEMENT =====
 var _excludedPanel=false;
