@@ -1590,7 +1590,88 @@ loadCurrentSetting();
       return send({ success: true });
     }
 
-    return send({ error: "Not found" }, 404);
+    // =================== ABSENSI ===================
+
+    // POST /absensi/scan — scan barcode karyawan, auto In/Out, hitung menit kerja
+    if (path === "/absensi/scan" && method === "POST") {
+      const { employeeId: rawId } = body;
+      if (!rawId) return send({ success: false, message: "employeeId wajib diisi" }, 400);
+      const empId = String(rawId).trim();
+      const today = new Date().toISOString().slice(0, 10);
+      const now = new Date();
+      // Format HH:MM:SS in WIB (UTC+8) — use server local time
+      const pad = n => String(n).padStart(2, "0");
+      const timeStr = pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
+
+      // Look up employee name
+      const employees = await getJson("absensi-employees", []);
+      const emp = employees.find(e => e.id === empId);
+      const empName = emp ? emp.name : "";
+
+      // Get today's all records
+      const todayKey = `absensi:${today}`;
+      const allRecords = await getJson(todayKey, []);
+      const empRecords = allRecords.filter(r => r.employeeId === empId);
+
+      // Auto In/Out toggle
+      const lastRec = empRecords.length ? empRecords[empRecords.length - 1] : null;
+      const status = lastRec ? (lastRec.status === "In" ? "Out" : "In") : "In";
+
+      // Calculate minutes
+      let onDutyMinutes = 0, offDutyMinutes = 0;
+      const toSecs = t => { const p = t.split(":").map(Number); return p[0]*3600 + p[1]*60 + p[2]; };
+      const nowSecs = toSecs(timeStr);
+      if (status === "Out" && lastRec && lastRec.status === "In") {
+        onDutyMinutes = Math.max(0, Math.floor((nowSecs - toSecs(lastRec.timeStr)) / 60));
+      } else if (status === "In" && lastRec && lastRec.status === "Out") {
+        offDutyMinutes = Math.max(0, Math.floor((nowSecs - toSecs(lastRec.timeStr)) / 60));
+      }
+
+      const newRecord = { employeeId: empId, employeeName: empName, timeStr, status, onDutyMinutes, offDutyMinutes, savedAt: now.toISOString() };
+      allRecords.push(newRecord);
+      await setJson(todayKey, allRecords);
+
+      const updatedEmpRecords = allRecords.filter(r => r.employeeId === empId);
+      return send({ success: true, employeeId: empId, employeeName: empName, status, timeStr, records: updatedEmpRecords });
+    }
+
+    // GET /absensi/records — get records (query: ?employeeId=xxx&date=yyyy-mm-dd)
+    if (path === "/absensi/records" && method === "GET") {
+      const date = query.date || new Date().toISOString().slice(0, 10);
+      let records = await getJson(`absensi:${date}`, []);
+      if (query.employeeId) records = records.filter(r => r.employeeId === query.employeeId);
+      return send({ success: true, records, date });
+    }
+
+    // GET /absensi-employees — list all employees (public, for name lookup)
+    if (path === "/absensi-employees" && method === "GET") {
+      const employees = await getJson("absensi-employees", []);
+      return send({ success: true, employees });
+    }
+
+    // POST /absensi-employee — add employee (admin only)
+    if (path === "/absensi-employee" && method === "POST") {
+      const { adminPassword, id, name } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      if (!id || !name) return send({ success: false, message: "id dan name wajib diisi" }, 400);
+      const employees = await getJson("absensi-employees", []);
+      if (employees.find(e => e.id === String(id).trim())) return send({ success: false, message: "ID sudah terdaftar" }, 400);
+      employees.push({ id: String(id).trim(), name: String(name).trim().toUpperCase() });
+      await setJson("absensi-employees", employees);
+      return send({ success: true, total: employees.length });
+    }
+
+    // DELETE /absensi-employee/:id — remove employee (admin only)
+    if (path.startsWith("/absensi-employee/") && method === "DELETE") {
+      const { adminPassword } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const empId = decodeURIComponent(path.replace("/absensi-employee/", "").trim());
+      const employees = (await getJson("absensi-employees", [])).filter(e => e.id !== empId);
+      await setJson("absensi-employees", employees);
+      return send({ success: true, total: employees.length });
+    }
+
+        return send({ error: "Not found" }, 404);
   } catch (err) {
     return send({ error: "Internal server error", detail: String(err) }, 500);
   }
