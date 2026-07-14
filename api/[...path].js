@@ -1605,7 +1605,7 @@ loadCurrentSetting();
 
       // Look up employee name
       const employees = await getJson("absensi-employees", []);
-      const emp = employees.find(e => e.id === empId);
+      const emp = employees.find(e => e.barcode === empId || e.empId === empId || e.id === empId);
       const empName = emp ? emp.name : "";
 
       // Get today's all records
@@ -1669,6 +1669,38 @@ loadCurrentSetting();
       const employees = (await getJson("absensi-employees", [])).filter(e => e.id !== empId);
       await setJson("absensi-employees", employees);
       return send({ success: true, total: employees.length });
+    }
+
+        // POST /absensi/upload-employees — bulk import from XLSX (replaces employee list)
+    if (path === "/absensi/upload-employees" && method === "POST") {
+      const { adminPassword, employees } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      if (!Array.isArray(employees)) return send({ success: false, message: "employees harus berupa array" }, 400);
+      const cleaned = employees
+        .filter(e => e.barcode && e.name)
+        .map(e => ({
+          barcode: String(e.barcode).trim(),
+          empId: String(e.empId || e.barcode).trim(),
+          name: String(e.name).trim().toUpperCase(),
+          division: String(e.division || '').trim(),
+          note: String(e.note || '').trim()
+        }));
+      await setJson("absensi-employees", cleaned);
+      return send({ success: true, total: cleaned.length });
+    }
+
+    // GET /absensi/sheet-url — retrieve stored Google Sheets URL
+    if (path === "/absensi/sheet-url" && method === "GET") {
+      const url = await getJson("absensi-sheet-url", "");
+      return send({ success: true, url });
+    }
+
+    // POST /absensi/sheet-url — save Google Sheets URL
+    if (path === "/absensi/sheet-url" && method === "POST") {
+      const { adminPassword, url } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      await setJson("absensi-sheet-url", String(url || "").trim());
+      return send({ success: true });
     }
 
         return send({ error: "Not found" }, 404);
