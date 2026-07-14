@@ -1719,54 +1719,53 @@ loadCurrentSetting();
       return send({ success: true });
     }
 
-        // POST /absensi/sync-employees — server fetches CSV from Google Sheets, saves to DB
+        // GET /absensi/sheet-url — get stored sheet URL + last sync time
+    if (path === "/absensi/sheet-url" && method === "GET") {
+      const url = await getJson("absensi-sheet-url", "");
+      const syncTime = await getJson("absensi-sync-time", "");
+      return send({ success: true, url, syncTime });
+    }
+
+        // POST /absensi/sync-employees — server-side fetch CSV from Google Sheets
     if (path === "/absensi/sync-employees" && method === "POST") {
       const { adminPassword, sheetUrl } = body;
       if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
       if (!sheetUrl) return send({ success: false, message: "sheetUrl wajib diisi" }, 400);
-
       const sheetIdMatch = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
       let employees = [];
-
       try {
         if (sheetIdMatch) {
-          // Google Sheets URL — fetch CSV server-side (no CORS issue)
           const sheetId = sheetIdMatch[1];
           const gidMatch = sheetUrl.match(/[#&?]gid=(\d+)/);
           const gid = gidMatch ? gidMatch[1] : '0';
           const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
           const resp = await fetch(csvUrl, { redirect: 'follow' });
-          if (!resp.ok) return send({ success: false, message: `Gagal fetch spreadsheet (HTTP ${resp.status}). Pastikan spreadsheet sudah di-share public.` }, 502);
+          if (!resp.ok) return send({ success: false, message: `Gagal fetch spreadsheet (HTTP ${resp.status}). Pastikan di-share public.` }, 502);
           const csvText = await resp.text();
           const rows = parseCSV(csvText);
           employees = rows.map(row => {
-            const barcode = String(row['Emp_no_barcode'] || row['barcode'] || row['BARCODE'] || row['ID Barcode'] || '').trim();
-            const empId   = String(row['Employee Id'] || row['employee_id'] || row['EMP_ID'] || barcode).trim();
-            const name    = String(row['Emp_nm'] || row['Employee Name'] || row['Nama'] || row['NAME'] || '').trim().toUpperCase();
-            const division= String(row['Div'] || row['Division'] || row['Divisi'] || row['DEPT'] || '').trim();
-            const note    = String(row['Note1'] || row['Note'] || '').trim();
+            const barcode  = String(row['Emp_no_barcode']||row['barcode']||row['BARCODE']||row['ID Barcode']||'').trim();
+            const empId    = String(row['Employee Id']||row['employee_id']||row['EMP_ID']||barcode).trim();
+            const name     = String(row['Emp_nm']||row['Employee Name']||row['Nama']||row['NAME']||'').trim().toUpperCase();
+            const division = String(row['Div']||row['Division']||row['Divisi']||row['DEPT']||'').trim();
+            const note     = String(row['Note1']||row['Note']||'').trim();
             return { barcode, empId, name, division, note };
           }).filter(e => e.barcode && e.name);
         } else {
-          // Assume Google Apps Script URL — fetch JSON
           const resp = await fetch(sheetUrl + '?action=getEmployees', { redirect: 'follow' });
           if (!resp.ok) return send({ success: false, message: `Gagal fetch GAS (HTTP ${resp.status})` }, 502);
           const data = await resp.json();
-          const rows = Array.isArray(data) ? data : (data.employees || data.data || []);
+          const rows = Array.isArray(data) ? data : (data.employees||data.data||[]);
           employees = rows.map(row => ({
-            barcode:  String(row['Emp_no_barcode'] || row['barcode'] || row['employee_id'] || '').trim(),
-            empId:    String(row['Employee Id'] || row['employee_id'] || '').trim(),
-            name:     String(row['Emp_nm'] || row['Employee Name'] || row['name'] || '').trim().toUpperCase(),
-            division: String(row['Div'] || row['division'] || '').trim(),
-            note:     String(row['Note1'] || row['note'] || '').trim()
+            barcode:  String(row['Emp_no_barcode']||row['barcode']||row['employee_id']||'').trim(),
+            empId:    String(row['Employee Id']||row['employee_id']||'').trim(),
+            name:     String(row['Emp_nm']||row['Employee Name']||row['name']||'').trim().toUpperCase(),
+            division: String(row['Div']||row['division']||'').trim(),
+            note:     String(row['Note1']||row['note']||'').trim()
           })).filter(e => e.barcode && e.name);
         }
-      } catch (fetchErr) {
-        return send({ success: false, message: 'Error fetch: ' + fetchErr.message }, 502);
-      }
-
-      if (!employees.length) return send({ success: false, message: 'Tidak ada data karyawan valid. Periksa nama kolom: Emp_no_barcode, Emp_nm.' }, 400);
-
+      } catch (fetchErr) { return send({ success: false, message: 'Fetch error: '+fetchErr.message }, 502); }
+      if (!employees.length) return send({ success: false, message: 'Tidak ada data valid. Periksa kolom: Emp_no_barcode, Emp_nm.' }, 400);
       await setJson("absensi-employees", employees);
       await setJson("absensi-sheet-url", sheetUrl);
       const syncTime = new Date().toISOString();
@@ -1774,11 +1773,87 @@ loadCurrentSetting();
       return send({ success: true, total: employees.length, syncTime });
     }
 
-    // GET /absensi/sheet-url — get stored sheet URL + last sync time
+    // GET /absensi/sheet-url
     if (path === "/absensi/sheet-url" && method === "GET") {
       const url = await getJson("absensi-sheet-url", "");
       const syncTime = await getJson("absensi-sync-time", "");
       return send({ success: true, url, syncTime });
+    }
+
+    // GET /absensi/summary?date=YYYY-MM-DD
+    if (path === "/absensi/summary" && method === "GET") {
+      const date = (query.date || new Date().toISOString().substring(0,10));
+      const records = await getJson(`absensi-records-${date}`, []);
+      const employees = await getJson("absensi-employees", []);
+      // Build per-employee lookup
+      const empMap = {};
+      employees.forEach(e => {
+        if (e.barcode) empMap[e.barcode] = e;
+        if (e.empId)   empMap[e.empId]   = empMap[e.empId] || e;
+      });
+      // Group records by employeeId
+      const grouped = {};
+      records.forEach(r => {
+        const key = r.employeeId || r.id || '?';
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(r);
+      });
+      // Build summary rows
+      const summary = Object.entries(grouped).map(([empId, recs]) => {
+        const emp = empMap[empId] || {};
+        const sorted = recs.slice().sort((a,b) => (a.timestamp||0)-(b.timestamp||0));
+        const inRecs  = sorted.filter(r => r.status === 'In');
+        const outRecs = sorted.filter(r => r.status === 'Out');
+        const firstIn  = inRecs.length  ? inRecs[0].timeStr  : null;
+        const lastOut  = outRecs.length ? outRecs[outRecs.length-1].timeStr : null;
+        // Compute on-duty / off-duty from alternating pairs
+        let totalOnDuty = 0, totalOffDuty = 0;
+        for (let i = 0; i < sorted.length - 1; i++) {
+          const cur  = sorted[i];
+          const next = sorted[i+1];
+          const mins = Math.round(((next.timestamp||0)-(cur.timestamp||0))/60000);
+          if (cur.status === 'In')  totalOnDuty  += mins;
+          else                      totalOffDuty += mins;
+        }
+        return {
+          employeeId:   empId,
+          employeeName: emp.name || null,
+          division:     emp.division || null,
+          date,
+          records:      sorted.map(r => ({ timeStr: r.timeStr, status: r.status, timestamp: r.timestamp })),
+          firstIn,
+          lastOut,
+          totalOnDuty,
+          totalOffDuty,
+          scanCount:    sorted.length,
+          status:       inRecs.length > 0 ? 'Hadir' : 'Tidak Hadir'
+        };
+      });
+      // Also include registered employees with 0 scans (absent)
+      employees.forEach(emp => {
+        const key = emp.barcode || emp.empId;
+        if (key && !grouped[key]) {
+          summary.push({
+            employeeId:   emp.barcode || emp.empId,
+            employeeName: emp.name,
+            division:     emp.division || null,
+            date,
+            records:      [],
+            firstIn:      null,
+            lastOut:      null,
+            totalOnDuty:  0,
+            totalOffDuty: 0,
+            scanCount:    0,
+            status:       'Tidak Hadir'
+          });
+        }
+      });
+      summary.sort((a,b) => {
+        const na = a.employeeName||a.employeeId||'';
+        const nb = b.employeeName||b.employeeId||'';
+        return na.localeCompare(nb);
+      });
+      return send({ success: true, date, total: summary.length, summary });
     }
 
         return send({ error: "Not found" }, 404);
