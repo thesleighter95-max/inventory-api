@@ -5104,10 +5104,11 @@ function absensiLoadSummary(){
         employeeId:r.employeeId,
         employeeName:r.employeeName,
         division:r.division||'',
-        firstIn:'-',lastOut:'-',
+        firstIn:normalizeTimeStr(r.firstIn)||'-',
+        lastOut:normalizeTimeStr(r.lastOut)||'-',
         totalOnDuty:r.totalOnDuty||0,
         totalOffDuty:r.totalOffDuty||0,
-        scanCount:0,
+        scanCount:r.scanCount||0,
         status:(r.lastStatus==='In'||r.lastStatus==='Out')?'Hadir':'Tidak Hadir'
       };
     });
