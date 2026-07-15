@@ -1708,6 +1708,7 @@ function restoreSession(){
     loadMaintenanceStatus();loadPwResetRequests();
   }else{
     currentUserNameInv=sess.n;currentUsernameRaw=sess.u;isAdmin=false;
+    absensiLoadAllowedUsers(function(){renderUserNav();});
     $("mainApp").classList.remove("hidden");setMarquee(true);
     renderUserNav();updateUserInfo(sess.n);tampilkanUpdate();
     updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
@@ -1993,7 +1994,8 @@ function doUserLogin(namaLengkap,user){
   currentUserNameInv=namaLengkap;currentUsernameRaw=user;isAdmin=false;kirimLog(user);kirimAktivitas("login","User login: "+namaLengkap);
   sessionSave(namaLengkap,user,false);
   $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
-  renderUserNav();updateUserInfo(namaLengkap);tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
+  absensiLoadAllowedUsers(function(){renderUserNav();});
+  updateUserInfo(namaLengkap);tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
   // Cek lokasi user setelah login berhasil (silent — tidak blokir akses)
   (function kirimLokasiUser(username){
     function kirimKeServer(lat,lng,accuracy,source){
@@ -4995,34 +4997,56 @@ function renderAbsensiResult(j){
 
 var _showEmpAdmin=false;
 var _gasUrl=localStorage.getItem('absensi_gas_url')||'';
-var _absensiAllowedUsers=JSON.parse(localStorage.getItem('absensi_allowed_users')||'[]');
+var _absensiAllowedUsers=[];
 function canAccessAbsensi(){return isAdmin||_absensiAllowedUsers.indexOf(currentUsernameRaw)!==-1;}
+function absensiLoadAllowedUsers(cb){
+  fetch(API_BASE_URL+'/absensi/allowed-users')
+  .then(function(r){return r.json();})
+  .then(function(j){
+    _absensiAllowedUsers=j.users||[];
+    if(cb)cb(_absensiAllowedUsers);
+  }).catch(function(){if(cb)cb([]);});
+}
 function absensiSaveAllowedUsers(){
   var inp=$('absensiAllowedInput');
   var raw=inp?inp.value.trim():'';
   var list=raw?raw.split(/[
 ,]+/).map(function(s){return s.trim();}).filter(Boolean):[];
-  _absensiAllowedUsers=list;
-  localStorage.setItem('absensi_allowed_users',JSON.stringify(list));
-  showToast('Daftar user disimpan: '+list.length+' user','success');
   var info=$('absensiAllowedInfo');
-  if(info)info.textContent=list.length?list.join(', '):'(kosong — hanya admin)';
+  var btn=inp?inp.parentElement.querySelector('button'):null;
+  if(info)info.textContent='Menyimpan...';
+  fetch(API_BASE_URL+'/absensi/allowed-users',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,users:list})})
+  .then(function(r){return r.json();})
+  .then(function(j){
+    if(j.success){
+      _absensiAllowedUsers=j.users||list;
+      showToast('Akses disimpan: '+_absensiAllowedUsers.length+' user','success');
+      if(info)info.textContent=_absensiAllowedUsers.length?_absensiAllowedUsers.join(', '):'(kosong — hanya admin)';
+    }else{
+      showToast('Gagal: '+(j.message||'Error'),'error');
+      if(info)info.textContent='Gagal menyimpan';
+    }
+  }).catch(function(e){showToast('Error: '+e.message,'error');if(info)info.textContent='Error';});
 }
 function toggleEmpAdmin(){
   _showEmpAdmin=!_showEmpAdmin;
   var p=$('empAdminPanel');if(!p)return;
   if(_showEmpAdmin){
     p.style.display='block';
-    // Load GAS URL and allowed users from localStorage
+    // Load GAS URL from localStorage
     _gasUrl=localStorage.getItem('absensi_gas_url')||'';
-    _absensiAllowedUsers=JSON.parse(localStorage.getItem('absensi_allowed_users')||'[]');
     var inp=$('absensiGasUrl');
     if(inp)inp.value=_gasUrl;
-    var aInp=$('absensiAllowedInput');
-    if(aInp)aInp.value=_absensiAllowedUsers.join('
-');
+    // Load allowed users from server
     var aInfo=$('absensiAllowedInfo');
-    if(aInfo)aInfo.textContent=_absensiAllowedUsers.length?_absensiAllowedUsers.join(', '):'(kosong — hanya admin)';
+    if(aInfo)aInfo.textContent='Memuat...';
+    absensiLoadAllowedUsers(function(list){
+      var aInp=$('absensiAllowedInput');
+      if(aInp)aInp.value=list.join('
+');
+      if(aInfo)aInfo.textContent=list.length?list.join(', '):'(kosong — hanya admin)';
+    });
     if(_gasUrl){
       absensiRefreshEmployees();
     }else{
