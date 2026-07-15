@@ -1710,6 +1710,7 @@ var UOM_URL="https://docs.google.com/spreadsheets/d/1cIBpesb-46knvTow6ZNZ00ra_x_
 var LOGIN_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQUOmxLN_--OjkRvb543vpKK5wyL-zcNl67dfDlCPzN28tuBXD2IDEhyJxR8yKqC7CvcHGVj5tSPAD2/pub?gid=0&single=true&output=csv";
 var LOG_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRI1O8jYI_Q1fpueN0eD-QeVRXI-U4JDm-XuPhyZZYfy-ihz_objP_uFIbuhQep-UFpu808DELcLj4k/pub?gid=0&single=true&output=csv";
 var LOG_POST_URL="https://script.google.com/macros/s/AKfycbxwad12DdJMvOMXny6u9h1l2-e-5gu7t48O7UASVeu7M73DaCF-BUROOjsIEyQ9nmFQkw/exec";
+var ABSENSI_GAS_URL="https://script.google.com/macros/s/AKfycbyhaxiRF0HmmVgLOqW4CBGCq6l5pTK4ZP566eq9gjOMAzpDBOQBglan0lKEIXKiZD5X/exec";
 var ADMIN_PASSWORD="00000";
 var BBLM_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQEzQCYwJLIK6KkHBBIJPDprj0OqiJj7KrI_FJHX_mFxCFqa9fXR6ksl9tZfq-6RQ/pub?gid=1514838244&single=true&output=csv";
 var API_BASE_URL=window.location.protocol+"//"+window.location.host+"/api";
@@ -4921,6 +4922,16 @@ function submitAbsensi(){
         badge.style.border='1px solid '+(isIn?'#00ff8855':'#ff664455');
       }
       renderAbsensiResult(j);
+      // Kirim ke Google Spreadsheet via GAS (background, fire-and-forget)
+      if(j.employeeName&&typeof ABSENSI_GAS_URL!=='undefined'&&ABSENSI_GAS_URL){
+        var now=new Date();
+        var witaOff=now.getTime()+8*3600000;
+        var witaDate=new Date(witaOff);
+        var tgl=witaDate.toISOString().slice(0,10);
+        fetch(ABSENSI_GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({tanggal:tgl,jam:j.timeStr,id_karyawan:j.employeeId,nama:j.employeeName,status:j.status})
+        }).catch(function(){});
+      }
       // Auto-refresh rekap if currently visible
       var sumPanel=$('absensiSummaryPanel');
       if(sumPanel&&sumPanel.style.display!=='none'){absensiLoadSummary();}
