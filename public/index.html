@@ -4770,6 +4770,25 @@ function submitAbsensi(){
   .catch(function(e){if(msg){msg.textContent='Error: '+e.message;msg.style.color='#ff4444';}});
 }
 function minsToHMM(m){return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
+function formatAbsensiTime(str){
+  if(!str)return'-';
+  // Jika sudah format HH:MM atau HH:MM:SS langsung
+  if(/^\d{1,2}:\d{2}(:\d{2})?$/.test((str+'').trim()))return(str+'').trim();
+  var d=new Date(str);
+  if(isNaN(d.getTime()))return str;
+  // Google Sheets epoch: tahun <=1900 = nilai time-only (desimal hari)
+  // Ambil waktu dari string asli, lalu koreksi ke WITA (+8)
+  var h,mi,s;
+  if(d.getFullYear()<=1900){
+    // Extract time from Date object using UTC (karena GAS serialize sebagai UTC)
+    h=d.getUTCHours(); mi=d.getUTCMinutes(); s=d.getUTCSeconds();
+  } else {
+    // Konversi ke WITA (UTC+8)
+    var wita=new Date(d.getTime()+8*3600000);
+    h=wita.getUTCHours(); mi=wita.getUTCMinutes(); s=wita.getUTCSeconds();
+  }
+  return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
 function renderAbsensiResult(j){
   var res=$('absensiResult');if(!res)return;
   var records=j.records||[];
@@ -4794,7 +4813,7 @@ function renderAbsensiResult(j){
     var sc=r.status==='In'?inC:outC;
     h+='<tr>'
       +'<td style="padding:7px 8px;color:#88aacc;border:1px solid #12122a;text-align:center;">'+(idx+1)+'</td>'
-      +'<td style="padding:7px 8px;color:#88ddff;font-weight:600;border:1px solid #12122a;text-align:center;">'+r.timeStr+'</td>'
+      +'<td style="padding:7px 8px;color:#88ddff;font-weight:600;border:1px solid #12122a;text-align:center;">'+formatAbsensiTime(r.timeStr)+'</td>'
       +'<td style="padding:7px 8px;text-align:center;border:1px solid #12122a;"><b style="color:'+sc+';">'+r.status+'</b></td>'
       +'<td style="padding:7px 8px;color:#ffcc44;font-weight:600;border:1px solid #12122a;text-align:right;">'+(r.onDutyMinutes>0?minsToHMM(r.onDutyMinutes):'0')+'</td>'
       +'<td style="padding:7px 8px;color:#ff8844;font-weight:600;border:1px solid #12122a;text-align:right;">'+(r.offDutyMinutes>0?minsToHMM(r.offDutyMinutes):'0')+'</td>'
