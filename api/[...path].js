@@ -1780,14 +1780,18 @@ loadCurrentSetting();
           var gasResp = await fetch(spUrl + '?action=getEmployees', { redirect: 'follow' });
           if (!gasResp.ok) return send({ success: false, message: 'Gagal fetch GAS (HTTP ' + gasResp.status + ')' }, 502);
           var gasData = await gasResp.json();
+          // GAS response: {success:true, employees:[{barcode, id, name, division}]}
           var gasRows = Array.isArray(gasData) ? gasData : (gasData.employees || gasData.data || []);
           spEmployees = gasRows.map(function(row) {
+            var bc = String(row['barcode'] || row['id'] || row['Emp_no_barcode'] || row['employee_id'] || '').trim();
+            var nm = String(row['name'] || row['Emp_nm'] || row['Employee Name'] || row['Nama'] || '').trim().toUpperCase();
             return {
-              barcode:  String(row['Emp_no_barcode'] || row['barcode'] || row['employee_id'] || '').trim(),
-              empId:    String(row['Employee Id'] || row['employee_id'] || '').trim(),
-              name:     String(row['Emp_nm'] || row['Employee Name'] || row['name'] || '').trim().toUpperCase(),
-              division: String(row['Div'] || row['division'] || '').trim(),
-              note:     String(row['Note1'] || row['note'] || '').trim()
+              barcode:  bc,
+              id:       bc,
+              empId:    String(row['id'] || row['Employee Id'] || bc).trim(),
+              name:     nm,
+              division: String(row['division'] || row['Div'] || '').trim(),
+              note:     ''
             };
           }).filter(function(e){ return e.barcode && e.name; });
         }
