@@ -4884,20 +4884,17 @@ function absensiRefreshEmployees(){
   .catch(function(){updateAbsensiSyncStatus('error','Gagal memuat data');});
 }
 
-var _absensiScanning=false;
-var _absensiLastScanTime=0;
-var _absensiLastScanId='';
+var _absensiInFlight={};
 function submitAbsensi(){
   var inp=$('absensiInput');if(!inp)return;
   var empId=inp.value.trim();if(!empId)return;
+  // Per-employee debounce: if same employee is already being processed, skip
+  var nowMs=Date.now();
+  if(_absensiInFlight[empId]&&nowMs-_absensiInFlight[empId]<3000){
+    inp.value='';inp.focus();return;
+  }
+  _absensiInFlight[empId]=nowMs;
   inp.value='';inp.focus();
-  // Frontend debounce: block same ID within 2s, or if request already in flight
-  var now=Date.now();
-  if(_absensiScanning){return;}
-  if(empId===_absensiLastScanId&&now-_absensiLastScanTime<2000){return;}
-  _absensiScanning=true;
-  _absensiLastScanTime=now;
-  _absensiLastScanId=empId;
   var msg=$('absensiScanMsg');
   var badge=$('absensiStatusBadge');
   if(msg){msg.textContent='Menyimpan...';msg.style.color='#6688aa';}
@@ -4905,7 +4902,7 @@ function submitAbsensi(){
   fetch(API_BASE_URL+'/absensi/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employeeId:empId})})
   .then(function(r){return r.json();})
   .then(function(j){
-    _absensiScanning=false;
+    delete _absensiInFlight[empId];
     if(j.success){
       var isIn=j.status==='In';
       if(j.duplicate){
@@ -4924,11 +4921,14 @@ function submitAbsensi(){
         badge.style.border='1px solid '+(isIn?'#00ff8855':'#ff664455');
       }
       renderAbsensiResult(j);
+      // Auto-refresh rekap if currently visible
+      var sumPanel=$('absensiSummaryPanel');
+      if(sumPanel&&sumPanel.style.display!=='none'){absensiLoadSummary();}
     }else{
       if(msg){msg.textContent='Error: '+(j.message||'Gagal');msg.style.color='#ff4444';}
     }
   })
-  .catch(function(e){_absensiScanning=false;if(msg){msg.textContent='Error: '+e.message;msg.style.color='#ff4444';}});
+  .catch(function(e){delete _absensiInFlight[empId];if(msg){msg.textContent='Error: '+e.message;msg.style.color='#ff4444';}});
 }
 
 function secsToDisplay(s){
