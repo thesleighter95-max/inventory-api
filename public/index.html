@@ -4887,6 +4887,32 @@ function absensiRefreshEmployees(){
 }
 
 var _absensiInFlight={};
+// Flash + beep feedback saat scan berhasil
+function absensiScanFeedback(isIn){
+  // Vibrate
+  if(navigator.vibrate)navigator.vibrate(isIn?[40,20,40]:[80]);
+  // Flash overlay
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;pointer-events:none;'
+    +'background:'+(isIn?'rgba(0,255,136,0.18)':'rgba(255,102,68,0.20)')
+    +';transition:opacity 0.35s;';
+  document.body.appendChild(overlay);
+  setTimeout(function(){overlay.style.opacity='0';},80);
+  setTimeout(function(){if(overlay.parentNode)overlay.parentNode.removeChild(overlay);},420);
+  // Beep via Web Audio
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    var osc=ctx.createOscillator();
+    var gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.type='sine';
+    osc.frequency.value=isIn?880:440;       // In: tinggi, Out: rendah
+    gain.gain.setValueAtTime(0.25,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+(isIn?0.18:0.28));
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime+(isIn?0.18:0.28));
+  }catch(e){}
+}
 function submitAbsensi(){
   var inp=$('absensiInput');if(!inp)return;
   var empId=inp.value.trim();if(!empId)return;
@@ -4902,7 +4928,8 @@ function submitAbsensi(){
   if(msg){msg.textContent='Menyimpan...';msg.style.color='#6688aa';}
   if(badge)badge.style.display='none';
   // Langsung ke GAS — tidak melalui server
-  fetch(ABSENSI_GAS_URL+'?action=scan&employeeId='+encodeURIComponent(empId))
+  var _op=encodeURIComponent(isAdmin?'Admin':(currentUserNameInv||currentUsernameRaw||'User'));
+  fetch(ABSENSI_GAS_URL+'?action=scan&employeeId='+encodeURIComponent(empId)+'&operator='+_op)
   .then(function(r){return r.json();})
   .then(function(j){
     delete _absensiInFlight[empId];
@@ -4920,6 +4947,7 @@ function submitAbsensi(){
         badge.style.border='1px solid '+(isIn?'#00ff8855':'#ff664455');
       }
       renderAbsensiResult(j);
+      absensiScanFeedback(isIn);
       var sumPanel=$('absensiSummaryPanel');
       if(sumPanel&&sumPanel.style.display!=='none'){absensiLoadSummary();}
     }else{
