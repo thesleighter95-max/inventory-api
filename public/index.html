@@ -1621,7 +1621,7 @@ table td { font-size: 11px; }
       <div id="empAdminPanel" style="display:none;background:#090912;padding:14px;border-bottom:1px solid #1a2a4a;">
         <p style="font-size:10px;color:#334466;margin:0 0 8px;font-family:monospace;">Spreadsheet harus di-share: <b style="color:#556699;">Anyone with the link &rarr; Viewer</b></p>
         <div style="display:flex;gap:6px;margin-bottom:6px;">
-          <input id="absensiSheetUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/..." value="https://docs.google.com/spreadsheets/d/1eFYULqon7cFvF_ZZRIacwA1dSSWqLt0fyZc3tracg8U/edit?gid=0#gid=0"
+          <input id="absensiSheetUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/..." value="https://script.google.com/macros/s/AKfycbyhaxiRF0HmmVgLOqW4CBGCq6l5pTK4ZP566eq9gjOMAzpDBOQBglan0lKEIXKiZD5X/exec"
             style="flex:1;background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:8px 10px;font-size:10px;color:#88aacc;font-family:monospace;outline:none;">
           <button id="abseSyncBtn" onclick="absensiSyncFromSpreadsheet()" style="background:#1a4a3a;border:1px solid #2a6a4a;color:#00cc88;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:monospace;flex-shrink:0;">Sync</button>
         </div>
@@ -4922,15 +4922,9 @@ function submitAbsensi(){
         badge.style.border='1px solid '+(isIn?'#00ff8855':'#ff664455');
       }
       renderAbsensiResult(j);
-      // Kirim ke Google Spreadsheet via GAS (background, fire-and-forget)
-      if(j.employeeName&&typeof ABSENSI_GAS_URL!=='undefined'&&ABSENSI_GAS_URL){
-        var now=new Date();
-        var witaOff=now.getTime()+8*3600000;
-        var witaDate=new Date(witaOff);
-        var tgl=witaDate.toISOString().slice(0,10);
-        fetch(ABSENSI_GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({tanggal:tgl,jam:j.timeStr,id_karyawan:j.employeeId,nama:j.employeeName,status:j.status})
-        }).catch(function(){});
+      // Kirim ke Google Spreadsheet via GAS (GET, sesuai doGet GAS)
+      if(typeof ABSENSI_GAS_URL!=='undefined'&&ABSENSI_GAS_URL){
+        fetch(ABSENSI_GAS_URL+'?action=scan&employeeId='+encodeURIComponent(j.employeeId)).catch(function(){});
       }
       // Auto-refresh rekap if currently visible
       var sumPanel=$('absensiSummaryPanel');
