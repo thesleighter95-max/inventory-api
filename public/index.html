@@ -1548,6 +1548,15 @@ table td { font-size: 11px; }
     <div id="absensiResult" style="background:#0a0a1a;flex-shrink:0;overflow-x:auto;">
       <div style="text-align:center;padding:20px 16px;color:#2a3a5a;font-family:monospace;font-size:11px;">&#9656; belum ada scan hari ini</div>
     </div>
+    <!-- STATUS BOARD: in/out semua karyawan hari ini -->
+    <div id="absensiStatusBoard" style="background:#070710;flex-shrink:0;border-top:1px solid #1a2a4a;padding:10px 12px;display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:10px;font-weight:700;color:#6a8cff;font-family:monospace;letter-spacing:1px;text-transform:uppercase;">&#128203; Status Hari Ini</span>
+        <button onclick="absensiAutoSync(true)" style="background:#0d1a2a;border:1px solid #2a4a7a;color:#66aaff;border-radius:8px;padding:3px 10px;font-size:10px;font-family:monospace;cursor:pointer;">&#8635; Sync</button>
+      </div>
+      <div id="absensiStatusList" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+      <div id="absensiStatusMeta" style="font-size:9px;color:#2a3a5a;font-family:monospace;margin-top:6px;"></div>
+    </div>
     <!-- ADMIN SECTION -->
     <div id="absensiAdminSection" style="display:none;flex-shrink:0;">
       <!-- Block 0: Kelola Akses User Absensi -->
@@ -2969,6 +2978,7 @@ function switchMainTab(tab){
     $("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();
     if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";
     absensiRefreshEmployees();
+    absensiStartAutoSyncTimer();
     setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);
   }
 }
@@ -4713,7 +4723,7 @@ function startAbsensiClock(){
   tick();
   _absensiClockInterval=setInterval(tick,1000);
 }
-function stopAbsensiClock(){if(_absensiClockInterval){clearInterval(_absensiClockInterval);_absensiClockInterval=null;}}
+function stopAbsensiClock(){if(_absensiClockInterval){clearInterval(_absensiClockInterval);_absensiClockInterval=null;}absensiStopAutoSyncTimer();}
 function updateAbsensiSyncStatus(state,msg){
   var el=$('absensiSyncStatus');if(!el)return;
   var dot='<span class="abs-sync-dot'+(state==='online'?' online':state==='syncing'?' syncing':state==='error'?' error':'')+'" style="display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle;background:'+(state==='online'?'#00cc88':state==='syncing'?'#ffcc44':state==='error'?'#ff4444':'#2a3a5a')+'"></span>';
@@ -4778,6 +4788,87 @@ function submitAbsensi(){
   })
   .catch(function(e){if(msg){msg.textContent='Error: '+e.message;msg.style.color='#ff4444';}});
 }
+// ── Absensi status board: cache + auto-sync ──────────────────────
+var _absensiSyncTimer=null;
+var ABSENSI_CACHE_KEY='absensi_status_cache';
+
+function absensiSaveStatusCache(records,dateStr){
+  try{localStorage.setItem(ABSENSI_CACHE_KEY,JSON.stringify({date:dateStr,records:records,ts:Date.now()}));}catch(e){}
+}
+function absensiLoadStatusCache(){
+  try{
+    var raw=localStorage.getItem(ABSENSI_CACHE_KEY);
+    if(!raw)return null;
+    var c=JSON.parse(raw);
+    var today=new Date().toISOString().slice(0,10);
+    if(c.date!==today)return null; // hari berbeda, buang cache
+    return c.records||[];
+  }catch(e){return null;}
+}
+
+function renderAbsensiStatusBoard(records,fromCache){
+  var board=$('absensiStatusBoard');
+  var list=$('absensiStatusList');
+  var meta=$('absensiStatusMeta');
+  if(!board||!list)return;
+  if(!records||!records.length){
+    board.style.display='none';
+    return;
+  }
+  board.style.display='block';
+  var inCount=0,outCount=0;
+  var h='';
+  records.forEach(function(r){
+    var isIn=r.lastStatus==='In';
+    if(isIn)inCount++; else outCount++;
+    var name=(r.employeeName||r.employeeId||'?').split(' ')[0]; // ambil nama depan
+    h+='<div style="display:flex;align-items:center;gap:5px;background:'+(isIn?'#0a2a1a':'#1a0a0a')+';border:1px solid '+(isIn?'#1a4a2a':'#3a1a1a')+';border-radius:8px;padding:4px 8px;min-width:0;">'
+      +'<span style="font-size:9px;font-weight:900;color:'+(isIn?'#00ff88':'#ff6644')+';font-family:monospace;flex-shrink:0;">'+(isIn?'IN':'OUT')+'</span>'
+      +'<span style="font-size:10px;color:#88aacc;font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;">'+name+'</span>'
+      +'</div>';
+  });
+  list.innerHTML=h;
+  var now=new Date();
+  var timeNow=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  meta.textContent=(fromCache?'(dari cache) ':'')+'Update: '+timeNow+' | '+inCount+' IN · '+outCount+' OUT';
+}
+
+function absensiAutoSync(manual){
+  // 1. Tampilkan dari cache dulu
+  var cached=absensiLoadStatusCache();
+  if(cached&&cached.length)renderAbsensiStatusBoard(cached,true);
+
+  // 2. Fetch dari GAS
+  var url=_gasUrl||(localStorage.getItem('absensi_gas_url')||'');
+  if(!url){
+    if(cached&&cached.length)return; // ada cache, cukup
+    return;
+  }
+  if(manual&&$('absensiStatusMeta'))$('absensiStatusMeta').textContent='Menyinkron...';
+  var today=new Date().toISOString().slice(0,10);
+  fetch(url+'?action=getSummary&date='+today)
+  .then(function(r){return r.json();})
+  .then(function(j){
+    if(j.success&&j.records){
+      absensiSaveStatusCache(j.records,today);
+      renderAbsensiStatusBoard(j.records,false);
+    }
+  })
+  .catch(function(e){
+    if(manual&&$('absensiStatusMeta'))$('absensiStatusMeta').textContent='Gagal sync: '+e.message;
+  });
+}
+
+// Panggil sync otomatis tiap 2 menit saat di tab absensi
+function absensiStartAutoSyncTimer(){
+  absensiStopAutoSyncTimer();
+  absensiAutoSync(false);
+  _absensiSyncTimer=setInterval(function(){absensiAutoSync(false);},120000);
+}
+function absensiStopAutoSyncTimer(){
+  if(_absensiSyncTimer){clearInterval(_absensiSyncTimer);_absensiSyncTimer=null;}
+}
+
 function minsToHMM(m){return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
 function _absensiTzOffset(){
   var v=parseInt(localStorage.getItem('absensi_tz_offset'));
@@ -4846,6 +4937,16 @@ function renderAbsensiResult(j){
     +'<td style="padding:7px 8px;color:#ff8844;font-weight:700;border:1px solid #1a2a4a;text-align:right;">'+minsToHMM(totOff)+'</td>'
     +'</tr></tbody></table></div>';
   res.innerHTML=h;
+  // Refresh status board: incorporate this scan into cache
+  var today2=new Date().toISOString().slice(0,10);
+  var cached2=absensiLoadStatusCache()||[];
+  // Update or add this employee entry
+  var empIdx=cached2.findIndex(function(r){return r.employeeId===j.employeeId;});
+  var lastS=records.length?records[records.length-1].status:'';
+  if(empIdx>=0){cached2[empIdx].lastStatus=lastS;cached2[empIdx].employeeName=j.employeeName||cached2[empIdx].employeeName;}
+  else if(j.employeeId){cached2.push({employeeId:j.employeeId,employeeName:j.employeeName||'',lastStatus:lastS});}
+  absensiSaveStatusCache(cached2,today2);
+  renderAbsensiStatusBoard(cached2,false);
 }
 var _showEmpAdmin=false;
 var _gasUrl=localStorage.getItem('absensi_gas_url')||'';
