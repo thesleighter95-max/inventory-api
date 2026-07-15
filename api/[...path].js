@@ -1723,6 +1723,21 @@ loadCurrentSetting();
       return send({ success: true, total: cleaned.length });
     }
 
+    // GET /absensi/allowed-users — get list of usernames allowed to access absensi
+    if (path === "/absensi/allowed-users" && method === "GET") {
+      const users = await getJson("absensi-allowed-users", []);
+      return send({ success: true, users });
+    }
+
+    // POST /absensi/allowed-users — save allowed users list (admin only)
+    if (path === "/absensi/allowed-users" && method === "POST") {
+      const { adminPassword, users } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const list = Array.isArray(users) ? users.map(u => String(u).trim()).filter(Boolean) : [];
+      await setJson("absensi-allowed-users", list);
+      return send({ success: true, users: list });
+    }
+
     // GET /absensi/sheet-url — retrieve stored Google Sheets URL
     if (path === "/absensi/sheet-url" && method === "GET") {
       const url = await getJson("absensi-sheet-url", "");
