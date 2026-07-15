@@ -5010,8 +5010,7 @@ function absensiLoadAllowedUsers(cb){
 function absensiSaveAllowedUsers(){
   var inp=$('absensiAllowedInput');
   var raw=inp?inp.value.trim():'';
-  var list=raw?raw.split(/[
-,]+/).map(function(s){return s.trim();}).filter(Boolean):[];
+  var list=raw?raw.split(/[\n,]+/).map(function(s){return s.trim();}).filter(Boolean):[];
   var info=$('absensiAllowedInfo');
   var btn=inp?inp.parentElement.querySelector('button'):null;
   if(info)info.textContent='Menyimpan...';
@@ -5043,8 +5042,7 @@ function toggleEmpAdmin(){
     if(aInfo)aInfo.textContent='Memuat...';
     absensiLoadAllowedUsers(function(list){
       var aInp=$('absensiAllowedInput');
-      if(aInp)aInp.value=list.join('
-');
+      if(aInp)aInp.value=list.join('\n');
       if(aInfo)aInfo.textContent=list.length?list.join(', '):'(kosong — hanya admin)';
     });
     if(_gasUrl){
