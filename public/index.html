@@ -1708,7 +1708,7 @@ function restoreSession(){
     loadMaintenanceStatus();loadPwResetRequests();
   }else{
     currentUserNameInv=sess.n;currentUsernameRaw=sess.u;isAdmin=false;
-    absensiLoadAllowedUsers(function(){renderUserNav();});
+    renderUserNav();
     $("mainApp").classList.remove("hidden");setMarquee(true);
     renderUserNav();updateUserInfo(sess.n);tampilkanUpdate();
     updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
@@ -5038,13 +5038,7 @@ function toggleEmpAdmin(){
     var inp=$('absensiGasUrl');
     if(inp)inp.value=_gasUrl;
     // Load allowed users from server
-    var aInfo=$('absensiAllowedInfo');
-    if(aInfo)aInfo.textContent='Memuat...';
-    absensiLoadAllowedUsers(function(list){
-      var aInp=$('absensiAllowedInput');
-      if(aInp)aInp.value=list.join('\n');
-      if(aInfo)aInfo.textContent=list.length?list.join(', '):'(kosong — hanya admin)';
-    });
+
     if(_gasUrl){
       absensiRefreshEmployees();
     }else{
