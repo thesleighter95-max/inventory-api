@@ -4943,8 +4943,8 @@ function secsToDisplay(s){
   return m+' mnt '+sec+'dtk';
 }
 function toSecsLocal(t){var p=(normalizeTimeStr(t)||'').split(':').map(Number);return(p[0]||0)*3600+(p[1]||0)*60+(p[2]||0);}
-function getOnDutySecs(r){return r.onDutySecs!==undefined?r.onDutySecs:(r.onDutyMinutes||0)*60;}
-function getOffDutySecs(r){return r.offDutySecs!==undefined?r.offDutySecs:(r.offDutyMinutes||0)*60;}
+function getOnDutySecs(r){return r.onDutySecs||0;}
+function getOffDutySecs(r){return r.offDutySecs||0;}
 function totalSecsDisplay(secs){
   if(!secs)return '0 mnt';
   var h=Math.floor(secs/3600);var m=Math.floor((secs%3600)/60);var s=secs%60;
@@ -4959,15 +4959,21 @@ function renderAbsensiResult(j){
   var records=j.records||[];
   var inC='#00ff88',outC='#ff6644';
   var lastStatus=records.length?records[records.length-1].status:'';
-  // Hitung ulang durasi dari timeStr yang dinormalisasi (GAS mungkin kirim durasi salah)
+  // Hitung ulang durasi dari timeStr — recalc adalah sumber kebenaran
   for(var _ri=1;_ri<records.length;_ri++){
     var _prev=records[_ri-1],_cur=records[_ri];
     var _diff=Math.max(0,toSecsLocal(_cur.timeStr)-toSecsLocal(_prev.timeStr));
-    if(_prev.status==='In'){_prev.onDutySecs=_diff;}
-    else{_prev.offDutySecs=_diff;}
+    if(_prev.status==='In'){_prev.onDutySecs=_diff; _prev.offDutySecs=0;}
+    else{_prev.offDutySecs=_diff; _prev.onDutySecs=0;}
   }
-  var totOn=records.reduce(function(s,r){return s+getOnDutySecs(r);},0);
-  var totOff=records.reduce(function(s,r){return s+getOffDutySecs(r);},0);
+  // Record terakhir belum selesai — nol-kan agar tidak ada sisa dari GAS
+  if(records.length>0){
+    var _last=records[records.length-1];
+    _last.onDutySecs=0; _last.offDutySecs=0;
+    _last.onDutyMinutes=0; _last.offDutyMinutes=0;
+  }
+  var totOn=records.reduce(function(s,r){return s+(r.onDutySecs||0);},0);
+  var totOff=records.reduce(function(s,r){return s+(r.offDutySecs||0);},0);
   var h='<div style="background:#0d0d22;padding:7px 10px 6px;border-bottom:1px solid #1a2a4a;">'
     +'<span style="font-size:11px;color:#00cc88;font-family:monospace;">\u2713 Saved ('+j.status+')</span>'
     +(j.employeeName?'<span style="font-size:11px;color:#6688bb;font-family:monospace;margin-left:8px;">\u2014 '+j.employeeName+'</span>':'<span style="font-size:10px;color:#ff8844;font-family:monospace;margin-left:8px;">\u26A0 ID tidak terdaftar</span>')
@@ -5071,8 +5077,11 @@ function absensiSyncFromSpreadsheet(){
 
 // ===== ABSENSI SUMMARY EXPORT =====
 function absensiFormatDuration(mins){
-  if(!mins||mins<0)return '0:00';
-  return Math.floor(mins/60)+':'+String(mins%60).padStart(2,'0');
+  if(!mins||mins<=0)return '-';
+  var h=Math.floor(mins/60),m=mins%60;
+  if(h>0&&m>0)return h+'j '+m+'m';
+  if(h>0)return h+'j';
+  return m+' mnt';
 }
 
 function absensiGetSelectedDate(){
