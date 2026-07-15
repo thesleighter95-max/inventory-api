@@ -1631,11 +1631,12 @@ loadCurrentSetting();
       const { employeeId: rawId } = body;
       if (!rawId) return send({ success: false, message: "employeeId wajib diisi" }, 400);
       const empId = String(rawId).trim();
-      const today = new Date().toISOString().slice(0, 10);
       const now = new Date();
-      // Format HH:MM:SS in WIB (UTC+8) — use server local time
+      // Use WITA (UTC+8) for date and time
+      const wita = new Date(now.getTime() + 8 * 3600000);
+      const today = wita.toISOString().slice(0, 10);
       const pad = n => String(n).padStart(2, "0");
-      const timeStr = pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
+      const timeStr = pad(wita.getUTCHours()) + ":" + pad(wita.getUTCMinutes()) + ":" + pad(wita.getUTCSeconds());
 
       // Look up employee name
       const employees = await getJson("absensi-employees", []);
@@ -1651,17 +1652,19 @@ loadCurrentSetting();
       const lastRec = empRecords.length ? empRecords[empRecords.length - 1] : null;
       const status = lastRec ? (lastRec.status === "In" ? "Out" : "In") : "In";
 
-      // Calculate minutes
-      let onDutyMinutes = 0, offDutyMinutes = 0;
+      // Calculate duration in seconds (precise, no rounding loss)
+      let onDutySecs = 0, offDutySecs = 0;
       const toSecs = t => { const p = t.split(":").map(Number); return p[0]*3600 + p[1]*60 + p[2]; };
       const nowSecs = toSecs(timeStr);
       if (status === "Out" && lastRec && lastRec.status === "In") {
-        onDutyMinutes = Math.max(0, Math.floor((nowSecs - toSecs(lastRec.timeStr)) / 60));
+        // In → Out: jam kerja
+        onDutySecs = Math.max(0, nowSecs - toSecs(lastRec.timeStr));
       } else if (status === "In" && lastRec && lastRec.status === "Out") {
-        offDutyMinutes = Math.max(0, Math.floor((nowSecs - toSecs(lastRec.timeStr)) / 60));
+        // Out → In: jam istirahat
+        offDutySecs = Math.max(0, nowSecs - toSecs(lastRec.timeStr));
       }
 
-      const newRecord = { employeeId: empId, employeeName: empName, timeStr, status, onDutyMinutes, offDutyMinutes, savedAt: now.toISOString() };
+      const newRecord = { employeeId: empId, employeeName: empName, timeStr, status, onDutySecs, offDutySecs, savedAt: now.toISOString() };
       allRecords.push(newRecord);
       await setJson(todayKey, allRecords);
 
@@ -1721,21 +1724,6 @@ loadCurrentSetting();
         }));
       await setJson("absensi-employees", cleaned);
       return send({ success: true, total: cleaned.length });
-    }
-
-    // GET /absensi/allowed-users — get list of usernames allowed to access absensi
-    if (path === "/absensi/allowed-users" && method === "GET") {
-      const users = await getJson("absensi-allowed-users", []);
-      return send({ success: true, users });
-    }
-
-    // POST /absensi/allowed-users — save allowed users list (admin only)
-    if (path === "/absensi/allowed-users" && method === "POST") {
-      const { adminPassword, users } = body;
-      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
-      const list = Array.isArray(users) ? users.map(u => String(u).trim()).filter(Boolean) : [];
-      await setJson("absensi-allowed-users", list);
-      return send({ success: true, users: list });
     }
 
     // GET /absensi/sheet-url — retrieve stored Google Sheets URL
