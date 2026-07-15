@@ -4772,22 +4772,20 @@ function submitAbsensi(){
 function minsToHMM(m){return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
 function formatAbsensiTime(str){
   if(!str)return'-';
-  // Jika sudah format HH:MM atau HH:MM:SS langsung
-  if(/^\d{1,2}:\d{2}(:\d{2})?$/.test((str+'').trim()))return(str+'').trim();
-  var d=new Date(str);
-  if(isNaN(d.getTime()))return str;
-  // Google Sheets epoch: tahun <=1900 = nilai time-only (desimal hari)
-  // Ambil waktu dari string asli, lalu koreksi ke WITA (+8)
-  var h,mi,s;
-  if(d.getFullYear()<=1900){
-    // Extract time from Date object using UTC (karena GAS serialize sebagai UTC)
-    h=d.getUTCHours(); mi=d.getUTCMinutes(); s=d.getUTCSeconds();
-  } else {
-    // Konversi ke WITA (UTC+8)
-    var wita=new Date(d.getTime()+8*3600000);
-    h=wita.getUTCHours(); mi=wita.getUTCMinutes(); s=wita.getUTCSeconds();
+  var s=(str+'').trim();
+  // Already HH:MM or HH:MM:SS — return unchanged
+  if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(s))return s;
+  // Google Sheets 1899 epoch: "Sat Dec 30 1899 HH:MM:SS GMT+..."
+  // The time portion in the string IS the actual stored time — just extract it
+  if(s.indexOf('1899')!==-1||s.indexOf('1900')!==-1){
+    var tm=s.match(/\b(\d{1,2}:\d{2}:\d{2})\b/);
+    if(tm)return tm[1];
   }
-  return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  // ISO string or full Date string: use local time (device is already WITA)
+  var d=new Date(str);
+  if(isNaN(d.getTime()))return s;
+  var h=d.getHours(),mi=d.getMinutes(),sec=d.getSeconds();
+  return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0')+':'+String(sec).padStart(2,'0');
 }
 function renderAbsensiResult(j){
   var res=$('absensiResult');if(!res)return;
