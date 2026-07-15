@@ -1560,6 +1560,15 @@ table td { font-size: 11px; }
             style="flex:1;background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:8px 10px;font-size:10px;color:#88aacc;font-family:monospace;outline:none;">
           <button onclick="absensiSaveGasUrl()" style="background:#1a4a3a;border:1px solid #2a6a4a;color:#00cc88;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:monospace;flex-shrink:0;">Simpan</button>
         </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:10px;color:#6688bb;font-family:monospace;white-space:nowrap;">&#8987; Koreksi jam:</span>
+          <select id="absensiTzOffset" onchange="absensiSaveTzOffset()" style="background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:5px 8px;font-size:11px;color:#88aacc;font-family:monospace;outline:none;cursor:pointer;">
+            <option value="0">+0 jam (WITA sudah benar)</option>
+            <option value="1" selected>+1 jam (koreksi WIB → WITA)</option>
+            <option value="2">+2 jam</option>
+            <option value="-1">-1 jam</option>
+          </select>
+        </div>
         <div style="display:flex;gap:6px;margin-bottom:8px;">
           <button onclick="absensiTestGas()" style="background:#1a2a4a;border:1px solid #2a4a7a;color:#88aacc;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">&#128268; Test &amp; Muat Karyawan</button>
         </div>
@@ -4770,22 +4779,34 @@ function submitAbsensi(){
   .catch(function(e){if(msg){msg.textContent='Error: '+e.message;msg.style.color='#ff4444';}});
 }
 function minsToHMM(m){return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
+function _absensiTzOffset(){
+  var v=parseInt(localStorage.getItem('absensi_tz_offset'));
+  return isNaN(v)?1:v; // default +1 (WIB->WITA)
+}
 function formatAbsensiTime(str){
   if(!str)return'-';
   var s=(str+'').trim();
-  // Already HH:MM or HH:MM:SS — return unchanged
-  if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(s))return s;
-  // Google Sheets 1899 epoch: "Sat Dec 30 1899 HH:MM:SS GMT+..."
-  // The time portion in the string IS the actual stored time — just extract it
-  if(s.indexOf('1899')!==-1||s.indexOf('1900')!==-1){
-    var tm=s.match(/\b(\d{1,2}:\d{2}:\d{2})\b/);
-    if(tm)return tm[1];
+  var offset=_absensiTzOffset();
+  // Plain HH:MM or HH:MM:SS — apply offset correction
+  var plainMatch=s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if(plainMatch){
+    var h=parseInt(plainMatch[1]),mi=parseInt(plainMatch[2]),sec=parseInt(plainMatch[3]||0);
+    h=(h+offset+24)%24;
+    return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0')+':'+String(sec).padStart(2,'0');
   }
-  // ISO string or full Date string: use local time (device is already WITA)
+  // Google Sheets 1899 epoch: extract time from string, then apply offset
+  if(s.indexOf('1899')!==-1||s.indexOf('1900')!==-1){
+    var tm=s.match(/\b(\d{1,2}):(\d{2}):(\d{2})\b/);
+    if(tm){
+      var h2=(parseInt(tm[1])+offset+24)%24;
+      return String(h2).padStart(2,'0')+':'+tm[2]+':'+tm[3];
+    }
+  }
+  // ISO / full Date string: use device local time (already WITA on device)
   var d=new Date(str);
   if(isNaN(d.getTime()))return s;
-  var h=d.getHours(),mi=d.getMinutes(),sec=d.getSeconds();
-  return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+  var h3=d.getHours(),mi3=d.getMinutes(),sec3=d.getSeconds();
+  return String(h3).padStart(2,'0')+':'+String(mi3).padStart(2,'0')+':'+String(sec3).padStart(2,'0');
 }
 function renderAbsensiResult(j){
   var res=$('absensiResult');if(!res)return;
@@ -4837,6 +4858,9 @@ function toggleEmpAdmin(){
     _gasUrl=localStorage.getItem('absensi_gas_url')||'';
     var inp=$('absensiGasUrl');
     if(inp)inp.value=_gasUrl;
+    // Load tz offset
+    var offSel=$('absensiTzOffset');
+    if(offSel){var sv=localStorage.getItem('absensi_tz_offset');if(sv!==null)offSel.value=sv;}
     // Load allowed users from server
     if(_gasUrl){
       absensiRefreshEmployees();
@@ -4877,6 +4901,12 @@ function absensiSaveGasUrl(){
   var info=$('absensiSyncInfo');
   if(info)info.textContent='URL disimpan ✔ Klik "Test & Muat Karyawan" untuk verifikasi.';
   showToast('URL GAS disimpan!','success');
+}
+function absensiSaveTzOffset(){
+  var sel=$('absensiTzOffset');
+  if(!sel)return;
+  localStorage.setItem('absensi_tz_offset',sel.value);
+  showToast('Koreksi jam disimpan: '+sel.value+' jam','success');
 }
 function absensiTestGas(){
   var url=_gasUrl||(localStorage.getItem('absensi_gas_url')||'');
