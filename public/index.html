@@ -4869,7 +4869,39 @@ function absensiStopAutoSyncTimer(){
   if(_absensiSyncTimer){clearInterval(_absensiSyncTimer);_absensiSyncTimer=null;}
 }
 
-function minsToHMM(m){return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
+function minsToHMM(m){
+  m=parseInt(m)||0;
+  return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
+}
+// Parse any time representation to seconds-from-midnight
+function absensiParseTimeSecs(ts){
+  if(!ts)return -1;
+  var s=String(ts).trim();
+  // Direct HH:MM:SS or HH:MM — possibly with offset applied
+  var m=s.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if(m)return parseInt(m[1])*3600+parseInt(m[2])*60+parseInt(m[3]||0);
+  return -1;
+}
+// Recompute on/off duty minutes from records array on frontend
+// (avoids GAS Date-object toSecs() bug)
+function absensiRecomputeDuty(records){
+  var offset=_absensiTzOffset();
+  records.forEach(function(r,i){
+    r.onDutyMinutes=0; r.offDutyMinutes=0;
+    if(i===0)return;
+    var prev=records[i-1];
+    // Apply offset to get real WITA seconds
+    var cleanCurr=formatAbsensiTime(r.timeStr||'');
+    var cleanPrev=formatAbsensiTime(prev.timeStr||'');
+    var secsCurr=absensiParseTimeSecs(cleanCurr);
+    var secsPrev=absensiParseTimeSecs(cleanPrev);
+    if(secsCurr<0||secsPrev<0)return;
+    var diffMins=Math.max(0,Math.floor((secsCurr-secsPrev)/60));
+    if(prev.status==='In') r.onDutyMinutes=diffMins;
+    else                   r.offDutyMinutes=diffMins;
+  });
+  return records;
+}
 function _absensiTzOffset(){
   var v=parseInt(localStorage.getItem('absensi_tz_offset'));
   return isNaN(v)?1:v; // default +1 (WIB->WITA)
@@ -4903,6 +4935,8 @@ function renderAbsensiResult(j){
   var res=$('absensiResult');if(!res)return;
   var records=j.records||[];
   var inC='#00ff88',outC='#ff6644';
+  // Recompute on/off duty on frontend (GAS Date-object bug workaround)
+  absensiRecomputeDuty(records);
   var lastStatus=records.length?records[records.length-1].status:'';
   var totOn=records.reduce(function(s,r){return s+(r.onDutyMinutes||0);},0);
   var totOff=records.reduce(function(s,r){return s+(r.offDutyMinutes||0);},0);
@@ -5066,7 +5100,37 @@ function absensiLoadSummary(){
       if(tableDiv)tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#ff6644;font-family:monospace;font-size:11px;">'+(j.message||'Gagal memuat')+'</div>';
       return;
     }
-    renderAbsensiSummaryTable(j.summary||[], date);
+    // GAS returns "records", server API returns "summary" — handle both
+    var rawList = j.summary||j.records||[];
+    // Normalize GAS format to match table expectations
+    var normalized = rawList.map(function(r){
+      // If it's already server format (has "status"), pass through
+      if(r.status==='Hadir'||r.status==='Tidak Hadir') return r;
+      // GAS format: {employeeId, employeeName, totalOnDuty, totalOffDuty,
+      //              lastStatus, firstIn?, lastOut?, scanCount?, records?}
+      var hasScans = r.scanCount>0 || r.totalOnDuty>0 || r.totalOffDuty>0 || r.lastStatus;
+      // Compute firstIn/lastOut from r.records if GAS provides them
+      var firstIn=r.firstIn||'', lastOut=r.lastOut||'';
+      if(!firstIn&&r.records&&r.records.length){
+        var recs=r.records;
+        var inRecs=recs.filter(function(x){return x.status==='In';});
+        var outRecs=recs.filter(function(x){return x.status==='Out';});
+        if(inRecs.length)firstIn=formatAbsensiTime(inRecs[0].timeStr);
+        if(outRecs.length)lastOut=formatAbsensiTime(outRecs[outRecs.length-1].timeStr);
+      }
+      return {
+        employeeId  : r.employeeId,
+        employeeName: r.employeeName||'',
+        division    : r.division||'-',
+        firstIn     : firstIn||'-',
+        lastOut     : lastOut||'-',
+        totalOnDuty : r.totalOnDuty||0,
+        totalOffDuty: r.totalOffDuty||0,
+        scanCount   : r.scanCount||0,
+        status      : hasScans ? 'Hadir' : 'Tidak Hadir'
+      };
+    });
+    renderAbsensiSummaryTable(normalized, date);
   })
   .catch(function(e){
     if(btn){btn.disabled=false;btn.textContent='Tampilkan';}
