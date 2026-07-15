@@ -4929,6 +4929,12 @@ function submitAbsensi(){
   .catch(function(e){delete _absensiInFlight[empId];if(msg){msg.textContent='Error: '+e.message;msg.style.color='#ff4444';}});
 }
 
+function normalizeTimeStr(t){
+  if(!t)return'-';
+  // Google Sheets menyimpan time sebagai Date — extract HH:MM:SS saja
+  var m=String(t).match(/(\d{2}:\d{2}:\d{2})/);
+  return m?m[1]:String(t);
+}
 function secsToDisplay(s){
   if(!s||s===0)return'-';
   var m=Math.floor(s/60);var sec=s%60;
@@ -4936,6 +4942,7 @@ function secsToDisplay(s){
   if(sec===0)return m+' mnt';
   return m+' mnt '+sec+'dtk';
 }
+function toSecsLocal(t){var p=(normalizeTimeStr(t)||'').split(':').map(Number);return(p[0]||0)*3600+(p[1]||0)*60+(p[2]||0);}
 function getOnDutySecs(r){return r.onDutySecs!==undefined?r.onDutySecs:(r.onDutyMinutes||0)*60;}
 function getOffDutySecs(r){return r.offDutySecs!==undefined?r.offDutySecs:(r.offDutyMinutes||0)*60;}
 function totalSecsDisplay(secs){
@@ -4952,6 +4959,13 @@ function renderAbsensiResult(j){
   var records=j.records||[];
   var inC='#00ff88',outC='#ff6644';
   var lastStatus=records.length?records[records.length-1].status:'';
+  // Hitung ulang durasi dari timeStr yang dinormalisasi (GAS mungkin kirim durasi salah)
+  for(var _ri=1;_ri<records.length;_ri++){
+    var _prev=records[_ri-1],_cur=records[_ri];
+    var _diff=Math.max(0,toSecsLocal(_cur.timeStr)-toSecsLocal(_prev.timeStr));
+    if(_prev.status==='In'){_prev.onDutySecs=_diff;}
+    else{_prev.offDutySecs=_diff;}
+  }
   var totOn=records.reduce(function(s,r){return s+getOnDutySecs(r);},0);
   var totOff=records.reduce(function(s,r){return s+getOffDutySecs(r);},0);
   var h='<div style="background:#0d0d22;padding:7px 10px 6px;border-bottom:1px solid #1a2a4a;">'
@@ -4972,7 +4986,7 @@ function renderAbsensiResult(j){
     var onS=getOnDutySecs(r);var offS=getOffDutySecs(r);
     h+='<tr>'
       +'<td style="padding:7px 8px;color:#88aacc;border:1px solid #12122a;text-align:center;">'+(idx+1)+'</td>'
-      +'<td style="padding:7px 8px;color:#88ddff;font-weight:600;border:1px solid #12122a;text-align:center;">'+r.timeStr+'</td>'
+      +'<td style="padding:7px 8px;color:#88ddff;font-weight:600;border:1px solid #12122a;text-align:center;">'+normalizeTimeStr(r.timeStr)+'</td>'
       +'<td style="padding:7px 8px;text-align:center;border:1px solid #12122a;"><b style="color:'+sc+';">'+r.status+'</b></td>'
       +'<td style="padding:7px 8px;color:#ffcc44;font-weight:600;border:1px solid #12122a;text-align:right;">'+secsToDisplay(onS)+'</td>'
       +'<td style="padding:7px 8px;color:#ff8844;font-weight:600;border:1px solid #12122a;text-align:right;">'+secsToDisplay(offS)+'</td>'
