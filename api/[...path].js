@@ -1650,6 +1650,16 @@ loadCurrentSetting();
 
       // Auto In/Out toggle
       const lastRec = empRecords.length ? empRecords[empRecords.length - 1] : null;
+
+      // Reject duplicate scan within 3 seconds (double-scan protection)
+      if (lastRec) {
+        const lastSavedAt = lastRec.savedAt ? new Date(lastRec.savedAt).getTime() : 0;
+        if (now.getTime() - lastSavedAt < 3000) {
+          const updatedEmpRecords = allRecords.filter(r => r.employeeId === empId);
+          return send({ success: true, duplicate: true, employeeId: empId, employeeName: empName, status: lastRec.status, timeStr: lastRec.timeStr, records: updatedEmpRecords });
+        }
+      }
+
       const status = lastRec ? (lastRec.status === "In" ? "Out" : "In") : "In";
 
       // Calculate duration in seconds (precise, no rounding loss)
