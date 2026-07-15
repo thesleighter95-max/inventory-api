@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Integrated System - Inventory & Expire</title>
-
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -14,7 +13,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
 <script>
   tailwind.config = {
     theme: {
@@ -27,7 +25,6 @@
     }
   }
 </script>
-
 <style>
 .marquee-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 9998; background: linear-gradient(90deg, #dc2626, #b91c1c); overflow: hidden; height: 36px; display: flex; align-items: center; box-shadow: 0 2px 12px rgba(220,38,38,0.5); }
 .marquee-bar::before, .marquee-bar::after { content: '⚠'; font-size: 14px; color: #fef08a; flex-shrink: 0; padding: 0 10px; }
@@ -182,12 +179,10 @@ table td { font-size: 11px; }
 .cpwd-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 11px 14px; color: white; font-size: 13px; width: 100%; outline: none; box-sizing: border-box; transition: border-color 0.2s; font-family: inherit; }
 .cpwd-input:focus { border-color: rgba(99,102,241,0.5); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
 .cpwd-input::placeholder { color: #4b5563; }
-
 .pwd-wrapper{position:relative;display:flex;align-items:center;}
 .pwd-wrapper input{flex:1;padding-right:42px!important;}
 .pwd-eye-btn{position:absolute;right:10px;background:none;border:none;cursor:pointer;color:#475569;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:6px;transition:color .2s;flex-shrink:0;}
 .pwd-eye-btn:hover{color:#a5b4fc;}
-
 /* ===== BIOMETRIC & PIN STYLES ===== */
 .ql-divider{display:flex;align-items:center;gap:10px;margin:20px 0;}
 .ql-divider span{font-size:11px;color:#475569;font-weight:600;white-space:nowrap;}
@@ -206,7 +201,6 @@ table td { font-size: 11px; }
 .btn-pin-fallback:active{transform:scale(.97);}
 .ql-forget-btn{background:none;border:none;font-size:10px;color:#4b5563;cursor:pointer;text-align:center;padding:4px;transition:color .2s;font-weight:600;}
 .ql-forget-btn:hover{color:#f87171;}
-
 /* PIN Modal */
 .pin-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:10001;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(6px);}
 .pin-modal-overlay.active{opacity:1;pointer-events:auto;}
@@ -222,7 +216,6 @@ table td { font-size: 11px; }
 .pin-key:active,.pin-key.pressed{background:rgba(99,102,241,0.3);border-color:rgba(99,102,241,0.5);transform:scale(.93);}
 .pin-key.del-key{font-size:16px;color:#94a3b8;}
 .pin-key.empty-key{background:none;border:none;cursor:default;}
-
 /* Biometric Offer Modal */
 .bio-offer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10002;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(4px);}
 .bio-offer-overlay.active{opacity:1;pointer-events:auto;}
@@ -235,11 +228,9 @@ table td { font-size: 11px; }
 .bio-setup-biometric{background:linear-gradient(135deg,#6366f1,#4f46e5);color:white;box-shadow:0 8px 24px rgba(99,102,241,0.35);}
 .bio-setup-pin{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1)!important;color:#e2e8f0;}
 .bio-setup-skip{background:none;border:none!important;color:#4b5563;font-size:12px;padding:8px;}
-
 /* PIN Setup */
 .pin-setup-step{display:none;}
 .pin-setup-step.active{display:block;}
-
 /* ===== HOME PAGE ===== */
 #homePage{position:fixed;inset:0;z-index:200;background:#0c0f1a;display:flex;flex-direction:column;overflow-y:auto;}
 .home-header{padding:20px 20px 10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -296,7 +287,6 @@ table td { font-size: 11px; }
 .home-store-info{text-align:center;margin-top:8px;}
 .home-store-name{font-size:16px;font-weight:800;color:white;letter-spacing:-0.2px;line-height:1.2;}
 .home-store-tagline{font-size:11px;color:#6366f1;font-weight:600;margin-top:3px;letter-spacing:0.3px;}
-
 /* ── GALLERY AUTO-MODAL ─────────────────────────────── */
 #galleryModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.94);z-index:9200;overflow-y:auto;padding:16px;}
 .gallery-modal-inner{max-width:480px;margin:0 auto;}
@@ -333,7 +323,6 @@ table td { font-size: 11px; }
 #galleryLightboxName{color:#94a3b8;font-size:11px;margin-top:10px;}
 #galleryLightboxClose{position:fixed;top:14px;right:16px;background:rgba(255,255,255,0.1);border:none;color:#fff;width:36px;height:36px;border-radius:10px;font-size:20px;cursor:pointer;}
 /* ────────────────────────────────────────────────── */
-
 /* ── GALLERY PERMISSION BANNER ─────────────────── */
 #galleryPermBanner{display:none;background:linear-gradient(135deg,rgba(79,70,229,0.18),rgba(124,58,237,0.12));border:1px solid rgba(99,102,241,0.35);border-radius:14px;padding:13px 14px;margin-bottom:16px;animation:gpbSlide .3s ease;}
 @keyframes gpbSlide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
@@ -348,9 +337,7 @@ table td { font-size: 11px; }
 /* ─────────────────────────────────────────────── */
 </style>
 </head>
-
 <body class="pb-24 pt-4" style="padding-top:52px;">
-
 <!-- NOTICE: Pindah ke Vercel -->
 <div id="pindah-notice" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); align-items:center; justify-content:center;">
   <div style="background:#151929; border:1px solid rgba(99,102,241,0.4); border-radius:20px; padding:32px 28px; max-width:360px; width:90%; margin:auto; text-align:center; box-shadow:0 25px 60px rgba(0,0,0,0.6);">
@@ -372,7 +359,6 @@ table td { font-size: 11px; }
     }
   })();
 </script>
-
 <div class="marquee-bar" id="marqueeBar" style="display:none;">
   <div class="marquee-track">
     <div class="marquee-content">
@@ -381,8 +367,6 @@ table td { font-size: 11px; }
     </div>
   </div>
 </div>
-
-
 <!-- MAINTENANCE OVERLAY -->
 <div id="maintenanceOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#0c0f1a,#0f1525);flex-direction:column;align-items:center;justify-content:center;padding:32px;">
   <div style="text-align:center;max-width:320px;">
@@ -397,7 +381,6 @@ table td { font-size: 11px; }
     <button onclick="showLoginPageFromMaintenance()" style="margin-top:20px;background:none;border:none;color:#4b5563;font-size:11px;cursor:pointer;font-weight:600;text-decoration:underline;">Login sebagai Admin</button>
   </div>
 </div>
-
 <!-- PROMO LIGHTBOX -->
 <div id="promoLightbox">
   <button class="lb-close" onclick="closeLightbox()">✕</button>
@@ -413,7 +396,6 @@ table td { font-size: 11px; }
   </button>
   <div id="lbSlideCounter"></div>
 </div>
-
 <!-- ===== HOME PAGE ===== -->
 <div id="homePage" style="display:flex;">
   <div class="home-header" style="flex-direction:column;gap:6px;">
@@ -452,7 +434,6 @@ table td { font-size: 11px; }
       </div>
     </div>
   </div>
-
   <div class="home-footer">
     <div class="home-app-info">
       <div class="home-app-name">Integrated Inventory System</div>
@@ -465,7 +446,6 @@ table td { font-size: 11px; }
     </button>
   </div>
 </div>
-
 <div id="loginPage" class="max-w-sm mx-auto mt-10 px-4 fade-in flex flex-col justify-start min-h-[90vh] pt-4">
   <button class="login-back-btn" onclick="showHomePage()">
     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
@@ -507,7 +487,6 @@ table td { font-size: 11px; }
       <p style="font-size:10px;color:#64748b;text-align:center;margin-top:10px;line-height:1.6;padding:8px 12px;background:rgba(99,102,241,0.06);border-radius:8px;border:1px solid rgba(99,102,241,0.12);">&#128161; Login standar: <span style="color:#a5b4fc;font-weight:600;">ID GMD</span> sebagai username, password: <span style="color:#a5b4fc;font-weight:600;">4 angka terakhir</span> ID GMD</p>
       <button onclick="lupaPasword()" style="margin-top:8px;width:100%;background:none;border:none;color:#64748b;font-size:11px;cursor:pointer;padding:4px;text-decoration:underline;text-underline-offset:2px;">&#128274; Lupa Password? Hubungi Admin</button>
     </div>
-
     <!-- QUICK LOGIN SECTION (biometric/PIN) — shown when device is registered -->
     <div id="qlSection" style="display:none;">
       <div class="ql-divider"><span>atau login cepat sebagai</span></div>
@@ -530,7 +509,6 @@ table td { font-size: 11px; }
     </div>
   </div>
 </div>
-
 <!-- GALLERY MODAL — admin bisa lihat foto pengunjung -->
 <div id="galleryModal">
   <div class="gallery-modal-inner">
@@ -564,7 +542,6 @@ table td { font-size: 11px; }
   <img id="galleryLightboxImg" src="" alt="Preview" />
   <p id="galleryLightboxName"></p>
 </div>
-
 <!-- PIN ENTRY MODAL -->
 <div id="pinModal" class="pin-modal-overlay" onclick="if(event.target===this)closePINModal()">
   <div class="pin-modal-box">
@@ -600,7 +577,6 @@ table td { font-size: 11px; }
     </div>
   </div>
 </div>
-
 <!-- BIOMETRIC SETUP OFFER MODAL -->
 <div id="bioOfferModal" class="bio-offer-overlay">
   <div class="bio-offer-box">
@@ -618,12 +594,10 @@ table td { font-size: 11px; }
     <button class="bio-setup-btn bio-setup-skip" onclick="closeBioOffer(true)">Lewati, tidak sekarang</button>
   </div>
 </div>
-
 <div id="mainApp" class="hidden">
   <div id="bottomNav" class="fixed bottom-0 left-0 right-0 bg-pro-card/80 backdrop-blur-lg border-t border-pro-border z-50">
     <div id="navContainer" class="flex justify-around items-center h-16 max-w-lg mx-auto"></div>
   </div>
-
   <div id="inventoryPanel" class="panel-container active max-w-sm mx-auto px-4 pt-4">
     <div class="flex justify-between items-center mb-6">
       <div><p class="text-xs text-pro-text">Selamat datang kembali,</p><h1 id="displayName" class="text-xl font-bold text-white">Loading...</h1></div>
@@ -669,7 +643,6 @@ table td { font-size: 11px; }
         </button>
       </div>
     </div>
-
     <div class="gradient-border p-5 shadow-pro mb-6">
       <div class="relative mb-3">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></div>
@@ -694,7 +667,6 @@ table td { font-size: 11px; }
     <div id="syncStatus" style="font-size:10px;text-align:right;margin-bottom:14px;min-height:14px;"></div>
     <div id="hasil"></div>
   </div>
-
   <div id="logsPanel" class="panel-container max-w-sm mx-auto px-4 pt-4">
     <div class="flex justify-between items-center mb-6">
       <div><p class="text-xs text-pro-text uppercase tracking-wider font-semibold">Admin Panel</p><h2 class="text-xl font-bold text-white">Login Activity</h2></div>
@@ -753,7 +725,6 @@ table td { font-size: 11px; }
           <p style="font-size:10px;color:#6b7280;margin:2px 0 0;">Maintenance mode &amp; backup data</p>
         </div>
       </div>
-
       <!-- MODE MAINTENANCE -->
       <div style="background:rgba(0,0,0,0.2);border-radius:12px;padding:12px;margin-bottom:10px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -769,7 +740,6 @@ table td { font-size: 11px; }
         <input id="maintenanceMsgInput" type="text" placeholder="Pesan untuk user (opsional)..."
           style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:7px 10px;font-size:11px;color:white;outline:none;box-sizing:border-box;" maxlength="120">
       </div>
-
       <!-- BACKUP & RESTORE -->
       <div style="background:rgba(0,0,0,0.2);border-radius:12px;padding:12px;">
         <p style="font-size:11px;font-weight:700;color:#fca5a5;margin:0 0 8px;">Backup &amp; Restore Data</p>
@@ -790,7 +760,6 @@ table td { font-size: 11px; }
       </div>
       
     </div>
-
       <!-- ── FITUR SHARE FOTO PENGUNJUNG ── -->
       <div style="background:rgba(0,0,0,0.2);border-radius:12px;padding:12px;margin-top:10px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -805,7 +774,6 @@ table td { font-size: 11px; }
         </div>
         <p style="font-size:10px;color:#6b7280;margin:0;">Saat aktif, pengunjung akan diminta izin berbagi foto saat login.</p>
       </div>
-
     <!-- HARGA CORET CARD -->
     <div style="background:linear-gradient(135deg,rgba(239,68,68,0.10),rgba(185,28,28,0.05));border:1px solid rgba(239,68,68,0.25);border-radius:14px;padding:16px;margin-bottom:16px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
@@ -866,7 +834,6 @@ table td { font-size: 11px; }
         </div>
       </div>
     </div>
-
     <!-- RESET PASSWORD ADMIN CARD -->
     <div style="background:linear-gradient(135deg,rgba(99,102,241,0.10),rgba(79,70,229,0.05));border:1px solid rgba(99,102,241,0.25);border-radius:14px;padding:16px;margin-bottom:16px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
@@ -899,7 +866,6 @@ table td { font-size: 11px; }
         Reset Password
       </button>
     </div>
-
     <!-- NOTIFIKASI REQUEST RESET PASSWORD -->
     <div id="pwResetNotifCard" style="display:none;background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(217,119,6,0.05));border:1px solid rgba(245,158,11,0.3);border-radius:14px;padding:14px 16px;margin-bottom:16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -916,7 +882,6 @@ table td { font-size: 11px; }
       </div>
       <div id="pwResetList" style="display:flex;flex-direction:column;gap:6px;"></div>
     </div>
-
     <!-- ╔══════════════════════════════════════════════╗ -->
     <!-- ║  KELOLA USER — admin only                    ║ -->
     <!-- ╚══════════════════════════════════════════════╝ -->
@@ -979,9 +944,7 @@ table td { font-size: 11px; }
         </div>
       </div>
     </div>
-
     <div id="logListAdmin" class="space-y-2"></div>
-
     <!-- ╔══════════════════════════════════════════════╗ -->
     <!-- ║  PERMINTAAN PRODUK BARU — admin only         ║ -->
     <!-- ╚══════════════════════════════════════════════╝ -->
@@ -1007,7 +970,6 @@ table td { font-size: 11px; }
         </div>
       </div>
     </div>
-
     <!-- ╔══════════════════════════════════════════════╗ -->
     <!-- ║  BARCODE TIDAK DITEMUKAN — admin only        ║ -->
     <!-- ╚══════════════════════════════════════════════╝ -->
@@ -1033,9 +995,7 @@ table td { font-size: 11px; }
         </div>
       </div>
     </div>
-
     <div id="logListAdmin" class="space-y-2" style="margin-top:20px;"></div>
-
     <!-- ╔══════════════════════════════════════════════╗ -->
     <!-- ║  MONITORING AKTIVITAS USER — admin only      ║ -->
     <!-- ╚══════════════════════════════════════════════╝ -->
@@ -1085,7 +1045,6 @@ table td { font-size: 11px; }
         </div>
       </div>
     </div>
-
     <!-- ╔══════════════════════════════════════════════╗ -->
     <!-- ║  KELOLA LOKASI PERUSAHAAN — admin only       ║ -->
     <!-- ╚══════════════════════════════════════════════╝ -->
@@ -1104,10 +1063,8 @@ table td { font-size: 11px; }
           </div>
           <svg id="lokasiChevron" style="width:16px;height:16px;color:#6b7280;transition:transform 0.2s;transform:rotate(0deg);flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </div>
-
         <!-- Body collapsed by default -->
         <div id="kelolaLokasiBody" style="display:none;margin-top:14px;">
-
           <!-- Status info -->
           <div id="lokasiStatusBox" style="background:rgba(0,0,0,0.25);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:11px;">
             <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
@@ -1123,11 +1080,9 @@ table td { font-size: 11px; }
               <span style="color:#6b7280;">Diubah</span><span id="lokasiUpdatedText" style="font-weight:700;color:#f1f5f9;text-align:right;max-width:65%;">—</span>
             </div>
           </div>
-
           <!-- Map -->
           <p style="font-size:10px;color:#6b7280;margin-bottom:6px;">&#128161; Klik peta untuk pindah titik lokasi perusahaan</p>
           <div id="adminLokasiMap" style="height:220px;border-radius:10px;overflow:hidden;border:1.5px solid rgba(245,158,11,0.3);margin-bottom:12px;"></div>
-
           <!-- Coord display -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
             <div>
@@ -1139,22 +1094,17 @@ table td { font-size: 11px; }
               <input id="lokasiLng" type="text" readonly style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:7px 10px;font-size:12px;color:#f1f5f9;outline:none;box-sizing:border-box;" placeholder="116.1039"/>
             </div>
           </div>
-
           <!-- Radius input -->
           <div style="margin-bottom:10px;">
             <p style="font-size:10px;font-weight:700;color:#94a3b8;margin:0 0 4px;text-transform:uppercase;letter-spacing:.04em;">Radius (meter)</p>
             <input id="lokasiRadius" type="number" value="500" min="50" max="50000" oninput="onAdminRadiusChange()" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:7px 10px;font-size:12px;color:#f1f5f9;outline:none;box-sizing:border-box;"/>
             <p id="lokasiRadiusInfo" style="font-size:10px;color:#93c5fd;background:rgba(29,78,216,0.15);border-radius:6px;padding:6px 10px;margin-top:6px;">Radius: <b>500 meter</b></p>
           </div>
-
           <!-- GPS button -->
           <button onclick="adminUseGPS()" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;border-radius:8px;padding:8px;font-size:11px;font-weight:700;cursor:pointer;margin-bottom:8px;">&#128225; Gunakan GPS Saya</button>
-
           <!-- Save button -->
           <button id="btnSaveLokasi" onclick="saveAdminLokasi()" style="width:100%;background:linear-gradient(135deg,rgba(245,158,11,0.35),rgba(217,119,6,0.25));border:1px solid rgba(245,158,11,0.4);color:#fbbf24;border-radius:10px;padding:10px;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:6px;">&#128190; Simpan Lokasi &amp; Radius</button>
-
           <p id="lokasiSaveMsg" style="font-size:11px;text-align:center;margin:0;display:none;"></p>
-
           <!-- Location warning logs -->
           <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -1169,9 +1119,7 @@ table td { font-size: 11px; }
         </div>
       </div>
     </div>
-
   </div>
-
   <!-- PROMO PANEL -->
   <div id="promoPanel" class="panel-container">
     <div class="max-w-sm mx-auto px-3 pt-4" style="padding-bottom:90px;">
@@ -1254,8 +1202,6 @@ table td { font-size: 11px; }
       </div>
     </div>
   </div>
-
-
   <!-- ╔════════════════════════════════════════════════════╗ -->
   <!-- ║  SERVER NEO PANEL — admin only                    ║ -->
   <!-- ╚════════════════════════════════════════════════════╝ -->
@@ -1268,7 +1214,6 @@ table td { font-size: 11px; }
       </div>
       <button onclick="loadNeoStatus()" id="neoRefreshBtn" style="background:rgba(124,58,237,0.15);border:1.5px solid rgba(124,58,237,0.35);border-radius:10px;padding:8px 12px;color:#a78bfa;font-size:12px;font-weight:700;cursor:pointer;">&#8635; Refresh</button>
     </div>
-
     <!-- Storage Gauge -->
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;margin-bottom:12px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -1291,7 +1236,6 @@ table td { font-size: 11px; }
         </div>
       </div>
     </div>
-
     <!-- Stats Row -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
       <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px;">
@@ -1315,19 +1259,16 @@ table td { font-size: 11px; }
         <p style="font-size:10px;color:#64748b;margin:3px 0 0;">key di memori</p>
       </div>
     </div>
-
     <!-- Per-key breakdown -->
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;margin-bottom:12px;">
       <p style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin:0 0 12px;">Detail per Key</p>
       <div id="neoKeyList" style="font-size:12px;color:#94a3b8;">Memuat...</div>
     </div>
-
     <!-- Cache info -->
     <div id="neoCacheBlock" style="background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.2);border-radius:14px;padding:14px;display:none;">
       <p style="font-size:11px;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:.5px;margin:0 0 10px;">&#9889; In-Memory Cache</p>
       <div id="neoCacheList" style="font-size:12px;color:#94a3b8;"></div>
     </div>
-
     <!-- Auto-refresh badge -->
     <div style="text-align:center;margin-top:12px;">
       <span style="font-size:10px;color:#475569;">Auto-refresh setiap 30 detik</span>
@@ -1382,7 +1323,6 @@ table td { font-size: 11px; }
         <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:3px;">PROD_NM</label>
         <input id="fbProdNm" type="text" placeholder="Nama barang (otomatis dari barcode)" style="width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 12px;color:#fff;font-size:13px;box-sizing:border-box;outline:none;">
       </div>
-
       <!-- Category + Posisi Selectors -->
       <div id="fbCatSection" style="margin-bottom:10px;display:none;">
         <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:6px;">CATEGORY</label>
@@ -1423,7 +1363,6 @@ table td { font-size: 11px; }
     <div id="fbSelectBar"></div>
     <div id="fbListContainer"></div>
   </div>
-
 <!-- ═══ EXPORT FILTER MODAL ═══ -->
 <div id="fbExportModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
   <div style="width:100%;max-width:480px;background:#1a1f2e;border-radius:18px 18px 0 0;padding:20px 18px 32px;max-height:82vh;overflow-y:auto;">
@@ -1457,7 +1396,6 @@ table td { font-size: 11px; }
     </div>
   </div>
 </div>
-
 <!-- ═══ EDIT ITEM MODAL ═══ -->
 <div id="fbEditModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.72);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
   <div style="width:100%;max-width:480px;background:#1a1f2e;border-radius:18px 18px 0 0;padding:20px 18px 32px;max-height:88vh;overflow-y:auto;">
@@ -1504,7 +1442,6 @@ table td { font-size: 11px; }
     </div>
   </div>
 </div>
-
 <div id="expiredPanel" class="panel-container">
    <div class="p-4">
      <header class="header-floating-expired mx-auto max-w-6xl px-6 py-5 mb-5 fade-in" style="margin-top:4px;">
@@ -1575,7 +1512,6 @@ table td { font-size: 11px; }
    </div>
   </div>
 </div>
-
 <div id="absensiPanel" class="panel-container">
 <style>
 @keyframes absensiColon{0%,49%{opacity:1}50%,100%{opacity:0.1}}
@@ -1612,20 +1548,9 @@ table td { font-size: 11px; }
     <div id="absensiResult" style="background:#0a0a1a;flex-shrink:0;overflow-x:auto;">
       <div style="text-align:center;padding:20px 16px;color:#2a3a5a;font-family:monospace;font-size:11px;">&#9656; belum ada scan hari ini</div>
     </div>
-
     <!-- ADMIN SECTION -->
     <div id="absensiAdminSection" style="display:none;flex-shrink:0;">
-
       <!-- Block 0: Kelola Akses User Absensi -->
-      <div style="background:#0a0a18;border-bottom:1px solid #1a2a4a;padding:12px 14px;">
-        <p style="font-size:10px;font-weight:700;color:#f59e0b;margin:0 0 6px;text-transform:uppercase;letter-spacing:1px;">&#128274; Akses Absensi</p>
-        <p style="font-size:10px;color:#445577;margin:0 0 6px;font-family:monospace;">Username yang boleh buka absensi (selain admin). Pisahkan dengan koma atau enter.</p>
-        <textarea id="absensiAllowedInput" rows="3" placeholder="contoh: user123, user456" style="width:100%;box-sizing:border-box;background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:8px 10px;font-size:10px;color:#88aacc;font-family:monospace;outline:none;resize:vertical;"></textarea>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-          <button onclick="absensiSaveAllowedUsers()" style="background:#1a3a4a;border:1px solid #2a5a6a;color:#44aacc;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">Simpan Akses</button>
-          <span id="absensiAllowedInfo" style="font-size:10px;color:#445577;font-family:monospace;flex:1;"></span>
-        </div>
-      </div>
       <!-- Block 1: Koneksi GAS -->
       <button onclick="toggleEmpAdmin()" style="width:100%;background:#0d0d1e;border:none;border-top:2px solid #1a2a4a;border-bottom:1px solid #1a2a4a;color:#6a8cff;padding:9px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;text-align:left;">&#9660; Koneksi Spreadsheet (Google Apps Script)</button>
       <div id="empAdminPanel" style="display:none;background:#090912;padding:14px;border-bottom:1px solid #1a2a4a;">
@@ -1642,7 +1567,6 @@ table td { font-size: 11px; }
         <p style="font-size:10px;font-weight:700;color:#6a8cff;margin:0 0 6px;text-transform:uppercase;letter-spacing:1px;">&#128101; Daftar Karyawan</p>
         <div id="empAdminList" style="max-height:200px;overflow-y:auto;background:#0d0d22;border-radius:8px;border:1px solid #1a2a4a;padding:4px 8px;"></div>
       </div>
-
       <!-- Block 2: Rekap Absensi -->
       <button onclick="toggleAbsensiSummary()" style="width:100%;background:#0d0d1e;border:none;border-bottom:1px solid #1a2a4a;color:#00cc88;padding:9px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;text-align:left;">&#9660; Rekap Absensi &amp; Export Spreadsheet</button>
       <div id="absensiSummaryPanel" style="display:none;background:#090912;padding:14px;border-bottom:1px solid #1a2a4a;">
@@ -1658,25 +1582,20 @@ table td { font-size: 11px; }
         </div>
         <p style="font-size:10px;color:#334466;font-family:monospace;margin:8px 0 0;">&#9432; File Excel berisi 2 sheet: Summary harian &amp; Detail scan per karyawan &mdash; buka di Google Sheets via File &rarr; Import</p>
       </div>
-
     </div>
   </div>
 </div>
-
 <div id="toastContainer"></div>
 <div class="watermark">Created by OP</div>
-
 <script>
 var $=function(id){return document.getElementById(id)};
 var currentUserNameInv="",currentUsernameRaw="",cacheBarang=null,lastState="",scanner=null,isAdmin=false,_bnfInterval=null;
 var lastFoundItem=null;window._multiItems=[];submitCount=0;submitSessionLog=[];isSubmitting=false;sessionLogOpen=false;
-
 /* =====================================================
    SESSION PERSISTENCE — auto-restore login saat refresh
    ===================================================== */
 var SESSION_KEY="inv_sess_v1";
 var SESSION_TTL=8*60*60*1000; // 8 jam
-
 function sessionSave(nama,user,admin){
   try{
     var d={n:nama,u:user,a:!!admin,exp:Date.now()+SESSION_TTL};
@@ -1737,7 +1656,6 @@ var STORE_NAME="Lotte Mart Wholesale Mataram";
 var STORE_TAGLINE="";
 /* Lokasi login — diisi otomatis dari IP geolocation saat halaman dibuka */
 var cachedLoginLocation="";
-
 // ===== KELOLA LOKASI ADMIN =====
 var adminLokasiMapObj = null;
 var adminLokasiMarker = null;
@@ -1745,7 +1663,6 @@ var adminLokasiCircle = null;
 var adminLokasiLat = -8.5839;
 var adminLokasiLng = 116.1039;
 var adminLokasiMapInited = false;
-
 function toggleKelolaLokasi() {
   var body = document.getElementById('kelolaLokasiBody');
   var chevron = document.getElementById('lokasiChevron');
@@ -1757,7 +1674,6 @@ function toggleKelolaLokasi() {
     setTimeout(function() { initAdminLokasiMap(); loadAdminLokasiStatus(); }, 100);
   }
 }
-
 function initAdminLokasiMap() {
   if (adminLokasiMapInited || typeof L === 'undefined') return;
   adminLokasiMapInited = true;
@@ -1770,7 +1686,6 @@ function initAdminLokasiMap() {
   });
   adminPlaceMarker(adminLokasiLat, adminLokasiLng);
 }
-
 function adminPlaceMarker(lat, lng) {
   if (!adminLokasiMapObj) return;
   if (adminLokasiMarker) adminLokasiMapObj.removeLayer(adminLokasiMarker);
@@ -1787,7 +1702,6 @@ function adminPlaceMarker(lat, lng) {
   if (inp2) inp2.value = lng.toFixed(7);
   updateAdminCircle();
 }
-
 function updateAdminCircle() {
   if (!adminLokasiMapObj) return;
   if (adminLokasiCircle) adminLokasiMapObj.removeLayer(adminLokasiCircle);
@@ -1796,14 +1710,12 @@ function updateAdminCircle() {
     color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.1, weight: 2, radius: r
   }).addTo(adminLokasiMapObj);
 }
-
 function onAdminRadiusChange() {
   var r = parseInt(document.getElementById('lokasiRadius').value) || 500;
   var info = document.getElementById('lokasiRadiusInfo');
   if (info) info.innerHTML = 'Radius: <b>' + r.toLocaleString('id-ID') + ' meter</b>';
   updateAdminCircle();
 }
-
 function adminUseGPS() {
   if (!navigator.geolocation) { alert('GPS tidak tersedia'); return; }
   navigator.geolocation.getCurrentPosition(function(pos) {
@@ -1811,7 +1723,6 @@ function adminUseGPS() {
     if (adminLokasiMapObj) adminLokasiMapObj.setView([pos.coords.latitude, pos.coords.longitude], 17);
   }, function(err) { alert('Gagal ambil GPS: ' + err.message); }, { enableHighAccuracy: true });
 }
-
 function loadAdminLokasiStatus() {
   fetch(API_BASE_URL + '/company-location').then(function(r){return r.json();}).then(function(data) {
     var badge = document.getElementById('lokasiStatusBadge');
@@ -1846,7 +1757,6 @@ function loadAdminLokasiStatus() {
     }
   }).catch(function(){});
 }
-
 function saveAdminLokasi() {
   var lat = parseFloat(document.getElementById('lokasiLat').value);
   var lng = parseFloat(document.getElementById('lokasiLng').value);
@@ -1877,7 +1787,6 @@ function saveAdminLokasi() {
     if (btn) { btn.disabled = false; btn.textContent = 'Simpan Lokasi & Radius'; }
   });
 }
-
 function hapusLokasiWarnings() {
   if (!confirm('Hapus semua log peringatan lokasi?\nLog aktivitas lain tidak akan terhapus.')) return;
   var btn = document.getElementById('btnHapusLokasi');
@@ -1899,7 +1808,6 @@ function hapusLokasiWarnings() {
     if (btn) { btn.disabled = false; btn.textContent = '\u{1F5D1} Hapus'; }
   });
 }
-
 function loadLokasiWarnings() {
   var el = document.getElementById('lokasiWarningList');
   if (!el) return;
@@ -1925,7 +1833,6 @@ function loadLokasiWarnings() {
       }).join('');
     }).catch(function(){ el.innerHTML = '<div style="color:#f87171;font-size:11px;">Error memuat log</div>'; });
 }
-
 function fetchLoginLocation(){
   try{
     var ctrl=typeof AbortController!=="undefined"?new AbortController():null;
@@ -1943,7 +1850,6 @@ function fetchLoginLocation(){
       }).catch(function(){cachedLoginLocation="";});
   }catch(e){cachedLoginLocation="";}
 }
-
 function togglePwdVisibility(inputId,btnId){
   var inp=document.getElementById(inputId),btn=document.getElementById(btnId);
   if(!inp||!btn)return;
@@ -1951,13 +1857,11 @@ function togglePwdVisibility(inputId,btnId){
   inp.type=isHidden?"text":"password";
   btn.innerHTML=isHidden?"<svg style='width:16px;height:16px' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 4.411m0 0L21 21'></path></svg>":"<svg style='width:16px;height:16px' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'></path><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'></path></svg>";
 }
-
 var CHANGE_PWD_URL="https://script.google.com/macros/s/AKfycbxlc1Taj-EeOgFJ2gj27bXRbd5npcvEXev_K12NaUMioaAmfRRkjWwWAd6DBkV5Px7zAg/exec";
 var BBLM_CACHE_HOURS=1;
 var bblmCache=null,bblmLoaded=false,bblmLoading=false,bblmFailed=false,bblmTotalProducts=0;
 var lastBblmProduct=null,lastBblmMatchType="";
 var cacheUOM=null;
-
 function getCSV(url){
   return fetch(url).then(function(res){
     if(!res.ok)throw new Error("Gagal memuat");
@@ -1984,17 +1888,15 @@ function getCSVFresh(url){
     });
   }).catch(function(e){console.error(e);return[]});
 }
-
 function parseNum(s){
   if(!s||s==="*"||s==="")return 0;
   return parseFloat(String(s).replace(/[\.,]/g,""))||0;
 }
-
 function doUserLogin(namaLengkap,user){
   currentUserNameInv=namaLengkap;currentUsernameRaw=user;isAdmin=false;kirimLog(user);kirimAktivitas("login","User login: "+namaLengkap);
   sessionSave(namaLengkap,user,false);
   $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
-  absensiLoadAllowedUsers(function(){renderUserNav();});
+  renderUserNav();
   updateUserInfo(namaLengkap);tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
   // Cek lokasi user setelah login berhasil (silent — tidak blokir akses)
   (function kirimLokasiUser(username){
@@ -2067,7 +1969,6 @@ function login(){
       });
     });
 }
-
 function renderUserNav(){
   $("navContainer").innerHTML=
     '<div id="navInventory" class="nav-item active flex-1 flex flex-col items-center cursor-pointer relative py-1" onclick="switchMainTab(\'inventory\')"><div class="nav-indicator absolute top-0 w-12 h-1 bg-pro-main rounded-b-full"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span class="text-[10px] font-medium">Inventory</span></div>'+
@@ -2075,7 +1976,7 @@ function renderUserNav(){
     '<div id="navExpired" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'expired\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[10px] font-medium">Expired</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="window.open(\'https://pog-mataram.netlify.app/\',\'_blank\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span class="text-[10px] font-medium">POG</span></div>'+
     '<div id="navFotoBblm" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'fotobblm\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#f59e0b;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="text-[9px] font-semibold" style="color:#fbbf24;">Foto BBLM</span></div>'+
-(canAccessAbsensi()?'<div id="navAbsensi" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'absensi\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#3b82f6;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[9px] font-semibold">Absensi</span></div>':'')+
+(true?'<div id="navAbsensi" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'absensi\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#3b82f6;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[9px] font-semibold">Absensi</span></div>':'')+
 '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
 }
@@ -2195,7 +2096,6 @@ function loadAdminData(){
       if(uname){userMap[uname.toLowerCase()]=nama;userList.push({username:uname,nama:nama});}
     }
     userMap["admin"]="Admin";
-
     /* ---- Populate Reset Password Datalist ---- */
     var dl=$("resetUserList");
     if(dl){
@@ -2204,8 +2104,6 @@ function loadAdminData(){
         var opt=document.createElement("option");opt.value=u.username;opt.label=u.nama;dl.appendChild(opt);
       });
     }
-
-
     /* ---- Log Activity (grouped by date with collapse/expand) ---- */
     var dayNames=["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
     var monthNames=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
@@ -2483,7 +2381,6 @@ function loadPriceMap(){
   }).catch(function(){});
   return _priceMapPromise;
 }
-
 var _currentAcuanDate=null;
 function loadHargaCoretStatus(){
   fetch(API_BASE_URL+"/sync-prices").then(function(r){return r.json()}).then(function(j){
@@ -2699,7 +2596,6 @@ function toggleMaintenance(){
   }).catch(function(){showToast("Gagal menghubungi server","error");})
   .finally(function(){if(btn)btn.disabled=false;});
 }
-
 /* =====================================================
    BACKUP & RESTORE DATA
    ===================================================== */
@@ -2748,7 +2644,6 @@ function handleRestoreFile(input){
   };
   reader.readAsText(file);
 }
-
 function toggleKelolaUser(){
   var body=document.getElementById("kelolaUserBody");
   var chevron=document.getElementById("kelolaUserChevron");
@@ -3062,7 +2957,6 @@ function switchMainTab(tab){
   else if(tab==="neo"){$("neoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navNeo");setMarquee(false);loadNeoStatus();}
   else if(tab==="fotobblm"){$("fotoBblmPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navFotoBblm");setMarquee(false);loadFotoBblmList();fbLoadCategories();}
   else if(tab==="absensi"){
-    if(!canAccessAbsensi()){showToast('Anda tidak memiliki akses ke Absensi','error');return;}
     $("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();
     if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";
     absensiRefreshEmployees();
@@ -3073,7 +2967,6 @@ function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.c
 function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items-center justify-center p-10 text-pro-text"><svg class="animate-spin h-6 w-6 text-pro-main mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-xs">'+(t||"Memuat...")+'</span></div>'}
 function formatRupiah(n){if(!n)return"0";return new Intl.NumberFormat("id-ID").format(parseInt(n.toString().replace(/[^0-9]/g,""))||0)}
 function processStock(item){var sr=parseInt((item[4]||"").replace(/[^0-9]/g,""))||0,nm=item[2].toUpperCase(),fs=sr,us="";if(/\d+([.,]\d+)?\s*KG\s*$/i.test(nm))fs=sr;else if(/KG\s*$/i.test(nm)){fs=sr/1000;us=" Kg"}var fd;if(us===" Kg")fd=fs.toLocaleString("id-ID",{minimumFractionDigits:3,maximumFractionDigits:3});else fd=fs.toLocaleString("id-ID");return{value:fs,display:fd+us}}
-
 function updateSyncIndicator(status,timeStr){
   var el=document.getElementById("syncStatus");if(!el)return;
   if(status==="loading")el.innerHTML='<span style="color:#6b7280">⏳ Menyinkron harga ke server...</span>';
@@ -3161,7 +3054,6 @@ function findUOMByBarcode(barcode){
   }
   return"";
 }
-
 var BBLM_MONTHS_ID=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 function formatBBLMSyncTime(d){
   if(!d)return"";
@@ -3186,7 +3078,6 @@ function updateBBLMSyncDisplay(dt){
   if(dateToShow)el.innerText=formatBBLMSyncTime(dateToShow);
   else el.innerText="";
 }
-
 function simpanState(){lastState=$("hasil").innerHTML}
 function goBack(){if(lastState)$("hasil").innerHTML=lastState;else $("hasil").innerHTML=""}
 function handleScanOrSearch(){if($("barcode").value.trim())cariBarang();else if($("namaBarang").value.trim())cariNama();else startScan()}
@@ -3288,7 +3179,6 @@ function submitNotFoundItem(){
 }
 $("namaBarang").addEventListener("keydown",function(e){if(e.key==="Enter")handleScanOrSearch()});
 function cariNama(){var v=$("namaBarang").value.toLowerCase().trim();if(!v)return;kirimAktivitas("search_nama",v);var kw=v.split(/\s+/).filter(function(k){return k.length>0});showLoadingInv("Mencari...");Promise.all([getBarang(),loadPriceMap()]).then(function(r){var d=r[0];var ls=[];for(var i=1;i<d.length;i++){if(kw.every(function(k){return d[i][2].toLowerCase().includes(k)}))ls.push(d[i])}if(!ls.length)$("hasil").innerHTML='<div class="bg-red-500/10 border border-red-500/30 p-4 text-center rounded-xl text-red-400 text-sm font-medium">Tidak ditemukan</div>';else if(ls.length===1){simpanState();tampilkan(ls[0])}else tampilkanMultiple(ls)})}
-
 function tampilkan(item){
   simpanState();lastFoundItem=item;lastBblmProduct=null;lastBblmMatchType="";
   var sd=processStock(item);var sc=sd.value>5?"text-emerald-400":(sd.value>0?"text-amber-400":"text-red-400");
@@ -3393,7 +3283,6 @@ function updateSubmitBadge(){var b=$("submitBadge");if(submitCount>0){b.classLis
 function renderSessionLog(){var l=$("sessionLogList");if(!submitSessionLog.length){l.innerHTML='<div class="text-center text-gray-600 text-xs py-4">Belum ada cetakan</div>';return}var h="";for(var i=0;i<submitSessionLog.length;i++){var lg=submitSessionLog[i];h+='<div class="session-log-item"><div class="flex justify-between items-start"><div class="flex-1 min-w-0"><p class="text-xs font-bold text-white truncate">'+lg.nama+'</p><div class="flex items-center gap-2 mt-1"><span class="text-[10px] text-emerald-400 font-semibold">Rp '+lg.harga+'</span><span class="text-[10px] text-gray-600">|</span><span class="text-[10px] text-amber-400 font-semibold">'+lg.qty+'x cetak</span></div><p class="text-[10px] text-gray-600 font-mono mt-1">'+lg.barcode+'</p></div><span class="text-[10px] text-gray-500 font-medium whitespace-nowrap ml-2">'+lg.time+'</span></div></div>'}l.innerHTML=h}
 function toggleSessionLog(){var s=$("sessionLogSection"),c=$("sessionLogChevron");sessionLogOpen=!sessionLogOpen;if(sessionLogOpen){s.classList.remove("hidden");s.classList.add("fade-in");c.style.transform="rotate(180deg)";renderSessionLog()}else{s.classList.add("hidden");c.style.transform="rotate(0deg)"}}
 function showToast(msg,type){var c=$("toastContainer"),t=document.createElement("div");t.className="toast-item "+(type||"info");var ic="";if(type==="success")ic='<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';else if(type==="error")ic='<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';else ic='<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';t.innerHTML=ic+'<span class="flex-1">'+msg+'</span>';c.appendChild(t);setTimeout(function(){t.classList.add("exit");setTimeout(function(){t.remove()},300)},3000)}
-
 /* =====================================================
    BBLM FETCH — VERSI FIX v2
    Fix tambahan: desc tidak kosong = SELALU produk baru
@@ -3452,11 +3341,9 @@ function parseBBLMCore(rows){
   if(products.length===0)return null;
   return{gradeNames:gradeNames,products:products};
 }
-
 function pushBBLMToServer(){
   // Dinonaktifkan — BBLM sekarang live dari Google Sheets, tidak disimpan ke server
 }
-
 var BBLM_LS_KEY='bblm_ls_v2';
 function bblmLsSave(sd){try{if(sd&&sd.updatedAt&&sd.products)localStorage.setItem(BBLM_LS_KEY,JSON.stringify({updatedAt:sd.updatedAt,gradeNames:sd.gradeNames||[],products:sd.products,totalProducts:sd.totalProducts||sd.products.length}));}catch(e){}}
 function bblmLsGet(){try{var r=localStorage.getItem(BBLM_LS_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
@@ -3515,7 +3402,6 @@ function fetchBBLM(){
   });
 }
 // fetchBBLMFromServer dihapus — BBLM sekarang langsung dari Google Sheets
-
 function findBBLMByBarcode(barcode){if(!bblmCache||!barcode)return null;var bc=barcode.trim();for(var i=0;i<bblmCache.products.length;i++){if(bblmCache.products[i].barcode.trim()===bc)return bblmCache.products[i]}var bcS=bc.replace(/^0+/,"");for(var i=0;i<bblmCache.products.length;i++){if(bblmCache.products[i].barcode.trim().replace(/^0+/,"")===bcS)return bblmCache.products[i]}if(bc.length>=8){for(var i=0;i<bblmCache.products.length;i++){var pb=bblmCache.products[i].barcode.trim();if(pb.length>=8&&(pb.indexOf(bc)!==-1||bc.indexOf(pb)!==-1))return bblmCache.products[i]}}return null}
 function findBBLMByName(searchName){
   if(!bblmCache||!searchName)return null;
@@ -3537,7 +3423,6 @@ function findBBLMByName(searchName){
   }
   /* Jika tidak ada anchor non-generik, pakai keyword pertama saja */
   if(!anchor&&keywords.length>0)anchor=keywords[0];
-
   /* Langkah 1: exact match penuh */
   for(var i=0;i<bblmCache.products.length;i++){if(bblmCache.products[i].desc.toLowerCase().trim()===sn)return bblmCache.products[i]}
   /* Langkah 2: substring — BBLM desc terkandung dalam nama pencarian (misal nama di inventory lebih panjang karena ada prefix "(P)") */
@@ -3576,7 +3461,6 @@ function findBBLMByItem(item){lastBblmProduct=null;lastBblmMatchType="";var bc=i
 function fmtRp(n){if(!n&&n!==0)return"0";return Math.round(n).toLocaleString("id-ID")}
 function getLevelIndex(lvName){var m=lvName.match(/(\d+)/);if(m)return parseInt(m[1])-1;return 0}
 function getLvColorClass(idx){var cls=["lv0","lv1","lv2","lv3","lv4"];return cls[Math.min(idx,cls.length-1)]}
-
 function buildLevelComparison(product,grade){
   var lvKeys=Object.keys(product.levels).sort();if(lvKeys.length<2)return"";if(!grade)return"";
   var levelPrices=[];for(var i=0;i<lvKeys.length;i++){var lvData=product.levels[lvKeys[i]],gd=lvData?lvData[grade]:null;levelPrices.push({name:lvKeys[i],price:gd?gd.price:null,minSls:gd?gd.minSls:null,hasData:!!gd,idx:getLevelIndex(lvKeys[i])})}
@@ -3624,7 +3508,6 @@ function renderBBLMSection(product,barcode,matchType){
 }
 function toggleBBLM(){var c=$("bblmContent"),ch=$("bblmChevron");if(!c)return;if(c.classList.contains("open")){c.classList.remove("open");if(ch)ch.classList.remove("open")}else{c.classList.add("open");if(ch)ch.classList.add("open")}}
 function onBBLMGradeChange(){var grade=$("bblmGradeSelect").value,cont=$("bblmLevelsContainer");if(!cont)return;if(!grade){cont.innerHTML='<div class="text-center text-gray-500 text-xs py-4">Pilih grade</div>';return}var product=lastBblmProduct;if(!product){cont.innerHTML='<div class="text-center text-red-400 text-xs py-4">Data tidak ditemukan</div>';return}cont.innerHTML=buildLevelComparison(product,grade)+buildLevelCards(product,grade)}
-
 /* =====================================================
    EXPIRED PANEL
    ===================================================== */
@@ -3660,14 +3543,12 @@ function closeModalExp(){$("imgModalExp").classList.remove("active")}
 function switchTabExp(tab){var s=$("summaryPanelExp"),inf=$("infografisPanelExp"),ts=$("tabSummaryExp"),ti=$("tabInfografisExp");s.classList.add("hidden");inf.classList.add("hidden");ts.className=ts.className.replace("tab-active-expired","tab-inactive-expired");ti.className=ti.className.replace("tab-active-expired","tab-inactive-expired");if(tab==="summary"){s.classList.remove("hidden");ts.className=ts.className.replace("tab-inactive-expired","tab-active-expired")}else{inf.classList.remove("hidden");ti.className=ti.className.replace("tab-inactive-expired","tab-active-expired");renderChartExp()}lucide.createIcons()}
 function renderChartExp(){var kat=$("chartFilterKategoriExp").value,data=allDataExp.slice();if(kat)data=data.filter(function(r){return getColExp(r,"kategori")===kat});var map=new Map();data.forEach(function(r){var n=getProductNameExp(r);if(!n)return;var c=map.get(n)||{qty:0,exp:""};c.qty+=(parseInt(getColExp(r,"jumlah"))||0);if(!c.exp)c.exp=getColExp(r,"expired");map.set(n,c)});var items=[];map.forEach(function(v,n){items.push({name:n,qty:v.qty,exp:v.exp})});var sb=$("chartSortByExp").value;if(sb==="exp_asc")items.sort(function(a,b){return parseDateExp(a.exp)-parseDateExp(b.exp)});else items.sort(function(a,b){return b.qty-a.qty});items=items.slice(0,10);var mx=Math.max.apply(null,items.map(function(i){return i.qty}).concat([1]));$("chartContainerExp").innerHTML=items.map(function(it){var pc=(it.qty/mx)*100;return'<div class="bar-row flex items-center gap-3 py-1.5"><div class="w-[120px] text-right text-xs font-semibold text-gray-700 truncate">'+it.name+'</div><div class="flex-1 bg-gray-100 rounded-lg overflow-hidden" style="height:24px"><div class="bar-fill flex items-center px-2" style="width:'+pc+'%"><span class="text-white text-[10px] font-bold">'+it.qty+'</span></div></div></div>'}).join("")}
 function resetChartFiltersExp(){$("chartFilterKategoriExp").value="";$("chartSortByExp").value="exp_asc";renderChartExp()}
-
 $("filterKategoriExp").addEventListener("change",applyFiltersExp);
 $("filterLorongExp").addEventListener("change",applyFiltersExp);
 $("searchBoxExp").addEventListener("input",applyFiltersExp);
 $("chartFilterKategoriExp").addEventListener("change",renderChartExp);
 $("chartSortByExp").addEventListener("change",renderChartExp);
 lucide.createIcons();
-
 /* =====================================================
    DRIVE SYNC
    ===================================================== */
@@ -3688,7 +3569,6 @@ function parseDriveCSV(text){
     });
   });
 }
-
 /* parseBBLMFromRows — wrapper untuk upload file Excel/CSV, pakai parseBBLMCore */
 /* File kosong/tanpa produk = diterima, dipakai untuk mereset/mengosongkan data BBLM */
 function parseBBLMFromRows(rows){
@@ -3696,7 +3576,6 @@ function parseBBLMFromRows(rows){
   if(!result)return{gradeNames:[],products:[]};
   return result;
 }
-
 function switchSyncTab(tab){
   var up=$("syncPanelUpload"),ur=$("syncPanelUrl");
   var tUp=$("tabUploadBtn"),tUr=$("tabUrlBtn");
@@ -3710,7 +3589,6 @@ function switchSyncTab(tab){
     tUp.style.background="transparent";tUp.style.color="#64748b";
   }
 }
-
 function handleBBLMFileUpload(input){
   if(!input.files||!input.files[0])return;
   var file=input.files[0];
@@ -3763,7 +3641,6 @@ function handleBBLMFileUpload(input){
   };
   reader.readAsArrayBuffer(file);
 }
-
 async function refreshCacheHarga(){
   var btn=$("btnRefreshCache");
   if(!btn)return;
@@ -3836,7 +3713,6 @@ function tandaiResetSelesai(username){
     .then(function(){loadPwResetRequests();}).catch(function(){});
 }
 function setDriveSyncStatus(msg,type){var s=$("driveSyncStatus");s.textContent=msg;s.className="drive-status "+(type||"loading")}
-
 function syncBBLMFromSheets(){
   var btn=$("btnQuickSync");
   btn.disabled=true;
@@ -3861,7 +3737,6 @@ function syncBBLMFromSheets(){
     btn.innerHTML='<svg style="width:14px;height:14px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Sync dari Google Sheets Sekarang';
   });
 }
-
 function syncBBLMFromDrive(){
   var inp=$("driveFileInput").value.trim();
   if(!inp){setDriveSyncStatus("Masukkan URL atau ID file terlebih dahulu","error");return}
@@ -3939,8 +3814,6 @@ function syncBBLMFromDrive(){
     console.error("[DriveSync-CSV]",e);
   }).finally(resetBtn);
 }
-
-
 /* =====================================================
    DOWNLOAD TEMPLATE EXCEL BBLM (Hapus Harga)
    Format sesuai parseBBLMCore:
@@ -4022,7 +3895,6 @@ function downloadTemplateBBLM(){
     showToast("Gagal membuat template: "+err.message,"error");
   }
 }
-
 /* =====================================================
    BIOMETRIC & PIN QUICK LOGIN SYSTEM
    =====================================================
@@ -4032,14 +3904,12 @@ function downloadTemplateBBLM(){
    3. PIN: hash SHA-256 disimpan di localStorage
    4. Login berikutnya: tampil "Login Cepat" → satu ketuk masuk
    ===================================================== */
-
 var QL_KEY = "ql_v2";
 var _pinBuffer = "";
 var _pinMode = "login"; // "login" | "setup" | "setup_confirm"
 var _pinFirstEntry = "";
 var _qlSession = null;
 var _bioCredentialRaw = null;
-
 /* ---- Helper: Simple obfuscation (not crypto, just anti-shoulder-surf) ---- */
 function qlEncode(obj) {
   try { return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); }
@@ -4049,14 +3919,12 @@ function qlDecode(str) {
   try { return JSON.parse(decodeURIComponent(escape(atob(str)))); }
   catch(e) { return null; }
 }
-
 /* ---- Helper: SHA-256 (Web Crypto) ---- */
 async function sha256(str) {
   var buf = new TextEncoder().encode(str);
   var hashBuf = await crypto.subtle.digest("SHA-256", buf);
   return Array.from(new Uint8Array(hashBuf)).map(function(b){return b.toString(16).padStart(2,"0")}).join("");
 }
-
 /* ---- Storage Helpers ---- */
 function qlLoad() {
   try { var v = localStorage.getItem(QL_KEY); return v ? qlDecode(v) : null; }
@@ -4068,7 +3936,6 @@ function qlSave(data) {
 function qlClear() {
   try { localStorage.removeItem(QL_KEY); } catch(e) {}
 }
-
 /* ---- Check WebAuthn availability (API ada + HTTPS/localhost) ---- */
 function isWebAuthnAvailable() {
   var apiOk = !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
@@ -4076,7 +3943,6 @@ function isWebAuthnAvailable() {
   var isSecure = location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1";
   return isSecure;
 }
-
 /* ---- Initialize Quick Login section on page load ---- */
 function initQuickLogin() {
   var data = qlLoad();
@@ -4097,7 +3963,6 @@ function initQuickLogin() {
   if (btnBio) btnBio.style.display = "flex";
   if (hintEl) hintEl.innerText = "Ketuk fingerprint untuk masuk langsung";
 }
-
 /* ---- Forget device ---- */
 function forgetDevice() {
   if (!confirm("Hapus data login cepat dari perangkat ini?")) return;
@@ -4106,7 +3971,6 @@ function forgetDevice() {
   if (sec) { sec.style.opacity = "0"; setTimeout(function(){ sec.style.display = "none"; sec.style.opacity = "1"; }, 300); }
   showToast("Data perangkat dihapus","info");
 }
-
 /* ---- Offer biometric setup after successful normal login ---- */
 function offerQuickLoginSetup(username, password, namaLengkap, adminFlag) {
   // Simpan sementara untuk digunakan saat setup selesai
@@ -4124,7 +3988,6 @@ function offerQuickLoginSetup(username, password, namaLengkap, adminFlag) {
     modal.classList.add("active");
   }, 800);
 }
-
 /* ---- Close biometric offer modal ---- */
 function closeBioOffer(skipAndRemember) {
   var modal = $("bioOfferModal");
@@ -4134,14 +3997,12 @@ function closeBioOffer(skipAndRemember) {
     qlSave({ username: _qlSession.username, nama: _qlSession.nama, isAdmin: _qlSession.isAdmin, skipped: true });
   }
 }
-
 /* ===== WEBAUTHN SETUP ===== */
 function qlGetRpId() {
   // Harus HTTPS atau localhost agar WebAuthn bekerja
   var h = location.hostname;
   return (h && h !== "") ? h : null;
 }
-
 async function setupBiometric() {
   if (!isWebAuthnAvailable()) {
     showToast("Browser ini tidak mendukung Fingerprint","error");
@@ -4162,7 +4023,6 @@ async function setupBiometric() {
     // userId harus 1-64 bytes
     var userIdStr = _qlSession.username.substring(0, 32);
     var userId = new TextEncoder().encode(userIdStr);
-
     var createOptions = {
       publicKey: {
         challenge: challenge,
@@ -4181,14 +4041,11 @@ async function setupBiometric() {
         attestation: "none"
       }
     };
-
     var cred = await navigator.credentials.create(createOptions);
     if (!cred) throw new Error("Tidak ada credential dikembalikan");
-
     // Simpan credential ID sebagai base64
     var rawIdArr = new Uint8Array(cred.rawId);
     var credId = btoa(String.fromCharCode.apply(null, rawIdArr));
-
     var existing = qlLoad() || {};
     var saveData = Object.assign(existing, {
       username: _qlSession.username,
@@ -4217,11 +4074,9 @@ async function setupBiometric() {
     showToast(msg,"error");
   }
 }
-
 /* ===== WEBAUTHN LOGIN ===== */
 var _bioIconHTML = '<svg style="width:20px;height:20px;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path></svg>Fingerprint';
 var _bioSpinHTML = '<svg class="animate-spin" style="width:20px;height:20px;flex-shrink:0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Verifikasi...';
-
 async function loginWithBiometric() {
   if (!isWebAuthnAvailable()) { showPINModal("login"); return; }
   var rpId = qlGetRpId();
@@ -4236,7 +4091,6 @@ async function loginWithBiometric() {
     var challenge = new Uint8Array(32);
     crypto.getRandomValues(challenge);
     var credIdBytes = Uint8Array.from(atob(data.credentialId), function(c){ return c.charCodeAt(0); });
-
     await navigator.credentials.get({
       publicKey: {
         challenge: challenge,
@@ -4261,7 +4115,6 @@ async function loginWithBiometric() {
     }
   }
 }
-
 /* ===== PIN MODAL ===== */
 function showPINModal(mode) {
   _pinMode = mode;
@@ -4330,7 +4183,6 @@ function pinKeyDelete() {
   _pinBuffer = _pinBuffer.slice(0, -1);
   updatePINDots();
 }
-
 async function handlePINComplete() {
   var pin = _pinBuffer;
   var errEl = $("pinModalError");
@@ -4384,7 +4236,6 @@ async function handlePINComplete() {
     }
   }
 }
-
 /* ===== PROCEED QUICK LOGIN (setelah biometric/PIN berhasil) ===== */
 function proceedQuickLogin(data) {
   var creds = qlDecode(data.cred);
@@ -4425,7 +4276,6 @@ function proceedQuickLogin(data) {
     var errEl = $("loginError"); if (errEl) errEl.innerText = "";
   });
 }
-
 /* ---- Patch login() agar menawarkan setup setelah sukses ---- */
 (function() {
   var _origLogin = window.login;
@@ -4468,7 +4318,6 @@ function proceedQuickLogin(data) {
     });
   };
 })();
-
 /* ===== KONFIGURASI BINGKAI (5 bingkai, masing-masing 1 sheet) ===== */
 /* Tambah GID sheet ke-5 saat sheet sudah dibuat, ganti '' dengan gid=XXXXXXX */
 var BINGKAI_URLS=[
@@ -4479,17 +4328,14 @@ var BINGKAI_URLS=[
   PROMO_URL.replace('gid=0','gid=964924672')
 ];
 var BINGKAI_TITLES=['Flyer 1','Flyer 2','Flyer 3','Flyer 4','Flyer 5'];
-
 var bingSlidesAll={1:[],2:[],3:[],4:[],5:[]};
 var bingLbSlides=[],bingLbIdx=0,bingLbTouchX0=0;
-
 function driveImgUrl(url){
   if(!url)return"";
   var m=url.match(/\/d\/([a-zA-Z0-9_-]+)/)||url.match(/id=([a-zA-Z0-9_-]+)/);
   if(m)return"https://lh3.googleusercontent.com/d/"+m[1];
   return url;
 }
-
 var _bcDone={},_bcAnimEnd={},_bcLoginShown=false,_bcFallback=null,_btnPulseInterval=null;
 function _triggerLoginBtn(){
   if(_bcLoginShown)return;
@@ -4548,19 +4394,16 @@ function loadBingkai(id,url,title){
       }
     }).catch(function(){});
 }
-
 function openBingkaiSlideshow(id){
   var slides=bingSlidesAll[id];
   if(!slides||!slides.length)return;
   bingLbSlides=slides;bingLbIdx=0;
   _openLbSlides();
 }
-
 function openLightbox(src){
   bingLbSlides=[{img:src,title:''}];bingLbIdx=0;
   _openLbSlides();
 }
-
 function _openLbSlides(){
   var s=bingLbSlides[bingLbIdx];
   var lb=$('promoLightbox'),img=$('lbImg'),wrap=$('lbImgWrap');
@@ -4584,7 +4427,6 @@ function _openLbSlides(){
     if(Math.abs(dx)>50)lbSlideshowNav(dx<0?1:-1);
   };
 }
-
 function lbSlideshowNav(dir){
   if(!bingLbSlides.length)return;
   bingLbIdx=(bingLbIdx+dir+bingLbSlides.length)%bingLbSlides.length;
@@ -4595,18 +4437,14 @@ function lbSlideshowNav(dir){
   img.onload=function(){img.style.opacity='1';img.onload=null;};
   if(ctr)ctr.textContent=(bingLbIdx+1)+' / '+bingLbSlides.length;
 }
-
 function loadAllBingkai(){
   for(var i=1;i<=5;i++)loadBingkai(i,BINGKAI_URLS[i-1],BINGKAI_TITLES[i-1]);
 }
-
 function loadPromos(){loadAllBingkai();}
-
 /* ===== PROMO LIGHTBOX ===== */
 var lbScale=1,lbMinScale=1,lbMaxScale=5;
 var lbLastTap=0,lbPinchDist0=0,lbPinchScale0=1;
 var lbDragX=0,lbDragY=0,lbDragStartX=0,lbDragStartY=0,lbTransX=0,lbTransY=0,lbIsDragging=false;
-
 function closeLightbox(){
   var lb=$("promoLightbox");
   lb.classList.remove("open");
@@ -4617,7 +4455,6 @@ function closeLightbox(){
     if(!lb.classList.contains("open"))lb.style.display="none";
   },320);
 }
-
 function lbApplyTransform(){
   var img=$("lbImg");
   // clamp pan based on scale
@@ -4628,13 +4465,11 @@ function lbApplyTransform(){
   img.style.transition="none";
   img.style.transform="scale("+lbScale+") translate("+lbTransX/lbScale+"px,"+lbTransY/lbScale+"px)";
 }
-
 function lbGetPinchDist(e){
   var dx=e.touches[0].clientX-e.touches[1].clientX;
   var dy=e.touches[0].clientY-e.touches[1].clientY;
   return Math.sqrt(dx*dx+dy*dy);
 }
-
 function lbTouchStart(e){
   if(e.touches.length===2){
     lbPinchDist0=lbGetPinchDist(e);
@@ -4654,7 +4489,6 @@ function lbTouchStart(e){
   }
   e.preventDefault();
 }
-
 function lbTouchMove(e){
   e.preventDefault();
   if(e.touches.length===2){
@@ -4667,12 +4501,10 @@ function lbTouchMove(e){
     lbApplyTransform();
   }
 }
-
 function lbTouchEnd(e){
   if(lbScale<1.05){lbScale=1;lbTransX=0;lbTransY=0;lbApplyTransform();}
   lbIsDragging=false;
 }
-
 function lbMouseDown(e){
   if(lbScale<=1)return;
   lbDragStartX=e.clientX-lbTransX;
@@ -4685,14 +4517,12 @@ function lbMouseDown(e){
   };
   wrap.onmouseup=function(){wrap.onmousemove=null;wrap.onmouseup=null;};
 }
-
 function lbWheel(e){
   e.preventDefault();
   var delta=e.deltaY>0?0.9:1.1;
   lbScale=Math.max(lbMinScale,Math.min(lbMaxScale,lbScale*delta));
   lbApplyTransform();
 }
-
 // close lightbox on background tap (not on image)
 document.addEventListener("DOMContentLoaded",function(){
   var lb=$("promoLightbox");
@@ -4700,7 +4530,6 @@ document.addEventListener("DOMContentLoaded",function(){
     if(e.target===lb||e.target.classList.contains("lb-img-wrap"))closeLightbox();
   });
 });
-
 function showLoginPage(){
   if(_btnPulseInterval){clearInterval(_btnPulseInterval);_btnPulseInterval=null;}
   $("homePage").style.display="none";
@@ -4708,7 +4537,6 @@ function showLoginPage(){
   setMarquee(false);
   if(promoTimer)clearInterval(promoTimer);
 }
-
 function showHomePage(){
   $("homePage").style.display="flex";
   $("loginPage").classList.add("hidden");
@@ -4723,7 +4551,6 @@ function showHomePage(){
   loadPromos();loadAllBingkai();
   var _lb=document.getElementById("homeLoginBtn");if(_lb){_lb.style.animation="none";_lb.style.transform="translateY(0)";_lb.style.opacity="1";}
 }
-
 /* ---- Peringatan sebelum refresh/tutup tab jika ada data belum terkirim ---- */
 window.addEventListener("beforeunload",function(e){
   var adaLog=submitSessionLog&&submitSessionLog.length>0;
@@ -4735,7 +4562,6 @@ window.addEventListener("beforeunload",function(e){
     return msg;
   }
 });
-
 /* ---- Init on page load ---- */
 (function() {
   checkMaintenance();
@@ -4750,11 +4576,9 @@ window.addEventListener("beforeunload",function(e){
   loadPromos();loadAllBingkai();
   _bcFallback=setTimeout(_triggerLoginBtn,5000);
 })();
-
 /* ===== PROMO LIST ===== */
 var _promoData=null;
 var _promoLoading=false;
-
 function loadPromoList(){
   if(_promoData){renderPromoItems();return;}
   if(_promoLoading)return;
@@ -4801,7 +4625,6 @@ function loadPromoList(){
     if(el)el.innerHTML='<div style="text-align:center;padding:30px;color:#f87171;font-size:12px;">Error: '+e.message+'</div>';
   });
 }
-
 function refreshPromoList(){
   _promoData=null;_promoLoading=false;
   if($("promoCountBig"))$("promoCountBig").textContent="-";
@@ -4809,7 +4632,6 @@ function refreshPromoList(){
   if($("promoCount20"))$("promoCount20").textContent="-";
   loadPromoList();
 }
-
 function renderPromoItems(){
   if(!_promoData)return;
   var search=($("promoSearch")?$("promoSearch").value.toLowerCase().trim():"");
@@ -4866,8 +4688,6 @@ function renderPromoItems(){
   }
   el.innerHTML=h;
 }
-
-
 // ===== ABSENSI SYSTEM =====
 var _absensiClockInterval=null;
 function startAbsensiClock(){
@@ -4885,13 +4705,11 @@ function startAbsensiClock(){
   _absensiClockInterval=setInterval(tick,1000);
 }
 function stopAbsensiClock(){if(_absensiClockInterval){clearInterval(_absensiClockInterval);_absensiClockInterval=null;}}
-
 function updateAbsensiSyncStatus(state,msg){
   var el=$('absensiSyncStatus');if(!el)return;
   var dot='<span class="abs-sync-dot'+(state==='online'?' online':state==='syncing'?' syncing':state==='error'?' error':'')+'" style="display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle;background:'+(state==='online'?'#00cc88':state==='syncing'?'#ffcc44':state==='error'?'#ff4444':'#2a3a5a')+'"></span>';
   el.innerHTML=dot+(msg||state);
 }
-
 function absensiRefreshEmployees(){
   updateAbsensiSyncStatus('syncing','Memuat...');
   var url=_gasUrl||(localStorage.getItem('absensi_gas_url')||'');
@@ -4917,7 +4735,6 @@ function absensiRefreshEmployees(){
     .catch(function(){updateAbsensiSyncStatus('error','Gagal memuat data');});
   }
 }
-
 function submitAbsensi(){
   var inp=$('absensiInput');if(!inp)return;
   var empId=inp.value.trim();if(!empId)return;
@@ -4952,9 +4769,7 @@ function submitAbsensi(){
   })
   .catch(function(e){if(msg){msg.textContent='Error: '+e.message;msg.style.color='#ff4444';}});
 }
-
 function minsToHMM(m){return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
-
 function renderAbsensiResult(j){
   var res=$('absensiResult');if(!res)return;
   var records=j.records||[];
@@ -4994,40 +4809,8 @@ function renderAbsensiResult(j){
     +'</tr></tbody></table></div>';
   res.innerHTML=h;
 }
-
 var _showEmpAdmin=false;
 var _gasUrl=localStorage.getItem('absensi_gas_url')||'';
-var _absensiAllowedUsers=[];
-function canAccessAbsensi(){return isAdmin||_absensiAllowedUsers.indexOf(currentUsernameRaw)!==-1;}
-function absensiLoadAllowedUsers(cb){
-  fetch(API_BASE_URL+'/absensi/allowed-users')
-  .then(function(r){return r.json();})
-  .then(function(j){
-    _absensiAllowedUsers=j.users||[];
-    if(cb)cb(_absensiAllowedUsers);
-  }).catch(function(){if(cb)cb([]);});
-}
-function absensiSaveAllowedUsers(){
-  var inp=$('absensiAllowedInput');
-  var raw=inp?inp.value.trim():'';
-  var list=raw?raw.split(/[\n,]+/).map(function(s){return s.trim();}).filter(Boolean):[];
-  var info=$('absensiAllowedInfo');
-  var btn=inp?inp.parentElement.querySelector('button'):null;
-  if(info)info.textContent='Menyimpan...';
-  fetch(API_BASE_URL+'/absensi/allowed-users',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,users:list})})
-  .then(function(r){return r.json();})
-  .then(function(j){
-    if(j.success){
-      _absensiAllowedUsers=j.users||list;
-      showToast('Akses disimpan: '+_absensiAllowedUsers.length+' user','success');
-      if(info)info.textContent=_absensiAllowedUsers.length?_absensiAllowedUsers.join(', '):'(kosong — hanya admin)';
-    }else{
-      showToast('Gagal: '+(j.message||'Error'),'error');
-      if(info)info.textContent='Gagal menyimpan';
-    }
-  }).catch(function(e){showToast('Error: '+e.message,'error');if(info)info.textContent='Error';});
-}
 function toggleEmpAdmin(){
   _showEmpAdmin=!_showEmpAdmin;
   var p=$('empAdminPanel');if(!p)return;
@@ -5038,7 +4821,6 @@ function toggleEmpAdmin(){
     var inp=$('absensiGasUrl');
     if(inp)inp.value=_gasUrl;
     // Load allowed users from server
-
     if(_gasUrl){
       absensiRefreshEmployees();
     }else{
@@ -5049,7 +4831,6 @@ function toggleEmpAdmin(){
     p.style.display='none';
   }
 }
-
 function renderAbsensiEmpList(employees){
   var el=$('empAdminList');if(!el)return;
   if(!employees.length){
@@ -5069,7 +4850,6 @@ function renderAbsensiEmpList(employees){
   if(employees.length>50)h+='<p style="font-size:10px;color:#445577;text-align:center;padding:6px;font-family:monospace;">... dan '+(employees.length-50)+' karyawan lainnya</p>';
   el.innerHTML=h;
 }
-
 function absensiSaveGasUrl(){
   var inp=$('absensiGasUrl');
   var url=inp?inp.value.trim():'';
@@ -5110,28 +4890,23 @@ function absensiTestGas(){
   });
 }
 function absensiSyncFromSpreadsheet(){}
-
-
 // ===== ABSENSI SUMMARY EXPORT =====
 function absensiFormatDuration(mins){
   if(!mins||mins<0)return '0:00';
   return Math.floor(mins/60)+':'+String(mins%60).padStart(2,'0');
 }
-
 function absensiGetSelectedDate(){
   var el=$('absensiSummaryDate');
   if(el&&el.value)return el.value;
   var now=new Date();
   return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
 }
-
 function absensiLoadSummary(){
   var date=absensiGetSelectedDate();
   var btn=$('absensiSummaryLoadBtn');
   if(btn){btn.disabled=true;btn.textContent='Loading...';}
   var tableDiv=$('absensiSummaryTable');
   if(tableDiv)tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#445577;font-family:monospace;font-size:11px;">Memuat data...</div>';
-
   var gasUrl=_gasUrl||(localStorage.getItem('absensi_gas_url')||'');
   var fetchSummary=gasUrl
     ? fetch(gasUrl+'?action=getSummary&date='+date).then(function(r){return r.json();})
@@ -5150,7 +4925,6 @@ function absensiLoadSummary(){
     if(tableDiv)tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#ff6644;font-family:monospace;font-size:11px;">Error: '+e.message+'</div>';
   });
 }
-
 function renderAbsensiSummaryTable(summary, date){
   var tableDiv=$('absensiSummaryTable');
   if(!tableDiv)return;
@@ -5158,12 +4932,10 @@ function renderAbsensiSummaryTable(summary, date){
   var hadir=summary.filter(function(r){return r.status==='Hadir';}).length;
   var tidakHadir=summary.filter(function(r){return r.status==='Tidak Hadir';}).length;
   if(totalStat)totalStat.textContent='Hadir: '+hadir+' | Tidak Hadir: '+tidakHadir+' | Total: '+summary.length;
-
   if(!summary.length){
     tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#445577;font-family:monospace;font-size:11px;">Tidak ada data absensi untuk tanggal ini</div>';
     return;
   }
-
   var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:11px;min-width:600px;">'
     +'<thead><tr style="background:#0d0d22;position:sticky;top:0;">'
     +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">No</th>'
@@ -5198,15 +4970,12 @@ function renderAbsensiSummaryTable(summary, date){
   window._absensiSummaryData=summary;
   window._absensiSummaryDate=date;
 }
-
 function absensiExportXLSX(){
   var summary=window._absensiSummaryData;
   var date=window._absensiSummaryDate;
   if(!summary||!summary.length){showToast('Tampilkan summary dulu','error');return;}
   if(typeof XLSX==='undefined'){showToast('Library Excel tidak tersedia','error');return;}
-
   var wb=XLSX.utils.book_new();
-
   // Sheet 1: Summary harian
   var aoa=[
     ['REKAPITULASI ABSENSI KARYAWAN'],
@@ -5232,14 +5001,12 @@ function absensiExportXLSX(){
   var hadir=summary.filter(function(r){return r.status==='Hadir';}).length;
   aoa.push([]);
   aoa.push(['','','','','','','TOTAL HADIR:',hadir,'TIDAK HADIR:',summary.length-hadir]);
-
   var ws1=XLSX.utils.aoa_to_sheet(aoa);
   // Column widths
   ws1['!cols']=[{wch:4},{wch:14},{wch:26},{wch:12},{wch:10},{wch:10},{wch:14},{wch:14},{wch:10},{wch:12}];
   // Merge title row
   ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:9}}];
   XLSX.utils.book_append_sheet(wb, ws1, 'Summary '+date);
-
   // Sheet 2: Detail scan per karyawan
   var aoa2=[
     ['DETAIL SCAN ABSENSI'],
@@ -5266,13 +5033,10 @@ function absensiExportXLSX(){
   ws2['!cols']=[{wch:4},{wch:14},{wch:26},{wch:12},{wch:12},{wch:10}];
   ws2['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}}];
   XLSX.utils.book_append_sheet(wb, ws2, 'Detail Scan');
-
   var fname='Absensi_'+date.replace(/-/g,'_')+'.xlsx';
   XLSX.writeFile(wb, fname);
   showToast('File '+fname+' berhasil didownload','success');
 }
-
-
 var _showAbsensiSummary=false;
 function toggleAbsensiSummary(){
   _showAbsensiSummary=!_showAbsensiSummary;
@@ -5288,7 +5052,6 @@ function toggleAbsensiSummary(){
     absensiLoadSummary();
   }else{p.style.display='none';}
 }
-
 // ===== PROMO EXCLUSION MANAGEMENT =====
 var _excludedPanel=false;
 function removePromoItem(barcode){
@@ -5361,8 +5124,6 @@ function loadExcludedList(){
   })
   .catch(function(e){el.innerHTML='<p style="font-size:10px;color:#f87171;">Error: '+e.message+'</p>';});
 }
-
-
 /* ============================================================
    UPLOAD FOTO BBLM — fungsi lengkap
    ============================================================ */
@@ -5376,7 +5137,6 @@ var _fbFilterPos = "";
 var _fbFilterDate = "";
 var _fbFilterDownload = "";
 var _fbDownloaded = {};
-
 var FB_ACTION_PASS = "111";
 function fbCheckPassword(action) {
   var pw = prompt("Masukkan password untuk " + (action||"aksi") + ":");
@@ -5384,7 +5144,6 @@ function fbCheckPassword(action) {
   if(pw !== FB_ACTION_PASS) { showToast("Password salah!", "error"); return false; }
   return true;
 }
-
 function fbMarkDownloaded(id) {
   _fbDownloaded[String(id)] = true;
   fetch(API_BASE_URL + "/bblm-foto/mark-downloaded", {
@@ -5406,7 +5165,6 @@ function fbYesterdayStr() {
   var d=new Date(Date.now()-86400000);
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 }
-
 function fbPickCat(btn) {
   var cur = document.getElementById("fbCategoryVal").value;
   var val = btn.getAttribute("data-v");
@@ -5420,7 +5178,6 @@ function fbPickCat(btn) {
     b.style.fontWeight    = sel ? "700"                    : "500";
   });
 }
-
 var _fbCategoryListCache = null;
 var _fbCategoryListTime = 0;
 function fbGetCategoryList() {
@@ -5446,7 +5203,6 @@ function fbGetCategoryList() {
     return cats;
   });
 }
-
 function fbRenderCatPills(containerId, hiddenId, handlerName, cats) {
   var el = document.getElementById(containerId);
   if (!el) return;
@@ -5464,7 +5220,6 @@ function fbRenderCatPills(containerId, hiddenId, handlerName, cats) {
     return '<button data-v="' + fbEsc(c) + '" onclick="' + handlerName + '(this)" style="font-size:11px;font-weight:' + fw + ';color:' + cl + ';background:' + bg + ';border:1px solid ' + bd + ';border-radius:20px;padding:4px 10px;cursor:pointer;white-space:nowrap;transition:all .15s;">' + fbEsc(c) + '</button>';
   }).join("");
 }
-
 function fbLoadCategories() {
   var section = document.getElementById("fbCatSection");
   if (section && !document.getElementById("fbCategoryVal").value) section.style.display = "none";
@@ -5475,7 +5230,6 @@ function fbLoadCategories() {
     if (el2) el2.innerHTML = '<span style="font-size:11px;color:#f87171;">Gagal memuat kategori</span>';
   });
 }
-
 function fbPickPos(btn) {
   var cur = document.getElementById("fbPosisiVal").value;
   var val = btn.getAttribute("data-v");
@@ -5489,7 +5243,6 @@ function fbPickPos(btn) {
     b.style.fontWeight    = sel ? "700"                    : "500";
   });
 }
-
 function fbResetCatPos() {
   var cv = document.getElementById("fbCategoryVal");
   var pv = document.getElementById("fbPosisiVal");
@@ -5506,7 +5259,6 @@ function fbResetCatPos() {
   var section = document.getElementById("fbCatSection");
   if (section) section.style.display = "none";
 }
-
 function fbGetFilteredItems() {
   return fbItems.filter(function(it){
     if(_fbFilterCat && (it.category||"") !== _fbFilterCat) return false;
@@ -5517,7 +5269,6 @@ function fbGetFilteredItems() {
     return true;
   });
 }
-
 function fbRenderFilterBar() {
   var el = document.getElementById("fbFilterBar");
   if(!el) return;
@@ -5590,31 +5341,26 @@ function fbRenderFilterBar() {
   h += "</div>";
   el.innerHTML = h;
 }
-
 function fbSetFilterDownload(el) {
   _fbFilterDownload = el.getAttribute("data-dl") || "";
   fbRenderFilterBar();
   fbRenderList();
 }
-
 function fbSetFilterDate(el) {
   _fbFilterDate = el.getAttribute("data-dt") || "";
   fbRenderFilterBar();
   fbRenderList();
 }
-
 function fbSetFilterPos(el) {
   _fbFilterPos = el.getAttribute("data-pos") || "";
   fbRenderFilterBar();
   fbRenderList();
 }
-
 function fbSetFilterCat(el) {
   _fbFilterCat = el.getAttribute("data-cat") || "";
   fbRenderFilterBar();
   fbRenderList();
 }
-
 function loadFotoBblmList() {
   var ld = document.getElementById("fbLoading");
   if(ld) ld.style.display = "flex";
@@ -5636,7 +5382,6 @@ function loadFotoBblmList() {
     .catch(function(){ showToast("Gagal memuat data foto BBLM","error"); })
     .finally(function(){ var ld=document.getElementById("fbLoading"); if(ld) ld.style.display="none"; });
 }
-
 function fbAutoLoadAllPhotos() {
   var ids = fbItems.map(function(it){ return it.id; })
     .filter(function(id){ return !_fbPhotoMap[id] && !_fbNoPhoto[id]; });
@@ -5656,9 +5401,7 @@ function fbAutoLoadAllPhotos() {
   }
   next();
 }
-
 function fbRefreshList() { loadFotoBblmList(); }
-
 function fbRenderList() {
   var c = document.getElementById("fbListContainer");
   if(!c) return;
@@ -5709,7 +5452,6 @@ function fbRenderList() {
   c.innerHTML = html;
   fbRenderSelectBar();
 }
-
 function fbRenderSelectBar() {
   var el = document.getElementById("fbSelectBar");
   if(!el) return;
@@ -5731,18 +5473,15 @@ function fbRenderSelectBar() {
     + '</div>'
   + '</div>';
 }
-
 function fbToggleSelectItem(id, checked) {
   _fbSelected[String(id)] = checked;
   fbRenderSelectBar();
 }
-
 function fbToggleSelectAll(checked) {
   var visItems = fbGetFilteredItems();
   visItems.forEach(function(it){ _fbSelected[String(it.id)] = checked; });
   fbRenderList();
 }
-
 function fbGetExtFromDataUrl(dataUrl) {
   var m = /^data:image\/([a-zA-Z0-9]+);base64,/.exec(dataUrl || "");
   if(!m) return "jpg";
@@ -5750,7 +5489,6 @@ function fbGetExtFromDataUrl(dataUrl) {
   if(ext === "jpeg") ext = "jpg";
   return ext;
 }
-
 function fbTriggerDownload(dataUrl, filename) {
   var a = document.createElement("a");
   a.href = dataUrl;
@@ -5759,7 +5497,6 @@ function fbTriggerDownload(dataUrl, filename) {
   a.click();
   document.body.removeChild(a);
 }
-
 function fbDownloadOnePromise(it) {
   return new Promise(function(resolve) {
     var src = _fbPhotoMap[it.id];
@@ -5784,7 +5521,6 @@ function fbDownloadOnePromise(it) {
       .catch(function(){ resolve(false); });
   });
 }
-
 function fbDownloadOneClick(id) {
   if(!fbCheckPassword("unduh foto")) return;
   var it = fbItems.filter(function(x){ return String(x.id) === String(id); })[0];
@@ -5794,7 +5530,6 @@ function fbDownloadOneClick(id) {
     else showToast("Foto tidak tersedia untuk item ini", "error");
   });
 }
-
 function fbDownloadSelected() {
   var ids = Object.keys(_fbSelected).filter(function(id){ return _fbSelected[id]; });
   if(!ids.length) { showToast("Pilih minimal 1 item dulu", "error"); return; }
@@ -5815,7 +5550,6 @@ function fbDownloadSelected() {
   }
   next();
 }
-
 function fbDeleteSelected() {
   var ids = Object.keys(_fbSelected).filter(function(id){ return _fbSelected[id]; });
   if(!ids.length) { showToast("Pilih minimal 1 item dulu", "error"); return; }
@@ -5837,10 +5571,8 @@ function fbDeleteSelected() {
   }
   next();
 }
-
 function fbEsc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function fbFmtDt(iso){ if(!iso) return "-"; try{ var d=new Date(iso); return d.toLocaleDateString("id-ID")+", "+d.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"}); }catch(e){ return "-"; } }
-
 function fbLoadPhoto(id) {
   var el = document.getElementById("fbThumb_"+id);
   if(el) { el.style.background="#0f172a"; el.innerHTML='<div style="font-size:9px;color:#60a5fa;text-align:center;line-height:1.3;"><div style="width:16px;height:16px;border:2px solid #1e3a5f;border-top-color:#60a5fa;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 3px;"></div>Muat...</div>'; }
@@ -5858,19 +5590,16 @@ function fbLoadPhoto(id) {
     })
     .catch(function(){ if(el) el.innerHTML='<div style="font-size:9px;color:#ef4444;text-align:center;">Gagal</div>'; });
 }
-
 /* ── FOTO BBLM LIGHTBOX ── */
 var _fbLbModal=null, _fbLbIdx=0, _fbLbIds=[], _fbLbScale=1, _fbLbMinScale=1, _fbLbMaxScale=5;
 var _fbLbTx=0, _fbLbTy=0, _fbLbDragging=false, _fbLbDragStart=null;
 var _fbLbPinchDist=0, _fbLbLastTap=0;
-
 function fbLbBuildIds(startId) {
   // All items, ordered same as fbItems list; photos-only items come first in nav
   _fbLbIds = fbItems.map(function(it){ return it.id; });
   _fbLbIdx = _fbLbIds.indexOf(startId);
   if(_fbLbIdx < 0) _fbLbIdx = 0;
 }
-
 function fbOpenPhotoModal(id) {
   var src = _fbPhotoMap[id];
   if(!src) {
@@ -5886,7 +5615,6 @@ function fbOpenPhotoModal(id) {
   fbLbBuildIds(id);
   fbLbCreate();
 }
-
 function fbLbCreate() {
   if(_fbLbModal) document.body.removeChild(_fbLbModal);
   var modal = document.createElement("div");
@@ -5920,7 +5648,6 @@ function fbLbCreate() {
   fbLbSetupGestures(modal);
   fbLbRender();
 }
-
 function fbLbRender() {
   if(!_fbLbModal) return;
   var id = _fbLbIds[_fbLbIdx];
@@ -5967,21 +5694,17 @@ function fbLbRender() {
       .catch(function(){});
   }
 }
-
 function fbLbNav(dir) {
   _fbLbIdx = (_fbLbIdx + dir + _fbLbIds.length) % _fbLbIds.length;
   fbLbRender();
 }
-
 function fbLbClose() {
   if(_fbLbModal){ document.body.removeChild(_fbLbModal); _fbLbModal=null; }
 }
-
 function fbLbApplyTransform() {
   var box = document.getElementById("fbLbImgBox");
   if(box) box.style.transform = "translate("+_fbLbTx+"px,"+_fbLbTy+"px) scale("+_fbLbScale+")";
 }
-
 function fbLbSetupGestures(modal) {
   var wrap = modal.querySelector("#fbLbImgWrap");
   if(!wrap) return;
@@ -6046,14 +5769,12 @@ function fbLbSetupGestures(modal) {
   // Keyboard
   document.addEventListener("keydown", fbLbKeyHandler);
 }
-
 function fbLbKeyHandler(e){
   if(!_fbLbModal) return;
   if(e.key==="Escape"){ fbLbClose(); document.removeEventListener("keydown",fbLbKeyHandler); }
   else if(e.key==="ArrowLeft"||e.key==="ArrowUp") fbLbNav(-1);
   else if(e.key==="ArrowRight"||e.key==="ArrowDown") fbLbNav(1);
 }
-
 function fbStartScan() {
   var rd = document.getElementById("fbReader");
   if(!rd) return;
@@ -6069,7 +5790,6 @@ function fbStartScan() {
     _fbScanner.stop().then(function(){ rd.innerHTML=""; fbLookupBarcode(dt); });
   }).catch(function(e){ console.error("fbScan:",e); rd.innerHTML=""; });
 }
-
 function fbLookupBarcode(bc) {
   bc = (bc||"").trim();
   if(!bc) return;
@@ -6115,7 +5835,6 @@ function fbLookupBarcode(bc) {
     }
   }).catch(function(){ document.getElementById("fbProdNm").value = ""; showToast("Gagal cari data inventory","error"); });
 }
-
 function fbAutoSelectCategory(val) {
   document.getElementById("fbCategoryVal").value = val || "";
   var section = document.getElementById("fbCatSection");
@@ -6132,7 +5851,6 @@ function fbAutoSelectCategory(val) {
     if (section) section.style.display = "block";
   });
 }
-
 function fbPhotoSelected(input) {
   var file = input.files[0];
   if(!file) return;
@@ -6156,7 +5874,6 @@ function fbPhotoSelected(input) {
   };
   reader.readAsDataURL(file);
 }
-
 function fbSubmitItem() {
   var barcode  = (document.getElementById("fbBarcode").value||"").trim();
   var prodNm   = (document.getElementById("fbProdNm").value||"").trim();
@@ -6203,7 +5920,6 @@ function fbSubmitItem() {
   .catch(function(e){ showToast("Gagal: " + e.message,"error"); })
   .finally(function(){ btn.disabled=false; btn.innerHTML="&#128190; Simpan"; });
 }
-
 function fbDeleteItem(id) {
   if(!fbCheckPassword("hapus item")) return;
   if(!confirm("Hapus item ini?")) return;
@@ -6212,7 +5928,6 @@ function fbDeleteItem(id) {
     .then(function(d){ if(d.success){ delete _fbPhotoMap[id]; showToast("Dihapus","success"); loadFotoBblmList(); } else showToast("Gagal hapus","error"); })
     .catch(function(e){ showToast("Error: "+e.message,"error"); });
 }
-
 function fbClearAll() {
   if(!confirm("Hapus SEMUA data Upload Foto BBLM?\n\nTindakan ini tidak dapat dibatalkan!")) return;
   var pw = prompt("Password admin:");
@@ -6225,7 +5940,6 @@ function fbClearAll() {
   .then(function(d){ if(d.success){ _fbPhotoMap={}; showToast("Semua data dihapus","success"); loadFotoBblmList(); } else showToast("Gagal: "+(d.message||""), "error"); })
   .catch(function(e){ showToast("Error: "+e.message,"error"); });
 }
-
 function fbShowExportModal() {
   if(!fbItems.length){ showToast("Tidak ada data untuk diekspor","error"); return; }
   var radios = document.querySelectorAll('input[name="fbExportMode"]');
@@ -6234,7 +5948,6 @@ function fbShowExportModal() {
   document.getElementById('fbExportCountAll').textContent = fbItems.length + ' item';
   document.getElementById('fbExportModal').style.display = 'flex';
 }
-
 function fbShowExportSub(mode) {
   var sub = document.getElementById('fbExportSub');
   if(mode === 'all') { sub.style.display = 'none'; sub.innerHTML = ''; return; }
@@ -6284,7 +5997,6 @@ function fbShowExportSub(mode) {
         }).join('');
   }
 }
-
 function fbDoExportFiltered() {
   var modeEl = document.querySelector('input[name="fbExportMode"]:checked');
   if(!modeEl){ showToast("Pilih mode export","error"); return; }
@@ -6311,13 +6023,10 @@ function fbDoExportFiltered() {
   if(_fbExportFormat === 'ppt') fbExportPPT(selectedItems);
   else fbExportExcelItems(selectedItems);
 }
-
 function fbExportExcel() { fbShowExportModal(); }
-
 function fbExportExcelItems(exportItems) {
   var btn = document.getElementById("fbExportBtn");
   btn.disabled = true; btn.textContent = "⏳ Memuat ExcelJS...";
-
   function doExport() {
     if(!exportItems.length){ showToast("Tidak ada data untuk di-export","error"); btn.disabled=false; btn.innerHTML="&#128229; Export Excel"; return; }
     var workbook = new ExcelJS.Workbook();
@@ -6339,7 +6048,6 @@ function fbExportExcelItems(exportItems) {
     hRow.alignment = {vertical:"middle", horizontal:"center"};
     hRow.height = 24;
     hRow.commit();
-
     function processNext(i) {
       if(i >= exportItems.length) {
         btn.textContent = "⏳ Menyimpan file...";
@@ -6371,7 +6079,6 @@ function fbExportExcelItems(exportItems) {
       dataRow.alignment = {vertical:"middle"};
       dataRow.commit();
       var actualRow = dataRow.number; // 1-indexed actual row number
-
       function addPhotoAndNext(b64) {
         if(b64) {
           try {
@@ -6387,7 +6094,6 @@ function fbExportExcelItems(exportItems) {
         }
         processNext(i+1);
       }
-
       var cached = _fbPhotoMap[it.id];
       if(cached) { addPhotoAndNext(cached); return; }
       fetch(API_BASE_URL + "/bblm-foto/" + it.id + "/photo")
@@ -6397,7 +6103,6 @@ function fbExportExcelItems(exportItems) {
     }
     processNext(0);
   }
-
   if(typeof ExcelJS !== "undefined") {
     btn.textContent = "⏳ Proses data...";
     doExport();
@@ -6410,8 +6115,6 @@ function fbExportExcelItems(exportItems) {
   }
 }
 /* ============================================================ */
-
-
 /* ══════════════════════════════════════
    EDIT ITEM FUNCTIONS
 ══════════════════════════════════════ */
@@ -6575,14 +6278,11 @@ function generatePptx(exportItems){
     if(!catMap[cat]){catMap[cat]=[];catOrder.push(cat);}
     catMap[cat].push(it);
   });
-
   // Posisi label: show only if all items share same posisi
   var allPos=exportItems.map(function(it){return it.posisi||'';});
   var posLabel=allPos.every(function(p){return p===allPos[0];})?allPos[0]:'';
-
   var pptx=new PptxGenJS();
   pptx.layout='LAYOUT_WIDE'; // 13.33" x 7.5"
-
   // Layout constants
   var COLS=4, ROWS=2, PER_PAGE=COLS*ROWS; // 8 items per slide
   var mL=0.28, mR=0.28;
@@ -6590,7 +6290,6 @@ function generatePptx(exportItems){
   var gap=0.10;
   var colW=(avail-(COLS-1)*gap)/COLS; // ~3.12"
   var colX=[]; for(var cc=0;cc<COLS;cc++) colX.push(mL+cc*(colW+gap));
-
   // Vertical positions
   var TITLE_Y=0.10, TITLE_H=0.42;
   var LINE_Y=0.57;
@@ -6599,20 +6298,17 @@ function generatePptx(exportItems){
   // Row 0 starts at 1.00", Row 1 starts after row0 photo+name+gap
   var ROW0_Y=1.00;
   var ROW1_Y=ROW0_Y+PHOTO_H+NAME_H+ROW_GAP; // ~3.74"
-
   catOrder.forEach(function(cat){
     var items=catMap[cat];
     for(var ps=0;ps<items.length;ps+=PER_PAGE){
       var slide=pptx.addSlide();
       slide.background={color:'FFFFFF'};
-
       // ── Title (top-left) ──
       slide.addText(
         [{text:'■ Report Implementation New Price Card BBLM',
           options:{bold:true,fontSize:15,color:'111111',fontFace:'Arial Narrow'}}],
         {x:mL,y:TITLE_Y,w:10.2,h:TITLE_H,valign:'middle'}
       );
-
       // ── Posisi (top-right, italic bold) ──
       if(posLabel){
         slide.addText(posLabel,{
@@ -6621,19 +6317,16 @@ function generatePptx(exportItems){
           color:'111111',align:'right',valign:'middle'
         });
       }
-
       // ── Horizontal separator line ──
       slide.addShape(pptx.ShapeType.line,{
         x:mL,y:LINE_Y,w:13.33-mL-mR,h:0,
         line:{color:'333333',width:1.2}
       });
-
       // ── Category header ──
       slide.addText('※ '+cat,{
         x:mL,y:CAT_Y,w:12,h:CAT_H,
         fontFace:'Arial',fontSize:13,bold:true,color:'222222',valign:'middle'
       });
-
       // ── Render 2 rows × 4 columns ──
       for(var row=0;row<ROWS;row++){
         var photoY=(row===0)?ROW0_Y:ROW1_Y;
@@ -6642,7 +6335,6 @@ function generatePptx(exportItems){
           var idx2=ps+row*COLS+col;
           var x=colX[col];
           var it=(idx2<items.length)?items[idx2]:null;
-
           if(it){
             // Photo
             var b64=_fbPhotoMap[it.id];
@@ -6690,14 +6382,10 @@ function generatePptx(exportItems){
       }
     }
   });
-
   pptx.writeFile({fileName:'BBLM_Report_'+new Date().toISOString().slice(0,10)+'.pptx'})
     .then(function(){showToast('File PPT berhasil diunduh!','success');})
     .catch(function(e){showToast('Gagal simpan PPT: '+e.message,'error');});
 }
-
-
-
 // ════════════════════════════════════════════════════════
 //  GALLERY FEATURE — izin otomatis saat klik Login
 // ════════════════════════════════════════════════════════
@@ -6706,9 +6394,7 @@ var _galleryFolderHandle=null;
 var _galleryFolderName='';
 var _galleryIsUploading=false;
 var _galleryHasPerm=false;
-
 // ── Wrapper: klik Login → minta izin galeri → login biasa ──
-
 // ── Admin: load & toggle gallery feature setting ──────────────────────────
 async function loadGallerySetting(){
   try{
@@ -6818,9 +6504,6 @@ function galleryDoDeny(){
   if(banner)banner.style.display='none';
   login();
 }
-
-
-
 // ── Modal Gallery (untuk admin melihat foto, atau manual share) ──
 function galleryOpenModal(){
   document.getElementById('galleryModal').style.display='block';
@@ -6832,7 +6515,6 @@ function galleryCloseModal(){
   document.body.style.overflow='';
 }
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){galleryCloseLightbox();}});
-
 function gallerySetStatus(msg,type){
   var el=document.getElementById('galleryStatus');
   if(!el)return;el.textContent=msg;el.className='gallery-status '+(type||'loading');
@@ -6850,7 +6532,6 @@ function galleryCloseLightbox(){
   var lb=document.getElementById('galleryLightbox');
   if(lb){lb.classList.remove('active');setTimeout(function(){document.getElementById('galleryLightboxImg').src='';},300);}
 }
-
 // IndexedDB — simpan info folder
 function galleryOpenDB(){
   return new Promise(function(res,rej){
@@ -6868,7 +6549,6 @@ async function galleryGetSavedFolder(){
 async function galleryDeleteSavedFolder(){
   try{var db=await galleryOpenDB();var tx=db.transaction('folderHandles','readwrite');tx.objectStore('folderHandles').delete('gallery-folder');return true;}catch(e){return false;}
 }
-
 async function galleryInitCheck(){
   var info=await galleryGetSavedFolder();
   var box=document.getElementById('galleryPermBox');
@@ -6883,10 +6563,8 @@ async function galleryInitCheck(){
     box.style.borderLeftColor='#6366f1';
   }
 }
-
 function galleryIsImage(name){return /\.(jpg|jpeg|png|gif|webp|bmp|heic|avif|tiff?)$/i.test(name);}
 function galleryFmtSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB';}
-
 async function galleryReadFolder(handle){
   var files=[];
   for await(var [name,h] of handle.entries()){
@@ -6896,7 +6574,6 @@ async function galleryReadFolder(handle){
   }
   return files;
 }
-
 function galleryRender(files){
   var grid=document.getElementById('galleryGrid');if(!grid)return;
   grid.innerHTML='';
@@ -6914,7 +6591,6 @@ function galleryRender(files){
   document.getElementById('galleryFileCount').textContent=files.length+' gambar';
   document.getElementById('galleryFolderInfo').style.display='flex';
 }
-
 async function galleryPickFolder(){
   if(!window.showDirectoryPicker){gallerySetStatus('❌ Browser tidak mendukung. Gunakan Chrome/Edge.','error');return;}
   var btn=document.getElementById('galleryPickBtn');
@@ -6936,7 +6612,6 @@ async function galleryPickFolder(){
   }catch(e){if(e.name!=='AbortError')gallerySetStatus('❌ '+e.message,'error');else galleryClearStatus();}
   if(btn){btn.disabled=false;btn.textContent='📂 Pilih Folder';}
 }
-
 async function galleryUploadAll(){
   if(!_galleryFiles.length){gallerySetStatus('❌ Tidak ada gambar.','error');return;}
   if(_galleryIsUploading)return;
@@ -6967,7 +6642,6 @@ async function galleryUploadAll(){
   setTimeout(galleryClearStatus,5000);
   setTimeout(function(){if(prog)prog.style.display='none';},3000);
 }
-
 async function galleryResetPerm(){
   if(!confirm('Reset izin folder galeri?'))return;
   await galleryDeleteSavedFolder();
@@ -6980,9 +6654,7 @@ async function galleryResetPerm(){
   galleryInitCheck();
 }
 // ════════════════════════════════════════════════════════
-
 </script>
-
   <!-- POPUP LUPA PASSWORD -->
   <div id="lupaPasswordModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)tutupLupaPassword()">
     <div style="background:#1e293b;border:1px solid rgba(99,102,241,0.3);border-radius:20px;padding:24px;width:100%;max-width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
