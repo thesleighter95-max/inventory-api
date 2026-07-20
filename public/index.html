@@ -4968,6 +4968,7 @@ function submitAbsensi(){
     badge.style.border='1px solid '+_pBorder;
   }
   absensiScanFeedback(_predictedIn);
+  renderAbsensiResultOptimistic(empId, _cachedName, _predictedIn);
   _absensiLastScanDate=_todayStr;
   // === Background fetch ke GAS — update nama & tabel saat response datang ===
   var _op=encodeURIComponent(isAdmin?'Admin':(currentUserNameInv||currentUsernameRaw||'User'));
@@ -5023,6 +5024,40 @@ function totalSecsDisplay(secs){
   return s+'dtk';
 }
 
+function renderAbsensiResultOptimistic(empId, empName, isIn){
+  var res=$('absensiResult');if(!res)return;
+  var now=new Date();
+  var timeStr=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+  var sc=isIn?'#00ff88':'#ff6644';
+  var statusLabel=isIn?'In':'Out';
+  var h='<div style="background:#0d0d22;padding:7px 10px 6px;border-bottom:1px solid #1a2a4a;">'
+    +'<span style="font-size:11px;color:#00cc88;font-family:monospace;">\u2713 Saved ('+statusLabel+')</span>'
+    +(empName?'<span style="font-size:11px;color:#6688bb;font-family:monospace;margin-left:8px;">\u2014 '+empName+'</span>':'')
+    +'</div>'
+    +'<div style="overflow-x:auto;">'
+    +'<table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:12px;">'
+    +'<thead><tr style="background:#0d0d22;">'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;">#</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;">Jam</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;">Status</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:right;">Kerja</th>'
+    +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:right;">Istirahat</th>'
+    +'</tr></thead><tbody>'
+    +'<tr>'
+    +'<td style="padding:7px 8px;color:#88aacc;border:1px solid #12122a;text-align:center;">1</td>'
+    +'<td style="padding:7px 8px;color:#88ddff;font-weight:600;border:1px solid #12122a;text-align:center;">'+timeStr+'</td>'
+    +'<td style="padding:7px 8px;text-align:center;border:1px solid #12122a;"><b style="color:'+sc+';">'+statusLabel+'</b></td>'
+    +'<td style="padding:7px 8px;color:#ffcc44;font-weight:600;border:1px solid #12122a;text-align:right;">-</td>'
+    +'<td style="padding:7px 8px;color:#ff8844;font-weight:600;border:1px solid #12122a;text-align:right;">-</td>'
+    +'</tr>'
+    +'<tr style="background:#0a0a2a;border-top:2px solid #2a4a7a;">'
+    +'<td colspan="2" style="padding:7px 8px;color:#88bbee;border:1px solid #1a2a4a;font-weight:700;letter-spacing:1px;">Total</td>'
+    +'<td style="padding:7px 8px;text-align:center;border:1px solid #1a2a4a;"><b style="color:'+sc+';">'+statusLabel+'</b></td>'
+    +'<td style="padding:7px 8px;color:#ffcc44;font-weight:700;border:1px solid #1a2a4a;text-align:right;">-</td>'
+    +'<td style="padding:7px 8px;color:#ff8844;font-weight:700;border:1px solid #1a2a4a;text-align:right;">-</td>'
+    +'</tr></tbody></table></div>';
+  res.innerHTML=h;
+}
 function renderAbsensiResult(j){
   var res=$('absensiResult');if(!res)return;
   var records=j.records||[];
