@@ -1579,6 +1579,30 @@ table td { font-size: 11px; }
 <div id="absensiPanel" class="panel-container">
 <style>
 @keyframes absensiColon{0%,49%{opacity:1}50%,100%{opacity:0.1}}
+@media(min-width:768px){
+  /* Pusatkan dan batasi lebar panel di PC */
+  #absensiPanel>div{max-width:700px;margin:0 auto;}
+  /* Tanggal */
+  #absensiDate{font-size:15px!important;letter-spacing:4px!important;padding:6px 24px!important;}
+  /* Jam — lebih besar di PC */
+  #absensiH,#absensiM,#absensiS{font-size:clamp(90px,10vw,140px)!important;}
+  /* Status sync + jumlah karyawan */
+  #absensiSyncStatus{font-size:13px!important;padding:5px 16px!important;}
+  #absensiEmpCount{font-size:13px!important;}
+  /* Input scan + tombol */
+  #absensiInput{font-size:20px!important;padding:15px 18px!important;}
+  /* Pesan status + badge */
+  #absensiScanMsg{font-size:16px!important;}
+  #absensiStatusBadge{font-size:15px!important;padding:5px 22px!important;border-radius:20px!important;}
+  /* Tabel hasil scan */
+  #absensiResult table{font-size:15px!important;}
+  #absensiResult th,#absensiResult td{padding:11px 16px!important;}
+  #absensiResult>div:first-child span{font-size:14px!important;}
+  /* Tombol SCAN */
+  #absensiScanBtn{font-size:17px!important;padding:15px 28px!important;border-radius:12px!important;}
+  /* Tombol admin */
+  #absensiAdminSection button{font-size:13px!important;padding:11px 16px!important;}
+}
 </style>
   <div style="background:#0f0f1a;min-height:100vh;display:flex;flex-direction:column;">
     <div style="background:#0a0a14;padding:16px 14px 12px;text-align:center;border-bottom:1px solid #1a2a4a;flex-shrink:0;">
@@ -1602,7 +1626,7 @@ table td { font-size: 11px; }
           placeholder="Scan atau ketik ID karyawan..."
           onkeydown="if(event.key==='Enter')submitAbsensi()"
           style="flex:1;background:#0d0d22;border:1px solid #2a3a6a;border-radius:10px;padding:11px 14px;font-size:15px;color:#88ddff;font-family:monospace;outline:none;letter-spacing:1px;">
-        <button onclick="submitAbsensi()" style="background:#1a3a7a;border:1px solid #2a5a9a;border-radius:10px;padding:11px 18px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;font-family:monospace;letter-spacing:1px;flex-shrink:0;">SCAN</button>
+        <button id="absensiScanBtn" onclick="submitAbsensi()" style="background:#1a3a7a;border:1px solid #2a5a9a;border-radius:10px;padding:11px 18px;color:#fff;font-weight:800;font-size:13px;cursor:pointer;font-family:monospace;letter-spacing:1px;flex-shrink:0;">SCAN</button>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;min-height:20px;">
         <span id="absensiScanMsg" style="font-size:12px;color:#445577;font-family:monospace;">&#9654; scan ID karyawan untuk absensi</span>
