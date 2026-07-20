@@ -4860,6 +4860,16 @@ function startAbsensiClock(){
     if($('absensiH'))$('absensiH').textContent=String(now.getHours()).padStart(2,'0');
     if($('absensiM'))$('absensiM').textContent=String(now.getMinutes()).padStart(2,'0');
     if($('absensiS'))$('absensiS').textContent=String(now.getSeconds()).padStart(2,'0');
+    // Auto-clear tampilan jam 02:00 pagi jika tanggal sudah berganti
+    if(now.getHours()===2&&now.getMinutes()===0){
+      var _td=now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+      if(_absensiLastScanDate!==_td){
+        var _r=$('absensiResult');if(_r)_r.innerHTML='';
+        var _b=$('absensiStatusBadge');if(_b)_b.style.display='none';
+        var _m=$('absensiScanMsg');if(_m){_m.textContent='\u25BA scan ID karyawan untuk absensi';_m.style.color='#445577';}
+        _absensiLastScanDate=_td;
+      }
+    }
   }
   tick();
   _absensiClockInterval=setInterval(tick,1000);
