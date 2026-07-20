@@ -4890,6 +4890,9 @@ function absensiRefreshEmployees(){
   .then(function(j){
     var employees=j.employees||[];
     var count=employees.length;
+    // Cache ke map untuk lookup langsung saat scan
+    _absensiEmpMap={};
+    employees.forEach(function(e){var k=(e.barcode||e.id||'').trim();if(k)_absensiEmpMap[k]=e.name||'';});
     if($('absensiEmpCount'))$('absensiEmpCount').textContent=count+' karyawan';
     updateAbsensiSyncStatus('online',count+' karyawan terdaftar');
     renderAbsensiEmpList(employees);
@@ -4898,6 +4901,7 @@ function absensiRefreshEmployees(){
 }
 
 var _absensiInFlight={};
+var _absensiEmpMap={};
 var _absensiLastScanDate=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();
 // Flash + beep feedback saat scan berhasil
 function absensiScanFeedback(isIn){
@@ -4945,7 +4949,11 @@ function submitAbsensi(){
     var _bdg=$('absensiStatusBadge');if(_bdg)_bdg.style.display='none';
   }
   // === OPTIMISTIC: Langsung tampilkan sukses tanpa tunggu response GAS ===
-  if(msg){msg.textContent=': '+empId+' \u2713';msg.style.color='#00cc88';}
+  var _cachedName=_absensiEmpMap[empId.trim()]||'';
+  if(msg){
+    msg.textContent=': '+empId+(_cachedName?' \u2192 '+_cachedName:' \u2713');
+    msg.style.color=_cachedName?'#88aacc':'#00cc88';
+  }
   if(badge){
     badge.style.display='inline-block';
     badge.textContent='SCAN OK';
@@ -5108,6 +5116,9 @@ function absensiSyncFromSpreadsheet(){
     if(btn){btn.disabled=false;btn.textContent='Sync';}
     if(j.success){
       var employees=j.employees||[];
+      // Cache ke map untuk lookup langsung saat scan
+      _absensiEmpMap={};
+      employees.forEach(function(e){var k=(e.barcode||e.id||'').trim();if(k)_absensiEmpMap[k]=e.name||'';});
       showToast(employees.length+' karyawan berhasil disinkronkan dari spreadsheet!','success');
       updateAbsensiSyncStatus('online',employees.length+' karyawan');
       if($('absensiEmpCount'))$('absensiEmpCount').textContent=employees.length+' karyawan';
