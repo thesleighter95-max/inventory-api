@@ -3047,7 +3047,7 @@ function switchMainTab(tab){
   else if(tab==="promo"){$("promoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navPromo");setMarquee(false);loadPromoList();}
   else if(tab==="neo"){$("neoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navNeo");setMarquee(false);loadNeoStatus();}
   else if(tab==="fotobblm"){$("fotoBblmPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navFotoBblm");setMarquee(false);loadFotoBblmList();fbLoadCategories();}
-  else if(tab==="absensi"){$("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();(function(){var _td=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();if(_absensiLastScanDate!==_td&&(new Date()).getHours()>=2){var _r=$("absensiResult");if(_r)_r.innerHTML="";var _b=$("absensiStatusBadge");if(_b)_b.style.display="none";var _m=$("absensiScanMsg");if(_m){_m.textContent="\u25BA scan ID karyawan untuk absensi";_m.style.color="#445577";}_absensiLastScanDate=_td;}})();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
+  else if(tab==="absensi"){$("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();(function(){var _td=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();if(_absensiLastScanDate!==_td&&(new Date()).getHours()>=2){var _r=$("absensiResult");if(_r)_r.innerHTML="";var _b=$("absensiStatusBadge");if(_b)_b.style.display="none";var _m=$("absensiScanMsg");if(_m){_m.textContent="\u25BA scan ID karyawan untuk absensi";_m.style.color="#445577";}_absensiLastScanDate=_td;_absensiStatusMap={};}})();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
 function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items-center justify-center p-10 text-pro-text"><svg class="animate-spin h-6 w-6 text-pro-main mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-xs">'+(t||"Memuat...")+'</span></div>'}
@@ -4867,7 +4867,7 @@ function startAbsensiClock(){
         var _r=$('absensiResult');if(_r)_r.innerHTML='';
         var _b=$('absensiStatusBadge');if(_b)_b.style.display='none';
         var _m=$('absensiScanMsg');if(_m){_m.textContent='\u25BA scan ID karyawan untuk absensi';_m.style.color='#445577';}
-        _absensiLastScanDate=_td;
+        _absensiLastScanDate=_td;_absensiStatusMap={};
       }
     }
     // Jadwalkan tick berikutnya tepat di batas detik — hilangkan jeda/drift
@@ -4902,6 +4902,7 @@ function absensiRefreshEmployees(){
 
 var _absensiInFlight={};
 var _absensiEmpMap={};
+var _absensiStatusMap={};
 var _absensiLastScanDate=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();
 // Flash + beep feedback saat scan berhasil
 function absensiScanFeedback(isIn){
@@ -4947,21 +4948,26 @@ function submitAbsensi(){
     var _res=$('absensiResult');if(_res)_res.innerHTML='';
     var _msg=$('absensiScanMsg');if(_msg){_msg.textContent='\u25BA scan ID karyawan untuk absensi';_msg.style.color='#445577';}
     var _bdg=$('absensiStatusBadge');if(_bdg)_bdg.style.display='none';
+    _absensiStatusMap={};
   }
-  // === OPTIMISTIC: Langsung tampilkan sukses tanpa tunggu response GAS ===
+  // === OPTIMISTIC: Langsung tampilkan sukses + IN/OUT dari toggle lokal ===
   var _cachedName=_absensiEmpMap[empId.trim()]||'';
+  var _predictedIn=(_absensiStatusMap[empId.trim()]!=='In');
+  var _pBg=_predictedIn?'#0a3a2a':'#3a1a0a';
+  var _pColor=_predictedIn?'#00ff88':'#ff6644';
+  var _pBorder=_predictedIn?'#00ff8855':'#ff664455';
   if(msg){
     msg.textContent=': '+empId+(_cachedName?' \u2192 '+_cachedName:' \u2713');
     msg.style.color=_cachedName?'#88aacc':'#00cc88';
   }
   if(badge){
     badge.style.display='inline-block';
-    badge.textContent='SCAN OK';
-    badge.style.background='#0a3a2a';
-    badge.style.color='#00ff88';
-    badge.style.border='1px solid #00ff8855';
+    badge.textContent=_predictedIn?'IN':'OUT';
+    badge.style.background=_pBg;
+    badge.style.color=_pColor;
+    badge.style.border='1px solid '+_pBorder;
   }
-  absensiScanFeedback(true);
+  absensiScanFeedback(_predictedIn);
   _absensiLastScanDate=_todayStr;
   // === Background fetch ke GAS — update nama & tabel saat response datang ===
   var _op=encodeURIComponent(isAdmin?'Admin':(currentUserNameInv||currentUsernameRaw||'User'));
@@ -4971,6 +4977,8 @@ function submitAbsensi(){
     delete _absensiInFlight[empId];
     if(j.success){
       var isIn=j.status==='In';
+      // Simpan status aktual — jadi prediksi scan berikutnya tepat
+      _absensiStatusMap[empId.trim()]=j.status;
       if(msg){
         msg.textContent=': '+j.employeeId+(j.employeeName?' \u2192 '+j.employeeName:' \u26A0 ID tidak terdaftar di spreadsheet');
         msg.style.color=j.employeeName?'#88aacc':'#ff8844';
