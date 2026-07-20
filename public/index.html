@@ -4852,10 +4852,10 @@ function renderPromoItems(){
 var _absensiClockInterval=null;
 function startAbsensiClock(){
   if(_absensiClockInterval)return;
+  var days=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+  var months=['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
   function tick(){
     var now=new Date();
-    var days=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
-    var months=['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
     if($('absensiDate'))$('absensiDate').textContent=days[now.getDay()]+' '+now.getDate()+' '+months[now.getMonth()]+' '+now.getFullYear();
     if($('absensiH'))$('absensiH').textContent=String(now.getHours()).padStart(2,'0');
     if($('absensiM'))$('absensiM').textContent=String(now.getMinutes()).padStart(2,'0');
@@ -4870,11 +4870,12 @@ function startAbsensiClock(){
         _absensiLastScanDate=_td;
       }
     }
+    // Jadwalkan tick berikutnya tepat di batas detik — hilangkan jeda/drift
+    _absensiClockInterval=setTimeout(tick, 1000-(new Date()).getMilliseconds());
   }
   tick();
-  _absensiClockInterval=setInterval(tick,1000);
 }
-function stopAbsensiClock(){if(_absensiClockInterval){clearInterval(_absensiClockInterval);_absensiClockInterval=null;}}
+function stopAbsensiClock(){if(_absensiClockInterval){clearTimeout(_absensiClockInterval);_absensiClockInterval=null;}}
 
 function updateAbsensiSyncStatus(state,msg){
   var el=$('absensiSyncStatus');if(!el)return;
