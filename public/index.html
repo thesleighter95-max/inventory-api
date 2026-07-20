@@ -1582,10 +1582,12 @@ table td { font-size: 11px; }
 @media(min-width:768px){
   /* Pusatkan dan batasi lebar panel di PC */
   #absensiPanel>div{max-width:720px;margin:0 auto;}
+  /* Header clock section — lebih kompak di PC */
+  #absensiPanel>div>div:first-child{padding:8px 14px 6px!important;}
   /* Tanggal */
-  #absensiDate{font-size:15px!important;letter-spacing:4px!important;padding:6px 24px!important;}
-  /* Jam — lebih besar di PC */
-  #absensiH,#absensiM,#absensiS{font-size:clamp(90px,10vw,140px)!important;}
+  #absensiDate{font-size:13px!important;letter-spacing:3px!important;padding:3px 16px!important;margin-bottom:6px!important;}
+  /* Jam — sedang di PC agar tabel tetap terlihat */
+  #absensiH,#absensiM,#absensiS{font-size:clamp(52px,6vw,80px)!important;}
   /* Status sync + jumlah karyawan */
   #absensiSyncStatus{font-size:13px!important;padding:5px 16px!important;}
   #absensiEmpCount{font-size:13px!important;}
