@@ -4936,8 +4936,6 @@ function submitAbsensi(){
   inp.value='';inp.focus();
   var msg=$('absensiScanMsg');
   var badge=$('absensiStatusBadge');
-  if(msg){msg.textContent='Menyimpan...';msg.style.color='#6688aa';}
-  if(badge)badge.style.display='none';
   // Bersihkan tampilan jika hari sudah berganti
   var _todayStr=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();
   if(_absensiLastScanDate!==_todayStr&&(new Date()).getHours()>=2){
@@ -4945,7 +4943,18 @@ function submitAbsensi(){
     var _msg=$('absensiScanMsg');if(_msg){_msg.textContent='\u25BA scan ID karyawan untuk absensi';_msg.style.color='#445577';}
     var _bdg=$('absensiStatusBadge');if(_bdg)_bdg.style.display='none';
   }
-  // Langsung ke GAS — tidak melalui server
+  // === OPTIMISTIC: Langsung tampilkan sukses tanpa tunggu response GAS ===
+  if(msg){msg.textContent=': '+empId+' \u2713';msg.style.color='#00cc88';}
+  if(badge){
+    badge.style.display='inline-block';
+    badge.textContent='SCAN OK';
+    badge.style.background='#0a3a2a';
+    badge.style.color='#00ff88';
+    badge.style.border='1px solid #00ff8855';
+  }
+  absensiScanFeedback(true);
+  _absensiLastScanDate=_todayStr;
+  // === Background fetch ke GAS — update nama & tabel saat response datang ===
   var _op=encodeURIComponent(isAdmin?'Admin':(currentUserNameInv||currentUsernameRaw||'User'));
   fetch(ABSENSI_GAS_URL+'?action=scan&employeeId='+encodeURIComponent(empId)+'&operator='+_op)
   .then(function(r){return r.json();})
@@ -4965,15 +4974,11 @@ function submitAbsensi(){
         badge.style.border='1px solid '+(isIn?'#00ff8855':'#ff664455');
       }
       renderAbsensiResult(j);
-      absensiScanFeedback(isIn);
-      _absensiLastScanDate=_todayStr;
       var sumPanel=$('absensiSummaryPanel');
       if(sumPanel&&sumPanel.style.display!=='none'){absensiLoadSummary();}
-    }else{
-      if(msg){msg.textContent='Error: '+(j.message||'Gagal');msg.style.color='#ff4444';}
     }
   })
-  .catch(function(e){delete _absensiInFlight[empId];if(msg){msg.textContent='Error: '+e.message;msg.style.color='#ff4444';}});
+  .catch(function(){delete _absensiInFlight[empId];});
 }
 
 function normalizeTimeStr(t){
