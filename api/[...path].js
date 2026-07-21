@@ -1,4 +1,5 @@
-import { put, list as vbList, del } from "@vercel/blob";
+// @vercel/blob tidak digunakan (store suspended), diganti Netlify Blobs
+// import { put, list as vbList, del } from "@vercel/blob";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "00000";
 const SNAP_PASSWORD = process.env.SNAP_PASSWORD || "00000";
@@ -33,35 +34,50 @@ function cacheInvalidate(key) {
 }
 
 // ============================================================
-// VERCEL BLOB helpers
+// NETLIFY BLOB helpers (menggantikan Vercel Blob yang suspended)
 // ============================================================
-const BLOB_PREFIX = "inventory/";
+const NETLIFY_SITE_ID = "e313c744-9353-4095-9c78-0512372311eb";
+const NETLIFY_STORE   = "inventory";
+const _NB_BASE = `https://api.netlify.com/api/v1/sites/${NETLIFY_SITE_ID}/blobs/${NETLIFY_STORE}`;
+// Token dari env var; fallback ke nilai default
+const _getNbToken = () => process.env.NETLIFY_TOKEN || "nfp_aUDNkKPatXCjdgbX2ZVPRgvURsvb4idgf8cc";
 
-async function vbFetch(pathname) {
+// Netlify Blobs: GET key → returns string or null
+async function vbFetch(key) {
   try {
-    const { blobs } = await vbList({ prefix: pathname, limit: 1 });
-    if (!blobs.length) return null;
-    const res = await fetch(blobs[0].url + "?_t=" + Date.now());
+    const res = await fetch(`${_NB_BASE}/${encodeURIComponent(key)}`, {
+      headers: { Authorization: `Bearer ${_getNbToken()}` }
+    });
     if (!res.ok) return null;
     return await res.text();
   } catch { return null; }
 }
 
-async function vbPut(pathname, value, contentType = "application/json") {
-  await put(pathname, value, {
-    access: "public",
-    addRandomSuffix: false,
-    contentType,
-    cacheControlMaxAge: 0,
+// Netlify Blobs: PUT key ← value string
+async function vbPut(key, value, contentType = "application/json") {
+  const res = await fetch(`${_NB_BASE}/${encodeURIComponent(key)}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${_getNbToken()}`,
+      "Content-Type": contentType
+    },
+    body: value
   });
+  if (!res.ok) throw new Error("Netlify Blob PUT gagal: " + res.status + " " + await res.text());
 }
 
-async function vbDel(pathname) {
+// Netlify Blobs: DELETE key
+async function vbDel(key) {
   try {
-    const { blobs } = await vbList({ prefix: pathname, limit: 10 });
-    if (blobs.length) await del(blobs.map(b => b.url));
+    await fetch(`${_NB_BASE}/${encodeURIComponent(key)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${_getNbToken()}` }
+    });
   } catch {}
 }
+
+// Alias: pathname untuk kompatibilitas (tidak perlu prefix lagi)
+const BLOB_PREFIX = "";
 
 async function getJson(key, defaultValue) {
   if (_CACHEABLE.has(key)) {
@@ -69,7 +85,7 @@ async function getJson(key, defaultValue) {
     if (hit !== undefined) return hit;
   }
   try {
-    const raw = await vbFetch(BLOB_PREFIX + key + ".json");
+    const raw = await vbFetch(key + ".json");
     if (raw === null) return defaultValue;
     const val = JSON.parse(raw);
     if (_CACHEABLE.has(key)) cacheSet(key, val);
@@ -81,13 +97,13 @@ async function getJson(key, defaultValue) {
 
 async function setJson(key, data) {
   cacheInvalidate(key);
-  await vbPut(BLOB_PREFIX + key + ".json", JSON.stringify(data));
+  await vbPut(key + ".json", JSON.stringify(data));
   if (_CACHEABLE.has(key)) cacheSet(key, data);
 }
 
 async function deleteKey(key) {
   cacheInvalidate(key);
-  await vbDel(BLOB_PREFIX + key + ".json");
+  await vbDel(key + ".json");
 }
 
 // ============================================================
@@ -1868,7 +1884,7 @@ loadCurrentSetting();
 
     // GET /bblm-foto — list semua item (tanpa foto)
     if (path === "/bblm-foto" && method === "GET") {
-      const list = await getJson("bblm-foto-list", []);
+      const list = await getJson("bblm-foto", []);
       const downloaded = await getJson("bblm-foto-downloaded", []);
       return send({ success: true, items: list, downloadedIds: downloaded });
     }
@@ -1877,10 +1893,10 @@ loadCurrentSetting();
     if (path === "/bblm-foto" && method === "POST") {
       const { barcode, prodNm, prodCd, stkQty, category, posisi, username } = body;
       if (!barcode) return send({ success: false, message: "barcode wajib diisi" }, 400);
-      const list = await getJson("bblm-foto-list", []);
+      const list = await getJson("bblm-foto", []);
       const newId = Date.now() + "_" + Math.random().toString(36).slice(2, 7);
       list.push({ id: newId, barcode, prodNm: prodNm||"", prodCd: prodCd||"", stkQty: stkQty||"0", category: category||"", posisi: posisi||"", username: username||"", createdAt: new Date().toISOString() });
-      await setJson("bblm-foto-list", list);
+      await setJson("bblm-foto", list);
       return send({ success: true, id: newId });
     }
 
@@ -1897,12 +1913,12 @@ loadCurrentSetting();
     // POST /bblm-foto/clear — hapus semua item dan foto
     if (path === "/bblm-foto/clear" && method === "POST") {
       if (body.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Password salah" }, 403);
-      const list = await getJson("bblm-foto-list", []);
+      const list = await getJson("bblm-foto", []);
       // Hapus semua foto dari Vercel Blob
       for (const item of list) {
-        try { await vbDel(BLOB_PREFIX + "bblm-photos/" + item.id + ".txt"); } catch(_) {}
+        try { await vbDel("bblm-foto-photo-" + item.id + ".txt"); } catch(_) {}
       }
-      await setJson("bblm-foto-list", []);
+      await setJson("bblm-foto", []);
       await setJson("bblm-foto-downloaded", []);
       return send({ success: true, deleted: list.length });
     }
@@ -1914,7 +1930,7 @@ loadCurrentSetting();
 
       // GET /bblm-foto/:id/photo — ambil foto dari Vercel Blob
       if (method === "GET") {
-        const raw = await vbFetch(BLOB_PREFIX + "bblm-photos/" + fbId + ".txt");
+        const raw = await vbFetch("bblm-foto-photo-" + fbId + ".txt");
         if (!raw) return send({ success: false, message: "Foto tidak ditemukan" });
         return send({ success: true, fotoBase64: raw });
       }
@@ -1923,7 +1939,7 @@ loadCurrentSetting();
       if (method === "POST") {
         const { fotoBase64 } = body;
         if (!fotoBase64) return send({ success: false, message: "fotoBase64 wajib diisi" }, 400);
-        await vbPut(BLOB_PREFIX + "bblm-photos/" + fbId + ".txt", fotoBase64);
+        await vbPut("bblm-foto-photo-" + fbId + ".txt", fotoBase64);
         return send({ success: true });
       }
     }
@@ -1935,7 +1951,7 @@ loadCurrentSetting();
       // PATCH /bblm-foto/:id — update metadata item
       if (method === "PATCH") {
         const { prodNm, stkQty, category, posisi } = body;
-        const list = await getJson("bblm-foto-list", []);
+        const list = await getJson("bblm-foto", []);
         const idx = list.findIndex(function(x){ return x.id === fbId; });
         if (idx === -1) return send({ success: false, message: "Item tidak ditemukan" }, 404);
         if (prodNm !== undefined) list[idx].prodNm = prodNm;
@@ -1943,16 +1959,16 @@ loadCurrentSetting();
         if (category !== undefined) list[idx].category = category;
         if (posisi !== undefined) list[idx].posisi = posisi;
         list[idx].updatedAt = new Date().toISOString();
-        await setJson("bblm-foto-list", list);
+        await setJson("bblm-foto", list);
         return send({ success: true });
       }
 
       // DELETE /bblm-foto/:id — hapus item dan fotonya
       if (method === "DELETE") {
-        const list = await getJson("bblm-foto-list", []);
+        const list = await getJson("bblm-foto", []);
         const newList = list.filter(function(x){ return x.id !== fbId; });
-        await setJson("bblm-foto-list", newList);
-        try { await vbDel(BLOB_PREFIX + "bblm-photos/" + fbId + ".txt"); } catch(_) {}
+        await setJson("bblm-foto", newList);
+        try { await vbDel("bblm-foto-photo-" + fbId + ".txt"); } catch(_) {}
         const downloaded = await getJson("bblm-foto-downloaded", []);
         await setJson("bblm-foto-downloaded", downloaded.filter(function(id){ return id !== fbId; }));
         return send({ success: true });
