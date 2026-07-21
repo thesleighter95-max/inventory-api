@@ -43,27 +43,43 @@ const _NB_BASE = `https://api.netlify.com/api/v1/sites/${NETLIFY_SITE_ID}/blobs/
 const _getNbToken = () => process.env.NETLIFY_TOKEN || "nfp_aUDNkKPatXCjdgbX2ZVPRgvURsvb4idgf8cc";
 
 // Netlify Blobs: GET key → returns string or null
+// Netlify API returns signed S3 URL, harus follow URL itu untuk baca konten
 async function vbFetch(key) {
   try {
     const res = await fetch(`${_NB_BASE}/${encodeURIComponent(key)}`, {
       headers: { Authorization: `Bearer ${_getNbToken()}` }
     });
     if (!res.ok) return null;
-    return await res.text();
+    const json = await res.json();
+    if (!json.url) return null;
+    // Follow signed S3 URL untuk baca konten aktual
+    const s3Res = await fetch(json.url);
+    if (!s3Res.ok) return null;
+    return await s3Res.text();
   } catch { return null; }
 }
 
 // Netlify Blobs: PUT key ← value string
+// Netlify API returns signed S3 PUT URL, harus PUT ke URL itu
 async function vbPut(key, value, contentType = "application/json") {
+  // Step 1: Minta signed PUT URL dari Netlify
   const res = await fetch(`${_NB_BASE}/${encodeURIComponent(key)}`, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${_getNbToken()}`,
       "Content-Type": contentType
-    },
+    }
+  });
+  if (!res.ok) throw new Error("Netlify Blob signed URL gagal: " + res.status);
+  const json = await res.json();
+  if (!json.url) throw new Error("Netlify Blob: tidak ada signed URL di response");
+  // Step 2: PUT konten aktual ke signed S3 URL
+  const s3Res = await fetch(json.url, {
+    method: "PUT",
+    headers: { "Content-Type": contentType },
     body: value
   });
-  if (!res.ok) throw new Error("Netlify Blob PUT gagal: " + res.status + " " + await res.text());
+  if (!s3Res.ok) throw new Error("Netlify Blob S3 PUT gagal: " + s3Res.status);
 }
 
 // Netlify Blobs: DELETE key
