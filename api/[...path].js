@@ -1861,6 +1861,104 @@ loadCurrentSetting();
       return send({ success: true, date: sumDate, total: summary.length, summary: summary });
     }
 
+
+    // ================================================================
+    // BBLM FOTO endpoints — metadata di KV, foto di Vercel Blob
+    // ================================================================
+
+    // GET /bblm-foto — list semua item (tanpa foto)
+    if (path === "/bblm-foto" && method === "GET") {
+      const list = await getJson("bblm-foto-list", []);
+      const downloaded = await getJson("bblm-foto-downloaded", []);
+      return send({ success: true, items: list, downloadedIds: downloaded });
+    }
+
+    // POST /bblm-foto — tambah item baru (metadata saja, foto dikirim terpisah)
+    if (path === "/bblm-foto" && method === "POST") {
+      const { barcode, prodNm, prodCd, stkQty, category, posisi, username } = body;
+      if (!barcode) return send({ success: false, message: "barcode wajib diisi" }, 400);
+      const list = await getJson("bblm-foto-list", []);
+      const newId = Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+      list.push({ id: newId, barcode, prodNm: prodNm||"", prodCd: prodCd||"", stkQty: stkQty||"0", category: category||"", posisi: posisi||"", username: username||"", createdAt: new Date().toISOString() });
+      await setJson("bblm-foto-list", list);
+      return send({ success: true, id: newId });
+    }
+
+    // POST /bblm-foto/mark-downloaded — tandai id sebagai sudah didownload
+    if (path === "/bblm-foto/mark-downloaded" && method === "POST") {
+      const { ids } = body;
+      if (!Array.isArray(ids)) return send({ success: false, message: "ids harus array" }, 400);
+      const current = await getJson("bblm-foto-downloaded", []);
+      const merged = Array.from(new Set([...current, ...ids.map(String)]));
+      await setJson("bblm-foto-downloaded", merged);
+      return send({ success: true });
+    }
+
+    // POST /bblm-foto/clear — hapus semua item dan foto
+    if (path === "/bblm-foto/clear" && method === "POST") {
+      if (body.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Password salah" }, 403);
+      const list = await getJson("bblm-foto-list", []);
+      // Hapus semua foto dari Vercel Blob
+      for (const item of list) {
+        try { await vbDel(BLOB_PREFIX + "bblm-photos/" + item.id + ".txt"); } catch(_) {}
+      }
+      await setJson("bblm-foto-list", []);
+      await setJson("bblm-foto-downloaded", []);
+      return send({ success: true, deleted: list.length });
+    }
+
+    // Dinamis: /bblm-foto/:id/photo (GET + POST) dan /bblm-foto/:id (PATCH + DELETE)
+    const fbPhotoMatch = path.match(/^\/bblm-foto\/([^/]+)\/photo$/);
+    if (fbPhotoMatch) {
+      const fbId = fbPhotoMatch[1];
+
+      // GET /bblm-foto/:id/photo — ambil foto dari Vercel Blob
+      if (method === "GET") {
+        const raw = await vbFetch(BLOB_PREFIX + "bblm-photos/" + fbId + ".txt");
+        if (!raw) return send({ success: false, message: "Foto tidak ditemukan" });
+        return send({ success: true, fotoBase64: raw });
+      }
+
+      // POST /bblm-foto/:id/photo — upload foto ke Vercel Blob
+      if (method === "POST") {
+        const { fotoBase64 } = body;
+        if (!fotoBase64) return send({ success: false, message: "fotoBase64 wajib diisi" }, 400);
+        await vbPut(BLOB_PREFIX + "bblm-photos/" + fbId + ".txt", fotoBase64);
+        return send({ success: true });
+      }
+    }
+
+    const fbItemMatch = path.match(/^\/bblm-foto\/([^/]+)$/);
+    if (fbItemMatch) {
+      const fbId = fbItemMatch[1];
+
+      // PATCH /bblm-foto/:id — update metadata item
+      if (method === "PATCH") {
+        const { prodNm, stkQty, category, posisi } = body;
+        const list = await getJson("bblm-foto-list", []);
+        const idx = list.findIndex(function(x){ return x.id === fbId; });
+        if (idx === -1) return send({ success: false, message: "Item tidak ditemukan" }, 404);
+        if (prodNm !== undefined) list[idx].prodNm = prodNm;
+        if (stkQty !== undefined) list[idx].stkQty = stkQty;
+        if (category !== undefined) list[idx].category = category;
+        if (posisi !== undefined) list[idx].posisi = posisi;
+        list[idx].updatedAt = new Date().toISOString();
+        await setJson("bblm-foto-list", list);
+        return send({ success: true });
+      }
+
+      // DELETE /bblm-foto/:id — hapus item dan fotonya
+      if (method === "DELETE") {
+        const list = await getJson("bblm-foto-list", []);
+        const newList = list.filter(function(x){ return x.id !== fbId; });
+        await setJson("bblm-foto-list", newList);
+        try { await vbDel(BLOB_PREFIX + "bblm-photos/" + fbId + ".txt"); } catch(_) {}
+        const downloaded = await getJson("bblm-foto-downloaded", []);
+        await setJson("bblm-foto-downloaded", downloaded.filter(function(id){ return id !== fbId; }));
+        return send({ success: true });
+      }
+    }
+
         return send({ error: "Not found" }, 404);
   } catch (err) {
     return send({ error: "Internal server error", detail: String(err) }, 500);
