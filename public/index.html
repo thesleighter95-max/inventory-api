@@ -5637,7 +5637,6 @@ function absensiLoadAllDates(){
     window._absensiSummaryData=allSummary;
     window._absensiSummaryDate=dari+'_s_'+sampai;
     var totalHadir=allSummary.filter(function(r){return r.status==='Hadir';}).length;
-    if(totalStat)totalStat.textContent=withData.length+' hari dengan data | Total karyawan unik: '+Object.keys(allSummary.reduce(function(m,r){m[r.employeeName]=1;return m;},{} ).length+' | Hadir: '+totalHadir+' record';
     // Kelompokkan per nama, urutkan tanggal di dalam
     var nameMap={};
     allSummary.forEach(function(r){
