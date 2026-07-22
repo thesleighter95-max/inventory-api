@@ -7230,5 +7230,31 @@ async function galleryResetPerm(){
       </div>
     </div>
   </div>
+
+<script>
+// ===== AUTO-UPDATE CHECKER =====
+(function(){
+  var _auEtag=null;
+  var _auUrl=location.href.split('?')[0].split('#')[0];
+  var _auInterval=5*60*1000; // cek setiap 5 menit
+
+  function auCheck(){
+    fetch(_auUrl,{method:'HEAD',cache:'no-store'})
+    .then(function(r){
+      var etag=r.headers.get('etag')||r.headers.get('last-modified')||'';
+      if(_auEtag===null){_auEtag=etag;return;}
+      if(etag&&etag!==_auEtag){
+        console.log('[AutoUpdate] Versi baru ditemukan, reload...');
+        location.reload(true);
+      }
+    })
+    .catch(function(){});
+  }
+
+  // Cek pertama setelah 10 detik (beri waktu halaman fully loaded)
+  setTimeout(function(){auCheck();setInterval(auCheck,_auInterval);},10000);
+})();
+// ===== END AUTO-UPDATE =====
+</script>
 </body>
 </html>
