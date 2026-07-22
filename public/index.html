@@ -1664,12 +1664,27 @@ table td { font-size: 11px; }
       <!-- Block 2: Rekap Absensi -->
       <button onclick="toggleAbsensiSummary()" style="width:100%;background:#0d0d1e;border:none;border-bottom:1px solid #1a2a4a;color:#00cc88;padding:9px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;text-align:left;">&#9660; Rekap Absensi &amp; Export Spreadsheet</button>
       <div id="absensiSummaryPanel" style="display:none;background:#090912;padding:14px;border-bottom:1px solid #1a2a4a;">
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <!-- TAB: Per Tanggal / Semua Tanggal -->
+        <div style="display:flex;border-radius:8px;overflow:hidden;border:1px solid #2a3a6a;margin-bottom:10px;">
+          <button id="absensiTabSingle" onclick="absensiSwitchTab('single')" style="flex:1;background:#1a3a7a;border:none;color:#88ddff;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;border-right:1px solid #2a3a6a;">&#128197; Per Tanggal</button>
+          <button id="absensiTabAll" onclick="absensiSwitchTab('all')" style="flex:1;background:#0d0d22;border:none;color:#445577;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">&#128466; Semua Tanggal</button>
+        </div>
+        <!-- KONTROL: Per Tanggal (default) -->
+        <div id="absensiSingleDateCtrl" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
           <label style="font-size:11px;color:#6688bb;font-family:monospace;font-weight:700;">Tanggal:</label>
           <input id="absensiSummaryDate" type="date" style="background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:6px 10px;font-size:11px;color:#88aacc;font-family:monospace;outline:none;">
           <button id="absensiSummaryLoadBtn" onclick="absensiLoadSummary()" style="background:#1a3a7a;border:1px solid #2a5a9a;color:#88ddff;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">Tampilkan</button>
           <button onclick="absensiExportXLSX()" style="background:#1a4a1a;border:1px solid #2a7a2a;color:#00ff88;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">&#8659; Download Excel</button>
           <button onclick="absensiSaveRekapToSheet()" id="absensiSaveSheetBtn" style="background:#1a2a4a;border:1px solid #2a4a7a;color:#66ccff;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">&#8593; Simpan ke Sheet</button>
+        </div>
+        <!-- KONTROL: Semua Tanggal (hidden by default) -->
+        <div id="absensiAllDateCtrl" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+          <label style="font-size:11px;color:#6688bb;font-family:monospace;font-weight:700;">Dari:</label>
+          <input id="absensiAllDari" type="date" style="background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:6px 10px;font-size:11px;color:#88aacc;font-family:monospace;outline:none;">
+          <label style="font-size:11px;color:#6688bb;font-family:monospace;font-weight:700;">Sampai:</label>
+          <input id="absensiAllSampai" type="date" style="background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:6px 10px;font-size:11px;color:#88aacc;font-family:monospace;outline:none;">
+          <button id="absensiAllLoadBtn" onclick="absensiLoadAllDates()" style="background:#1a3a7a;border:1px solid #2a5a9a;color:#88ddff;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">Tampilkan Semua</button>
+          <button onclick="absensiExportAllXLSX()" style="background:#1a4a1a;border:1px solid #2a7a2a;color:#00ff88;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">&#8659; Download Excel</button>
         </div>
         <div id="absensiSummaryTotal" style="font-size:11px;color:#6a9aff;font-family:monospace;margin-bottom:8px;min-height:16px;"></div>
         <div id="absensiSummaryTable" style="max-height:320px;overflow-y:auto;background:#0d0d22;border-radius:8px;border:1px solid #1a2a4a;">
@@ -5529,6 +5544,182 @@ function absensiSaveRekapToSheet(){
   })
   .catch(function(e){showToast('Gagal terhubung ke spreadsheet: '+e.message,'error');})
   .finally(function(){if(btn){btn.disabled=false;btn.innerHTML='&#8593; Simpan ke Sheet';}});
+}
+
+// ===== ABSENSI: SWITCH TAB =====
+var _absensiTabMode='single';
+function absensiSwitchTab(mode){
+  _absensiTabMode=mode;
+  var tblS=document.getElementById('absensiSingleDateCtrl');
+  var tblA=document.getElementById('absensiAllDateCtrl');
+  var tabS=document.getElementById('absensiTabSingle');
+  var tabA=document.getElementById('absensiTabAll');
+  var tableDiv=$('absensiSummaryTable');
+  var totalStat=$('absensiSummaryTotal');
+  if(mode==='single'){
+    if(tblS)tblS.style.display='flex';
+    if(tblA)tblA.style.display='none';
+    if(tabS){tabS.style.background='#1a3a7a';tabS.style.color='#88ddff';}
+    if(tabA){tabA.style.background='#0d0d22';tabA.style.color='#445577';}
+    if(tableDiv)tableDiv.style.maxHeight='320px';
+    if(tableDiv)tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#2a3a5a;font-family:monospace;font-size:11px;">Pilih tanggal lalu klik Tampilkan</div>';
+    if(totalStat)totalStat.textContent='';
+    window._absensiSummaryData=null;window._absensiSummaryDate=null;
+  }else{
+    if(tblS)tblS.style.display='none';
+    if(tblA)tblA.style.display='flex';
+    if(tabS){tabS.style.background='#0d0d22';tabS.style.color='#445577';}
+    if(tabA){tabA.style.background='#1a3a7a';tabA.style.color='#88ddff';}
+    if(tableDiv)tableDiv.style.maxHeight='600px';
+    if(tableDiv)tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#2a3a5a;font-family:monospace;font-size:11px;">Pilih rentang tanggal lalu klik Tampilkan Semua</div>';
+    if(totalStat)totalStat.textContent='';
+    // Set default range: 7 hari terakhir
+    var now=new Date();
+    var sampai=now.toISOString().slice(0,10);
+    var dari=new Date(now-6*86400000).toISOString().slice(0,10);
+    var inpD=document.getElementById('absensiAllDari');
+    var inpS=document.getElementById('absensiAllSampai');
+    if(inpD&&!inpD.value)inpD.value=dari;
+    if(inpS&&!inpS.value)inpS.value=sampai;
+  }
+}
+
+// ===== ABSENSI: LOAD SEMUA TANGGAL =====
+function absensiLoadAllDates(){
+  var dari=document.getElementById('absensiAllDari').value;
+  var sampai=document.getElementById('absensiAllSampai').value;
+  if(!dari||!sampai){showToast('Pilih rentang tanggal terlebih dahulu','error');return;}
+  if(dari>sampai){showToast('Tanggal awal harus sebelum atau sama dengan tanggal akhir','error');return;}
+  // Hitung jumlah hari
+  var dates=[];
+  var cur=new Date(dari+'T00:00:00');
+  var end=new Date(sampai+'T00:00:00');
+  while(cur<=end){
+    dates.push(cur.toISOString().slice(0,10));
+    cur.setDate(cur.getDate()+1);
+  }
+  if(dates.length>60){showToast('Maksimal 60 hari sekaligus','error');return;}
+  var tableDiv=$('absensiSummaryTable');
+  var totalStat=$('absensiSummaryTotal');
+  var btn=document.getElementById('absensiAllLoadBtn');
+  if(btn){btn.disabled=true;btn.textContent='Memuat '+dates.length+' hari...';}
+  if(tableDiv)tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#445577;font-family:monospace;font-size:11px;">Memuat data '+dates.length+' tanggal, harap tunggu...</div>';
+  if(totalStat)totalStat.textContent='';
+  Promise.all(dates.map(function(date){
+    return fetch(ABSENSI_GAS_URL+'?action=getSummary&date='+date)
+      .then(function(r){return r.json();})
+      .then(function(j){return{date:date,records:j.success?(j.records||[]):[]};})
+      .catch(function(){return{date:date,records:[]};});
+  })).then(function(results){
+    if(btn){btn.disabled=false;btn.textContent='Tampilkan Semua';}
+    var withData=results.filter(function(r){return r.records.length>0;});
+    if(!withData.length){
+      if(tableDiv)tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#445577;font-family:monospace;font-size:11px;">Tidak ada data absensi di rentang ini</div>';
+      return;
+    }
+    var allSummary=[];
+    withData.forEach(function(res){
+      res.records.forEach(function(r){
+        allSummary.push({
+          date:res.date,
+          employeeId:r.employeeId||'',
+          employeeName:r.employeeName||'(Tidak Terdaftar)',
+          division:r.division||'',
+          firstIn:normalizeTimeStr(r.firstIn)||'-',
+          lastOut:normalizeTimeStr(r.lastOut)||'-',
+          totalOnDuty:r.totalOnDuty||0,
+          totalOffDuty:r.totalOffDuty||0,
+          scanCount:r.scanCount||0,
+          status:(r.lastStatus==='In'||r.lastStatus==='Out')?'Hadir':'Tidak Hadir'
+        });
+      });
+    });
+    window._absensiSummaryData=allSummary;
+    window._absensiSummaryDate=dari+'_s_'+sampai;
+    var totalHadir=allSummary.filter(function(r){return r.status==='Hadir';}).length;
+    if(totalStat)totalStat.textContent=withData.length+' hari dengan data | Hadir: '+totalHadir+' | Total record: '+allSummary.length;
+    // Render tabel dikelompokkan per tanggal
+    var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:11px;min-width:700px;">'
+      +'<thead><tr style="background:#0d0d22;position:sticky;top:0;z-index:1;">'
+      +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;white-space:nowrap;">Tanggal</th>'
+      +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;white-space:nowrap;">Nama</th>'
+      +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;white-space:nowrap;">Divisi</th>'
+      +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Jam Masuk</th>'
+      +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Jam Keluar</th>'
+      +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:right;white-space:nowrap;">On Duty</th>'
+      +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:right;white-space:nowrap;">Off Duty</th>'
+      +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Scan</th>'
+      +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Status</th>'
+      +'</tr></thead><tbody>';
+    withData.forEach(function(res){
+      var dayRows=allSummary.filter(function(r){return r.date===res.date;});
+      var dayHadir=dayRows.filter(function(r){return r.status==='Hadir';}).length;
+      h+='<tr style="background:#071220;"><td colspan="9" style="padding:6px 10px;color:#6aff99;font-weight:700;border:1px solid #1a3a2a;letter-spacing:1px;font-size:11px;">'
+        +'&#128197; '+res.date+' &nbsp;&mdash;&nbsp; Hadir: <b>'+dayHadir+'</b> / '+dayRows.length+'</td></tr>';
+      dayRows.forEach(function(r,idx){
+        var sc=r.status==='Hadir'?'#00ff88':'#ff6644';
+        h+='<tr style="background:'+(idx%2===0?'#080818':'#0d0d1e')+';">'
+          +'<td style="padding:6px 8px;border:1px solid #12122a;color:#335577;font-size:10px;">'+r.date+'</td>'
+          +'<td style="padding:6px 8px;border:1px solid #12122a;color:#cce4ff;font-weight:600;">'+r.employeeName+'</td>'
+          +'<td style="padding:6px 8px;border:1px solid #12122a;color:#8899bb;">'+r.division+'</td>'
+          +'<td style="padding:6px 8px;border:1px solid #12122a;color:#88ddff;text-align:center;">'+r.firstIn+'</td>'
+          +'<td style="padding:6px 8px;border:1px solid #12122a;color:#ffcc88;text-align:center;">'+r.lastOut+'</td>'
+          +'<td style="padding:6px 8px;border:1px solid #12122a;color:#aaddff;text-align:right;">'+absensiFormatDuration(r.totalOnDuty)+'</td>'
+          +'<td style="padding:6px 8px;border:1px solid #12122a;color:#ffaacc;text-align:right;">'+absensiFormatDuration(r.totalOffDuty)+'</td>'
+          +'<td style="padding:6px 8px;border:1px solid #12122a;color:#99bbff;text-align:center;">'+r.scanCount+'</td>'
+          +'<td style="padding:6px 8px;border:1px solid #12122a;text-align:center;font-weight:700;color:'+sc+';">'+r.status+'</td>'
+          +'</tr>';
+      });
+    });
+    h+='</tbody></table></div>';
+    if(tableDiv)tableDiv.innerHTML=h;
+  }).catch(function(e){
+    if(btn){btn.disabled=false;btn.textContent='Tampilkan Semua';}
+    if(tableDiv)tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#ff6644;font-family:monospace;font-size:11px;">Error: '+e.message+'</div>';
+  });
+}
+
+// ===== ABSENSI: EXPORT ALL XLSX =====
+function absensiExportAllXLSX(){
+  var summary=window._absensiSummaryData;
+  var dateRange=window._absensiSummaryDate;
+  if(!summary||!summary.length){showToast('Tampilkan data semua tanggal dulu','error');return;}
+  if(typeof XLSX==='undefined'){showToast('Library Excel tidak tersedia','error');return;}
+  var wb=XLSX.utils.book_new();
+  // Kelompokkan per tanggal
+  var dateMap={};
+  summary.forEach(function(r){if(!dateMap[r.date])dateMap[r.date]=[];dateMap[r.date].push(r);});
+  var dates=Object.keys(dateMap).sort();
+  // Sheet 1: Rekap semua tanggal (flat)
+  var aoa=[
+    ['REKAPITULASI ABSENSI — SEMUA TANGGAL'],
+    ['Rentang: '+(dateRange||'').replace('_s_',' s/d ')],
+    ['Digenerate: '+new Date().toLocaleString('id-ID')],
+    [],
+    ['No','Tanggal','Nama Karyawan','Divisi','Jam Masuk','Jam Keluar','On Duty','Off Duty','Scan','Status']
+  ];
+  var no=1;
+  dates.forEach(function(date){
+    dateMap[date].forEach(function(r){
+      aoa.push([no++,date,r.employeeName||'',r.division||'',r.firstIn||'',r.lastOut||'',absensiFormatDuration(r.totalOnDuty),absensiFormatDuration(r.totalOffDuty),r.scanCount||0,r.status]);
+    });
+  });
+  var ws1=XLSX.utils.aoa_to_sheet(aoa);
+  ws1['!cols']=[{wch:4},{wch:12},{wch:26},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:6},{wch:12}];
+  ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:9}}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Rekap Semua Tanggal');
+  // Sheet per tanggal
+  dates.forEach(function(date){
+    var rows=dateMap[date];
+    var aoa2=[['No','Nama Karyawan','Divisi','Jam Masuk','Jam Keluar','On Duty','Off Duty','Scan','Status']];
+    rows.forEach(function(r,i){aoa2.push([i+1,r.employeeName||'',r.division||'',r.firstIn||'',r.lastOut||'',absensiFormatDuration(r.totalOnDuty),absensiFormatDuration(r.totalOffDuty),r.scanCount||0,r.status]);});
+    var ws=XLSX.utils.aoa_to_sheet(aoa2);
+    ws['!cols']=[{wch:4},{wch:26},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:6},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,ws,date.replace(/-/g,''));
+  });
+  var fname='Absensi_Semua_'+(dateRange||'all').replace('_s_','_sd_')+'.xlsx';
+  XLSX.writeFile(wb,fname);
+  showToast('File '+fname+' berhasil didownload','success');
 }
 
 
