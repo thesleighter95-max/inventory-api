@@ -5649,9 +5649,9 @@ function absensiLoadAllDates(){
     if(totalStat)totalStat.textContent=withData.length+' hari dengan data | '+totalKaryawan+' karyawan | Hadir: '+totalHadir+' record';
     var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:11px;min-width:680px;">'
       +'<thead><tr style="background:#0d0d22;position:sticky;top:0;z-index:1;">'
+      +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Tanggal</th>'
       +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;white-space:nowrap;">Nama</th>'
       +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;white-space:nowrap;">Divisi</th>'
-      +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Tanggal</th>'
       +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Jam Masuk</th>'
       +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Jam Keluar</th>'
       +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:right;white-space:nowrap;">On Duty</th>'
@@ -5661,19 +5661,13 @@ function absensiLoadAllDates(){
       +'</tr></thead><tbody>';
     names.forEach(function(name){
       var emp=nameMap[name];
-      // Urutkan baris per tanggal ascending
       var rows=emp.rows.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
-      var empHadir=rows.filter(function(r){return r.status==='Hadir';}).length;
-      // Header baris nama karyawan
-      h+='<tr style="background:#071a10;"><td colspan="9" style="padding:6px 10px;color:#66ffcc;font-weight:700;border:1px solid #1a3a2a;letter-spacing:0.5px;font-size:11px;">'
-        +'&#128100; '+name+' &nbsp;&mdash;&nbsp; Hadir: <b>'+empHadir+'</b> / '+rows.length+' hari</td></tr>';
-      // Baris tanggal untuk karyawan ini
       rows.forEach(function(r,idx){
         var sc=r.status==='Hadir'?'#00ff88':'#ff6644';
         h+='<tr style="background:'+(idx%2===0?'#080818':'#0d0d1e')+';">'
+          +'<td style="padding:6px 8px;border:1px solid #12122a;color:#6aaaff;text-align:center;font-size:10px;white-space:nowrap;">'+r.date+'</td>'
           +'<td style="padding:6px 8px;border:1px solid #12122a;color:#cce4ff;font-weight:600;">'+r.employeeName+'</td>'
           +'<td style="padding:6px 8px;border:1px solid #12122a;color:#8899bb;">'+r.division+'</td>'
-          +'<td style="padding:6px 8px;border:1px solid #12122a;color:#6aaaff;text-align:center;font-size:10px;">'+r.date+'</td>'
           +'<td style="padding:6px 8px;border:1px solid #12122a;color:#88ddff;text-align:center;">'+r.firstIn+'</td>'
           +'<td style="padding:6px 8px;border:1px solid #12122a;color:#ffcc88;text-align:center;">'+r.lastOut+'</td>'
           +'<td style="padding:6px 8px;border:1px solid #12122a;color:#aaddff;text-align:right;">'+absensiFormatDuration(r.totalOnDuty)+'</td>'
