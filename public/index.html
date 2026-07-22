@@ -5519,40 +5519,37 @@ function absensiSaveAllToSheet(){
   var summary=window._absensiSummaryData;
   var dateRange=window._absensiSummaryDate;
   if(!summary||!summary.length){showToast('Tampilkan data semua tanggal dulu','error');return;}
-  // Kelompokkan per tanggal
-  var dateMap={};
-  summary.forEach(function(r){if(!dateMap[r.date])dateMap[r.date]=[];dateMap[r.date].push(r);});
-  var dates=Object.keys(dateMap).sort();
   var btn=document.getElementById('absensiSaveAllSheetBtn');
-  if(btn){btn.disabled=true;btn.textContent='Menyimpan '+dates.length+' hari...';}
-  var done=0,errors=0;
-  function saveNext(i){
-    if(i>=dates.length){
-      if(btn){btn.disabled=false;btn.innerHTML='&#8593; Simpan ke Sheet';}
-      if(errors===0){showToast('Semua '+dates.length+' tanggal berhasil disimpan ke sheet','success');}
-      else{showToast(done+' hari berhasil, '+errors+' hari gagal','error');}
-      return;
-    }
-    var date=dates[i];
-    var records=dateMap[date].map(function(r){return{
-      employeeId:r.employeeId||'',
-      employeeName:r.employeeName||'(Tidak Terdaftar)',
-      division:r.division||'',
-      firstIn:r.firstIn||'-',
-      lastOut:r.lastOut||'-',
-      totalOnDuty:r.totalOnDuty||0,
-      totalOffDuty:r.totalOffDuty||0,
-      scanCount:r.scanCount||0,
-      status:r.status
-    };});
-    if(btn)btn.textContent='Menyimpan '+(i+1)+'/'+dates.length+': '+date+'...';
-    fetch(ABSENSI_GAS_URL,{method:'POST',body:JSON.stringify({action:'saveRekap',date:date,records:records})})
-    .then(function(r){return r.json();})
-    .then(function(j){if(j.success)done++;else errors++;})
-    .catch(function(){errors++;})
-    .finally(function(){saveNext(i+1);});
-  }
-  saveNext(0);
+  if(btn){btn.disabled=true;btn.textContent='Menyimpan...';}
+  // Urutkan per nama lalu per tanggal (sama dengan tampilan tabel)
+  var nameMap={};
+  summary.forEach(function(r){var k=r.employeeName||'(Tidak Terdaftar)';if(!nameMap[k])nameMap[k]=[];nameMap[k].push(r);});
+  var names=Object.keys(nameMap).sort();
+  var records=[];
+  names.forEach(function(name){
+    nameMap[name].slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;}).forEach(function(r){
+      records.push({
+        employeeId:r.employeeId||'',
+        employeeName:r.employeeName||'(Tidak Terdaftar)',
+        division:r.division||'',
+        date:r.date,
+        firstIn:r.firstIn||'-',
+        lastOut:r.lastOut||'-',
+        totalOnDuty:r.totalOnDuty||0,
+        totalOffDuty:r.totalOffDuty||0,
+        scanCount:r.scanCount||0,
+        status:r.status
+      });
+    });
+  });
+  fetch(ABSENSI_GAS_URL,{method:'POST',body:JSON.stringify({action:'saveRekapAll',dateRange:dateRange,records:records})})
+  .then(function(r){return r.json();})
+  .then(function(j){
+    if(j.success){showToast('Rekap berhasil disimpan ke sheet: '+j.sheetName,'success');}
+    else{showToast('Gagal menyimpan: '+(j.message||'Error tidak diketahui'),'error');}
+  })
+  .catch(function(e){showToast('Gagal terhubung ke spreadsheet: '+e.message,'error');})
+  .finally(function(){if(btn){btn.disabled=false;btn.innerHTML='&#8593; Simpan ke Sheet';}});
 }
 
 function absensiSaveRekapToSheet(){
