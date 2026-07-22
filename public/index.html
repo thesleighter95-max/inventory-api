@@ -5637,13 +5637,22 @@ function absensiLoadAllDates(){
     window._absensiSummaryData=allSummary;
     window._absensiSummaryDate=dari+'_s_'+sampai;
     var totalHadir=allSummary.filter(function(r){return r.status==='Hadir';}).length;
-    if(totalStat)totalStat.textContent=withData.length+' hari dengan data | Hadir: '+totalHadir+' | Total record: '+allSummary.length;
-    // Render tabel dikelompokkan per tanggal
-    var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:11px;min-width:700px;">'
+    if(totalStat)totalStat.textContent=withData.length+' hari dengan data | Total karyawan unik: '+Object.keys(allSummary.reduce(function(m,r){m[r.employeeName]=1;return m;},{} ).length+' | Hadir: '+totalHadir+' record';
+    // Kelompokkan per nama, urutkan tanggal di dalam
+    var nameMap={};
+    allSummary.forEach(function(r){
+      var k=r.employeeName;
+      if(!nameMap[k])nameMap[k]={division:r.division,rows:[]};
+      nameMap[k].rows.push(r);
+    });
+    var names=Object.keys(nameMap).sort();
+    var totalKaryawan=names.length;
+    if(totalStat)totalStat.textContent=withData.length+' hari dengan data | '+totalKaryawan+' karyawan | Hadir: '+totalHadir+' record';
+    var h='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:11px;min-width:680px;">'
       +'<thead><tr style="background:#0d0d22;position:sticky;top:0;z-index:1;">'
-      +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;white-space:nowrap;">Tanggal</th>'
       +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;white-space:nowrap;">Nama</th>'
       +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;white-space:nowrap;">Divisi</th>'
+      +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Tanggal</th>'
       +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Jam Masuk</th>'
       +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Jam Keluar</th>'
       +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:right;white-space:nowrap;">On Duty</th>'
@@ -5651,17 +5660,21 @@ function absensiLoadAllDates(){
       +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Scan</th>'
       +'<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Status</th>'
       +'</tr></thead><tbody>';
-    withData.forEach(function(res){
-      var dayRows=allSummary.filter(function(r){return r.date===res.date;});
-      var dayHadir=dayRows.filter(function(r){return r.status==='Hadir';}).length;
-      h+='<tr style="background:#071220;"><td colspan="9" style="padding:6px 10px;color:#6aff99;font-weight:700;border:1px solid #1a3a2a;letter-spacing:1px;font-size:11px;">'
-        +'&#128197; '+res.date+' &nbsp;&mdash;&nbsp; Hadir: <b>'+dayHadir+'</b> / '+dayRows.length+'</td></tr>';
-      dayRows.forEach(function(r,idx){
+    names.forEach(function(name){
+      var emp=nameMap[name];
+      // Urutkan baris per tanggal ascending
+      var rows=emp.rows.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
+      var empHadir=rows.filter(function(r){return r.status==='Hadir';}).length;
+      // Header baris nama karyawan
+      h+='<tr style="background:#071a10;"><td colspan="9" style="padding:6px 10px;color:#66ffcc;font-weight:700;border:1px solid #1a3a2a;letter-spacing:0.5px;font-size:11px;">'
+        +'&#128100; '+name+' &nbsp;&mdash;&nbsp; Hadir: <b>'+empHadir+'</b> / '+rows.length+' hari</td></tr>';
+      // Baris tanggal untuk karyawan ini
+      rows.forEach(function(r,idx){
         var sc=r.status==='Hadir'?'#00ff88':'#ff6644';
         h+='<tr style="background:'+(idx%2===0?'#080818':'#0d0d1e')+';">'
-          +'<td style="padding:6px 8px;border:1px solid #12122a;color:#335577;font-size:10px;">'+r.date+'</td>'
           +'<td style="padding:6px 8px;border:1px solid #12122a;color:#cce4ff;font-weight:600;">'+r.employeeName+'</td>'
           +'<td style="padding:6px 8px;border:1px solid #12122a;color:#8899bb;">'+r.division+'</td>'
+          +'<td style="padding:6px 8px;border:1px solid #12122a;color:#6aaaff;text-align:center;font-size:10px;">'+r.date+'</td>'
           +'<td style="padding:6px 8px;border:1px solid #12122a;color:#88ddff;text-align:center;">'+r.firstIn+'</td>'
           +'<td style="padding:6px 8px;border:1px solid #12122a;color:#ffcc88;text-align:center;">'+r.lastOut+'</td>'
           +'<td style="padding:6px 8px;border:1px solid #12122a;color:#aaddff;text-align:right;">'+absensiFormatDuration(r.totalOnDuty)+'</td>'
@@ -5686,36 +5699,39 @@ function absensiExportAllXLSX(){
   if(!summary||!summary.length){showToast('Tampilkan data semua tanggal dulu','error');return;}
   if(typeof XLSX==='undefined'){showToast('Library Excel tidak tersedia','error');return;}
   var wb=XLSX.utils.book_new();
-  // Kelompokkan per tanggal
-  var dateMap={};
-  summary.forEach(function(r){if(!dateMap[r.date])dateMap[r.date]=[];dateMap[r.date].push(r);});
-  var dates=Object.keys(dateMap).sort();
-  // Sheet 1: Rekap semua tanggal (flat)
+  // Kelompokkan per nama, urutkan tanggal di dalam
+  var nameMap={};
+  summary.forEach(function(r){var k=r.employeeName||'(Tidak Terdaftar)';if(!nameMap[k])nameMap[k]=[];nameMap[k].push(r);});
+  var names=Object.keys(nameMap).sort();
+  // Sheet 1: Rekap per nama (urut tanggal dalam tiap nama)
   var aoa=[
-    ['REKAPITULASI ABSENSI — SEMUA TANGGAL'],
+    ['REKAPITULASI ABSENSI — PER KARYAWAN'],
     ['Rentang: '+(dateRange||'').replace('_s_',' s/d ')],
     ['Digenerate: '+new Date().toLocaleString('id-ID')],
     [],
-    ['No','Tanggal','Nama Karyawan','Divisi','Jam Masuk','Jam Keluar','On Duty','Off Duty','Scan','Status']
+    ['No','Nama Karyawan','Divisi','Tanggal','Jam Masuk','Jam Keluar','On Duty','Off Duty','Scan','Status']
   ];
   var no=1;
-  dates.forEach(function(date){
-    dateMap[date].forEach(function(r){
-      aoa.push([no++,date,r.employeeName||'',r.division||'',r.firstIn||'',r.lastOut||'',absensiFormatDuration(r.totalOnDuty),absensiFormatDuration(r.totalOffDuty),r.scanCount||0,r.status]);
+  names.forEach(function(name){
+    var rows=nameMap[name].slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
+    rows.forEach(function(r){
+      aoa.push([no++,r.employeeName||'',r.division||'',r.date,r.firstIn||'',r.lastOut||'',absensiFormatDuration(r.totalOnDuty),absensiFormatDuration(r.totalOffDuty),r.scanCount||0,r.status]);
     });
   });
   var ws1=XLSX.utils.aoa_to_sheet(aoa);
-  ws1['!cols']=[{wch:4},{wch:12},{wch:26},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:6},{wch:12}];
+  ws1['!cols']=[{wch:4},{wch:26},{wch:12},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:6},{wch:12}];
   ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:9}}];
-  XLSX.utils.book_append_sheet(wb,ws1,'Rekap Semua Tanggal');
-  // Sheet per tanggal
-  dates.forEach(function(date){
-    var rows=dateMap[date];
-    var aoa2=[['No','Nama Karyawan','Divisi','Jam Masuk','Jam Keluar','On Duty','Off Duty','Scan','Status']];
-    rows.forEach(function(r,i){aoa2.push([i+1,r.employeeName||'',r.division||'',r.firstIn||'',r.lastOut||'',absensiFormatDuration(r.totalOnDuty),absensiFormatDuration(r.totalOffDuty),r.scanCount||0,r.status]);});
+  XLSX.utils.book_append_sheet(wb,ws1,'Rekap Per Karyawan');
+  // Sheet per karyawan (max 50 karyawan — batas sheet Excel)
+  names.slice(0,50).forEach(function(name){
+    var rows=nameMap[name].slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
+    var aoa2=[['No','Tanggal','Divisi','Jam Masuk','Jam Keluar','On Duty','Off Duty','Scan','Status']];
+    rows.forEach(function(r,i){aoa2.push([i+1,r.date,r.division||'',r.firstIn||'',r.lastOut||'',absensiFormatDuration(r.totalOnDuty),absensiFormatDuration(r.totalOffDuty),r.scanCount||0,r.status]);});
     var ws=XLSX.utils.aoa_to_sheet(aoa2);
-    ws['!cols']=[{wch:4},{wch:26},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:6},{wch:12}];
-    XLSX.utils.book_append_sheet(wb,ws,date.replace(/-/g,''));
+    ws['!cols']=[{wch:4},{wch:12},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:6},{wch:12}];
+    // Nama sheet max 31 karakter (batas Excel)
+    var sheetName=name.slice(0,31).replace(/[:/?*[]]/g,'');
+    XLSX.utils.book_append_sheet(wb,ws,sheetName);
   });
   var fname='Absensi_Semua_'+(dateRange||'all').replace('_s_','_sd_')+'.xlsx';
   XLSX.writeFile(wb,fname);
