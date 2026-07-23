@@ -5676,7 +5676,7 @@ function absensiSaveRekapToSheet(){
   })
   .then(function(r){return r.json();})
   .then(function(j){
-    if(j.success){showToast('Rekap '+date+' berhasil disimpan ke sheet +j.sheetName+','success');}
+    if(j.success){showToast('Rekap '+date+' berhasil disimpan ke sheet '+j.sheetName,'success');}
     else{showToast('Gagal menyimpan: '+(j.message||'Error tidak diketahui'),'error');}
   })
   .catch(function(e){showToast('Gagal terhubung ke spreadsheet: '+e.message,'error');})
