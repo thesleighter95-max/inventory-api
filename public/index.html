@@ -1676,6 +1676,10 @@ table td { font-size: 11px; }
           <button id="absensiSummaryLoadBtn" onclick="absensiLoadSummary()" style="background:#1a3a7a;border:1px solid #2a5a9a;color:#88ddff;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">Tampilkan</button>
           <button onclick="absensiExportXLSX()" style="background:#1a4a1a;border:1px solid #2a7a2a;color:#00ff88;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">&#8659; Download Excel</button>
           <button onclick="absensiSaveRekapToSheet()" id="absensiSaveSheetBtn" style="background:#1a2a4a;border:1px solid #2a4a7a;color:#66ccff;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">&#8593; Simpan ke Sheet</button>
+          <span style="display:inline-flex;border-radius:6px;overflow:hidden;border:1px solid #2a3a6a;margin-left:4px;">
+            <button id="absensiViewTabel" onclick="absensiSetView('tabel')" style="background:#1a3a7a;border:none;color:#88ddff;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:monospace;">&#9776; Tabel</button>
+            <button id="absensiViewReport" onclick="absensiSetView('report')" style="background:#0d0d22;border:none;color:#445577;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:monospace;">&#128196; Report</button>
+          </span>
         </div>
         <!-- KONTROL: Semua Tanggal (hidden by default) -->
         <div id="absensiAllDateCtrl" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
@@ -5394,6 +5398,99 @@ function absensiLoadSummary(){
   });
 }
 
+function absensiSetView(mode){
+  window._absensiViewMode=mode;
+  var btnT=document.getElementById('absensiViewTabel');
+  var btnR=document.getElementById('absensiViewReport');
+  if(btnT){btnT.style.background=mode==='tabel'?'#1a3a7a':'#0d0d22';btnT.style.color=mode==='tabel'?'#88ddff':'#445577';}
+  if(btnR){btnR.style.background=mode==='report'?'#1a1a3a':'#0d0d22';btnR.style.color=mode==='report'?'#cc88ff':'#445577';}
+  var tableDiv=$('absensiSummaryTable');
+  if(tableDiv)tableDiv.style.maxHeight=mode==='report'?'none':'320px';
+  var s=window._absensiSummaryData,d=window._absensiSummaryDate;
+  if(s&&d){if(mode==='report')renderAbsensiReport(s,d);else renderAbsensiSummaryTable(s,d);}
+}
+
+function renderAbsensiReport(summary, date){
+  var tableDiv=$('absensiSummaryTable');
+  if(!tableDiv)return;
+  var hadir=summary.filter(function(r){return r.status==='Hadir';}).length;
+  var tidakHadir=summary.length-hadir;
+  // Kelompokkan per divisi
+  var divMap={},divOrder=[];
+  summary.forEach(function(r){
+    var d=r.division||'—';
+    if(!divMap[d]){divMap[d]=[];divOrder.push(d);}
+    divMap[d].push(r);
+  });
+  divOrder.sort();
+  // Format tanggal tampilan
+  var tgl=date?new Date(date+'T00:00:00'):new Date();
+  var dayNames=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  var monNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  var tglStr=dayNames[tgl.getDay()]+', '+tgl.getDate()+' '+monNames[tgl.getMonth()]+' '+tgl.getFullYear();
+
+  var h='<div style="background:#06060f;padding:14px;font-family:monospace;">'
+    // ── Header report ──
+    +'<div style="border:1px solid #2a4a8a;border-radius:8px;background:#080a18;padding:12px 14px;margin-bottom:12px;">'
+    +'<div style="font-size:13px;font-weight:700;color:#88aaff;letter-spacing:1px;margin-bottom:2px;">LAPORAN HARIAN ABSENSI</div>'
+    +'<div style="font-size:10px;color:#4a6a99;">PDA Mini Mataram &mdash; '+tglStr+'</div>'
+    +'</div>'
+    // ── Kartu ringkasan ──
+    +'<div style="display:flex;gap:8px;margin-bottom:12px;">'
+    +'<div style="flex:1;background:#071a0e;border:1px solid #1a4a2a;border-radius:8px;padding:10px;text-align:center;">'
+    +'<div style="font-size:22px;font-weight:700;color:#00ff88;">'+hadir+'</div>'
+    +'<div style="font-size:9px;color:#3a8a5a;letter-spacing:1px;margin-top:2px;">HADIR</div>'
+    +'</div>'
+    +'<div style="flex:1;background:#1a0707;border:1px solid #4a1a1a;border-radius:8px;padding:10px;text-align:center;">'
+    +'<div style="font-size:22px;font-weight:700;color:#ff5533;">'+tidakHadir+'</div>'
+    +'<div style="font-size:9px;color:#8a3a3a;letter-spacing:1px;margin-top:2px;">TIDAK HADIR</div>'
+    +'</div>'
+    +'<div style="flex:1;background:#0d0d1a;border:1px solid #2a2a5a;border-radius:8px;padding:10px;text-align:center;">'
+    +'<div style="font-size:22px;font-weight:700;color:#aabbff;">'+summary.length+'</div>'
+    +'<div style="font-size:9px;color:#4a4a8a;letter-spacing:1px;margin-top:2px;">TOTAL</div>'
+    +'</div>'
+    +'<div style="flex:1;background:#0a0a1a;border:1px solid #2a2a5a;border-radius:8px;padding:10px;text-align:center;">'
+    +'<div style="font-size:22px;font-weight:700;color:#ffcc44;">'+(summary.length?Math.round(hadir/summary.length*100):0)+'%</div>'
+    +'<div style="font-size:9px;color:#7a6a2a;letter-spacing:1px;margin-top:2px;">KEHADIRAN</div>'
+    +'</div>'
+    +'</div>';
+
+  // ── Tabel per divisi ──
+  divOrder.forEach(function(div){
+    var rows=divMap[div];
+    var divHadir=rows.filter(function(r){return r.status==='Hadir';}).length;
+    h+='<div style="margin-bottom:14px;">'
+      +'<div style="background:#0d1a2a;border:1px solid #1a3a5a;border-bottom:none;border-radius:8px 8px 0 0;padding:6px 12px;display:flex;justify-content:space-between;align-items:center;">'
+      +'<span style="font-size:10px;font-weight:700;color:#66aaee;letter-spacing:1px;">&#9646; '+div+'</span>'
+      +'<span style="font-size:9px;color:#3a5a7a;">'+divHadir+' / '+rows.length+' hadir</span>'
+      +'</div>'
+      +'<div style="overflow-x:auto;border:1px solid #1a3a5a;border-radius:0 0 8px 8px;">'
+      +'<table style="width:100%;border-collapse:collapse;font-size:10px;min-width:420px;">'
+      +'<thead><tr style="background:#080e1a;">'
+      +'<th style="padding:5px 8px;color:#4a6a99;border-bottom:1px solid #1a2a4a;text-align:left;">Nama</th>'
+      +'<th style="padding:5px 8px;color:#4a6a99;border-bottom:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Masuk</th>'
+      +'<th style="padding:5px 8px;color:#4a6a99;border-bottom:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Keluar</th>'
+      +'<th style="padding:5px 8px;color:#4a6a99;border-bottom:1px solid #1a2a4a;text-align:right;white-space:nowrap;">On Duty</th>'
+      +'<th style="padding:5px 8px;color:#4a6a99;border-bottom:1px solid #1a2a4a;text-align:center;white-space:nowrap;">Status</th>'
+      +'</tr></thead><tbody>';
+    rows.forEach(function(r,i){
+      var sc=r.status==='Hadir'?'#00ff88':'#ff5533';
+      var bg=i%2===0?'#06060f':'#08080f';
+      h+='<tr style="background:'+bg+';">'
+        +'<td style="padding:5px 8px;color:#cce4ff;font-weight:600;border-bottom:1px solid #0f0f20;">'+r.employeeName+'</td>'
+        +'<td style="padding:5px 8px;color:#00cc88;text-align:center;border-bottom:1px solid #0f0f20;white-space:nowrap;">'+r.firstIn+'</td>'
+        +'<td style="padding:5px 8px;color:#ff8844;text-align:center;border-bottom:1px solid #0f0f20;white-space:nowrap;">'+r.lastOut+'</td>'
+        +'<td style="padding:5px 8px;color:#ffcc44;text-align:right;border-bottom:1px solid #0f0f20;white-space:nowrap;">'+absensiFormatDuration(r.totalOnDuty)+'</td>'
+        +'<td style="padding:5px 8px;text-align:center;border-bottom:1px solid #0f0f20;"><b style="color:'+sc+';">'+r.status+'</b></td>'
+        +'</tr>';
+    });
+    h+='</tbody></table></div></div>';
+  });
+
+  h+='<div style="text-align:right;font-size:9px;color:#2a3a5a;padding-top:4px;">Digenerate: '+new Date().toLocaleString('id-ID')+'</div></div>';
+  tableDiv.innerHTML=h;
+}
+
 function renderAbsensiSummaryTable(summary, date){
   var tableDiv=$('absensiSummaryTable');
   if(!tableDiv)return;
@@ -5436,10 +5533,12 @@ function renderAbsensiSummaryTable(summary, date){
       +'</tr>';
   });
   h+='</tbody></table></div>';
-  tableDiv.innerHTML=h;
   // store for export
   window._absensiSummaryData=summary;
   window._absensiSummaryDate=date;
+  // Jika mode report aktif, render report bukan tabel
+  if(window._absensiViewMode==='report'){renderAbsensiReport(summary,date);return;}
+  tableDiv.innerHTML=h;
 }
 
 function absensiExportXLSX(){
