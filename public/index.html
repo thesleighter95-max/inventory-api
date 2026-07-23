@@ -1685,7 +1685,7 @@ table td { font-size: 11px; }
           <input id="absensiAllSampai" type="date" style="background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:6px 10px;font-size:11px;color:#88aacc;font-family:monospace;outline:none;">
           <button id="absensiAllLoadBtn" onclick="absensiLoadAllDates()" style="background:#1a3a7a;border:1px solid #2a5a9a;color:#88ddff;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">Tampilkan Semua</button>
           <button onclick="absensiExportAllXLSX()" style="background:#1a4a1a;border:1px solid #2a7a2a;color:#00ff88;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">&#8659; Download Excel</button>
-          <button onclick="absensiSaveAllToSheet()" id="absensiSaveAllSheetBtn" style="background:#1a2a4a;border:1px solid #2a4a7a;color:#66ccff;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">&#8593; Simpan ke Sheet</button>
+          <button onclick="absensiSaveAllToSheet()" id="absensiSaveAllSheetBtn" style="background:#1a2a4a;border:1px solid #2a4a7a;color:#66ccff;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;display:none;">&#8593; Simpan ke Sheet</button>
         </div>
         <div id="absensiSummaryTotal" style="font-size:11px;color:#6a9aff;font-family:monospace;margin-bottom:8px;min-height:16px;"></div>
         <div id="absensiSummaryTable" style="max-height:320px;overflow-y:auto;background:#0d0d22;border-radius:8px;border:1px solid #1a2a4a;">
@@ -5515,10 +5515,10 @@ function absensiExportXLSX(){
   showToast('File '+fname+' berhasil didownload','success');
 }
 
-function absensiSaveAllToSheet(){
+function absensiSaveAllToSheet(silent){
   var summary=window._absensiSummaryData;
   var dateRange=window._absensiSummaryDate;
-  if(!summary||!summary.length){showToast('Tampilkan data semua tanggal dulu','error');return;}
+  if(!summary||!summary.length){if(!silent)showToast('Tampilkan data semua tanggal dulu','error');return;}
   var btn=document.getElementById('absensiSaveAllSheetBtn');
   if(btn){btn.disabled=true;btn.textContent='Menyimpan...';}
   // Urutkan per nama lalu per tanggal (sama dengan tampilan tabel)
@@ -5545,7 +5545,7 @@ function absensiSaveAllToSheet(){
   fetch(ABSENSI_GAS_URL,{method:'POST',body:JSON.stringify({action:'saveRekapAll',dateRange:dateRange,records:records})})
   .then(function(r){return r.json();})
   .then(function(j){
-    if(j.success){showToast('Rekap berhasil disimpan ke sheet: '+j.sheetName,'success');}
+    if(j.success){showToast((silent?'Auto-simpan: ':'Rekap berhasil disimpan ke sheet: ')+j.sheetName,'success');}
     else{showToast('Gagal menyimpan: '+(j.message||'Error tidak diketahui'),'error');}
   })
   .catch(function(e){showToast('Gagal terhubung ke spreadsheet: '+e.message,'error');})
@@ -5717,6 +5717,8 @@ function absensiLoadAllDates(){
     });
     h+='</tbody></table></div>';
     if(tableDiv)tableDiv.innerHTML=h;
+    // Auto-simpan ke sheet setelah data tampil
+    setTimeout(function(){ absensiSaveAllToSheet(true); }, 300);
   }).catch(function(e){
     if(btn){btn.disabled=false;btn.textContent='Tampilkan Semua';}
     if(tableDiv)tableDiv.innerHTML='<div style="text-align:center;padding:18px;color:#ff6644;font-family:monospace;font-size:11px;">Error: '+e.message+'</div>';
