@@ -6295,7 +6295,17 @@ function fbRenderList() {
           + (it.posisi   ? '<span style="font-size:10px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#c7d2fe;border-radius:10px;padding:1px 6px;">'+fbEsc(it.posisi)+'</span>' : '')
         + '</div>'
         + (_fbDownloaded[String(it.id)] ? '<span style="display:inline-block;margin-top:3px;font-size:9px;font-weight:700;color:#4ade80;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:1px 6px;">&#10003; Sudah Diunduh</span>' : '<span style="display:inline-block;margin-top:3px;font-size:9px;font-weight:600;color:#64748b;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:1px 6px;">&#128247; Belum Diunduh</span>')
-        + '<p style="margin:2px 0 0;font-size:10px;color:#475569;">'+fbEsc(it.username||'')+(it.username?' · ':'')+fbFmtDt(it.capturedAt)+'</p>'
+        + (function(){
+            if(!it.capturedAt) return '<p style="margin:3px 0 0;font-size:10px;color:#475569;">'+fbEsc(it.username||'-')+'</p>';
+            var _d=new Date(it.capturedAt);
+            var _tgl=_d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+            var _jam=_d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+            return '<div style="margin-top:5px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;">'
+              +'<span style="font-size:10px;font-weight:700;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.35);color:#fbbf24;border-radius:6px;padding:1px 7px;white-space:nowrap;">&#128197; '+_tgl+'</span>'
+              +'<span style="font-size:10px;font-weight:600;background:rgba(148,163,184,0.1);border:1px solid rgba(148,163,184,0.2);color:#94a3b8;border-radius:6px;padding:1px 7px;white-space:nowrap;">&#128336; '+_jam+'</span>'
+              +(it.username?'<span style="font-size:9px;color:#475569;">'+fbEsc(it.username)+'</span>':'')
+              +'</div>';
+          }())
       + '</div>'
       + '<div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">'
         + '<button data-fid="'+it.id+'" onclick="fbEditItem(this.dataset.fid)" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:5px 8px;color:#a5b4fc;font-size:12px;cursor:pointer;" title="Edit">&#9999;</button>'
