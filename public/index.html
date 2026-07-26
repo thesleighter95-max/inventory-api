@@ -1582,6 +1582,32 @@ table td { font-size: 11px; }
 @media(min-width:768px){
   /* Pusatkan dan batasi lebar panel di PC */
   #absensiPanel>div{max-width:720px;margin:0 auto;}
+  /* -- Dekorasi sisi kiri & kanan di PC --------------------------------- */
+  #absensiPanel{
+    position:relative;
+    background:
+      linear-gradient(90deg,transparent calc(50% - 361px),rgba(80,140,255,0.22) calc(50% - 361px),rgba(80,140,255,0.22) calc(50% - 359px),transparent calc(50% - 359px)),
+      linear-gradient(90deg,transparent calc(50% + 359px),rgba(0,210,100,0.22) calc(50% + 359px),rgba(0,210,100,0.22) calc(50% + 361px),transparent calc(50% + 361px)),
+      radial-gradient(circle,rgba(60,110,255,0.07) 1px,transparent 0) 0 0/30px 30px,
+      linear-gradient(90deg,rgba(30,60,200,0.06) 0%,transparent 24%,transparent 76%,rgba(0,160,70,0.06) 100%),
+      #07070f!important;
+  }
+  /* Teks vertikal kiri */
+  #absensiPanel::before{
+    content:'ATTENDANCE  SYSTEM';
+    position:absolute;left:18px;top:50%;
+    transform:translateY(-50%) rotate(-90deg);transform-origin:center center;
+    font-family:monospace;font-size:11px;font-weight:800;letter-spacing:5px;
+    color:rgba(80,140,255,0.18);white-space:nowrap;pointer-events:none;z-index:0;
+  }
+  /* Teks vertikal kanan */
+  #absensiPanel::after{
+    content:'SCAN  IN  OUT';
+    position:absolute;right:18px;top:50%;
+    transform:translateY(-50%) rotate(90deg);transform-origin:center center;
+    font-family:monospace;font-size:11px;font-weight:800;letter-spacing:5px;
+    color:rgba(0,210,100,0.18);white-space:nowrap;pointer-events:none;z-index:0;
+  }
   /* Header clock section — lebih kompak di PC */
   #absensiPanel>div>div:first-child{padding:8px 14px 6px!important;}
   /* Tanggal */
