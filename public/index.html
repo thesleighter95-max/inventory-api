@@ -7560,81 +7560,7 @@ async function galleryDeleteSavedFolder(){
   try{var db=await galleryOpenDB();var tx=db.transaction('folderHandles','readwrite');tx.objectStore('folderHandles').delete('gallery-folder');return true;}catch(e){return false;}
 }
 
-async 
-    // ════════════════════════════════════════════════════════
-    /* ABSENSI FOTO — capture & upload selfie setelah scan */
-    // ════════════════════════════════════════════════════════
-    var _absensiFotoEmpId='',_absensiFotoBase64='',_absensiFotoShift='';
-
-    function absensiGetCurrentShift(){
-    var h=new Date().getHours();
-    return(h>=14&&h<23)?'Siang':'Pagi';
-    }
-    function absensiShowFotoArea(empId){
-    _absensiFotoEmpId=empId;
-    _absensiFotoShift=absensiGetCurrentShift();
-    _absensiFotoBase64='';
-    var area=$('absensiFotoArea'),preview=$('absensiFotoPreview'),kirim=$('absensiFotoKirimBtn'),status=$('absensiFotoStatus');
-    if(area)area.style.display='block';
-    if(preview)preview.style.display='none';
-    if(kirim)kirim.style.display='none';
-    if(status)status.textContent='Shift: '+_absensiFotoShift+' — ambil foto lalu kirim';
-    }
-    function absensiHideFotoArea(){
-    var area=$('absensiFotoArea');
-    if(area)area.style.display='none';
-    _absensiFotoEmpId='';_absensiFotoBase64='';
-    }
-    function absensiAmbilFoto(){
-    var inp=$('absensiFotoInput');
-    if(inp)inp.click();
-    }
-    function absensiFotoSelected(input){
-    var file=input&&input.files&&input.files[0];
-    if(!file)return;
-    var reader=new FileReader();
-    reader.onload=function(e){
-      _absensiFotoBase64=e.target.result;
-      var img=$('absensiFotoImg'),preview=$('absensiFotoPreview'),kirim=$('absensiFotoKirimBtn'),status=$('absensiFotoStatus');
-      if(img)img.src=_absensiFotoBase64;
-      if(preview)preview.style.display='block';
-      if(kirim)kirim.style.display='inline-block';
-      if(status)status.textContent='Foto siap — Shift: '+_absensiFotoShift;
-    };
-    reader.readAsDataURL(file);
-    input.value='';
-    }
-    function absensiKirimFoto(){
-    if(!_absensiFotoBase64||!_absensiFotoEmpId){showToast('Belum ada foto','error');return;}
-    var btn=$('absensiFotoKirimBtn'),status=$('absensiFotoStatus');
-    if(btn){btn.disabled=true;btn.textContent='Mengirim...';}
-    if(status)status.textContent='Mengirim foto...';
-    var today=(typeof todayStr==='function'?todayStr():new Date().toISOString().slice(0,10));
-    fetch(ABSENSI_GAS_URL,{
-      method:'POST',
-      body:JSON.stringify({action:'saveFoto',employeeId:_absensiFotoEmpId,
-        employeeName:(_absensiEmpMap[_absensiFotoEmpId.trim()]||''),
-        shift:_absensiFotoShift,date:today,fotoBase64:_absensiFotoBase64})
-    })
-    .then(function(r){return r.json();})
-    .then(function(j){
-      if(j.success||j.fotoUrl){
-        showToast('Foto absensi berhasil dikirim','success');
-        if(status)status.textContent='✅ Terkirim — Shift: '+_absensiFotoShift;
-        if(btn)btn.style.display='none';
-      }else{
-        showToast('Gagal: '+(j.message||'error'),'error');
-        if(btn){btn.disabled=false;btn.textContent='↑ Kirim Foto';}
-        if(status)status.textContent='❌ Gagal';
-      }
-    })
-    .catch(function(e){
-      showToast('Gagal terhubung: '+e.message,'error');
-      if(btn){btn.disabled=false;btn.textContent='↑ Kirim Foto';}
-      if(status)status.textContent='❌ Gagal';
-    });
-    }
-    function galleryInitCheck(){
+async function galleryInitCheck(){
   var info=await galleryGetSavedFolder();
   var box=document.getElementById('galleryPermBox');
   if(!box)return;
@@ -7748,7 +7674,52 @@ async function galleryResetPerm(){
 /* =====================================================
    PETUGAS PIKET — Panel Kiri & Kanan (PC)
    ===================================================== */
-var PIKET_SHEET_URL=(function(){try{return localStorage.getItem("piket_sheet_url")||"";}catch(e){return "";}})();
+// ════════════════════════════════════════════════════════
+    /* ABSENSI FOTO — capture & upload selfie setelah scan */
+    // ════════════════════════════════════════════════════════
+    var _absensiFotoEmpId='',_absensiFotoBase64='',_absensiFotoShift='';
+    function absensiGetCurrentShift(){var h=new Date().getHours();return(h>=14&&h<23)?'Siang':'Pagi';}
+    function absensiShowFotoArea(empId){
+    _absensiFotoEmpId=empId;_absensiFotoShift=absensiGetCurrentShift();_absensiFotoBase64='';
+    var area=$('absensiFotoArea'),preview=$('absensiFotoPreview'),kirim=$('absensiFotoKirimBtn'),status=$('absensiFotoStatus');
+    if(area)area.style.display='block';if(preview)preview.style.display='none';if(kirim)kirim.style.display='none';
+    if(status)status.textContent='Shift: '+_absensiFotoShift+' — ambil foto lalu kirim';
+    }
+    function absensiHideFotoArea(){
+    var area=$('absensiFotoArea');if(area)area.style.display='none';
+    _absensiFotoEmpId='';_absensiFotoBase64='';
+    }
+    function absensiAmbilFoto(){var inp=$('absensiFotoInput');if(inp)inp.click();}
+    function absensiFotoSelected(input){
+    var file=input&&input.files&&input.files[0];if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      _absensiFotoBase64=e.target.result;
+      var img=$('absensiFotoImg'),preview=$('absensiFotoPreview'),kirim=$('absensiFotoKirimBtn'),status=$('absensiFotoStatus');
+      if(img)img.src=_absensiFotoBase64;if(preview)preview.style.display='block';if(kirim)kirim.style.display='inline-block';
+      if(status)status.textContent='Foto siap — Shift: '+_absensiFotoShift;
+    };
+    reader.readAsDataURL(file);input.value='';
+    }
+    function absensiKirimFoto(){
+    if(!_absensiFotoBase64||!_absensiFotoEmpId){showToast('Belum ada foto','error');return;}
+    var btn=$('absensiFotoKirimBtn'),status=$('absensiFotoStatus');
+    if(btn){btn.disabled=true;btn.textContent='Mengirim...';}if(status)status.textContent='Mengirim foto...';
+    var today=new Date().toISOString().slice(0,10);
+    fetch(ABSENSI_GAS_URL,{method:'POST',body:JSON.stringify({action:'saveFoto',employeeId:_absensiFotoEmpId,
+      employeeName:(_absensiEmpMap&&_absensiEmpMap[_absensiFotoEmpId.trim()]||''),
+      shift:_absensiFotoShift,date:today,fotoBase64:_absensiFotoBase64})})
+    .then(function(r){return r.json();})
+    .then(function(j){
+      if(j.success||j.fotoUrl){showToast('Foto absensi berhasil dikirim','success');
+        if(status)status.textContent='✅ Terkirim — Shift: '+_absensiFotoShift;if(btn)btn.style.display='none';
+      }else{showToast('Gagal: '+(j.message||'error'),'error');
+        if(btn){btn.disabled=false;btn.textContent='↑ Kirim Foto';}if(status)status.textContent='❌ Gagal';}
+    })
+    .catch(function(e){showToast('Gagal terhubung: '+e.message,'error');
+      if(btn){btn.disabled=false;btn.textContent='↑ Kirim Foto';}if(status)status.textContent='❌ Gagal';});
+    }
+    var PIKET_SHEET_URL=(function(){try{return localStorage.getItem("piket_sheet_url")||"";}catch(e){return "";}})();
 var _piketData=[];
 
 function togglePiketAdmin(){
