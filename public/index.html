@@ -1581,33 +1581,23 @@ table td { font-size: 11px; }
 @keyframes absensiColon{0%,49%{opacity:1}50%,100%{opacity:0.1}}
 @media(min-width:768px){
   /* Pusatkan dan batasi lebar panel di PC */
-  #absensiPanel>div{max-width:720px;margin:0 auto;}
-  /* -- Dekorasi sisi kiri & kanan di PC --------------------------------- */
+  /* 3-column layout: kiri | tengah | kanan */
   #absensiPanel{
     position:relative;
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:stretch;
     background:
-      linear-gradient(90deg,transparent calc(50% - 361px),rgba(80,140,255,0.22) calc(50% - 361px),rgba(80,140,255,0.22) calc(50% - 359px),transparent calc(50% - 359px)),
-      linear-gradient(90deg,transparent calc(50% + 359px),rgba(0,210,100,0.22) calc(50% + 359px),rgba(0,210,100,0.22) calc(50% + 361px),transparent calc(50% + 361px)),
       radial-gradient(circle,rgba(60,110,255,0.07) 1px,transparent 0) 0 0/30px 30px,
       linear-gradient(90deg,rgba(30,60,200,0.06) 0%,transparent 24%,transparent 76%,rgba(0,160,70,0.06) 100%),
       #07070f!important;
   }
-  /* Teks vertikal kiri */
-  #absensiPanel::before{
-    content:'ATTENDANCE  SYSTEM';
-    position:absolute;left:18px;top:50%;
-    transform:translateY(-50%) rotate(-90deg);transform-origin:center center;
-    font-family:monospace;font-size:11px;font-weight:800;letter-spacing:5px;
-    color:rgba(80,140,255,0.18);white-space:nowrap;pointer-events:none;z-index:0;
-  }
-  /* Teks vertikal kanan */
-  #absensiPanel::after{
-    content:'SCAN  IN  OUT';
-    position:absolute;right:18px;top:50%;
-    transform:translateY(-50%) rotate(90deg);transform-origin:center center;
-    font-family:monospace;font-size:11px;font-weight:800;letter-spacing:5px;
-    color:rgba(0,210,100,0.18);white-space:nowrap;pointer-events:none;z-index:0;
-  }
+  #absensiPanel>div:not(#petugasPagiSide):not(#petugasSiangSide){max-width:720px;width:100%;margin:0 auto;flex:1 1 auto;}
+  /* Side panels: visible hanya di PC */
+  #petugasPagiSide,#petugasSiangSide{display:flex!important;flex-direction:column;width:230px;min-width:190px;flex-shrink:0;}
+  #petugasPagiSide{border-right:1px solid #1a2a4a;background:#08080f;}
+  #petugasSiangSide{border-left:1px solid #1a2a4a;background:#08080f;}
+  #absensiPanel::before,#absensiPanel::after{display:none!important;}
   /* Header clock section — lebih kompak di PC */
   #absensiPanel>div>div:first-child{padding:8px 14px 6px!important;}
   /* Tanggal */
@@ -1636,6 +1626,27 @@ table td { font-size: 11px; }
   #absensiAdminSection button{font-size:13px!important;padding:11px 16px!important;}
 }
 </style>
+<div id="petugasPagiSide" style="display:none;flex-direction:column;">
+  <div style="padding:14px 12px 8px;border-bottom:1px solid #1a2a4a;text-align:center;flex-shrink:0;">
+    <div style="font-size:9px;font-weight:900;letter-spacing:3px;color:#6a8cff;font-family:monospace;text-transform:uppercase;margin-bottom:2px;">&#9728; SHIFT PAGI</div>
+    <div id="pagiShiftTime" style="font-size:9px;color:#334466;font-family:monospace;">07:00 — 15:00</div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:12px;">
+    <div style="text-align:center;">
+      <div style="width:120px;height:120px;border-radius:16px;background:#0d1a2a;border:2px solid #1a3a6a;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+        <div id="petugasPagiFotoWrap" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+          <svg width="40" height="40" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="#2a4a7a"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="#2a4a7a"/></svg>
+        </div>
+      </div>
+      <div id="petugasPagiNama" style="font-size:13px;font-weight:800;color:#88ddff;font-family:monospace;margin-bottom:4px;">—</div>
+      <div id="petugasPagiStatus" style="font-size:9px;color:#445577;font-family:monospace;">Belum dimuat</div>
+    </div>
+    <div style="margin-top:14px;border-top:1px solid #1a2a3a;padding-top:10px;">
+      <div style="font-size:9px;font-weight:700;color:#445577;letter-spacing:2px;text-transform:uppercase;font-family:monospace;margin-bottom:8px;">&#128197; Jadwal Pagi</div>
+      <div id="jadwalPagiList"><div style="color:#2a3a5a;text-align:center;padding:8px 0;font-size:10px;font-family:monospace;">—</div></div>
+    </div>
+  </div>
+</div>
   <div style="background:#0f0f1a;min-height:100vh;display:flex;flex-direction:column;">
     <div style="background:#0a0a14;padding:16px 14px 12px;text-align:center;border-bottom:1px solid #1a2a4a;flex-shrink:0;">
       <div id="absensiDate" style="font-size:11px;font-weight:700;color:#6a8cff;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;font-family:monospace;background:#1a1a3e;display:inline-block;padding:3px 14px;border-radius:6px;border:1px solid #2a3a6a;"></div>
@@ -1673,7 +1684,21 @@ table td { font-size: 11px; }
     <!-- ADMIN SECTION -->
     <div id="absensiAdminSection" style="display:none;flex-shrink:0;">
 
-      <!-- Block 1: Sumber Data Karyawan -->
+      <!-- Block 0: Jadwal Piket Config -->
+<button onclick="togglePiketAdmin()" style="width:100%;background:#0d0d1e;border:none;border-top:2px solid #1a2a4a;border-bottom:1px solid #1a2a4a;color:#6a9aff;padding:9px 14px;font-size:11px;font-family:monospace;font-weight:700;text-align:left;cursor:pointer;letter-spacing:1px;">
+  &#8679; JADWAL PIKET — Konfigurasi Sheet
+</button>
+<div id="piketAdminPanel" style="display:none;background:#090912;padding:14px;border-bottom:1px solid #1a2a4a;">
+  <p style="font-size:10px;color:#334466;margin:0 0 8px;font-family:monospace;">Format sheet: kolom <b style="color:#556699;">Tanggal</b> (YYYY-MM-DD) | <b style="color:#556699;">Nama</b> | <b style="color:#556699;">Shift</b> (Pagi/Siang) | <b style="color:#556699;">Foto</b> (link Google Drive share)</p>
+  <label style="font-size:10px;color:#445577;font-family:monospace;display:block;margin-bottom:4px;">URL Spreadsheet CSV (File &gt; Share &gt; Publish to web &gt; CSV):</label>
+  <input id="piketSheetUrlInput" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&output=csv" style="width:100%;background:#0d0d22;border:1px solid #2a3a6a;border-radius:8px;padding:8px 10px;font-size:11px;color:#88aaff;font-family:monospace;box-sizing:border-box;margin-bottom:8px;">
+  <div style="display:flex;gap:8px;">
+    <button onclick="savePiketUrl()" style="background:#1a3a7a;border:1px solid #2a5a9a;color:#88ddff;border-radius:8px;padding:7px 14px;font-size:11px;font-family:monospace;cursor:pointer;">&#128190; Simpan &amp; Muat</button>
+    <button onclick="loadPetugasHari()" style="background:#1a4a3a;border:1px solid #2a6a4a;color:#00cc88;border-radius:8px;padding:7px 14px;font-size:11px;font-family:monospace;cursor:pointer;">&#8635; Refresh</button>
+  </div>
+  <p id="piketSyncInfo" style="font-size:10px;color:#445577;font-family:monospace;margin:6px 0 0;"></p>
+</div>
+<!-- Block 1: Sumber Data Karyawan -->
       <button onclick="toggleEmpAdmin()" style="width:100%;background:#0d0d1e;border:none;border-top:2px solid #1a2a4a;border-bottom:1px solid #1a2a4a;color:#6a8cff;padding:9px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;text-align:left;">&#9660; Sumber Data Karyawan (Google Spreadsheet)</button>
       <div id="empAdminPanel" style="display:none;background:#090912;padding:14px;border-bottom:1px solid #1a2a4a;">
         <p style="font-size:10px;color:#334466;margin:0 0 8px;font-family:monospace;">Spreadsheet harus di-share: <b style="color:#556699;">Anyone with the link &rarr; Viewer</b></p>
@@ -1724,6 +1749,27 @@ table td { font-size: 11px; }
         <p style="font-size:10px;color:#334466;font-family:monospace;margin:8px 0 0;">&#9432; File Excel berisi 2 sheet: Summary harian &amp; Detail scan per karyawan &mdash; buka di Google Sheets via File &rarr; Import</p>
       </div>
 
+    </div>
+  </div>
+</div>
+<div id="petugasSiangSide" style="display:none;flex-direction:column;">
+  <div style="padding:14px 12px 8px;border-bottom:1px solid #1a2a4a;text-align:center;flex-shrink:0;">
+    <div style="font-size:9px;font-weight:900;letter-spacing:3px;color:#00cc88;font-family:monospace;text-transform:uppercase;margin-bottom:2px;">&#9790; SHIFT SIANG</div>
+    <div id="siangShiftTime" style="font-size:9px;color:#334466;font-family:monospace;">15:00 — 22:00</div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:12px;">
+    <div style="text-align:center;">
+      <div style="width:120px;height:120px;border-radius:16px;background:#0d1a14;border:2px solid #1a4a3a;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+        <div id="petugasSiangFotoWrap" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+          <svg width="40" height="40" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="#1a4a3a"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="#1a4a3a"/></svg>
+        </div>
+      </div>
+      <div id="petugasSiangNama" style="font-size:13px;font-weight:800;color:#00ffaa;font-family:monospace;margin-bottom:4px;">—</div>
+      <div id="petugasSiangStatus" style="font-size:9px;color:#445577;font-family:monospace;">Belum dimuat</div>
+    </div>
+    <div style="margin-top:14px;border-top:1px solid #1a2a3a;padding-top:10px;">
+      <div style="font-size:9px;font-weight:700;color:#445577;letter-spacing:2px;text-transform:uppercase;font-family:monospace;margin-bottom:8px;">&#128197; Jadwal Siang</div>
+      <div id="jadwalSiangList"><div style="color:#2a3a5a;text-align:center;padding:8px 0;font-size:10px;font-family:monospace;">—</div></div>
     </div>
   </div>
 </div>
@@ -7614,6 +7660,165 @@ async function galleryResetPerm(){
   galleryInitCheck();
 }
 // ════════════════════════════════════════════════════════
+
+/* =====================================================
+   PETUGAS PIKET — Panel Kiri & Kanan (PC)
+   ===================================================== */
+var PIKET_SHEET_URL = (function(){try{return localStorage.getItem('piket_sheet_url')||'';}catch(e){return '';}})();
+var _piketData = [];
+
+function togglePiketAdmin(){
+  var p=$('piketAdminPanel');if(!p)return;
+  var open=p.style.display!=='none';
+  p.style.display=open?'none':'block';
+  if(!open){var inp=$('piketSheetUrlInput');if(inp)inp.value=PIKET_SHEET_URL;}
+}
+
+function savePiketUrl(){
+  var inp=$('piketSheetUrlInput');if(!inp)return;
+  PIKET_SHEET_URL=inp.value.trim();
+  try{localStorage.setItem('piket_sheet_url',PIKET_SHEET_URL);}catch(e){}
+  loadPetugasHari();
+}
+
+function driveThumb(url){
+  if(!url)return null;
+  url=url.trim();
+  var m=url.match(/\/d\/([^/&?#\s]+)/)||url.match(/[?&]id=([^&\s]+)/);
+  if(m)return 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w400';
+  if(url.startsWith('http'))return url;
+  return null;
+}
+
+function todayStr(){
+  var d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+var _HARI=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+function hariLabel(dateStr){
+  var p=dateStr.split('-');
+  if(p.length<3)return dateStr;
+  var d=new Date(+p[0],+p[1]-1,+p[2]);
+  return isNaN(d)?dateStr:_HARI[d.getDay()]+' '+p[2]+'/'+p[1];
+}
+
+function renderPetugasSide(shift,todayRow,weekRows){
+  var isPagi=shift==='Pagi';
+  var namaEl=$(isPagi?'petugasPagiNama':'petugasSiangNama');
+  var statusEl=$(isPagi?'petugasPagiStatus':'petugasSiangStatus');
+  var fotoWrap=$(isPagi?'petugasPagiFotoWrap':'petugasSiangFotoWrap');
+  var jadwalEl=$(isPagi?'jadwalPagiList':'jadwalSiangList');
+  var accent=isPagi?'#2a4a7a':'#1a4a3a';
+  if(todayRow){
+    if(namaEl)namaEl.textContent=todayRow.nama||'—';
+    if(statusEl){statusEl.textContent='Bertugas Hari Ini';statusEl.style.color=isPagi?'#4488ff':'#00cc88';}
+    var thumb=driveThumb(todayRow.foto);
+    if(fotoWrap&&thumb){
+      fotoWrap.innerHTML='<img src="'+thumb+'" alt="'+(todayRow.nama||'')+'" '+
+        'style="width:100%;height:100%;object-fit:cover;border-radius:14px;" '+
+        'onerror="this.style.display='none';this.nextSibling.style.display='flex'">'+'<div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">'+
+        '<svg width="40" height="40" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="'+accent+'"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="'+accent+'"/></svg></div>';
+    }
+  }else{
+    if(namaEl)namaEl.textContent='—';
+    if(statusEl){statusEl.textContent='Tidak ada jadwal';statusEl.style.color='#334466';}
+  }
+  if(jadwalEl){
+    if(!weekRows||!weekRows.length){
+      jadwalEl.innerHTML='<div style="color:#2a3a5a;text-align:center;padding:6px 0;font-size:10px;font-family:monospace;">Belum ada data</div>';
+      return;
+    }
+    var today=todayStr();
+    var h='';
+    weekRows.forEach(function(r){
+      var isToday=r.tanggal===today;
+      var lbl=hariLabel(r.tanggal);
+      h+='<div style="display:flex;align-items:center;gap:5px;padding:3px 4px;border-radius:6px;margin-bottom:2px;'+
+        (isToday?'background:#0d2a1a;border:1px solid #1a4a3a;':'border:1px solid transparent;')+'">'+'<span style="font-size:9px;color:'+(isToday?'#00cc88':'#334466')+';min-width:40px;font-family:monospace;">'+lbl+'</span>'+
+        '<span style="font-size:10px;font-weight:'+(isToday?'800':'400')+';color:'+(isToday?(isPagi?'#88ddff':'#00ffaa'):'#445577')+';flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;">'+(r.nama||'—')+'</span>'+
+        (isToday?'<span style="font-size:8px;color:#00cc88;">&#9654;</span>':'')+
+        '</div>';
+    });
+    jadwalEl.innerHTML=h;
+  }
+}
+
+function loadPetugasHari(){
+  var info=$('piketSyncInfo');
+  if(!PIKET_SHEET_URL){if(info)info.textContent='URL belum diisi. Buka Admin > Jadwal Piket.';return;}
+  if(info)info.textContent='Memuat jadwal...';
+  var url=PIKET_SHEET_URL+(PIKET_SHEET_URL.includes('?')?'&':'?')+'_cb='+Date.now();
+  fetch(url).then(function(r){return r.text();}).then(function(csv){
+    var rows=parseCSVPiket(csv);
+    _piketData=rows;
+    renderPiketPanels(rows);
+    if(info)info.textContent='Dimuat: '+rows.length+' baris ('+new Date().toLocaleTimeString('id-ID')+')';
+  }).catch(function(e){if(info)info.textContent='Gagal: '+String(e);});
+}
+
+function parseCSVPiket(csv){
+  var lines=csv.split(/\r?\n/);
+  if(!lines.length)return[];
+  var hdr=lines[0].split(',').map(function(h){return h.trim().toLowerCase().replace(/[^a-z]/g,'');});
+  var iT=hdr.indexOf('tanggal'),iN=hdr.indexOf('nama'),iS=hdr.indexOf('shift'),iF=hdr.indexOf('foto');
+  if(iT<0)iT=0;if(iN<0)iN=1;if(iS<0)iS=2;if(iF<0)iF=3;
+  var rows=[];
+  for(var i=1;i<lines.length;i++){
+    var line=lines[i].trim();if(!line)continue;
+    var cols=splitCSVLine(line);
+    var tgl=(cols[iT]||'').trim().replace(/"/g,'');
+    var nama=(cols[iN]||'').trim().replace(/"/g,'');
+    var shift=(cols[iS]||'').trim().replace(/"/g,'');
+    var foto=(cols[iF]||'').trim().replace(/"/g,'');
+    if(tgl&&nama)rows.push({tanggal:tgl,nama:nama,shift:shift,foto:foto});
+  }
+  return rows;
+}
+
+function splitCSVLine(line){
+  var cols=[],cur='',inQ=false;
+  for(var i=0;i<line.length;i++){
+    var c=line[i];
+    if(c==='"'){inQ=!inQ;}else if(c===','&&!inQ){cols.push(cur);cur='';}else{cur+=c;}
+  }
+  cols.push(cur);return cols;
+}
+
+function renderPiketPanels(rows){
+  var today=todayStr();
+  var dates=[];
+  for(var d=0;d<7;d++){var dt=new Date();dt.setDate(dt.getDate()+d);dates.push(dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'));}
+  var weekRows=rows.filter(function(r){return dates.indexOf(r.tanggal)>=0;});
+  weekRows.sort(function(a,b){return a.tanggal.localeCompare(b.tanggal);});
+  var todayPagi=rows.find(function(r){return r.tanggal===today&&r.shift.toLowerCase().indexOf('pagi')>=0;});
+  var todaySiang=rows.find(function(r){return r.tanggal===today&&r.shift.toLowerCase().indexOf('siang')>=0;});
+  var wPagi=weekRows.filter(function(r){return r.shift.toLowerCase().indexOf('pagi')>=0;});
+  var wSiang=weekRows.filter(function(r){return r.shift.toLowerCase().indexOf('siang')>=0;});
+  renderPetugasSide('Pagi',todayPagi,wPagi);
+  renderPetugasSide('Siang',todaySiang,wSiang);
+}
+
+// Hook ke showPanel agar auto-load saat masuk menu Absensi
+var _piketLoaded=false;
+(function(){
+  var orig=window.showPanel;
+  if(typeof orig==='function'){
+    window.showPanel=function(id){
+      orig.call(this,id);
+      if(id==='absensiPanel'&&!_piketLoaded){
+        _piketLoaded=true;
+        var inp=$('piketSheetUrlInput');if(inp&&PIKET_SHEET_URL)inp.value=PIKET_SHEET_URL;
+        if(PIKET_SHEET_URL)loadPetugasHari();
+      }
+    };
+  }
+})();
+document.addEventListener('DOMContentLoaded',function(){
+  var inp=$('piketSheetUrlInput');
+  if(inp&&PIKET_SHEET_URL)inp.value=PIKET_SHEET_URL;
+});
+
 
 </script>
 
