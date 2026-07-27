@@ -1582,21 +1582,21 @@ table td { font-size: 11px; }
 @media(min-width:768px){
   /* Pusatkan dan batasi lebar panel di PC */
   /* 3-column layout: kiri | tengah | kanan */
-  #absensiPanel{
-    position:relative;
+  #absensiPanel.active{
     display:flex!important;
     flex-direction:row!important;
     align-items:stretch;
+    position:relative;
     background:
       radial-gradient(circle,rgba(60,110,255,0.07) 1px,transparent 0) 0 0/30px 30px,
       linear-gradient(90deg,rgba(30,60,200,0.06) 0%,transparent 24%,transparent 76%,rgba(0,160,70,0.06) 100%),
       #07070f!important;
   }
-  #absensiPanel>div:not(#petugasPagiSide):not(#petugasSiangSide){max-width:720px;width:100%;margin:0 auto;flex:1 1 auto;}
+  #absensiPanel.active>div:not(#petugasPagiSide):not(#petugasSiangSide){max-width:720px;width:100%;margin:0 auto;flex:1 1 auto;}
   /* Side panels: visible hanya di PC */
-  #petugasPagiSide,#petugasSiangSide{display:flex!important;flex-direction:column;width:230px;min-width:190px;flex-shrink:0;}
-  #petugasPagiSide{border-right:1px solid #1a2a4a;background:#08080f;}
-  #petugasSiangSide{border-left:1px solid #1a2a4a;background:#08080f;}
+  #absensiPanel.active #petugasPagiSide,#absensiPanel.active #petugasSiangSide{display:flex!important;flex-direction:column;width:230px;min-width:190px;flex-shrink:0;}
+  #absensiPanel.active #petugasPagiSide{border-right:1px solid #1a2a4a;background:#08080f;}
+  #absensiPanel.active #petugasSiangSide{border-left:1px solid #1a2a4a;background:#08080f;}
   #absensiPanel::before,#absensiPanel::after{display:none!important;}
   /* Header clock section — lebih kompak di PC */
   #absensiPanel>div>div:first-child{padding:8px 14px 6px!important;}
