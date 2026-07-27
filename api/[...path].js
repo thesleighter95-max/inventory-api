@@ -1991,6 +1991,20 @@ loadCurrentSetting();
       }
     }
 
+    // GET /mod-config — baca URL sheet MOD (public, semua user)
+    if (path === "/mod-config" && method === "GET") {
+      const cfg = await getJson("mod-config", { sheetUrl: "" });
+      return send({ sheetUrl: cfg.sheetUrl || "" });
+    }
+
+    // POST /mod-config — simpan URL sheet MOD (admin only)
+    if (path === "/mod-config" && method === "POST") {
+      const { adminPassword, sheetUrl } = body;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      await setJson("mod-config", { sheetUrl: sheetUrl || "", updatedAt: new Date().toISOString() });
+      return send({ success: true, sheetUrl: sheetUrl || "" });
+    }
+
         return send({ error: "Not found" }, 404);
   } catch (err) {
     return send({ error: "Internal server error", detail: String(err) }, 500);

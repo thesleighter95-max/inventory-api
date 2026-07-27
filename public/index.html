@@ -7926,34 +7926,75 @@ document.addEventListener("DOMContentLoaded",function(){
 <script>
 // ===== MOD/PIMPINAN SHEET =====
 (function(){
-  var MOD_SHEET_URL=(function(){try{return localStorage.getItem("mod_sheet_url")||"";}catch(e){return "";}})();
+  var _MOD_SHEET_URL="";
+  var _modLastDate="";
   window._modRows=null;
+
+  // --- Ambil URL dari server (shared ke semua user) ---
+  function _fetchModConfig(cb){
+    var base=typeof API_BASE_URL!=="undefined"?API_BASE_URL:("/api");
+    fetch(base+"/mod-config?_cb="+Date.now())
+      .then(function(r){return r.json();})
+      .then(function(j){
+        if(j.sheetUrl&&j.sheetUrl!==_MOD_SHEET_URL){
+          _MOD_SHEET_URL=j.sheetUrl;
+          var inp=document.getElementById("modSheetUrlInput");
+          if(inp)inp.value=_MOD_SHEET_URL;
+        }
+        if(cb)cb(_MOD_SHEET_URL);
+      })
+      .catch(function(){if(cb)cb(_MOD_SHEET_URL);});
+  }
 
   window.toggleModAdmin=function(){
     var p=document.getElementById("modAdminPanel");if(!p)return;
     var open=p.style.display!=="none";
     p.style.display=open?"none":"block";
-    if(!open){var inp=document.getElementById("modSheetUrlInput");if(inp)inp.value=MOD_SHEET_URL;}
+    if(!open){var inp=document.getElementById("modSheetUrlInput");if(inp)inp.value=_MOD_SHEET_URL;}
   };
 
+  // Admin simpan URL ke server
   window.saveModUrl=function(){
     var inp=document.getElementById("modSheetUrlInput");if(!inp)return;
-    MOD_SHEET_URL=inp.value.trim();
-    try{localStorage.setItem("mod_sheet_url",MOD_SHEET_URL);}catch(e){}
-    window.loadModHari();
+    var newUrl=inp.value.trim();
+    var info=document.getElementById("modSyncInfo");
+    if(info)info.textContent="Menyimpan...";
+    var base=typeof API_BASE_URL!=="undefined"?API_BASE_URL:("/api");
+    var pw=typeof ADMIN_PASSWORD!=="undefined"?ADMIN_PASSWORD:"";
+    fetch(base+"/mod-config",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({adminPassword:pw,sheetUrl:newUrl})
+    }).then(function(r){return r.json();}).then(function(j){
+      if(j.success){
+        _MOD_SHEET_URL=newUrl;
+        if(info)info.textContent="URL tersimpan di server ✓";
+        window.loadModHari();
+      }else{
+        if(info)info.textContent="Gagal simpan: "+(j.message||"error");
+      }
+    }).catch(function(e){if(info)info.textContent="Gagal: "+String(e);});
   };
 
+  // Muat data MOD dari Google Sheet CSV
   window.loadModHari=function(){
     var info=document.getElementById("modSyncInfo");
-    if(!MOD_SHEET_URL){if(info)info.textContent="URL belum diisi.";return;}
-    if(info)info.textContent="Memuat data MOD...";
-    var url=MOD_SHEET_URL+(MOD_SHEET_URL.indexOf("?")>=0?"&":"?")+"_cb="+Date.now();
+    if(!_MOD_SHEET_URL){
+      _fetchModConfig(function(url){
+        if(url)window.loadModHari();
+        else if(info)info.textContent="URL belum dikonfigurasi admin.";
+      });
+      return;
+    }
+    var url=_MOD_SHEET_URL+(_MOD_SHEET_URL.indexOf("?")>=0?"&":"?")+"_cb="+Date.now();
     fetch(url).then(function(r){return r.text();}).then(function(csv){
       var rows=typeof parseCSVPiket==="function"?parseCSVPiket(csv):[];
       window._modRows=rows;
       _renderModPanels(rows);
-      if(info)info.textContent="MOD dimuat: "+new Date().toLocaleTimeString("id-ID");
-    }).catch(function(e){if(info)info.textContent="Gagal memuat: "+String(e);});
+      var now=new Date();
+      if(info)info.textContent="MOD: "+now.toLocaleTimeString("id-ID",{timeZone:"Asia/Makassar"})+" WITA";
+      _modLastDate=_todayMod();
+    }).catch(function(e){if(info)info.textContent="Gagal: "+String(e);});
   };
 
   function _todayMod(){
@@ -7983,10 +8024,7 @@ document.addEventListener("DOMContentLoaded",function(){
     var fotoWrap=document.getElementById(isPagi?"petugasPagiFotoWrap":"petugasSiangFotoWrap");
     var labelEl=document.getElementById(isPagi?"modPagiLabel":"modSiangLabel");
     var accent=isPagi?"#2a4a7a":"#1a4a3a";
-    if(!row){
-      if(labelEl)labelEl.style.display="none";
-      return;
-    }
+    if(!row){if(labelEl)labelEl.style.display="none";return;}
     if(labelEl)labelEl.style.display="inline-block";
     if(namaEl)namaEl.textContent=row.nama||"—";
     if(statusEl){statusEl.textContent="MOD Hari Ini";statusEl.style.color="#ffcc44";}
@@ -7995,8 +8033,7 @@ document.addEventListener("DOMContentLoaded",function(){
       if(thumb){
         fotoWrap.innerHTML="";
         var img=document.createElement("img");
-        img.src=thumb;
-        img.alt=row.nama||"";
+        img.src=thumb;img.alt=row.nama||"";
         img.style.cssText="width:100%;height:100%;object-fit:cover;border-radius:14px;";
         img.onerror=function(){
           this.style.display="none";
@@ -8010,20 +8047,10 @@ document.addEventListener("DOMContentLoaded",function(){
     }
   }
 
-  // Setelah piket render, terapkan ulang MOD agar tidak tertimpa
-  if(typeof renderPiketPanels==="function"){
-    var _origRPP=window.renderPiketPanels;
-    window.renderPiketPanels=function(rows){
-      _origRPP.call(this,rows);
-      if(window._modRows)_renderModPanels(window._modRows);
-    };
-  }
-
-  document.addEventListener("DOMContentLoaded",function(){
-    var inp=document.getElementById("modSheetUrlInput");
-    if(inp&&MOD_SHEET_URL)inp.value=MOD_SHEET_URL;
-    // Patch renderPiketPanels (pastikan sudah ada saat DOMContentLoaded)
-    if(typeof window.renderPiketPanels==="function"&&!window._modRPPPatched){
+  // Patch renderPiketPanels agar MOD tidak tertimpa piket
+  function _patchRPP(){
+    if(window._modRPPPatched)return;
+    if(typeof window.renderPiketPanels==="function"){
       window._modRPPPatched=true;
       var _orig=window.renderPiketPanels;
       window.renderPiketPanels=function(rows){
@@ -8031,9 +8058,29 @@ document.addEventListener("DOMContentLoaded",function(){
         if(window._modRows)_renderModPanels(window._modRows);
       };
     }
-    if(MOD_SHEET_URL)window.loadModHari();
-    // Auto-refresh setiap 5 menit
-    setInterval(function(){if(MOD_SHEET_URL)window.loadModHari();},5*60*1000);
+  }
+
+  document.addEventListener("DOMContentLoaded",function(){
+    _patchRPP();
+    // Ambil URL dari server, lalu muat data
+    _fetchModConfig(function(url){
+      if(url)window.loadModHari();
+    });
+    // Auto-refresh setiap 1 menit — cek juga pergantian tanggal
+    setInterval(function(){
+      var today=_todayMod();
+      // Cek config server setiap 5 menit (siapa tahu admin update URL)
+      if(!window._modCfgTick)window._modCfgTick=0;
+      window._modCfgTick++;
+      if(window._modCfgTick%5===0){
+        _fetchModConfig(function(){window.loadModHari();});
+      } else {
+        if(_MOD_SHEET_URL){
+          // Reload data jika tanggal berubah atau setiap menit
+          window.loadModHari();
+        }
+      }
+    },60*1000);
   });
 })();
 // ===== END MOD/PIMPINAN SHEET =====
