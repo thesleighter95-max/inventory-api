@@ -1677,6 +1677,18 @@ table td { font-size: 11px; }
         <span id="absensiStatusBadge" style="padding:2px 12px;border-radius:14px;font-weight:700;font-size:11px;letter-spacing:1px;display:none;"></span>
       </div>
     </div>
+    <div id="absensiFotoArea" style="display:none;margin:0 14px 10px;padding:10px 12px;background:#080f08;border:1px solid #1a4a2a;border-radius:10px;">
+    <div style="font-size:10px;color:#00cc88;font-family:monospace;font-weight:700;margin-bottom:8px;">&#128247; Foto Absensi</div>
+    <div id="absensiFotoPreview" style="display:none;margin-bottom:8px;text-align:center;">
+      <img id="absensiFotoImg" style="max-width:120px;max-height:90px;border-radius:8px;border:1px solid #1a4a2a;" alt="foto">
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button onclick="absensiAmbilFoto()" style="background:#1a4a2a;border:1px solid #2a6a3a;color:#00ff88;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">&#128247; Ambil / Pilih Foto</button>
+      <button id="absensiFotoKirimBtn" onclick="absensiKirimFoto()" style="display:none;background:#1a3a7a;border:1px solid #2a5a9a;color:#88ddff;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace;">&#8679; Kirim Foto</button>
+      <span id="absensiFotoStatus" style="font-size:10px;color:#445577;font-family:monospace;"></span>
+    </div>
+    <input id="absensiFotoInput" type="file" accept="image/*" capture="environment" style="display:none;" onchange="absensiFotoSelected(this)">
+    </div>
     <div id="absensiResult" style="background:#0a0a1a;flex-shrink:0;overflow-x:auto;">
       <div style="text-align:center;padding:20px 16px;color:#2a3a5a;font-family:monospace;font-size:11px;">&#9656; belum ada scan hari ini</div>
     </div>
@@ -1749,7 +1761,7 @@ table td { font-size: 11px; }
 
     </div>
   </div>
-</div>
+
 <div id="petugasSiangSide" style="display:none;flex-direction:column;">
   <div style="padding:14px 12px 8px;border-bottom:1px solid #1a2a4a;text-align:center;flex-shrink:0;">
     <div style="font-size:9px;font-weight:900;letter-spacing:3px;color:#00cc88;font-family:monospace;text-transform:uppercase;margin-bottom:2px;">&#9790; SHIFT SIANG</div>
@@ -1770,6 +1782,7 @@ table td { font-size: 11px; }
       <div id="jadwalSiangList"><div style="color:#2a3a5a;text-align:center;padding:8px 0;font-size:10px;font-family:monospace;">—</div></div>
     </div>
   </div>
+</div>
 </div>
 
 <div id="toastContainer"></div>
@@ -7547,7 +7560,81 @@ async function galleryDeleteSavedFolder(){
   try{var db=await galleryOpenDB();var tx=db.transaction('folderHandles','readwrite');tx.objectStore('folderHandles').delete('gallery-folder');return true;}catch(e){return false;}
 }
 
-async function galleryInitCheck(){
+async 
+    // ════════════════════════════════════════════════════════
+    /* ABSENSI FOTO — capture & upload selfie setelah scan */
+    // ════════════════════════════════════════════════════════
+    var _absensiFotoEmpId='',_absensiFotoBase64='',_absensiFotoShift='';
+
+    function absensiGetCurrentShift(){
+    var h=new Date().getHours();
+    return(h>=14&&h<23)?'Siang':'Pagi';
+    }
+    function absensiShowFotoArea(empId){
+    _absensiFotoEmpId=empId;
+    _absensiFotoShift=absensiGetCurrentShift();
+    _absensiFotoBase64='';
+    var area=$('absensiFotoArea'),preview=$('absensiFotoPreview'),kirim=$('absensiFotoKirimBtn'),status=$('absensiFotoStatus');
+    if(area)area.style.display='block';
+    if(preview)preview.style.display='none';
+    if(kirim)kirim.style.display='none';
+    if(status)status.textContent='Shift: '+_absensiFotoShift+' — ambil foto lalu kirim';
+    }
+    function absensiHideFotoArea(){
+    var area=$('absensiFotoArea');
+    if(area)area.style.display='none';
+    _absensiFotoEmpId='';_absensiFotoBase64='';
+    }
+    function absensiAmbilFoto(){
+    var inp=$('absensiFotoInput');
+    if(inp)inp.click();
+    }
+    function absensiFotoSelected(input){
+    var file=input&&input.files&&input.files[0];
+    if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      _absensiFotoBase64=e.target.result;
+      var img=$('absensiFotoImg'),preview=$('absensiFotoPreview'),kirim=$('absensiFotoKirimBtn'),status=$('absensiFotoStatus');
+      if(img)img.src=_absensiFotoBase64;
+      if(preview)preview.style.display='block';
+      if(kirim)kirim.style.display='inline-block';
+      if(status)status.textContent='Foto siap — Shift: '+_absensiFotoShift;
+    };
+    reader.readAsDataURL(file);
+    input.value='';
+    }
+    function absensiKirimFoto(){
+    if(!_absensiFotoBase64||!_absensiFotoEmpId){showToast('Belum ada foto','error');return;}
+    var btn=$('absensiFotoKirimBtn'),status=$('absensiFotoStatus');
+    if(btn){btn.disabled=true;btn.textContent='Mengirim...';}
+    if(status)status.textContent='Mengirim foto...';
+    var today=(typeof todayStr==='function'?todayStr():new Date().toISOString().slice(0,10));
+    fetch(ABSENSI_GAS_URL,{
+      method:'POST',
+      body:JSON.stringify({action:'saveFoto',employeeId:_absensiFotoEmpId,
+        employeeName:(_absensiEmpMap[_absensiFotoEmpId.trim()]||''),
+        shift:_absensiFotoShift,date:today,fotoBase64:_absensiFotoBase64})
+    })
+    .then(function(r){return r.json();})
+    .then(function(j){
+      if(j.success||j.fotoUrl){
+        showToast('Foto absensi berhasil dikirim','success');
+        if(status)status.textContent='✅ Terkirim — Shift: '+_absensiFotoShift;
+        if(btn)btn.style.display='none';
+      }else{
+        showToast('Gagal: '+(j.message||'error'),'error');
+        if(btn){btn.disabled=false;btn.textContent='↑ Kirim Foto';}
+        if(status)status.textContent='❌ Gagal';
+      }
+    })
+    .catch(function(e){
+      showToast('Gagal terhubung: '+e.message,'error');
+      if(btn){btn.disabled=false;btn.textContent='↑ Kirim Foto';}
+      if(status)status.textContent='❌ Gagal';
+    });
+    }
+    function galleryInitCheck(){
   var info=await galleryGetSavedFolder();
   var box=document.getElementById('galleryPermBox');
   if(!box)return;
