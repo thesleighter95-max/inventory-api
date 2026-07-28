@@ -5220,9 +5220,22 @@ function submitAbsensi(){
   absensiScanFeedback(_predictedIn);
   renderAbsensiResultOptimistic(empId, _cachedName, _predictedIn);
   _absensiLastScanDate=_todayStr;
-  // === Kirim ke GAS — retry sekali jika gagal, tidak ada mode offline ===
+  // === Kirim ke GAS ===
   var _op=isAdmin?'Admin':(currentUserNameInv||currentUsernameRaw||'User');
   var _gasUrl=ABSENSI_GAS_URL+'?action=scan&employeeId='+encodeURIComponent(empId)+'&operator='+encodeURIComponent(_op);
+
+  // Kalau jaringan benar-benar mati, langsung antri — tidak perlu coba fetch
+  if(!navigator.onLine){
+    var _q=absensiGetQueue();
+    _q.push({empId:empId,operator:_op,timestamp:new Date().toISOString(),predictedIn:_predictedIn});
+    absensiSetQueue(_q);
+    delete _absensiInFlight[empId];
+    absensiUpdateOfflineBadge();
+    updateAbsensiSyncStatus('error','Offline — absen disimpan lokal');
+    if(msg){msg.textContent=': '+empId+(_cachedName?' → '+_cachedName:'')+' 📵 disimpan, otomatis terkirim saat online';msg.style.color='#ffaa44';}
+    return;
+  }
+
   function doScan(isRetry){
     fetch(_gasUrl)
     .then(function(r){return r.json();})
@@ -5247,11 +5260,20 @@ function submitAbsensi(){
       }
     })
     .catch(function(){
-      if(!isRetry){
-        // Retry sekali setelah 1 detik
+      if(!navigator.onLine){
+        // Jaringan mati di tengah fetch — antri, akan otomatis terkirim saat online
+        var _q=absensiGetQueue();
+        _q.push({empId:empId,operator:_op,timestamp:new Date().toISOString(),predictedIn:_predictedIn});
+        absensiSetQueue(_q);
+        delete _absensiInFlight[empId];
+        absensiUpdateOfflineBadge();
+        updateAbsensiSyncStatus('error','Offline — absen disimpan lokal');
+        if(msg){msg.textContent=': '+empId+(_cachedName?' → '+_cachedName:'')+' 📵 disimpan, otomatis terkirim saat online';msg.style.color='#ffaa44';}
+      }else if(!isRetry){
+        // Jaringan oke tapi GAS gagal — retry sekali setelah 1 detik
         setTimeout(function(){doScan(true);},1000);
       }else{
-        // Dua kali gagal — tampilkan peringatan, tapi TIDAK masuk mode offline
+        // Jaringan oke, GAS tetap gagal setelah retry — tampilkan peringatan
         delete _absensiInFlight[empId];
         updateAbsensiSyncStatus('error','Gagal terhubung ke spreadsheet');
         if(msg){msg.textContent=': '+empId+(_cachedName?' → '+_cachedName:'')+' ⚠ gagal terkirim ke spreadsheet';msg.style.color='#ff8844';}
