@@ -5325,6 +5325,7 @@ function totalSecsDisplay(secs){
 
 function renderAbsensiResultOptimistic(empId, empName, isIn){
   if(_absensiResultTimer){clearTimeout(_absensiResultTimer);_absensiResultTimer=null;}
+  var _hasHistory=!!_absensiStatusMap[(empId||'').trim()];
   var res=$('absensiResult');if(!res)return;
   var now=new Date();
   var timeStr=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
@@ -5357,7 +5358,9 @@ function renderAbsensiResultOptimistic(empId, empName, isIn){
     +'<td style="padding:7px 8px;color:#ff8844;font-weight:700;border:1px solid #1a2a4a;text-align:right;">-</td>'
     +'</tr></tbody></table></div>';
   res.innerHTML=h;
-  _absensiStartHideTimer();
+  // Hanya mulai timer kalau scan pertama hari ini — kalau sudah ada riwayat,
+  // tunggu GAS balas dulu (renderAbsensiResult) baru timer aktif
+  if(!_hasHistory) _absensiStartHideTimer();
 }
 function renderAbsensiResult(j){
   var res=$('absensiResult');if(!res)return;
