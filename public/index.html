@@ -1594,7 +1594,11 @@ table td { font-size: 11px; }
   }
   #absensiPanel.active>div:not(#petugasPagiSide):not(#petugasSiangSide){max-width:720px;width:100%;margin:0 auto;flex:1 1 auto;}
   #absensiPanel.active #petugasPagiSide,
-  #absensiPanel.active #petugasSiangSide{display:flex!important;flex-direction:column;width:230px;min-width:190px;flex-shrink:0;}
+  #absensiPanel.active #petugasSiangSide{display:flex!important;flex-direction:column;width:280px;min-width:240px;flex-shrink:0;}
+  #pagiPhotoBox,#siangPhotoBox{width:190px!important;height:190px!important;border-radius:20px!important;}
+  #petugasPagiNama,#petugasSiangNama{font-size:16px!important;}
+  #petugasPagiStatus,#petugasSiangStatus{font-size:11px!important;}
+  #modPagiLabel,#modSiangLabel{font-size:11px!important;padding:3px 12px!important;letter-spacing:3px!important;}
   #absensiPanel.active #petugasPagiSide{border-right:1px solid #1a2a4a;background:#08080f;}
   #absensiPanel.active #petugasSiangSide{border-left:1px solid #1a2a4a;background:#08080f;}
   /* decorative lines removed — replaced by real side panels */
@@ -1633,7 +1637,7 @@ table td { font-size: 11px; }
   </div>
   <div style="flex:1;overflow-y:auto;padding:12px;">
     <div style="text-align:center;">
-      <div style="width:120px;height:120px;border-radius:16px;background:#0d1a2a;border:2px solid #1a3a6a;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+      <div id="pagiPhotoBox" style="width:120px;height:120px;border-radius:16px;background:#0d1a2a;border:2px solid #1a3a6a;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
         <div id="petugasPagiFotoWrap" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
           <svg width="40" height="40" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="#2a4a7a"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="#2a4a7a"/></svg>
         </div>
@@ -1781,7 +1785,7 @@ table td { font-size: 11px; }
   </div>
   <div style="flex:1;overflow-y:auto;padding:12px;">
     <div style="text-align:center;">
-      <div style="width:120px;height:120px;border-radius:16px;background:#0d1a14;border:2px solid #1a4a3a;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+      <div id="siangPhotoBox" style="width:120px;height:120px;border-radius:16px;background:#0d1a14;border:2px solid #1a4a3a;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
         <div id="petugasSiangFotoWrap" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
           <svg width="40" height="40" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="#1a4a3a"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="#1a4a3a"/></svg>
         </div>
