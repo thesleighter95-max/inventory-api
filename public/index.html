@@ -5114,18 +5114,26 @@ window.addEventListener('offline',function(){
 // ===== END OFFLINE MODE =====
 
 function absensiRefreshEmployees(){
+  // Selalu tampilkan cache dulu agar UI tidak blank saat GAS lambat
+  var cached=absensiLoadEmpCache();
+  if(cached&&cached.length){
+    _absensiEmpMap={};
+    cached.forEach(function(e){var k=(e.barcode||e.id||'').trim();if(k)_absensiEmpMap[k]=e.name||'';});
+    if($('absensiEmpCount'))$('absensiEmpCount').textContent=cached.length+' karyawan (cache)';
+    renderAbsensiEmpList(cached);
+  }
   if(!_absensiOnline){
-    var cached=absensiLoadEmpCache();
     if(cached&&cached.length){
-      _absensiEmpMap={};
-      cached.forEach(function(e){var k=(e.barcode||e.id||'').trim();if(k)_absensiEmpMap[k]=e.name||'';});
-      if($('absensiEmpCount'))$('absensiEmpCount').textContent=cached.length+' karyawan (cache)';
       updateAbsensiSyncStatus('error','Offline — '+cached.length+' karyawan dari cache');
-      renderAbsensiEmpList(cached);
     }else{updateAbsensiSyncStatus('error','Offline — belum ada cache');}
     absensiUpdateOfflineBadge();return;
   }
-  updateAbsensiSyncStatus('syncing','Memuat...');
+  // Update dari GAS di background (tidak blokir tampilan)
+  if(cached&&cached.length){
+    updateAbsensiSyncStatus('syncing','Memperbarui '+cached.length+' karyawan...');
+  }else{
+    updateAbsensiSyncStatus('syncing','Memuat dari spreadsheet...');
+  }
   fetch(ABSENSI_GAS_URL+'?action=getEmployees')
   .then(function(r){return r.json();})
   .then(function(j){
@@ -5139,13 +5147,10 @@ function absensiRefreshEmployees(){
     absensiSyncQueue();
   })
   .catch(function(){
-    var cached=absensiLoadEmpCache();
-    if(cached&&cached.length){
-      _absensiEmpMap={};
-      cached.forEach(function(e){var k=(e.barcode||e.id||'').trim();if(k)_absensiEmpMap[k]=e.name||'';});
-      if($('absensiEmpCount'))$('absensiEmpCount').textContent=cached.length+' karyawan (cache)';
-      updateAbsensiSyncStatus('error','Gagal — '+cached.length+' karyawan dari cache');
-      renderAbsensiEmpList(cached);
+    var c=absensiLoadEmpCache();
+    if(c&&c.length){
+      if($('absensiEmpCount'))$('absensiEmpCount').textContent=c.length+' karyawan (cache)';
+      updateAbsensiSyncStatus('error','GAS offline — '+c.length+' karyawan dari cache');
     }else{updateAbsensiSyncStatus('error','Gagal memuat data');}
   });
 }
