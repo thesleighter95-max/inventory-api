@@ -5040,6 +5040,7 @@ var _ABSENSI_CACHE_KEY='absensi_emp_cache_v1';
 var _ABSENSI_QUEUE_KEY='absensi_offline_queue_v1';
 var _absensiOnline=navigator.onLine;
 var _absensiSyncing=false;
+var _absensiFailStreak=0;
 
 function absensiGetQueue(){try{return JSON.parse(localStorage.getItem(_ABSENSI_QUEUE_KEY)||'[]');}catch(e){return[];}}
 function absensiSetQueue(q){try{localStorage.setItem(_ABSENSI_QUEUE_KEY,JSON.stringify(q));}catch(e){}}
@@ -5233,6 +5234,7 @@ function submitAbsensi(){
   .then(function(j){
     delete _absensiInFlight[empId];
     if(j.success){
+      _absensiFailStreak=0;
       var isIn=j.status==='In';
       _absensiStatusMap[empId.trim()]=j.status;
       if(msg){
@@ -5251,13 +5253,19 @@ function submitAbsensi(){
   })
   .catch(function(){
     delete _absensiInFlight[empId];
-    // Jaringan putus saat fetch — simpan ke antrian offline
-    _absensiOnline=false;
-    updateAbsensiSyncStatus('error','Offline');
-    var _q=absensiGetQueue();
-    _q.push({empId:empId,operator:_op,timestamp:new Date().toISOString(),predictedIn:_predictedIn});
-    absensiSetQueue(_q);absensiUpdateOfflineBadge();
-    if(msg){msg.textContent=': '+empId+(_cachedName?' → '+_cachedName:'')+' 📵 disimpan offline';msg.style.color='#ffaa44';}
+    _absensiFailStreak++;
+    // Tandai offline hanya setelah 3 gagal berturut-turut — satu gagal bukan berarti offline
+    if(_absensiFailStreak>=3){
+      _absensiOnline=false;
+      updateAbsensiSyncStatus('error','Offline');
+      var _q=absensiGetQueue();
+      _q.push({empId:empId,operator:_op,timestamp:new Date().toISOString(),predictedIn:_predictedIn});
+      absensiSetQueue(_q);absensiUpdateOfflineBadge();
+      if(msg){msg.textContent=': '+empId+(_cachedName?' → '+_cachedName:'')+' 📵 disimpan offline';msg.style.color='#ffaa44';}
+    }else{
+      updateAbsensiSyncStatus('error','Gagal kirim ('+_absensiFailStreak+'/3)');
+      if(msg){msg.textContent=': '+empId+(_cachedName?' → '+_cachedName:'')+' ⚠ gagal — coba lagi';msg.style.color='#ff8844';}
+    }
   });
 }
 
