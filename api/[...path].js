@@ -14,7 +14,7 @@ const _CACHE_TTL = 5 * 60 * 1000;
 const _CACHEABLE = new Set([
   "price-snapshot-current","price-snapshot-prev","price-snapshot-highest",
   "promo-excluded","company-location","maintenance","bblm-status","sync-meta",
-  "users","bblm"
+  "users","bblm","absensi-employees"
 ]);
 
 function cacheGet(key) {
@@ -1670,14 +1670,14 @@ loadCurrentSetting();
       const pad = n => String(n).padStart(2, "0");
       const timeStr = pad(wita.getUTCHours()) + ":" + pad(wita.getUTCMinutes()) + ":" + pad(wita.getUTCSeconds());
 
-      // Look up employee name
-      const employees = await getJson("absensi-employees", []);
+      // Look up employee name + today's records in parallel
+      const todayKey = `absensi:${today}`;
+      const [employees, allRecords] = await Promise.all([
+        getJson("absensi-employees", []),
+        getJson(todayKey, [])
+      ]);
       const emp = employees.find(e => e.barcode === empId || e.empId === empId || e.id === empId);
       const empName = emp ? emp.name : "";
-
-      // Get today's all records
-      const todayKey = `absensi:${today}`;
-      const allRecords = await getJson(todayKey, []);
       const empRecords = allRecords.filter(r => r.employeeId === empId);
 
       // Auto In/Out toggle
