@@ -5156,6 +5156,16 @@ function absensiRefreshEmployees(){
 }
 
 var _absensiInFlight={};
+var _absensiResultTimer=null;
+function _absensiClearResult(){
+  var r=$('absensiResult');if(r)r.innerHTML='';
+  var m=$('absensiScanMsg');if(m){m.textContent='\u25BA scan ID karyawan untuk absensi';m.style.color='#445577';}
+  var b=$('absensiStatusBadge');if(b)b.style.display='none';
+}
+function _absensiStartHideTimer(){
+  if(_absensiResultTimer)clearTimeout(_absensiResultTimer);
+  _absensiResultTimer=setTimeout(function(){_absensiResultTimer=null;_absensiClearResult();},3000);
+}
 var _absensiEmpMap={};
 var _absensiStatusMap={};
 var _absensiLastScanDate=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();
@@ -5314,6 +5324,7 @@ function totalSecsDisplay(secs){
 }
 
 function renderAbsensiResultOptimistic(empId, empName, isIn){
+  if(_absensiResultTimer){clearTimeout(_absensiResultTimer);_absensiResultTimer=null;}
   var res=$('absensiResult');if(!res)return;
   var now=new Date();
   var timeStr=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
@@ -5346,6 +5357,7 @@ function renderAbsensiResultOptimistic(empId, empName, isIn){
     +'<td style="padding:7px 8px;color:#ff8844;font-weight:700;border:1px solid #1a2a4a;text-align:right;">-</td>'
     +'</tr></tbody></table></div>';
   res.innerHTML=h;
+  _absensiStartHideTimer();
 }
 function renderAbsensiResult(j){
   var res=$('absensiResult');if(!res)return;
@@ -5399,6 +5411,7 @@ function renderAbsensiResult(j){
     +'<td style="padding:7px 8px;color:#ff8844;font-weight:700;border:1px solid #1a2a4a;text-align:right;">'+totalSecsDisplay(totOff)+'</td>'
     +'</tr></tbody></table></div>';
   res.innerHTML=h;
+  _absensiStartHideTimer();
 }
 
 var _showEmpAdmin=false;
