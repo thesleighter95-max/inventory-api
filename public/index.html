@@ -5220,53 +5220,45 @@ function submitAbsensi(){
   absensiScanFeedback(_predictedIn);
   renderAbsensiResultOptimistic(empId, _cachedName, _predictedIn);
   _absensiLastScanDate=_todayStr;
-  // === Background fetch ke GAS — tambah ke antrian jika offline ===
+  // === Kirim ke GAS — retry sekali jika gagal, tidak ada mode offline ===
   var _op=isAdmin?'Admin':(currentUserNameInv||currentUsernameRaw||'User');
-  if(!_absensiOnline){
-    var _q=absensiGetQueue();
-    _q.push({empId:empId,operator:_op,timestamp:new Date().toISOString(),predictedIn:_predictedIn});
-    absensiSetQueue(_q);delete _absensiInFlight[empId];absensiUpdateOfflineBadge();
-    if(msg){msg.textContent=': '+empId+(_cachedName?' → '+_cachedName:'')+' 📵 disimpan offline';msg.style.color='#ffaa44';}
-    return;
+  var _gasUrl=ABSENSI_GAS_URL+'?action=scan&employeeId='+encodeURIComponent(empId)+'&operator='+encodeURIComponent(_op);
+  function doScan(isRetry){
+    fetch(_gasUrl)
+    .then(function(r){return r.json();})
+    .then(function(j){
+      delete _absensiInFlight[empId];
+      updateAbsensiSyncStatus('online','Terhubung');
+      if(j.success){
+        var isIn=j.status==='In';
+        _absensiStatusMap[empId.trim()]=j.status;
+        if(msg){
+          msg.textContent=': '+j.employeeId+(j.employeeName?' → '+j.employeeName:' ⚠ ID tidak terdaftar di spreadsheet');
+          msg.style.color=j.employeeName?'#88aacc':'#ff8844';
+        }
+        if(badge){
+          badge.style.display='inline-block';badge.textContent=j.status.toUpperCase();
+          badge.style.background=isIn?'#0a3a2a':'#3a1a0a';badge.style.color=isIn?'#00ff88':'#ff6644';
+          badge.style.border='1px solid '+(isIn?'#00ff8855':'#ff664455');
+        }
+        renderAbsensiResult(j);
+        var sumPanel=$('absensiSummaryPanel');
+        if(sumPanel&&sumPanel.style.display!=='none'){absensiLoadSummary();}
+      }
+    })
+    .catch(function(){
+      if(!isRetry){
+        // Retry sekali setelah 1 detik
+        setTimeout(function(){doScan(true);},1000);
+      }else{
+        // Dua kali gagal — tampilkan peringatan, tapi TIDAK masuk mode offline
+        delete _absensiInFlight[empId];
+        updateAbsensiSyncStatus('error','Gagal terhubung ke spreadsheet');
+        if(msg){msg.textContent=': '+empId+(_cachedName?' → '+_cachedName:'')+' ⚠ gagal terkirim ke spreadsheet';msg.style.color='#ff8844';}
+      }
+    });
   }
-  fetch(ABSENSI_GAS_URL+'?action=scan&employeeId='+encodeURIComponent(empId)+'&operator='+encodeURIComponent(_op))
-  .then(function(r){return r.json();})
-  .then(function(j){
-    delete _absensiInFlight[empId];
-    if(j.success){
-      _absensiFailStreak=0;
-      var isIn=j.status==='In';
-      _absensiStatusMap[empId.trim()]=j.status;
-      if(msg){
-        msg.textContent=': '+j.employeeId+(j.employeeName?' → '+j.employeeName:' ⚠ ID tidak terdaftar di spreadsheet');
-        msg.style.color=j.employeeName?'#88aacc':'#ff8844';
-      }
-      if(badge){
-        badge.style.display='inline-block';badge.textContent=j.status.toUpperCase();
-        badge.style.background=isIn?'#0a3a2a':'#3a1a0a';badge.style.color=isIn?'#00ff88':'#ff6644';
-        badge.style.border='1px solid '+(isIn?'#00ff8855':'#ff664455');
-      }
-      renderAbsensiResult(j);
-      var sumPanel=$('absensiSummaryPanel');
-      if(sumPanel&&sumPanel.style.display!=='none'){absensiLoadSummary();}
-    }
-  })
-  .catch(function(){
-    delete _absensiInFlight[empId];
-    _absensiFailStreak++;
-    // Tandai offline hanya setelah 3 gagal berturut-turut — satu gagal bukan berarti offline
-    if(_absensiFailStreak>=3){
-      _absensiOnline=false;
-      updateAbsensiSyncStatus('error','Offline');
-      var _q=absensiGetQueue();
-      _q.push({empId:empId,operator:_op,timestamp:new Date().toISOString(),predictedIn:_predictedIn});
-      absensiSetQueue(_q);absensiUpdateOfflineBadge();
-      if(msg){msg.textContent=': '+empId+(_cachedName?' → '+_cachedName:'')+' 📵 disimpan offline';msg.style.color='#ffaa44';}
-    }else{
-      updateAbsensiSyncStatus('error','Gagal kirim ('+_absensiFailStreak+'/3)');
-      if(msg){msg.textContent=': '+empId+(_cachedName?' → '+_cachedName:'')+' ⚠ gagal — coba lagi';msg.style.color='#ff8844';}
-    }
-  });
+  doScan(false);
 }
 
 function normalizeTimeStr(t){
