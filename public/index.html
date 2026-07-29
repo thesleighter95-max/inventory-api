@@ -6920,6 +6920,54 @@ function fbSubmitItem() {
   if(!category){ showToast("Pilih CATEGORY terlebih dahulu","error"); return; }
   if(!posisi){ showToast("Pilih POSISI terlebih dahulu","error"); return; }
   if(!fotoData){ showToast("Ambil foto terlebih dahulu","error"); return; }
+
+  // Cek duplikat barcode di list yang sudah ada
+  var existing = fbItems.filter(function(it){ return String(it.barcode||"").trim() === barcode; });
+  if(existing.length > 0) {
+    var existNm = existing[0].prodNm || barcode;
+    var confirmed = confirm(
+      "⚠️ Barcode ini sudah pernah disimpan!\n\n" +
+      "Produk  : " + existNm + "\n" +
+      "Barcode : " + barcode + "\n\n" +
+      "Foto akan diperbarui ke yang terbaru.\nLanjutkan?"
+    );
+    if(!confirmed) return;
+
+    // Update semua duplikat: PATCH metadata + update foto di entry pertama,
+    // hapus sisa duplikat (jika ada lebih dari 1)
+    var btn = document.getElementById("fbSubmitBtn");
+    btn.disabled = true; btn.textContent = "Memperbarui...";
+    var primaryId = existing[0].id;
+    fetch(API_BASE_URL + "/bblm-foto/" + primaryId, {
+      method:"PATCH", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ prodNm:prodNm, prodCd:prodCd, stkQty:stkQty, category:category, posisi:posisi })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d.success) throw new Error(d.message||"Gagal update");
+      btn.textContent = "Upload foto...";
+      return fetch(API_BASE_URL + "/bblm-foto/" + primaryId + "/photo", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ fotoBase64: fotoData })
+      }).then(function(){ _fbPhotoMap[primaryId] = fotoData; });
+    })
+    .then(function(){
+      document.getElementById("fbBarcode").value = "";
+      document.getElementById("fbProdNm").value = "";
+      document.getElementById("fbProdCd").value = "";
+      document.getElementById("fbStkQty").value = "";
+      document.getElementById("fbPhotoData").value = "";
+      document.getElementById("fbPhotoPreviewWrap").style.display = "none";
+      document.getElementById("fbPhotoInput").value = "";
+      fbResetCatPos();
+      showToast("Foto diperbarui: " + existNm, "success");
+      loadFotoBblmList();
+    })
+    .catch(function(e){ showToast("Gagal: " + e.message,"error"); })
+    .finally(function(){ btn.disabled=false; btn.innerHTML="&#128190; Simpan"; });
+    return;
+  }
+
   var btn = document.getElementById("fbSubmitBtn");
   btn.disabled = true; btn.textContent = "Menyimpan...";
   fetch(API_BASE_URL + "/bblm-foto", {
