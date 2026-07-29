@@ -1579,6 +1579,15 @@ table td { font-size: 11px; }
 <div id="absensiPanel" class="panel-container">
 <style>
 @keyframes absensiColon{0%,49%{opacity:1}50%,100%{opacity:0.1}}
+@keyframes kioskPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,200,120,0.4)}70%{box-shadow:0 0 0 10px rgba(0,200,120,0)}}
+body.kiosk-mode #bottomNav{display:none!important;}
+body.kiosk-mode .watermark{display:none!important;}
+body.kiosk-mode{padding-bottom:0!important;}
+#kioskExitBtn{display:none;position:fixed;top:12px;right:12px;z-index:99999;background:rgba(10,20,40,0.85);border:1px solid #2a4a7a;color:#66bbff;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:monospace;backdrop-filter:blur(6px);letter-spacing:0.5px;}
+body.kiosk-mode #kioskExitBtn{display:block;}
+#kioskScanFlash{display:none;position:fixed;inset:0;z-index:99998;pointer-events:none;}
+body.kiosk-mode.kiosk-flash-in #kioskScanFlash{display:block;animation:kioskFlash 0.4s ease-out forwards;}
+@keyframes kioskFlash{0%{background:rgba(0,200,120,0.18);opacity:1}100%{background:rgba(0,200,120,0);opacity:0}}
 @media(min-width:768px){
   /* Pusatkan dan batasi lebar panel di PC */
   /* 3-col layout only when panel is active - no override of display:none */
@@ -1667,6 +1676,7 @@ table td { font-size: 11px; }
         <div id="absensiOfflineBadge" style="display:none;align-items:center;font-size:10px;font-family:monospace;padding:3px 10px;border-radius:10px;font-weight:700;"></div>
         <div id="absensiEmpCount" style="font-size:10px;color:#6a9aff;font-family:monospace;"></div>
         <button onclick="absensiRefreshEmployees()" style="background:#1a3a5a;border:1px solid #2a5a7a;color:#66bbff;border-radius:10px;padding:3px 10px;font-size:10px;cursor:pointer;font-family:monospace;">&#8635; Refresh</button>
+        <button id="absensiKioskBtn" onclick="enterKioskMode()" title="Mode Kiosk" style="background:#1a2a4a;border:1px solid #2a4a7a;color:#8899cc;border-radius:10px;padding:3px 10px;font-size:10px;cursor:pointer;font-family:monospace;letter-spacing:0.5px;">&#9974; Kiosk</button>
       </div>
     </div>
     <div style="background:#0a0a1a;padding:12px 14px 10px;border-bottom:1px solid #1a2a3a;flex-shrink:0;">
@@ -1804,6 +1814,8 @@ table td { font-size: 11px; }
 
 <div id="toastContainer"></div>
 <div class="watermark">Created by OP</div>
+<button id="kioskExitBtn" onclick="exitKioskMode()">&#x26F6; Exit Kiosk</button>
+<div id="kioskScanFlash"></div>
 
 <script>
 var $=function(id){return document.getElementById(id)};
@@ -5002,6 +5014,54 @@ function renderPromoItems(){
 
 // ===== ABSENSI SYSTEM =====
 var _absensiClockInterval=null;
+/* ══════════════════════════════════════
+   KIOSK MODE
+══════════════════════════════════════ */
+var _kioskActive = false;
+function enterKioskMode(){
+  _kioskActive = true;
+  document.body.classList.add("kiosk-mode");
+  // Request fullscreen
+  var el = document.documentElement;
+  try {
+    if(el.requestFullscreen) el.requestFullscreen();
+    else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if(el.mozRequestFullScreen) el.mozRequestFullScreen();
+  } catch(e) {}
+  // Scroll to top & focus scan input
+  window.scrollTo(0,0);
+  setTimeout(function(){ var inp=$("absensiInput"); if(inp) inp.focus(); }, 300);
+}
+function exitKioskMode(){
+  _kioskActive = false;
+  document.body.classList.remove("kiosk-mode");
+  try {
+    if(document.exitFullscreen) document.exitFullscreen();
+    else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+    else if(document.mozCancelFullScreen) document.mozCancelFullScreen();
+  } catch(e) {}
+}
+// Exit kiosk when fullscreen is exited via ESC / browser button
+(function(){
+  function _onFsChange(){
+    var fs = document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement;
+    if(!fs && _kioskActive) exitKioskMode();
+  }
+  document.addEventListener("fullscreenchange",_onFsChange);
+  document.addEventListener("webkitfullscreenchange",_onFsChange);
+  document.addEventListener("mozfullscreenchange",_onFsChange);
+})();
+// Flash screen green on successful scan in kiosk mode
+var _kioskFlashTimer = null;
+function kioskFlashSuccess(){
+  if(!_kioskActive) return;
+  document.body.classList.remove("kiosk-flash-in");
+  void document.body.offsetWidth; // reflow to restart animation
+  document.body.classList.add("kiosk-flash-in");
+  if(_kioskFlashTimer) clearTimeout(_kioskFlashTimer);
+  _kioskFlashTimer = setTimeout(function(){ document.body.classList.remove("kiosk-flash-in"); }, 500);
+}
+
 function startAbsensiClock(){
   if(_absensiClockInterval)return;
   var days=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
@@ -5358,6 +5418,7 @@ function renderAbsensiResultOptimistic(empId, empName, isIn){
     +'<td style="padding:7px 8px;color:#ff8844;font-weight:700;border:1px solid #1a2a4a;text-align:right;">-</td>'
     +'</tr></tbody></table></div>';
   res.innerHTML=h;
+  kioskFlashSuccess();
   // Hanya mulai timer kalau scan pertama hari ini — kalau sudah ada riwayat,
   // tunggu GAS balas dulu (renderAbsensiResult) baru timer aktif
   if(!_hasHistory) _absensiStartHideTimer();
