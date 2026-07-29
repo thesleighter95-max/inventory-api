@@ -5018,9 +5018,34 @@ var _absensiClockInterval=null;
    KIOSK MODE
 ══════════════════════════════════════ */
 var _kioskActive = false;
+var _kioskWakeLock = null;
+
+async function _kioskRequestWakeLock(){
+  if(!('wakeLock' in navigator)) return;
+  try {
+    _kioskWakeLock = await navigator.wakeLock.request('screen');
+    _kioskWakeLock.addEventListener('release', function(){
+      // Jika kiosk masih aktif tapi wake lock dilepas browser (tab blur dll),
+      // coba minta ulang saat tab kembali visible
+      _kioskWakeLock = null;
+    });
+  } catch(e) { /* browser tidak support atau ditolak */ }
+}
+function _kioskReleaseWakeLock(){
+  if(_kioskWakeLock){ try{ _kioskWakeLock.release(); }catch(e){} _kioskWakeLock=null; }
+}
+// Re-acquire wake lock saat tab kembali visible (browser melepas otomatis saat tab blur)
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState==='visible' && _kioskActive && !_kioskWakeLock){
+    _kioskRequestWakeLock();
+  }
+});
+
 function enterKioskMode(){
   _kioskActive = true;
   document.body.classList.add("kiosk-mode");
+  // Cegah screen saver / layar mengunci
+  _kioskRequestWakeLock();
   // Request fullscreen
   var el = document.documentElement;
   try {
@@ -5035,6 +5060,8 @@ function enterKioskMode(){
 function exitKioskMode(){
   _kioskActive = false;
   document.body.classList.remove("kiosk-mode");
+  // Lepas wake lock
+  _kioskReleaseWakeLock();
   try {
     if(document.exitFullscreen) document.exitFullscreen();
     else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
