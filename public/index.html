@@ -5164,7 +5164,7 @@ function _absensiClearResult(){
 }
 function _absensiStartHideTimer(){
   if(_absensiResultTimer)clearTimeout(_absensiResultTimer);
-  _absensiResultTimer=setTimeout(function(){_absensiResultTimer=null;_absensiClearResult();},3000);
+  _absensiResultTimer=setTimeout(function(){_absensiResultTimer=null;_absensiClearResult();},10000);
 }
 var _absensiEmpMap={};
 var _absensiStatusMap={};
