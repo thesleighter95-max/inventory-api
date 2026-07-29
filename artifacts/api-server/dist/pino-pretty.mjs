@@ -1690,9 +1690,9 @@ var require_delete_log_property = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/fast-copy@4.0.2/node_modules/fast-copy/dist/cjs/index.cjs
+// ../../node_modules/.pnpm/fast-copy@4.0.4/node_modules/fast-copy/dist/cjs/index.cjs
 var require_cjs = __commonJS({
-  "../../node_modules/.pnpm/fast-copy@4.0.2/node_modules/fast-copy/dist/cjs/index.cjs"(exports) {
+  "../../node_modules/.pnpm/fast-copy@4.0.4/node_modules/fast-copy/dist/cjs/index.cjs"(exports) {
     "use strict";
     var toStringFunction = Function.prototype.toString;
     var toStringObject = Object.prototype.toString;
@@ -1720,7 +1720,7 @@ var require_cjs = __commonJS({
       const type = toStringObject.call(value);
       return type.substring(8, type.length - 1);
     }
-    var { hasOwnProperty, propertyIsEnumerable } = Object.prototype;
+    var { propertyIsEnumerable } = Object.prototype;
     function copyOwnDescriptor(original, clone, property, state) {
       const ownDescriptor = Object.getOwnPropertyDescriptor(original, property) || {
         configurable: true,
@@ -1741,13 +1741,11 @@ var require_cjs = __commonJS({
       }
     }
     function copyOwnPropertiesStrict(value, clone, state) {
-      const names = Object.getOwnPropertyNames(value);
-      for (let index = 0; index < names.length; ++index) {
-        copyOwnDescriptor(value, clone, names[index], state);
+      for (const name of Object.getOwnPropertyNames(value)) {
+        copyOwnDescriptor(value, clone, name, state);
       }
-      const symbols = Object.getOwnPropertySymbols(value);
-      for (let index = 0; index < symbols.length; ++index) {
-        copyOwnDescriptor(value, clone, symbols[index], state);
+      for (const symbol of Object.getOwnPropertySymbols(value)) {
+        copyOwnDescriptor(value, clone, symbol, state);
       }
       return clone;
     }
@@ -1779,9 +1777,9 @@ var require_cjs = __commonJS({
     function copyMapLoose(map, state) {
       const clone = new state.Constructor();
       state.cache.set(map, clone);
-      map.forEach((value, key) => {
+      for (const [key, value] of map) {
         clone.set(key, state.copier(value, state));
-      });
+      }
       return clone;
     }
     function copyMapStrict(map, state) {
@@ -1790,14 +1788,10 @@ var require_cjs = __commonJS({
     function copyObjectLoose(object, state) {
       const clone = getCleanClone(state.prototype);
       state.cache.set(object, clone);
-      for (const key in object) {
-        if (hasOwnProperty.call(object, key)) {
-          clone[key] = state.copier(object[key], state);
-        }
+      for (const key of Object.keys(object)) {
+        clone[key] = state.copier(object[key], state);
       }
-      const symbols = Object.getOwnPropertySymbols(object);
-      for (let index = 0; index < symbols.length; ++index) {
-        const symbol = symbols[index];
+      for (const symbol of Object.getOwnPropertySymbols(object)) {
         if (propertyIsEnumerable.call(object, symbol)) {
           clone[symbol] = state.copier(object[symbol], state);
         }
@@ -1823,9 +1817,9 @@ var require_cjs = __commonJS({
     function copySetLoose(set, state) {
       const clone = new state.Constructor();
       state.cache.set(set, clone);
-      set.forEach((value) => {
+      for (const value of set) {
         clone.add(state.copier(value, state));
-      });
+      }
       return clone;
     }
     function copySetStrict(set, state) {
@@ -1863,6 +1857,8 @@ var require_cjs = __commonJS({
         Array: methods.array,
         ArrayBuffer: methods.arrayBuffer,
         AsyncGenerator: methods.asyncGenerator,
+        BigInt64Array: methods.arrayBuffer,
+        BigUint64Array: methods.arrayBuffer,
         Blob: methods.blob,
         Boolean: copyPrimitiveWrapper,
         DataView: methods.dataView,
@@ -1886,8 +1882,7 @@ var require_cjs = __commonJS({
         Uint8Array: methods.arrayBuffer,
         Uint8ClampedArray: methods.arrayBuffer,
         Uint16Array: methods.arrayBuffer,
-        Uint32Array: methods.arrayBuffer,
-        Uint64Array: methods.arrayBuffer
+        Uint32Array: methods.arrayBuffer
       };
     }
     function createCopier(options = {}) {
