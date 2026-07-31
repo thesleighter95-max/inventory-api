@@ -1638,7 +1638,23 @@ body.kiosk-mode.kiosk-flash-in #kioskScanFlash{display:block;animation:kioskFlas
   /* Tombol admin */
   #absensiAdminSection button{font-size:13px!important;padding:11px 16px!important;}
 }
+/* === TEMA 17 AGUSTUS — aktif 1-31 Agustus, PC only === */
+@keyframes merdekaTicker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes agustusStrip{0%,100%{opacity:0.85}50%{opacity:1}}
+#merdekaMarquee,#hutRiBadge{display:none;}
+@media(min-width:768px){
+  #absensiPanel.aug-theme.active{position:relative!important;background:radial-gradient(circle,rgba(220,38,38,0.06) 1px,transparent 0) 0 0/40px 40px,radial-gradient(circle,rgba(241,245,249,0.04) 1px,transparent 0) 20px 20px/40px 40px,radial-gradient(circle,rgba(60,110,255,0.05) 1px,transparent 0) 10px 10px/30px 30px,linear-gradient(90deg,rgba(80,0,0,0.08) 0%,transparent 20%,transparent 80%,rgba(200,200,200,0.04) 100%),#07070f!important;}
+  #absensiPanel.aug-theme.active::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#dc2626 50%,#e5e7eb 50%);z-index:10;animation:agustusStrip 3s ease-in-out infinite;pointer-events:none;}
+  #absensiPanel.aug-theme.active #petugasPagiSide{border-right:1px solid rgba(220,38,38,0.45)!important;box-shadow:inset -8px 0 24px rgba(220,38,38,0.07)!important;}
+  #absensiPanel.aug-theme.active #petugasSiangSide{border-left:1px solid rgba(229,231,235,0.25)!important;box-shadow:inset 8px 0 24px rgba(241,245,249,0.04)!important;}
+  #absensiPanel.aug-theme #absensiH{color:#f87171!important;text-shadow:0 0 35px rgba(220,38,38,0.45),0 0 15px rgba(220,38,38,0.2)!important;}
+  #absensiPanel.aug-theme #absensiM{color:#f1f5f9!important;text-shadow:0 0 25px rgba(255,255,255,0.18)!important;}
+  #absensiPanel.aug-theme #hutRiBadge{display:block!important;}
+  #absensiPanel.aug-theme #merdekaMarquee{display:block!important;}
+}
 </style>
+<div id="merdekaMarquee" style="display:none;position:absolute;bottom:0;left:0;right:0;z-index:8;height:26px;overflow:hidden;border-top:1px solid rgba(160,0,0,0.3);background:linear-gradient(135deg,rgba(100,0,0,0.93),rgba(22,22,22,0.93));"><div style="display:inline-block;white-space:nowrap;height:100%;line-height:26px;animation:merdekaTicker 26s linear infinite;"><span style="font-family:monospace;font-size:10.5px;font-weight:700;letter-spacing:1.8px;color:#fca5a5;">&nbsp;&nbsp;&nbsp;&#127470;&#127465; DIRGAHAYU REPUBLIK INDONESIA KE-81 &nbsp;&bull;&nbsp; MERDEKA! &nbsp;&bull;&nbsp; 17 AGUSTUS 2026 &nbsp;&bull;&nbsp; BERSATU PADU UNTUK NEGERI &nbsp;&bull;&nbsp;&nbsp;&nbsp;</span><span style="font-family:monospace;font-size:10.5px;font-weight:700;letter-spacing:1.8px;color:#fca5a5;">&#127470;&#127465; DIRGAHAYU REPUBLIK INDONESIA KE-81 &nbsp;&bull;&nbsp; MERDEKA! &nbsp;&bull;&nbsp; 17 AGUSTUS 2026 &nbsp;&bull;&nbsp; BERSATU PADU UNTUK NEGERI &nbsp;&bull;&nbsp;&nbsp;&nbsp;</span></div></div>
+<script>(function(){var d=new Date(),m=d.getMonth(),y=d.getFullYear();if(m===7&&y===2026){var p=document.getElementById('absensiPanel');if(p)p.classList.add('aug-theme');}})()</script>
 <div id="petugasPagiSide" style="display:none;flex-direction:column;">
   <div style="padding:14px 12px 8px;border-bottom:1px solid #1a2a4a;text-align:center;flex-shrink:0;">
     <div style="font-size:9px;font-weight:900;letter-spacing:3px;color:#6a8cff;font-family:monospace;text-transform:uppercase;margin-bottom:2px;">&#9728; SHIFT PAGI</div>
@@ -1663,7 +1679,8 @@ body.kiosk-mode.kiosk-flash-in #kioskScanFlash{display:block;animation:kioskFlas
 </div>
   <div style="background:#0f0f1a;min-height:100vh;display:flex;flex-direction:column;">
     <div style="background:#0a0a14;padding:16px 14px 12px;text-align:center;border-bottom:1px solid #1a2a4a;flex-shrink:0;">
-      <div id="absensiDate" style="font-size:11px;font-weight:700;color:#6a8cff;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;font-family:monospace;background:#1a1a3e;display:inline-block;padding:3px 14px;border-radius:6px;border:1px solid #2a3a6a;"></div>
+      <div id="absensiDate" style="font-size:11px;font-weight:700;color:#6a8cff;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;font-family:monospace;background:#1a1a3e;display:inline-block;padding:3px 14px;border-radius:6px;border:1px solid #2a3a6a;"></div>
+      <div id="hutRiBadge" style="display:none;margin-bottom:8px;"><span style="font-family:monospace;font-size:11px;font-weight:900;letter-spacing:1.5px;background:linear-gradient(135deg,#7f0000,#991b1b);color:#fca5a5;padding:3px 16px;border-radius:20px;border:1px solid rgba(220,38,38,0.45);text-shadow:0 1px 2px rgba(0,0,0,0.6);">&#127881; HUT RI KE-81 &nbsp;&bull;&nbsp; 17 AGUSTUS 2026</span></div>
       <div style="display:flex;justify-content:center;align-items:center;gap:0;margin-bottom:10px;">
         <div id="absensiH" style="font-size:clamp(52px,16vw,78px);font-weight:900;color:#e0f0ff;font-family:monospace;min-width:2ch;text-align:center;line-height:1;text-shadow:0 0 30px rgba(100,180,255,0.15);"></div>
         <div style="font-size:clamp(40px,12vw,60px);font-weight:900;color:#2a5a9a;font-family:monospace;line-height:1;padding:0 3px 8px;animation:absensiColon 1s step-end infinite;">:</div>
