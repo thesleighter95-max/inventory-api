@@ -6509,7 +6509,7 @@ function loadFotoBblmList() {
       _fbDownloaded = {};
       (d.downloadedIds || []).forEach(function(id){ _fbDownloaded[String(id)] = true; });
       fbRenderList();
-      fbAutoLoadAllPhotos();
+      // fbAutoLoadAllPhotos dihapus — foto dimuat manual per item (klik 'Muat Foto')
     })
     .catch(function(){ showToast("Gagal memuat data foto BBLM","error"); })
     .finally(function(){ var ld=document.getElementById("fbLoading"); if(ld) ld.style.display="none"; });
