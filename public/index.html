@@ -6251,6 +6251,7 @@ var _fbFilterPos = "";
 var _fbFilterDate = "";
 var _fbFilterDownload = "";
 var _fbDownloaded = {};
+var _fbCatsCache = null;
 
 var FB_ACTION_PASS = "111";
 function fbCheckPassword(action) {
@@ -6343,7 +6344,13 @@ function fbRenderCatPills(containerId, hiddenId, handlerName, cats) {
 function fbLoadCategories() {
   var section = document.getElementById("fbCatSection");
   if (section && !document.getElementById("fbCategoryVal").value) section.style.display = "none";
+  // Gunakan cache supaya tidak fetch ulang tiap buka tab
+  if(_fbCatsCache) {
+    fbRenderCatPills("fbEditCatPills", "fbEditCatVal", "fbEditPickCat", _fbCatsCache);
+    return;
+  }
   fbGetCategoryList().then(function(cats) {
+    _fbCatsCache = cats;
     fbRenderCatPills("fbEditCatPills", "fbEditCatVal", "fbEditPickCat", cats);
   }).catch(function() {
     var el2 = document.getElementById("fbEditCatPills");
@@ -6468,25 +6475,21 @@ function fbRenderFilterBar() {
 
 function fbSetFilterDownload(el) {
   _fbFilterDownload = el.getAttribute("data-dl") || "";
-  fbRenderFilterBar();
   fbRenderList();
 }
 
 function fbSetFilterDate(el) {
   _fbFilterDate = el.getAttribute("data-dt") || "";
-  fbRenderFilterBar();
   fbRenderList();
 }
 
 function fbSetFilterPos(el) {
   _fbFilterPos = el.getAttribute("data-pos") || "";
-  fbRenderFilterBar();
   fbRenderList();
 }
 
 function fbSetFilterCat(el) {
   _fbFilterCat = el.getAttribute("data-cat") || "";
-  fbRenderFilterBar();
   fbRenderList();
 }
 
@@ -6516,20 +6519,45 @@ function fbAutoLoadAllPhotos() {
   var ids = fbItems.map(function(it){ return it.id; })
     .filter(function(id){ return !_fbPhotoMap[id] && !_fbNoPhoto[id]; });
   if(!ids.length) return;
-  var i = 0;
-  function next() {
-    if(i >= ids.length) return;
-    var id = ids[i++];
+  var idx = 0;
+  var PARALLEL = 3; // muat 3 foto paralel, tidak satu-satu
+  function loadOne(id) {
     fetch(API_BASE_URL + "/bblm-foto/" + id + "/photo")
       .then(function(r){ return r.json(); })
       .then(function(d){
-        if(d.success && d.fotoBase64){ _fbPhotoMap[id] = d.fotoBase64; fbRenderList(); }
-        else { _fbNoPhoto[id] = true; }
-        next();
+        if(d.success && d.fotoBase64){
+          _fbPhotoMap[id] = d.fotoBase64;
+          // Swap elemen DOM langsung — tidak perlu rebuild seluruh list
+          var el = document.getElementById("fbThumb_" + id);
+          if(el) {
+            var img = document.createElement("img");
+            img.src = d.fotoBase64;
+            img.style.cssText = "width:64px;height:48px;object-fit:cover;border-radius:8px;cursor:pointer;";
+            img.dataset.fid = id;
+            img.alt = "foto";
+            img.onclick = function(){ fbOpenPhotoModal(this.dataset.fid); };
+            el.parentNode.replaceChild(img, el);
+          }
+        } else {
+          _fbNoPhoto[id] = true;
+          var el = document.getElementById("fbThumb_" + id);
+          if(el) {
+            el.style.cursor = "default";
+            el.innerHTML = "No<br>Foto";
+            el.style.borderStyle = "dashed";
+            el.style.background = "#0f172a";
+            el.style.borderColor = "#1e293b";
+            el.style.color = "#334155";
+            el.removeAttribute("onclick");
+          }
+        }
       })
-      .catch(function(){ next(); });
+      .catch(function(){ _fbNoPhoto[id] = true; })
+      .finally(function(){ if(idx < ids.length) loadOne(ids[idx++]); });
   }
-  next();
+  // Kickoff PARALLEL workers
+  var start = Math.min(PARALLEL, ids.length);
+  for(var s = 0; s < start; s++) loadOne(ids[idx++]);
 }
 
 function fbRefreshList() { fbShowListSection(); }
@@ -6624,13 +6652,38 @@ function fbRenderSelectBar() {
 
 function fbToggleSelectItem(id, checked) {
   _fbSelected[String(id)] = checked;
+  // Update background card item ybs tanpa rebuild list
+  var container = document.getElementById("fbListContainer");
+  if(container) {
+    var box = container.querySelector("input[type=checkbox][data-fid='"+id+"']");
+    if(box) {
+      var card = box.closest("div[style]");
+      if(card) {
+        card.style.background = checked ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.04)";
+        card.style.borderColor = checked ? "rgba(99,102,241,0.35)" : "rgba(255,255,255,0.08)";
+      }
+    }
+  }
   fbRenderSelectBar();
 }
 
 function fbToggleSelectAll(checked) {
   var visItems = fbGetFilteredItems();
   visItems.forEach(function(it){ _fbSelected[String(it.id)] = checked; });
-  fbRenderList();
+  // Update checkbox style di DOM tanpa rebuild seluruh list
+  var container = document.getElementById("fbListContainer");
+  if(container) {
+    var boxes = container.querySelectorAll("input[type=checkbox][data-fid]");
+    boxes.forEach(function(box){
+      box.checked = !!_fbSelected[String(box.dataset.fid)];
+      var card = box.closest("div[style]");
+      if(card) {
+        card.style.background = checked ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.04)";
+        card.style.borderColor = checked ? "rgba(99,102,241,0.35)" : "rgba(255,255,255,0.08)";
+      }
+    });
+  }
+  fbRenderSelectBar();
 }
 
 function fbGetExtFromDataUrl(dataUrl) {
