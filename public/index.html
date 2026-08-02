@@ -6493,7 +6493,7 @@ function fbSetFilterCat(el) {
   fbRenderList();
 }
 
-function loadFotoBblmList() {
+function loadFotoBblmList(autoLoadPhotos) {
   var ld = document.getElementById("fbLoading");
   if(ld) ld.style.display = "flex";
   document.getElementById("fbListContainer").innerHTML = "";
@@ -6507,9 +6507,10 @@ function loadFotoBblmList() {
       _fbFilterDownload = "";
       _fbSelected = {};
       _fbDownloaded = {};
+      _fbPhotoMap = {}; // reset foto cache supaya foto yang fresh dimuat ulang
       (d.downloadedIds || []).forEach(function(id){ _fbDownloaded[String(id)] = true; });
       fbRenderList();
-      // fbAutoLoadAllPhotos dihapus — foto dimuat manual per item (klik 'Muat Foto')
+      if(autoLoadPhotos) fbAutoLoadAllPhotos(); // hanya kalau diminta
     })
     .catch(function(){ showToast("Gagal memuat data foto BBLM","error"); })
     .finally(function(){ var ld=document.getElementById("fbLoading"); if(ld) ld.style.display="none"; });
@@ -6560,12 +6561,17 @@ function fbAutoLoadAllPhotos() {
   for(var s = 0; s < start; s++) loadOne(ids[idx++]);
 }
 
-function fbRefreshList() { fbShowListSection(); }
+function fbRefreshList() {
+  // Hanya reload data list — foto tidak dimuat ulang otomatis
+  var ls=document.getElementById("fbListSection");
+  if(!ls||ls.style.display==="none") return; // list belum tampil, abaikan
+  loadFotoBblmList(false);
+}
 
 function fbShowListSection() {
   var lb=document.getElementById("fbLoadBtn");if(lb)lb.style.display="none";
   var ls=document.getElementById("fbListSection");if(ls)ls.style.display="block";
-  loadFotoBblmList();
+  loadFotoBblmList(true); // tampilkan list + auto-load semua foto
 }
 function fbRenderList() {
   var c = document.getElementById("fbListContainer");
