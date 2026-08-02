@@ -6562,10 +6562,18 @@ function fbAutoLoadAllPhotos() {
 }
 
 function fbRefreshList() {
-  // Hanya reload data list — foto tidak dimuat ulang otomatis
-  var ls=document.getElementById("fbListSection");
-  if(!ls||ls.style.display==="none") return; // list belum tampil, abaikan
-  loadFotoBblmList(false);
+  // Hanya update total count badge — tidak tampilkan list, tidak load foto
+  var cnt = document.getElementById("fbCount");
+  if(cnt) cnt.textContent = "...";
+  fetch(API_BASE_URL + "/bblm-foto")
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var total = (d.items || []).length;
+      if(cnt) cnt.textContent = total + " item";
+    })
+    .catch(function(){
+      if(cnt) cnt.textContent = "?";
+    });
 }
 
 function fbShowListSection() {
