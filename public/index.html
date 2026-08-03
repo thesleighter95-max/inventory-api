@@ -7234,11 +7234,12 @@ function fbDeleteItem(id) {
 
 function fbClearAll() {
   if(!confirm("Hapus SEMUA data Upload Foto BBLM?\n\nTindakan ini tidak dapat dibatalkan!")) return;
-  var pw = prompt("Password admin:");
+  var pw = prompt("Masukkan password untuk Hapus Semua:");
   if(pw === null) return;
+  if(pw !== "111") { showToast("Password salah!", "error"); return; }
   fetch(API_BASE_URL + "/bblm-foto/clear", {
     method:"POST", headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({ adminPassword: pw })
+    body:JSON.stringify({ adminPassword: "00000" })
   })
   .then(function(r){ return r.json(); })
   .then(function(d){ if(d.success){ _fbPhotoMap={}; showToast("Semua data dihapus","success"); loadFotoBblmList(); } else showToast("Gagal: "+(d.message||""), "error"); })
