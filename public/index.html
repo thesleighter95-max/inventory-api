@@ -1404,8 +1404,13 @@ table td { font-size: 11px; }
       <!-- Photo -->
       <div style="margin-bottom:12px;">
         <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:6px;">FOTO DISPLAY</label>
-        <button onclick="document.getElementById('fbPhotoInput').click()" style="width:100%;background:rgba(234,179,8,0.1);border:1.5px dashed rgba(234,179,8,0.45);border-radius:10px;padding:12px;color:#fbbf24;font-size:13px;font-weight:600;cursor:pointer;">&#128247; Ambil Foto / Pilih dari Galeri</button>
-        <input id="fbPhotoInput" type="file" accept="image/*" capture="environment" style="display:none;" onchange="fbPhotoSelected(this)">
+        <div style="display:flex;gap:8px;">
+          <button onclick="document.getElementById('fbPhotoInputCam').click()" style="flex:1;background:rgba(234,179,8,0.1);border:1.5px solid rgba(234,179,8,0.45);border-radius:10px;padding:11px 6px;color:#fbbf24;font-size:12px;font-weight:700;cursor:pointer;">&#128247; Kamera</button>
+          <button onclick="document.getElementById('fbPhotoInputGal').click()" style="flex:1;background:rgba(99,102,241,0.1);border:1.5px solid rgba(99,102,241,0.45);border-radius:10px;padding:11px 6px;color:#a5b4fc;font-size:12px;font-weight:700;cursor:pointer;">&#128444; Galeri</button>
+        </div>
+        <input id="fbPhotoInputCam" type="file" accept="image/*" capture="environment" style="display:none;" onchange="fbPhotoSelected(this)">
+        <input id="fbPhotoInputGal" type="file" accept="image/*" style="display:none;" onchange="fbPhotoSelected(this)">
+        <input id="fbPhotoInput" type="file" accept="image/*" style="display:none;" onchange="fbPhotoSelected(this)">
         <input id="fbPhotoData" type="hidden" value="">
         <div id="fbPhotoPreviewWrap" style="display:none;margin-top:8px;text-align:center;">
           <img id="fbPhotoPreview" style="max-width:100%;max-height:180px;border-radius:10px;object-fit:cover;border:2px solid rgba(234,179,8,0.35);" alt="preview">
@@ -1499,8 +1504,13 @@ table td { font-size: 11px; }
     </div>
     <div style="margin-bottom:14px;">
       <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:6px;">Foto (opsional — biarkan kosong jika tidak diganti)</label>
-      <button onclick="document.getElementById('fbEditPhotoInput').click()" style="width:100%;background:rgba(234,179,8,0.08);border:1.5px dashed rgba(234,179,8,0.35);border-radius:10px;padding:10px;color:#fbbf24;font-size:12px;font-weight:600;cursor:pointer;">&#128247; Ganti Foto</button>
-      <input id="fbEditPhotoInput" type="file" accept="image/*" capture="environment" style="display:none;" onchange="fbEditPhotoSelected(this)">
+      <div style="display:flex;gap:8px;">
+        <button onclick="document.getElementById('fbEditPhotoInputCam').click()" style="flex:1;background:rgba(234,179,8,0.08);border:1.5px solid rgba(234,179,8,0.35);border-radius:10px;padding:9px 6px;color:#fbbf24;font-size:11px;font-weight:700;cursor:pointer;">&#128247; Kamera</button>
+        <button onclick="document.getElementById('fbEditPhotoInputGal').click()" style="flex:1;background:rgba(99,102,241,0.08);border:1.5px solid rgba(99,102,241,0.35);border-radius:10px;padding:9px 6px;color:#a5b4fc;font-size:11px;font-weight:700;cursor:pointer;">&#128444; Galeri</button>
+      </div>
+      <input id="fbEditPhotoInputCam" type="file" accept="image/*" capture="environment" style="display:none;" onchange="fbEditPhotoSelected(this)">
+      <input id="fbEditPhotoInputGal" type="file" accept="image/*" style="display:none;" onchange="fbEditPhotoSelected(this)">
+      <input id="fbEditPhotoInput" type="file" accept="image/*" style="display:none;" onchange="fbEditPhotoSelected(this)">
       <input id="fbEditPhotoData" type="hidden" value="">
       <div id="fbEditPhotoPreviewWrap" style="display:none;margin-top:8px;text-align:center;">
         <img id="fbEditPhotoPreview" style="max-width:100%;max-height:140px;border-radius:10px;object-fit:cover;border:2px solid rgba(234,179,8,0.35);" alt="preview">
