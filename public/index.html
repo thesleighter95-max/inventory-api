@@ -7056,18 +7056,22 @@ function fbLookupBarcode(bc) {
         }
       }
     }
-    // Pass 4: cari by PROD_CD (exact, case-insensitive)
+    // Pass 4: cari by PROD_CD — strip trailing "000" agar "MI001" = "MI001000"
     if(!found) {
-      var bcUp = bc.toUpperCase();
+      var stripZ = function(s){ return s.replace(/000$/,""); };
+      var bcUp = stripZ(bc.toUpperCase());
       for(var i = 1; i < data.length; i++) {
-        if(data[i] && (data[i][0]||"").toString().trim().toUpperCase() === bcUp) { found = data[i]; break; }
+        var dbCd = stripZ((data[i] && data[i][0]||"").toString().trim().toUpperCase());
+        if(dbCd && dbCd === bcUp) { found = data[i]; break; }
       }
     }
-    // Pass 5: cari by PROD_CD (partial / contains)
-    if(!found) {
-      var bcUp2 = bc.toUpperCase();
+    // Pass 5: cari by PROD_CD prefix (strip trailing "000" juga)
+    if(!found && bc.length >= 2) {
+      var stripZ2 = function(s){ return s.replace(/000$/,""); };
+      var bcUp2 = stripZ2(bc.toUpperCase());
       for(var i = 1; i < data.length; i++) {
-        if(data[i] && (data[i][0]||"").toString().trim().toUpperCase().indexOf(bcUp2) === 0) { found = data[i]; break; }
+        var dbCd2 = stripZ2((data[i] && data[i][0]||"").toString().trim().toUpperCase());
+        if(dbCd2 && dbCd2.indexOf(bcUp2) === 0) { found = data[i]; break; }
       }
     }
     if(found) {
