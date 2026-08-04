@@ -8331,7 +8331,7 @@ document.addEventListener("DOMContentLoaded",function(){
     var timeStr = mins > 0 ? mins + ' mnt ' + s + ' dtk' : s + ' dtk';
 
     if (msg) {
-      msg.textContent = ': ' + empId + ' ⏳ tunggu ' + timeStr + ' lagi';
+      msg.textContent = ': ' + empId + ' ✓ scan sudah masuk — ⏳ tunggu ' + timeStr + ' lagi';
       msg.style.color = '#ffaa33';
     }
     if (badge) {
@@ -8375,7 +8375,7 @@ document.addEventListener("DOMContentLoaded",function(){
         var mins = Math.floor(secs / 60);
         var s = secs % 60;
         var timeStr = mins > 0 ? mins + ' mnt ' + s + ' dtk' : s + ' dtk';
-        msg.textContent = ': ' + empId + ' ⏳ tunggu ' + timeStr + ' lagi';
+        msg.textContent = ': ' + empId + ' ✓ scan sudah masuk — ⏳ tunggu ' + timeStr + ' lagi';
       }
     }, 1000);
   }
