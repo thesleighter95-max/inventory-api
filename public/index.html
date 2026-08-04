@@ -8313,6 +8313,122 @@ document.addEventListener("DOMContentLoaded",function(){
   if(inp&&PIKET_SHEET_URL)inp.value=PIKET_SHEET_URL;
 });
 
+/* =====================================================
+   ABSENSI COOLDOWN — 2 menit per karyawan
+   ===================================================== */
+(function(){
+  var COOLDOWN_MS = 120000;
+  var _cooldownMap = {};          // empId -> timestamp of last successful scan
+  var _cooldownTimer = null;      // interval for countdown display
+
+  /* Show cooldown warning in the existing absensiScanMsg area */
+  function showCooldownWarning(empId, remainingMs) {
+    var msg = $('absensiScanMsg');
+    var badge = $('absensiStatusBadge');
+    var secs = Math.ceil(remainingMs / 1000);
+    var mins = Math.floor(secs / 60);
+    var s = secs % 60;
+    var timeStr = mins > 0 ? mins + ' mnt ' + s + ' dtk' : s + ' dtk';
+
+    if (msg) {
+      msg.textContent = ': ' + empId + ' ⏳ tunggu ' + timeStr + ' lagi';
+      msg.style.color = '#ffaa33';
+    }
+    if (badge) {
+      badge.style.display = 'inline-block';
+      badge.textContent = 'TUNGGU';
+      badge.style.background = '#2a1a00';
+      badge.style.color = '#ffaa33';
+      badge.style.border = '1px solid #ffaa3355';
+    }
+
+    // Beep / visual flash on the scan input
+    var inp = $('absensiInput');
+    if (inp) {
+      inp.style.borderColor = '#ffaa33';
+      inp.style.boxShadow = '0 0 0 3px #ffaa3333';
+      setTimeout(function(){ inp.style.borderColor = ''; inp.style.boxShadow = ''; }, 1000);
+    }
+  }
+
+  /* Continuously update countdown every second while user is on panel */
+  function startCountdown(empId, endTime) {
+    if (_cooldownTimer) clearInterval(_cooldownTimer);
+    _cooldownTimer = setInterval(function() {
+      var remaining = endTime - Date.now();
+      if (remaining <= 0) {
+        clearInterval(_cooldownTimer);
+        _cooldownTimer = null;
+        var msg = $('absensiScanMsg');
+        if (msg && msg.textContent.indexOf('⏳') >= 0) {
+          msg.textContent = '► scan ID karyawan untuk absensi';
+          msg.style.color = '#445577';
+        }
+        var badge = $('absensiStatusBadge');
+        if (badge && badge.textContent === 'TUNGGU') badge.style.display = 'none';
+        return;
+      }
+      // Only update if still showing this employee's warning
+      var msg = $('absensiScanMsg');
+      if (msg && msg.textContent.indexOf('⏳') >= 0) {
+        var secs = Math.ceil(remaining / 1000);
+        var mins = Math.floor(secs / 60);
+        var s = secs % 60;
+        var timeStr = mins > 0 ? mins + ' mnt ' + s + ' dtk' : s + ' dtk';
+        msg.textContent = ': ' + empId + ' ⏳ tunggu ' + timeStr + ' lagi';
+      }
+    }, 1000);
+  }
+
+  /* Save the original function, then replace with guarded version */
+  var _origSubmit = window.submitAbsensi;
+  window.submitAbsensi = function() {
+    var inp = $('absensiInput');
+    if (!inp) { if (_origSubmit) _origSubmit(); return; }
+    var empId = inp.value.trim();
+    if (!empId) { if (_origSubmit) _origSubmit(); return; }
+
+    var now = Date.now();
+    var lastScan = _cooldownMap[empId];
+    if (lastScan && (now - lastScan) < COOLDOWN_MS) {
+      // Still in cooldown
+      var remaining = COOLDOWN_MS - (now - lastScan);
+      showCooldownWarning(empId, remaining);
+      startCountdown(empId, lastScan + COOLDOWN_MS);
+      inp.value = '';
+      if (inp.focus) inp.focus();
+      return; // Block the scan
+    }
+
+    /* Record scan time BEFORE calling original (optimistic — prevents double-tap) */
+    _cooldownMap[empId] = now;
+
+    /* Persist to sessionStorage so page refresh within same session also blocks */
+    try {
+      var stored = JSON.parse(sessionStorage.getItem('_absensiCooldown') || '{}');
+      stored[empId] = now;
+      sessionStorage.setItem('_absensiCooldown', JSON.stringify(stored));
+    } catch(e) {}
+
+    /* Clear any running countdown — valid scan coming through */
+    if (_cooldownTimer) { clearInterval(_cooldownTimer); _cooldownTimer = null; }
+
+    /* Call original submitAbsensi */
+    if (_origSubmit) _origSubmit();
+  };
+
+  /* Restore cooldown map from sessionStorage on load */
+  try {
+    var stored = JSON.parse(sessionStorage.getItem('_absensiCooldown') || '{}');
+    var now = Date.now();
+    Object.keys(stored).forEach(function(k) {
+      if (now - stored[k] < COOLDOWN_MS) _cooldownMap[k] = stored[k]; // still active
+    });
+  } catch(e) {}
+
+})();
+/* END ABSENSI COOLDOWN */
+
 
 </script>
 
