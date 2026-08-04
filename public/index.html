@@ -8317,22 +8317,35 @@ document.addEventListener("DOMContentLoaded",function(){
    ABSENSI COOLDOWN — 2 menit per karyawan
    ===================================================== */
 (function(){
-  var COOLDOWN_MS = 120000;
+  var COOLDOWN_MS    = 120000;
   var _cooldownMap   = {}; // empId -> timestamp last successful scan
-  var _lastResultMap = {}; // empId -> innerHTML of absensiResult after last scan
+  var _lastResultMap = {}; // empId -> latest full innerHTML of #absensiResult
+  var _activeEmpId   = null; // empId yang sedang/terakhir scan valid
   var _cooldownTimer = null;
 
-  /* Snapshot the result table 400ms after a scan (optimistic) + again at 4s (confirmed GAS) */
-  function snapshotResult(empId) {
-    function snap() {
-      var res = $('absensiResult');
-      if (res && res.innerHTML.trim()) _lastResultMap[empId] = res.innerHTML;
-    }
-    setTimeout(snap, 400);
-    setTimeout(snap, 4000);
+  /* ── MutationObserver: tangkap setiap perubahan tabel absensiResult ── */
+  function initObserver() {
+    var res = $('absensiResult');
+    if (!res || res._cooldownObserver) return;
+    var obs = new MutationObserver(function() {
+      if (_activeEmpId && res.innerHTML.trim()) {
+        _lastResultMap[_activeEmpId] = res.innerHTML;
+      }
+    });
+    obs.observe(res, { childList: true, subtree: true, characterData: true });
+    res._cooldownObserver = obs;
   }
 
-  /* Restore last result table for this employee */
+  /* Pastikan observer aktif saat DOM sudah siap */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initObserver);
+  } else {
+    initObserver();
+  }
+  /* Coba lagi setelah 1 detik kalau elemen belum ada */
+  setTimeout(initObserver, 1000);
+
+  /* ── Pulihkan tabel history lengkap untuk empId ── */
   function restoreResult(empId) {
     var saved = _lastResultMap[empId];
     if (!saved) return;
@@ -8340,7 +8353,7 @@ document.addEventListener("DOMContentLoaded",function(){
     if (res) res.innerHTML = saved;
   }
 
-  /* Show warning in absensiScanMsg + restore tabel */
+  /* ── Tampilkan pesan cooldown + tabel history ── */
   function showCooldownWarning(empId, remainingMs) {
     var msg   = $('absensiScanMsg');
     var badge = $('absensiStatusBadge');
@@ -8354,14 +8367,13 @@ document.addEventListener("DOMContentLoaded",function(){
       msg.style.color = '#ffaa33';
     }
     if (badge) {
-      badge.style.display = 'inline-block';
-      badge.textContent   = 'TUNGGU';
+      badge.style.display    = 'inline-block';
+      badge.textContent      = 'TUNGGU';
       badge.style.background = '#2a1a00';
       badge.style.color      = '#ffaa33';
       badge.style.border     = '1px solid #ffaa3355';
     }
 
-    // Flash input border
     var inp = $('absensiInput');
     if (inp) {
       inp.style.borderColor = '#ffaa33';
@@ -8369,11 +8381,11 @@ document.addEventListener("DOMContentLoaded",function(){
       setTimeout(function(){ inp.style.borderColor = ''; inp.style.boxShadow = ''; }, 1000);
     }
 
-    // Tampilkan tabel absen terakhir karyawan ini
+    /* Tampilkan history lengkap hari ini untuk karyawan ini */
     restoreResult(empId);
   }
 
-  /* Live countdown — update pesan setiap detik */
+  /* ── Countdown hidup setiap detik ── */
   function startCountdown(empId, endTime) {
     if (_cooldownTimer) clearInterval(_cooldownTimer);
     _cooldownTimer = setInterval(function() {
@@ -8401,7 +8413,7 @@ document.addEventListener("DOMContentLoaded",function(){
     }, 1000);
   }
 
-  /* Wrap submitAbsensi */
+  /* ── Wrapper submitAbsensi ── */
   var _origSubmit = window.submitAbsensi;
   window.submitAbsensi = function() {
     var inp = $('absensiInput');
@@ -8413,17 +8425,18 @@ document.addEventListener("DOMContentLoaded",function(){
     var lastScan = _cooldownMap[empId];
 
     if (lastScan && (now - lastScan) < COOLDOWN_MS) {
-      // Masih cooldown — blokir, tampilkan pesan + tabel terakhir
-      var remaining = COOLDOWN_MS - (now - lastScan);
-      showCooldownWarning(empId, remaining);
+      /* Masih cooldown: tampilkan warning + history */
+      showCooldownWarning(empId, COOLDOWN_MS - (now - lastScan));
       startCountdown(empId, lastScan + COOLDOWN_MS);
       inp.value = '';
       if (inp.focus) inp.focus();
       return;
     }
 
-    // Scan valid — catat waktu, snapshot hasil, lanjut ke original
+    /* Scan valid */
+    _activeEmpId       = empId;
     _cooldownMap[empId] = now;
+
     try {
       var stored = JSON.parse(sessionStorage.getItem('_absensiCooldown') || '{}');
       stored[empId] = now;
@@ -8432,13 +8445,14 @@ document.addEventListener("DOMContentLoaded",function(){
 
     if (_cooldownTimer) { clearInterval(_cooldownTimer); _cooldownTimer = null; }
 
-    if (_origSubmit) _origSubmit();
+    /* Pastikan observer terpasang sebelum memanggil original
+       (supaya tangkap optimistic render pertama) */
+    initObserver();
 
-    // Simpan tabel hasil setelah dirender (optimistic + confirmed)
-    snapshotResult(empId);
+    if (_origSubmit) _origSubmit();
   };
 
-  /* Pulihkan cooldown dari sessionStorage (tahan refresh halaman) */
+  /* ── Pulihkan cooldown dari sessionStorage (tahan refresh) ── */
   try {
     var stored = JSON.parse(sessionStorage.getItem('_absensiCooldown') || '{}');
     var now    = Date.now();
