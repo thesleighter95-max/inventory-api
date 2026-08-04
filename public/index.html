@@ -1431,6 +1431,9 @@ table td { font-size: 11px; }
     </div>
     <!-- List section — tersembunyi sampai tombol di-klik -->
     <div id="fbListSection" style="display:none;">
+      <div style="margin-bottom:6px;">
+        <input id="fbSearchInp" type="text" placeholder="&#128269; Cari nama, barcode, PROD_CD..." oninput="fbSetSearch(this.value)" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:9px 12px;color:#fff;font-size:13px;outline:none;">
+      </div>
       <div id="fbFilterBar" style="margin-bottom:6px;"></div>
       <div id="fbSelectBar"></div>
       <div id="fbListContainer"></div>
@@ -1461,6 +1464,10 @@ table td { font-size: 11px; }
       <label style="display:flex;align-items:center;gap:10px;padding:11px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;cursor:pointer;">
         <input type="radio" name="fbExportMode" value="checklist" onchange="fbShowExportSub(this.value)" style="accent-color:#6366f1;width:16px;height:16px;">
         <span style="font-size:13px;color:#e2e8f0;font-weight:600;">&#9745; Pilih Manual (Ceklist)</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:11px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;cursor:pointer;">
+        <input type="radio" name="fbExportMode" value="tanggal" onchange="fbShowExportSub(this.value)" style="accent-color:#6366f1;width:16px;height:16px;">
+        <span style="font-size:13px;color:#e2e8f0;font-weight:600;">&#128197; Berdasarkan Tanggal</span>
       </label>
     </div>
     <div id="fbExportSub" style="display:none;margin-bottom:14px;max-height:220px;overflow-y:auto;"></div>
@@ -6262,6 +6269,7 @@ var _fbFilterCat = "";
 var _fbFilterPos = "";
 var _fbFilterDate = "";
 var _fbFilterDownload = "";
+var _fbFilterSearch = "";
 var _fbDownloaded = {};
 var _fbCatsCache = null;
 
@@ -6408,6 +6416,14 @@ function fbGetFilteredItems() {
     if(_fbFilterDate && fbDateStr(it.createdAt) !== _fbFilterDate) return false;
     if(_fbFilterDownload === "sudah" && !_fbDownloaded[String(it.id)]) return false;
     if(_fbFilterDownload === "belum" && !!_fbDownloaded[String(it.id)]) return false;
+    if(_fbFilterSearch) {
+      var q = _fbFilterSearch.toLowerCase();
+      var nm = (it.prodNm||"").toLowerCase();
+      var bc = (it.barcode||"").toLowerCase();
+      var cd = (it.prodCd||"").toLowerCase();
+      var cdStrip = cd.replace(/000$/,"");
+      if(nm.indexOf(q)<0 && bc.indexOf(q)<0 && cd.indexOf(q)<0 && cdStrip.indexOf(q)<0) return false;
+    }
     return true;
   });
 }
@@ -6448,30 +6464,15 @@ function fbRenderFilterBar() {
     });
     h += "</div>";
   }
-  // DATE filter
-  var allDates = [];
-  fbItems.forEach(function(it){
-    var ds = fbDateStr(it.createdAt);
-    if(ds && allDates.indexOf(ds) < 0) allDates.push(ds);
-  });
-  allDates.sort(function(a,b){ return a > b ? -1 : 1; });
-  if(allDates.length > 0) {
-    var today = fbTodayStr();
-    var yesterday = fbYesterdayStr();
-    h += '<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:5px;">'
-      + '<span style="font-size:9px;color:#475569;text-transform:uppercase;font-weight:700;margin-right:2px;">Tgl:</span>';
-    var dtAll = _fbFilterDate==="" ? "background:rgba(99,102,241,0.3);border-color:#818cf8;color:#c7d2fe;" : "background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.10);color:#64748b;";
-    h += '<span style="'+PILLB+dtAll+'" data-dt="" onclick="fbSetFilterDate(this)">Semua</span>';
-    allDates.forEach(function(ds){
-      var label;
-      if(ds === today) label = "&#128197; Hari Ini";
-      else if(ds === yesterday) label = "&#128337; Kemarin";
-      else { var p=ds.split("-"); label = p[2]+"/"+p[1]; }
-      var act = _fbFilterDate===ds ? "background:rgba(56,189,248,0.2);border-color:#38bdf8;color:#7dd3fc;" : "background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.10);color:#64748b;";
-      h += '<span style="'+PILLB+act+'" data-dt="'+ds+'" onclick="fbSetFilterDate(this)">'+label+'</span>';
-    });
-    h += "</div>";
-  }
+  // DATE filter — pakai calendar picker
+  h += '<div style="display:flex;align-items:center;gap:6px;margin-top:5px;">'
+    + '<span style="font-size:9px;color:#475569;text-transform:uppercase;font-weight:700;flex-shrink:0;">Tgl:</span>'
+    + '<input type="date" id="fbDatePicker" value="'+(_fbFilterDate||'')+'" onchange="fbSetFilterDateVal(this.value)" '
+    + 'style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;'
+    + 'padding:4px 8px;color:#e2e8f0;font-size:12px;outline:none;cursor:pointer;">'
+    + '<button onclick="fbSetFilterDateVal('')" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);'
+    + 'border-radius:8px;padding:4px 9px;color:#94a3b8;font-size:11px;cursor:pointer;flex-shrink:0;">&#10005; Reset</button>'
+    + '</div>';
   // DOWNLOAD STATUS filter
   h += '<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:5px;">'
     + '<span style="font-size:9px;color:#475569;text-transform:uppercase;font-weight:700;margin-right:2px;">Unduh:</span>';
@@ -6494,7 +6495,18 @@ function fbSetFilterDate(el) {
   _fbFilterDate = el.getAttribute("data-dt") || "";
   fbRenderList();
 }
+function fbSetFilterDateVal(val) {
+  _fbFilterDate = val || "";
+  fbRenderList();
+  // Sync picker value
+  var pk = document.getElementById('fbDatePicker');
+  if(pk) pk.value = _fbFilterDate;
+}
 
+function fbSetSearch(val) {
+  _fbFilterSearch = (val||"").trim().toLowerCase();
+  fbRenderList();
+}
 function fbSetFilterPos(el) {
   _fbFilterPos = el.getAttribute("data-pos") || "";
   fbRenderList();
@@ -6517,6 +6529,7 @@ function loadFotoBblmList(autoLoadPhotos) {
       _fbFilterPos = "";
       _fbFilterDate = "";
       _fbFilterDownload = "";
+      _fbFilterSearch = "";
       _fbSelected = {};
       _fbDownloaded = {};
       _fbPhotoMap = {}; // reset foto cache supaya foto yang fresh dimuat ulang
@@ -6603,6 +6616,12 @@ function fbRenderList() {
   var html = "";
   fbRenderFilterBar();
   var visItems = fbGetFilteredItems();
+  // Sort: hari ini paling atas, lalu terbaru berdasarkan createdAt
+  visItems.sort(function(a,b){
+    var ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    var tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return tb - ta;
+  });
   var cnt2 = document.getElementById("fbCount");
   if(cnt2) cnt2.textContent = visItems.length + (visItems.length !== fbItems.length ? "/" + fbItems.length : "") + " item";
   for(var i = 0; i < visItems.length; i++) {
@@ -7351,6 +7370,24 @@ function fbShowExportSub(mode) {
             +'<span style="font-size:10px;color:#64748b;">'+cnt+' item</span>'
             +'</label>';
         }).join('');
+  } else if(mode === 'tanggal') {
+    var allDates2 = [];
+    fbItems.forEach(function(i){
+      var ds = fbDateStr(i.createdAt);
+      if(ds && allDates2.indexOf(ds) < 0) allDates2.push(ds);
+    });
+    allDates2.sort(function(a,b){ return a>b?-1:1; });
+    var today2=fbTodayStr(), yest2=fbYesterdayStr();
+    sub.innerHTML = '<p style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;margin:0 0 8px;">Pilih Tanggal:</p>'
+      + allDates2.map(function(ds){
+          var cnt=fbItems.filter(function(i){return fbDateStr(i.createdAt)===ds;}).length;
+          var lbl=ds===today2?'📅 Hari Ini':ds===yest2?'🕙 Kemarin':(function(){var p=ds.split('-');return p[2]+'/'+p[1]+'/'+p[0];})();
+          return '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:4px;cursor:pointer;">'
+            +'<input type="checkbox" name="fbExDate" value="'+ds+'" checked style="accent-color:#6366f1;width:15px;height:15px;">'
+            +'<span style="font-size:12px;color:#e2e8f0;flex:1;">'+lbl+'</span>'
+            +'<span style="font-size:10px;color:#64748b;">'+cnt+' item</span>'
+            +'</label>';
+        }).join('');
   } else if(mode === 'checklist') {
     sub.innerHTML = '<p style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;margin:0 0 8px;">Pilih Item:</p>'
       + fbItems.map(function(it){
@@ -7383,6 +7420,10 @@ function fbDoExportFiltered() {
     document.querySelectorAll('input[name="fbExItem"]:checked').forEach(function(el){selIds[el.value]=true;});
     if(!Object.keys(selIds).length){ showToast("Pilih minimal satu item","error"); return; }
     selectedItems = fbItems.filter(function(i){ return selIds[i.id]; });
+  } else if(mode === 'tanggal') {
+    var selDates = Array.prototype.map.call(document.querySelectorAll('input[name="fbExDate"]:checked'),function(el){return el.value;});
+    if(!selDates.length){ showToast("Pilih minimal satu tanggal","error"); return; }
+    selectedItems = fbItems.filter(function(i){ return selDates.indexOf(fbDateStr(i.createdAt))>=0; });
   }
   if(!selectedItems||!selectedItems.length){ showToast("Tidak ada item yang dipilih","error"); return; }
   document.getElementById('fbExportModal').style.display = 'none';
