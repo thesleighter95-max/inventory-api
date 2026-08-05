@@ -8370,12 +8370,40 @@ document.addEventListener("DOMContentLoaded",function(){
   }
   setTimeout(initObserver, 1000);
 
-  /* ── Pulihkan tabel history lengkap untuk empId ── */
+  /* ── Format timestamp jadi HH:MM:SS ── */
+  function fmtTime(ts) {
+    var d = new Date(ts);
+    return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2);
+  }
+
+  /* ── Pulihkan tabel history lengkap untuk empId,
+       fallback ke mini-card "terakhir scan pukul HH:MM:SS" ── */
   function restoreResult(empId) {
-    var saved = _lastResultMap[empId];
-    if (!saved) return;
     var res = $('absensiResult');
-    if (res) res.innerHTML = saved;
+    if (!res) return;
+    if (_lastResultMap[empId]) {
+      res.innerHTML = _lastResultMap[empId];
+      return;
+    }
+    /* Fallback: ambil jam dari localStorage dan tampilkan mini card */
+    var lastTs = getLastScan(empId);
+    if (!lastTs) return;
+    res.innerHTML =
+      '<div style="padding:10px 14px;background:#0d1a00;border:1px solid #1a4a00;border-radius:10px;margin-top:8px;font-family:monospace;">' +
+      '<div style="font-size:10px;color:#557755;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">Riwayat Terakhir</div>' +
+      '<table style="width:100%;border-collapse:collapse;">' +
+      '<tr style="border-bottom:1px solid #1a3a1a;">' +
+      '<th style="font-size:12px;color:#445566;padding:4px 8px;text-align:left;font-weight:600;">ID</th>' +
+      '<th style="font-size:12px;color:#445566;padding:4px 8px;text-align:left;font-weight:600;">Jam Terakhir Scan</th>' +
+      '<th style="font-size:12px;color:#445566;padding:4px 8px;text-align:left;font-weight:600;">Status</th>' +
+      '</tr>' +
+      '<tr>' +
+      '<td style="font-size:13px;color:#88ddff;padding:6px 8px;font-weight:700;">' + empId + '</td>' +
+      '<td style="font-size:13px;color:#00cc88;padding:6px 8px;font-weight:700;">' + fmtTime(lastTs) + '</td>' +
+      '<td style="font-size:11px;color:#ffaa33;padding:6px 8px;font-weight:700;">⏳ Cooldown</td>' +
+      '</tr>' +
+      '</table>' +
+      '</div>';
   }
 
   /* ── Tampilkan pesan cooldown + tabel history ── */
@@ -8386,9 +8414,11 @@ document.addEventListener("DOMContentLoaded",function(){
     var mins  = Math.floor(secs / 60);
     var s     = secs % 60;
     var timeStr = mins > 0 ? mins + ' mnt ' + s + ' dtk' : s + ' dtk';
+    var lastTs  = getLastScan(empId);
+    var scanAt  = lastTs ? ' (pukul ' + fmtTime(lastTs) + ')' : '';
 
     if (msg) {
-      msg.textContent = ': ' + empId + ' ✓ scan sudah masuk — ⏳ tunggu ' + timeStr + ' lagi';
+      msg.textContent = ': ' + empId + ' ✓ scan sudah masuk' + scanAt + ' — ⏳ tunggu ' + timeStr + ' lagi';
       msg.style.color = '#ffaa33';
     }
     if (badge) {
@@ -8432,7 +8462,9 @@ document.addEventListener("DOMContentLoaded",function(){
         var mins    = Math.floor(secs / 60);
         var s       = secs % 60;
         var timeStr = mins > 0 ? mins + ' mnt ' + s + ' dtk' : s + ' dtk';
-        msg.textContent = ': ' + empId + ' ✓ scan sudah masuk — ⏳ tunggu ' + timeStr + ' lagi';
+        var lastTs2 = getLastScan(empId);
+        var scanAt2 = lastTs2 ? ' (pukul ' + fmtTime(lastTs2) + ')' : '';
+        msg.textContent = ': ' + empId + ' ✓ scan sudah masuk' + scanAt2 + ' — ⏳ tunggu ' + timeStr + ' lagi';
       }
     }, 1000);
   }
