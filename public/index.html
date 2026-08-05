@@ -8376,34 +8376,67 @@ document.addEventListener("DOMContentLoaded",function(){
     return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2);
   }
 
-  /* ── Pulihkan tabel history lengkap untuk empId,
-       fallback ke mini-card "terakhir scan pukul HH:MM:SS" ── */
+  /* ── Pulihkan tabel history: coba memory dulu, lalu fetch GAS ── */
   function restoreResult(empId) {
     var res = $('absensiResult');
     if (!res) return;
+
+    /* 1. Kalau masih ada di memory tab ini — langsung pakai */
     if (_lastResultMap[empId]) {
       res.innerHTML = _lastResultMap[empId];
       return;
     }
-    /* Fallback: ambil jam dari localStorage dan tampilkan mini card */
+
+    /* 2. Tampilkan loading sementara pakai timestamp localStorage */
     var lastTs = getLastScan(empId);
-    if (!lastTs) return;
+    var scanAt = lastTs ? fmtTime(lastTs) : '—';
     res.innerHTML =
       '<div style="padding:10px 14px;background:#0d1a00;border:1px solid #1a4a00;border-radius:10px;margin-top:8px;font-family:monospace;">' +
-      '<div style="font-size:10px;color:#557755;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">Riwayat Terakhir</div>' +
-      '<table style="width:100%;border-collapse:collapse;">' +
-      '<tr style="border-bottom:1px solid #1a3a1a;">' +
-      '<th style="font-size:12px;color:#445566;padding:4px 8px;text-align:left;font-weight:600;">ID</th>' +
-      '<th style="font-size:12px;color:#445566;padding:4px 8px;text-align:left;font-weight:600;">Jam Terakhir Scan</th>' +
-      '<th style="font-size:12px;color:#445566;padding:4px 8px;text-align:left;font-weight:600;">Status</th>' +
-      '</tr>' +
-      '<tr>' +
-      '<td style="font-size:13px;color:#88ddff;padding:6px 8px;font-weight:700;">' + empId + '</td>' +
-      '<td style="font-size:13px;color:#00cc88;padding:6px 8px;font-weight:700;">' + fmtTime(lastTs) + '</td>' +
-      '<td style="font-size:11px;color:#ffaa33;padding:6px 8px;font-weight:700;">⏳ Cooldown</td>' +
-      '</tr>' +
-      '</table>' +
+      '<div style="font-size:10px;color:#557755;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">⏳ Memuat riwayat dari spreadsheet...</div>' +
+      '<div style="font-size:11px;color:#445566;">Terakhir scan tercatat: ' + scanAt + '</div>' +
       '</div>';
+
+    /* 3. Fetch getSummary hari ini dari GAS, filter per empId */
+    var today = (function(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1<10?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate(); })();
+    var gasUrl = (typeof ABSENSI_GAS_URL !== 'undefined') ? ABSENSI_GAS_URL : '';
+    if (!gasUrl) return;
+
+    fetch(gasUrl + '?action=getSummary&date=' + today)
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (!j.success || !j.records) return;
+        var rec = null;
+        for (var i=0; i<j.records.length; i++) {
+          if (String(j.records[i].employeeId) === String(empId)) { rec = j.records[i]; break; }
+        }
+        if (!rec) return;
+        var statusC = (rec.lastStatus === 'In') ? '#00ff88' : '#ff6644';
+        var html =
+          '<div style="background:#0d0d22;padding:7px 10px 6px;border-bottom:1px solid #1a2a4a;">' +
+          '<span style="font-size:11px;color:#00cc88;font-family:monospace;">&#10003; Riwayat Hari Ini</span>' +
+          (rec.employeeName ? '<span style="font-size:11px;color:#6688bb;font-family:monospace;margin-left:8px;">&#8212; ' + rec.employeeName + '</span>' : '') +
+          '</div>' +
+          '<div style="overflow-x:auto;">' +
+          '<table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:12px;">' +
+          '<thead><tr style="background:#0d0d22;">' +
+          '<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;">Pertama Masuk</th>' +
+          '<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;">Terakhir Scan</th>' +
+          '<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;">Total Scan</th>' +
+          '<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;">Status</th>' +
+          '</tr></thead><tbody>' +
+          '<tr>' +
+          '<td style="padding:7px 8px;color:#88ddff;font-weight:700;border:1px solid #12122a;text-align:center;">' + (rec.firstIn || '—') + '</td>' +
+          '<td style="padding:7px 8px;color:#00cc88;font-weight:700;border:1px solid #12122a;text-align:center;">' + (rec.lastOut || rec.firstIn || '—') + '</td>' +
+          '<td style="padding:7px 8px;color:#ffcc44;font-weight:700;border:1px solid #12122a;text-align:center;">' + (rec.scanCount || 1) + 'x</td>' +
+          '<td style="padding:7px 8px;text-align:center;border:1px solid #12122a;"><b style="color:' + statusC + ';">' + (rec.lastStatus || '—') + '</b></td>' +
+          '</tr>' +
+          '</tbody></table></div>';
+        var resEl = $('absensiResult');
+        if (resEl) { resEl.innerHTML = html; _lastResultMap[empId] = html; }
+      })
+      .catch(function(){
+        /* Biarkan tampilan loading tetap ada, tidak crash */
+      });
   }
 
   /* ── Tampilkan pesan cooldown + tabel history ── */
