@@ -8331,6 +8331,20 @@ document.addEventListener("DOMContentLoaded",function(){
   var _activeEmpId   = null;
   var _cooldownTimer = null;
 
+  /* ── Helper: tanggal lokal dalam format YYYY-MM-DD ── */
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' +
+      ('0'+(d.getMonth()+1)).slice(-2) + '-' +
+      ('0'+d.getDate()).slice(-2);
+  }
+  function tsToDateStr(ts) {
+    var d = new Date(ts);
+    return d.getFullYear() + '-' +
+      ('0'+(d.getMonth()+1)).slice(-2) + '-' +
+      ('0'+d.getDate()).slice(-2);
+  }
+
   /* ── Baca / tulis localStorage ── */
   function readStorage() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { return {}; }
@@ -8339,16 +8353,37 @@ document.addEventListener("DOMContentLoaded",function(){
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(map)); } catch(e) {}
   }
 
-  /* ── Ambil timestamp terakhir scan empId (gabung in-storage + lintas tab) ── */
+  /* ── Bersihkan semua entry yang bukan hari ini ── */
+  function purgeOldEntries() {
+    var today  = todayStr();
+    var stored = readStorage();
+    var changed = false;
+    Object.keys(stored).forEach(function(k) {
+      if (tsToDateStr(stored[k]) !== today) { delete stored[k]; changed = true; }
+    });
+    if (changed) writeStorage(stored);
+  }
+
+  /* ── Ambil timestamp terakhir scan empId;
+       kembalikan 0 jika beda hari (otomatis hapus entry lama) ── */
   function getLastScan(empId) {
     var stored = readStorage();
-    return stored[empId] || 0;
+    var ts = stored[empId] || 0;
+    if (ts && tsToDateStr(ts) !== todayStr()) {
+      delete stored[empId];
+      writeStorage(stored);
+      return 0;
+    }
+    return ts;
   }
   function setLastScan(empId, ts) {
     var stored = readStorage();
     stored[empId] = ts;
     writeStorage(stored);
   }
+
+  /* Bersihkan entry lama saat halaman dimuat */
+  purgeOldEntries();
 
   /* ── MutationObserver: tangkap setiap perubahan tabel absensiResult ── */
   function initObserver() {
