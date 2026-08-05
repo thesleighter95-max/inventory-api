@@ -8320,13 +8320,35 @@ document.addEventListener("DOMContentLoaded",function(){
 
 /* =====================================================
    ABSENSI COOLDOWN — 2 menit per karyawan
+   FIX: pakai localStorage (dibagi semua tab) + re-read
+        dari storage di setiap scan agar tab lain tidak
+        bisa bypass dengan buka tab baru.
    ===================================================== */
 (function(){
   var COOLDOWN_MS    = 120000;
-  var _cooldownMap   = {}; // empId -> timestamp last successful scan
+  var STORAGE_KEY    = '_absensiCooldown';
   var _lastResultMap = {}; // empId -> latest full innerHTML of #absensiResult
-  var _activeEmpId   = null; // empId yang sedang/terakhir scan valid
+  var _activeEmpId   = null;
   var _cooldownTimer = null;
+
+  /* ── Baca / tulis localStorage ── */
+  function readStorage() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { return {}; }
+  }
+  function writeStorage(map) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(map)); } catch(e) {}
+  }
+
+  /* ── Ambil timestamp terakhir scan empId (gabung in-storage + lintas tab) ── */
+  function getLastScan(empId) {
+    var stored = readStorage();
+    return stored[empId] || 0;
+  }
+  function setLastScan(empId, ts) {
+    var stored = readStorage();
+    stored[empId] = ts;
+    writeStorage(stored);
+  }
 
   /* ── MutationObserver: tangkap setiap perubahan tabel absensiResult ── */
   function initObserver() {
@@ -8341,13 +8363,11 @@ document.addEventListener("DOMContentLoaded",function(){
     res._cooldownObserver = obs;
   }
 
-  /* Pastikan observer aktif saat DOM sudah siap */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initObserver);
   } else {
     initObserver();
   }
-  /* Coba lagi setelah 1 detik kalau elemen belum ada */
   setTimeout(initObserver, 1000);
 
   /* ── Pulihkan tabel history lengkap untuk empId ── */
@@ -8386,7 +8406,6 @@ document.addEventListener("DOMContentLoaded",function(){
       setTimeout(function(){ inp.style.borderColor = ''; inp.style.boxShadow = ''; }, 1000);
     }
 
-    /* Tampilkan history lengkap hari ini untuk karyawan ini */
     restoreResult(empId);
   }
 
@@ -8427,10 +8446,10 @@ document.addEventListener("DOMContentLoaded",function(){
     if (!empId) { if (_origSubmit) _origSubmit(); return; }
 
     var now      = Date.now();
-    var lastScan = _cooldownMap[empId];
+    /* Re-read dari localStorage setiap scan — menangkap scan dari tab lain */
+    var lastScan = getLastScan(empId);
 
     if (lastScan && (now - lastScan) < COOLDOWN_MS) {
-      /* Masih cooldown: tampilkan warning + history */
       showCooldownWarning(empId, COOLDOWN_MS - (now - lastScan));
       startCountdown(empId, lastScan + COOLDOWN_MS);
       inp.value = '';
@@ -8438,33 +8457,15 @@ document.addEventListener("DOMContentLoaded",function(){
       return;
     }
 
-    /* Scan valid */
-    _activeEmpId       = empId;
-    _cooldownMap[empId] = now;
-
-    try {
-      var stored = JSON.parse(sessionStorage.getItem('_absensiCooldown') || '{}');
-      stored[empId] = now;
-      sessionStorage.setItem('_absensiCooldown', JSON.stringify(stored));
-    } catch(e) {}
+    /* Scan valid — catat ke localStorage langsung */
+    _activeEmpId = empId;
+    setLastScan(empId, now);
 
     if (_cooldownTimer) { clearInterval(_cooldownTimer); _cooldownTimer = null; }
 
-    /* Pastikan observer terpasang sebelum memanggil original
-       (supaya tangkap optimistic render pertama) */
     initObserver();
-
     if (_origSubmit) _origSubmit();
   };
-
-  /* ── Pulihkan cooldown dari sessionStorage (tahan refresh) ── */
-  try {
-    var stored = JSON.parse(sessionStorage.getItem('_absensiCooldown') || '{}');
-    var now    = Date.now();
-    Object.keys(stored).forEach(function(k) {
-      if (now - stored[k] < COOLDOWN_MS) _cooldownMap[k] = stored[k];
-    });
-  } catch(e) {}
 
 })();
 /* END ABSENSI COOLDOWN */
