@@ -8872,14 +8872,20 @@ function loadDashboard(){
     var info=$('dashSheetInfo');if(info)info.textContent='Masukkan URL spreadsheet di atas lalu klik Simpan & Muat';
     return;
   }
-  // Ubah URL spreadsheet biasa ke CSV export jika perlu
+  // Ubah URL spreadsheet ke CSV jika perlu
   var csvUrl=url;
-  var idMatch=url.match(/\/spreadsheets\/d\/([A-Za-z0-9_-]+)/);
-  if(idMatch){
-    var sheetId=idMatch[1];
-    var gidMatch=url.match(/[#&?]gid=([0-9]+)/);
-    var gid=gidMatch?gidMatch[1]:'0';
-    csvUrl='https://docs.google.com/spreadsheets/d/'+sheetId+'/export?format=csv&gid='+gid;
+  if(url.indexOf('output=csv')>=0||url.indexOf('/pub?')>=0||url.indexOf('/pub ')>=0){
+    // Sudah format publish CSV — pakai langsung
+    csvUrl=url;
+  } else {
+    // URL spreadsheet biasa /d/<id>/ — konversi ke export CSV
+    var idMatch=url.match(/\/spreadsheets\/d\/(?!e\/)([A-Za-z0-9_-]+)/);
+    if(idMatch){
+      var sheetId=idMatch[1];
+      var gidMatch=url.match(/[#&?]gid=([0-9]+)/);
+      var gid=gidMatch?gidMatch[1]:'0';
+      csvUrl='https://docs.google.com/spreadsheets/d/'+sheetId+'/export?format=csv&gid='+gid;
+    }
   }
   var btn=$('dashRefreshBtn');
   if(btn){btn.disabled=true;btn.textContent='⏳ Memuat...';}
