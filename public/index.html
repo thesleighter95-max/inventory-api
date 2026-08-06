@@ -1802,6 +1802,63 @@ table td { font-size: 11px; }
 </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════
+     DASHBOARD PANEL — admin only
+════════════════════════════════════════════════════════ -->
+<div id="dashboardPanel" class="panel-container" style="background:#07070f;min-height:100vh;padding-bottom:80px;">
+  <div style="max-width:900px;margin:0 auto;padding:16px 14px 0;">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:3px;color:#6a8cff;font-family:monospace;text-transform:uppercase;">Admin Dashboard</div>
+        <div style="font-size:16px;font-weight:900;color:#e0f0ff;margin-top:2px;">Top High Stock Value</div>
+        <div style="font-size:10px;color:#445577;font-family:monospace;">by Amount MTD — Top 20</div>
+      </div>
+      <button onclick="loadDashboard()" id="dashRefreshBtn"
+        style="background:#1a3a5a;border:1px solid #2a5a7a;color:#66bbff;border-radius:10px;padding:8px 16px;font-size:11px;font-family:monospace;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">
+        &#8635; Refresh
+      </button>
+    </div>
+
+    <!-- Config URL Sheet (admin) -->
+    <div style="background:#0d1a2a;border:1px solid #1a3a5a;border-radius:12px;padding:12px 14px;margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:700;color:#445577;letter-spacing:2px;text-transform:uppercase;font-family:monospace;margin-bottom:8px;">&#9881; Sumber Data — Google Spreadsheet URL</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="dashSheetUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/..."
+          style="flex:1;background:#07070f;border:1px solid #1a3a5a;border-radius:8px;padding:8px 10px;font-size:11px;color:#88aacc;font-family:monospace;outline:none;">
+        <button onclick="saveDashSheetUrl()"
+          style="background:#1a3a6a;border:1px solid #2a5a9a;color:#6aadff;border-radius:8px;padding:8px 14px;font-size:11px;font-family:monospace;font-weight:700;cursor:pointer;white-space:nowrap;">
+          Simpan &amp; Muat
+        </button>
+      </div>
+      <div id="dashSheetInfo" style="font-size:9px;color:#334466;font-family:monospace;margin-top:6px;">Masukkan URL spreadsheet yang sudah di-publish (File → Share → Publish to web → CSV)</div>
+    </div>
+
+    <!-- Status -->
+    <div id="dashStatus" style="font-size:11px;font-family:monospace;color:#6688aa;margin-bottom:10px;min-height:16px;"></div>
+
+    <!-- Table -->
+    <div style="overflow-x:auto;border-radius:12px;border:1px solid #1a2a4a;">
+      <table style="width:100%;border-collapse:collapse;font-family:monospace;">
+        <thead>
+          <tr style="background:#0d1a30;border-bottom:2px solid #1a3a6a;">
+            <th style="padding:10px 12px;font-size:10px;font-weight:900;color:#6a8cff;letter-spacing:1px;text-align:center;white-space:nowrap;">#</th>
+            <th style="padding:10px 12px;font-size:10px;font-weight:900;color:#6a8cff;letter-spacing:1px;text-align:center;white-space:nowrap;">Cat</th>
+            <th style="padding:10px 12px;font-size:10px;font-weight:900;color:#6a8cff;letter-spacing:1px;text-align:left;white-space:nowrap;">ProdCode</th>
+            <th style="padding:10px 12px;font-size:10px;font-weight:900;color:#6a8cff;letter-spacing:1px;text-align:left;">ProdName</th>
+            <th style="padding:10px 12px;font-size:10px;font-weight:900;color:#6a8cff;letter-spacing:1px;text-align:right;white-space:nowrap;">Qty</th>
+            <th style="padding:10px 12px;font-size:10px;font-weight:900;color:#6a8cff;letter-spacing:1px;text-align:right;white-space:nowrap;">Amount</th>
+          </tr>
+        </thead>
+        <tbody id="dashTableBody">
+          <tr><td colspan="6" style="padding:40px;text-align:center;color:#2a3a5a;font-size:12px;font-family:monospace;">Belum ada data — masukkan URL spreadsheet di atas</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="dashUpdatedAt" style="font-size:9px;color:#2a3a5a;font-family:monospace;margin-top:8px;text-align:right;"></div>
+  </div>
+</div>
+
 <div id="toastContainer"></div>
 <div class="watermark">Created by OP</div>
 
@@ -2227,6 +2284,7 @@ function renderAdminNav(){
     '<div id="navNeo" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="openNeoMonitor()"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#7c3aed;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg><span class="text-[9px] font-semibold" style="color:#a78bfa;">Server Neo</span></div>'+
     '<div id="navFotoBblm" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'fotobblm\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#f59e0b;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="text-[9px] font-semibold" style="color:#fbbf24;">Foto BBLM</span></div>'+
 '<div id="navAbsensi" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'absensi\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#3b82f6;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[9px] font-semibold">Absensi</span></div>'+
+'<div id="navDashboard" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'dashboard\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#6a8cff;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg><span class="text-[9px] font-semibold" style="color:#6a8cff;">Dashboard</span></div>'+
 '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
 }
@@ -3200,6 +3258,7 @@ function switchMainTab(tab){
   else if(tab==="neo"){$("neoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navNeo");setMarquee(false);loadNeoStatus();}
   else if(tab==="fotobblm"){$("fotoBblmPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navFotoBblm");setMarquee(false);loadFotoBblmList();fbLoadCategories();}
   else if(tab==="absensi"){$("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();(function(){var _td=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();if(_absensiLastScanDate!==_td&&(new Date()).getHours()>=2){var _r=$("absensiResult");if(_r)_r.innerHTML="";var _b=$("absensiStatusBadge");if(_b)_b.style.display="none";var _m=$("absensiScanMsg");if(_m){_m.textContent="\u25BA scan ID karyawan untuk absensi";_m.style.color="#445577";}_absensiLastScanDate=_td;_absensiStatusMap={};}})();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
+  else if(tab==="dashboard"){$("dashboardPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navDashboard");setMarquee(false);initDashboard();}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
 function showLoadingInv(t){$("hasil").innerHTML='<div class="flex flex-col items-center justify-center p-10 text-pro-text"><svg class="animate-spin h-6 w-6 text-pro-main mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-xs">'+(t||"Memuat...")+'</span></div>'}
@@ -8139,6 +8198,150 @@ document.addEventListener("DOMContentLoaded",function(){
   setTimeout(function(){auCheck();setInterval(auCheck,_auInterval);},10000);
 })();
 // ===== END AUTO-UPDATE =====
+
+// ═══════════════════════════════════════════════════════
+// DASHBOARD — Top 20 High Stock Value by Amount MTD
+// ═══════════════════════════════════════════════════════
+var _DASH_SHEET_KEY='dashboard_stock_sheet_url';
+
+function initDashboard(){
+  var saved=localStorage.getItem(_DASH_SHEET_KEY)||'';
+  var inp=$('dashSheetUrl');if(inp)inp.value=saved;
+  if(saved)loadDashboard();
+}
+
+function saveDashSheetUrl(){
+  var inp=$('dashSheetUrl');if(!inp)return;
+  var url=inp.value.trim();
+  if(!url){showToast('Masukkan URL spreadsheet terlebih dahulu','error');return;}
+  localStorage.setItem(_DASH_SHEET_KEY,url);
+  loadDashboard();
+}
+
+function loadDashboard(){
+  var url=localStorage.getItem(_DASH_SHEET_KEY)||'';
+  var inp=$('dashSheetUrl');
+  if(!url&&inp)url=inp.value.trim();
+  if(!url){
+    var info=$('dashSheetInfo');if(info)info.textContent='Masukkan URL spreadsheet di atas lalu klik Simpan & Muat';
+    return;
+  }
+  // Ubah URL spreadsheet biasa ke CSV export jika perlu
+  var csvUrl=url;
+  var idMatch=url.match(/\/spreadsheets\/d\/([A-Za-z0-9_-]+)/);
+  if(idMatch){
+    var sheetId=idMatch[1];
+    var gidMatch=url.match(/[#&?]gid=([0-9]+)/);
+    var gid=gidMatch?gidMatch[1]:'0';
+    csvUrl='https://docs.google.com/spreadsheets/d/'+sheetId+'/export?format=csv&gid='+gid;
+  }
+  var btn=$('dashRefreshBtn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Memuat...';}
+  var status=$('dashStatus');if(status)status.textContent='Mengambil data dari spreadsheet...';
+  fetch(csvUrl+'&_cb='+Date.now())
+  .then(function(r){
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return r.text();
+  })
+  .then(function(csv){
+    var rows=parseDashCSV(csv);
+    if(rows.length<2){throw new Error('Data kosong atau format tidak dikenali');}
+    var headers=rows[0].map(function(h){return String(h).trim().toLowerCase();});
+    // Deteksi kolom berdasarkan nama header
+    var iCat=findColIdx(headers,['cat','c','kategori','category']);
+    var iProdCd=findColIdx(headers,['prod cd','prodcd','prod_cd','kode','barcode','product code','prodcode']);
+    var iProdNm=findColIdx(headers,['prod nm','prodnm','prod_nm','nama','name','product name','prodname','product nm']);
+    var iQty=findColIdx(headers,['stk qty','stkqty','stk_qty','qty','quantity','jumlah','stock qty']);
+    var iAmt=findColIdx(headers,['stock camt','stockcamt','stock_camt','amount','nilai','value','amt','camt','stock amt']);
+    // Fallback ke posisi kolom tetap jika header tidak dikenali (C=2,E=4,G=6,AF=31,AH=33)
+    if(iCat<0)iCat=2;if(iProdCd<0)iProdCd=4;if(iProdNm<0)iProdNm=6;
+    if(iQty<0)iQty=31;if(iAmt<0)iAmt=33;
+    var data=[];
+    for(var i=1;i<rows.length;i++){
+      var r=rows[i];
+      if(!r||!r.length)continue;
+      var amt=parseNum(r[iAmt]);
+      if(!amt&&amt!==0)continue;
+      data.push({
+        cat:String(r[iCat]||'').trim(),
+        prodCd:String(r[iProdCd]||'').trim(),
+        prodNm:String(r[iProdNm]||'').trim(),
+        qty:parseNum(r[iQty]),
+        amt:amt
+      });
+    }
+    // Sort by amount desc, take top 20
+    data.sort(function(a,b){return b.amt-a.amt;});
+    var top20=data.slice(0,20);
+    renderDashTable(top20);
+    if(status)status.textContent='✓ '+data.length+' baris diproses — menampilkan Top 20';
+    var upd=$('dashUpdatedAt');if(upd)upd.textContent='Diperbarui: '+new Date().toLocaleString('id-ID',{timeZone:'Asia/Makassar'});
+    var info=$('dashSheetInfo');if(info)info.textContent='URL tersimpan. Klik Refresh untuk memperbarui data.';
+  })
+  .catch(function(e){
+    if(status)status.textContent='⚠ Gagal mengambil data: '+e.message+'. Pastikan spreadsheet sudah di-publish.';
+    showToast('Gagal memuat dashboard: '+e.message,'error');
+  })
+  .finally(function(){
+    if(btn){btn.disabled=false;btn.textContent='⇄ Refresh';}
+  });
+}
+
+function findColIdx(headers,keywords){
+  for(var k=0;k<keywords.length;k++){
+    for(var i=0;i<headers.length;i++){
+      if(headers[i].indexOf(keywords[k])>=0)return i;
+    }
+  }
+  return -1;
+}
+
+function parseNum(v){
+  if(v===undefined||v===null||v==='')return 0;
+  var n=parseFloat(String(v).replace(/[^0-9.,-]/g,'').replace(/\./g,'').replace(',','.'));
+  return isNaN(n)?0:n;
+}
+
+function parseDashCSV(text){
+  var rows=[];var lines=text.split(/\r?\n/);
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i];if(!line.trim())continue;
+    var cols=[];var cur='';var inQ=false;
+    for(var j=0;j<line.length;j++){
+      var ch=line[j];
+      if(ch==='"'){if(inQ&&line[j+1]==='"'){cur+='"';j++;}else{inQ=!inQ;}}
+      else if(ch===','&&!inQ){cols.push(cur);cur='';}
+      else cur+=ch;
+    }
+    cols.push(cur);rows.push(cols);
+  }
+  return rows;
+}
+
+function renderDashTable(data){
+  var tbody=$('dashTableBody');if(!tbody)return;
+  if(!data.length){
+    tbody.innerHTML='<tr><td colspan="6" style="padding:40px;text-align:center;color:#2a3a5a;font-size:12px;font-family:monospace;">Tidak ada data ditemukan</td></tr>';
+    return;
+  }
+  var fmtNum=function(n){return new Intl.NumberFormat('id-ID').format(Math.round(n));};
+  var h='';
+  for(var i=0;i<data.length;i++){
+    var d=data[i];
+    var isOdd=i%2===0;
+    var bg=isOdd?'#07080f':'#0a0d18';
+    var rankColor=i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':'#445577';
+    h+='<tr style="background:'+bg+';border-bottom:1px solid #0d1a2a;">'+
+      '<td style="padding:9px 12px;text-align:center;font-size:12px;font-weight:900;color:'+rankColor+';font-family:monospace;">'+(i+1)+'</td>'+
+      '<td style="padding:9px 12px;text-align:center;font-size:11px;font-weight:700;color:#88aacc;font-family:monospace;">'+d.cat+'</td>'+
+      '<td style="padding:9px 12px;font-size:11px;color:#6688aa;font-family:monospace;white-space:nowrap;">'+d.prodCd+'</td>'+
+      '<td style="padding:9px 12px;font-size:12px;color:#ddeeff;font-weight:600;max-width:240px;">'+d.prodNm+'</td>'+
+      '<td style="padding:9px 12px;text-align:right;font-size:12px;color:#88ddff;font-family:monospace;white-space:nowrap;">'+fmtNum(d.qty)+'</td>'+
+      '<td style="padding:9px 12px;text-align:right;font-size:12px;color:#00ee88;font-weight:800;font-family:monospace;white-space:nowrap;">'+fmtNum(d.amt)+'</td>'+
+    '</tr>';
+  }
+  tbody.innerHTML=h;
+}
 </script>
 </body>
 </html>
