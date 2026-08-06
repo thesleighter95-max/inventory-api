@@ -8950,7 +8950,8 @@ function findColIdx(headers,keywords){
 
 function parseNum(v){
   if(v===undefined||v===null||v==='')return 0;
-  var n=parseFloat(String(v).replace(/[^0-9.,-]/g,'').replace(/\./g,'').replace(',','.'));
+  // Hapus semua karakter selain angka — aman untuk format 482,296,584 maupun 482.296.584
+  var n=parseInt(String(v).replace(/[^0-9]/g,''),10);
   return isNaN(n)?0:n;
 }
 
