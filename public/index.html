@@ -350,6 +350,7 @@ table td { font-size: 11px; }
 </head>
 
 <body class="pb-24 pt-4" style="padding-top:52px;">
+<script>if(screen.width<768)document.body.classList.add('is-mobile-device');</script>
 
 <!-- NOTICE: Pindah ke Vercel -->
 <div id="pindah-notice" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); align-items:center; justify-content:center;">
@@ -1362,10 +1363,12 @@ table td { font-size: 11px; }
       <div id="fbReader" style="width:100%;border-radius:10px;overflow:hidden;margin-bottom:8px;"></div>
       <!-- Barcode row -->
       <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <input id="fbBarcode" type="text" inputmode="numeric" placeholder="Scan atau ketik barcode..." style="flex:1;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 12px;color:#fff;font-size:14px;outline:none;min-width:0;" onkeydown="if(event.key==='Enter')fbLookupBarcode(this.value.trim());">
+        <input id="fbBarcode" type="text" inputmode="text" placeholder="Scan barcode atau ketik PROD_CD..." style="flex:1;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 12px;color:#fff;font-size:14px;outline:none;min-width:0;" onkeydown="if(event.key==='Enter')fbLookupBarcode(this.value.trim());" oninput="if(!this.value.trim()){var dw=document.getElementById('fbDupWarning');if(dw){dw.style.display='none';dw.innerHTML='';} }">
         <button onclick="fbStartScan()" style="background:rgba(99,102,241,0.2);border:1.5px solid rgba(99,102,241,0.4);border-radius:10px;padding:10px 13px;color:#a5b4fc;font-size:18px;cursor:pointer;flex-shrink:0;" title="Scan Barcode">&#9638;</button>
         <button onclick="fbLookupBarcode(document.getElementById('fbBarcode').value.trim())" style="background:rgba(99,102,241,0.15);border:1.5px solid rgba(99,102,241,0.3);border-radius:10px;padding:10px 12px;color:#a5b4fc;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">Cari</button>
       </div>
+      <!-- Duplikat warning -->
+      <div id="fbDupWarning" style="display:none;background:rgba(234,179,8,0.12);border:1.5px solid rgba(234,179,8,0.35);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#fde047;font-family:monospace;"></div>
       <!-- PROD_CD + STK QTY -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
         <div>
@@ -1402,8 +1405,13 @@ table td { font-size: 11px; }
       <!-- Photo -->
       <div style="margin-bottom:12px;">
         <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:6px;">FOTO DISPLAY</label>
-        <button onclick="document.getElementById('fbPhotoInput').click()" style="width:100%;background:rgba(234,179,8,0.1);border:1.5px dashed rgba(234,179,8,0.45);border-radius:10px;padding:12px;color:#fbbf24;font-size:13px;font-weight:600;cursor:pointer;">&#128247; Ambil Foto / Pilih dari Galeri</button>
-        <input id="fbPhotoInput" type="file" accept="image/*" capture="environment" style="display:none;" onchange="fbPhotoSelected(this)">
+        <div style="display:flex;gap:8px;">
+          <button onclick="document.getElementById('fbPhotoInputCam').click()" style="flex:1;background:rgba(234,179,8,0.1);border:1.5px solid rgba(234,179,8,0.45);border-radius:10px;padding:11px 6px;color:#fbbf24;font-size:12px;font-weight:700;cursor:pointer;">&#128247; Kamera</button>
+          <button onclick="document.getElementById('fbPhotoInputGal').click()" style="flex:1;background:rgba(99,102,241,0.1);border:1.5px solid rgba(99,102,241,0.45);border-radius:10px;padding:11px 6px;color:#a5b4fc;font-size:12px;font-weight:700;cursor:pointer;">&#128444; Galeri</button>
+        </div>
+        <input id="fbPhotoInputCam" type="file" accept="image/*" capture="environment" style="display:none;" onchange="fbPhotoSelected(this)">
+        <input id="fbPhotoInputGal" type="file" accept="image/*" style="display:none;" onchange="fbPhotoSelected(this)">
+        <input id="fbPhotoInput" type="file" accept="image/*" style="display:none;" onchange="fbPhotoSelected(this)">
         <input id="fbPhotoData" type="hidden" value="">
         <div id="fbPhotoPreviewWrap" style="display:none;margin-top:8px;text-align:center;">
           <img id="fbPhotoPreview" style="max-width:100%;max-height:180px;border-radius:10px;object-fit:cover;border:2px solid rgba(234,179,8,0.35);" alt="preview">
@@ -1418,10 +1426,19 @@ table td { font-size: 11px; }
       <svg style="width:16px;height:16px;animation:spin 1s linear infinite;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"></circle><path fill="currentColor" opacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
       Memuat data...
     </div>
-    <!-- List -->
-    <div id="fbFilterBar" style="margin-bottom:6px;"></div>
-    <div id="fbSelectBar"></div>
-    <div id="fbListContainer"></div>
+    <!-- Tombol muat list — tidak auto-load supaya tidak lag -->
+    <div id="fbLoadBtn" style="text-align:center;padding:14px 0 4px;">
+      <button onclick="fbShowListSection()" style="background:rgba(99,102,241,0.15);border:1.5px solid rgba(99,102,241,0.35);border-radius:12px;padding:11px 24px;color:#a5b4fc;font-size:13px;font-weight:700;cursor:pointer;">&#128247; Tampilkan List Foto</button>
+    </div>
+    <!-- List section — tersembunyi sampai tombol di-klik -->
+    <div id="fbListSection" style="display:none;">
+      <div style="margin-bottom:6px;">
+        <input id="fbSearchInp" type="text" placeholder="&#128269; Cari nama, barcode, PROD_CD..." oninput="fbSetSearch(this.value)" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:9px 12px;color:#fff;font-size:13px;outline:none;">
+      </div>
+      <div id="fbFilterBar" style="margin-bottom:6px;"></div>
+      <div id="fbSelectBar"></div>
+      <div id="fbListContainer"></div>
+    </div>
   </div>
 
 <!-- ═══ EXPORT FILTER MODAL ═══ -->
@@ -1448,6 +1465,10 @@ table td { font-size: 11px; }
       <label style="display:flex;align-items:center;gap:10px;padding:11px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;cursor:pointer;">
         <input type="radio" name="fbExportMode" value="checklist" onchange="fbShowExportSub(this.value)" style="accent-color:#6366f1;width:16px;height:16px;">
         <span style="font-size:13px;color:#e2e8f0;font-weight:600;">&#9745; Pilih Manual (Ceklist)</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;padding:11px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;cursor:pointer;">
+        <input type="radio" name="fbExportMode" value="tanggal" onchange="fbShowExportSub(this.value)" style="accent-color:#6366f1;width:16px;height:16px;">
+        <span style="font-size:13px;color:#e2e8f0;font-weight:600;">&#128197; Berdasarkan Tanggal</span>
       </label>
     </div>
     <div id="fbExportSub" style="display:none;margin-bottom:14px;max-height:220px;overflow-y:auto;"></div>
@@ -1491,8 +1512,13 @@ table td { font-size: 11px; }
     </div>
     <div style="margin-bottom:14px;">
       <label style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;display:block;margin-bottom:6px;">Foto (opsional — biarkan kosong jika tidak diganti)</label>
-      <button onclick="document.getElementById('fbEditPhotoInput').click()" style="width:100%;background:rgba(234,179,8,0.08);border:1.5px dashed rgba(234,179,8,0.35);border-radius:10px;padding:10px;color:#fbbf24;font-size:12px;font-weight:600;cursor:pointer;">&#128247; Ganti Foto</button>
-      <input id="fbEditPhotoInput" type="file" accept="image/*" capture="environment" style="display:none;" onchange="fbEditPhotoSelected(this)">
+      <div style="display:flex;gap:8px;">
+        <button onclick="document.getElementById('fbEditPhotoInputCam').click()" style="flex:1;background:rgba(234,179,8,0.08);border:1.5px solid rgba(234,179,8,0.35);border-radius:10px;padding:9px 6px;color:#fbbf24;font-size:11px;font-weight:700;cursor:pointer;">&#128247; Kamera</button>
+        <button onclick="document.getElementById('fbEditPhotoInputGal').click()" style="flex:1;background:rgba(99,102,241,0.08);border:1.5px solid rgba(99,102,241,0.35);border-radius:10px;padding:9px 6px;color:#a5b4fc;font-size:11px;font-weight:700;cursor:pointer;">&#128444; Galeri</button>
+      </div>
+      <input id="fbEditPhotoInputCam" type="file" accept="image/*" capture="environment" style="display:none;" onchange="fbEditPhotoSelected(this)">
+      <input id="fbEditPhotoInputGal" type="file" accept="image/*" style="display:none;" onchange="fbEditPhotoSelected(this)">
+      <input id="fbEditPhotoInput" type="file" accept="image/*" style="display:none;" onchange="fbEditPhotoSelected(this)">
       <input id="fbEditPhotoData" type="hidden" value="">
       <div id="fbEditPhotoPreviewWrap" style="display:none;margin-top:8px;text-align:center;">
         <img id="fbEditPhotoPreview" style="max-width:100%;max-height:140px;border-radius:10px;object-fit:cover;border:2px solid rgba(234,179,8,0.35);" alt="preview">
@@ -1579,6 +1605,18 @@ table td { font-size: 11px; }
 <div id="absensiPanel" class="panel-container">
 <style>
 @keyframes absensiColon{0%,49%{opacity:1}50%,100%{opacity:0.1}}
+@keyframes kioskPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,200,120,0.4)}70%{box-shadow:0 0 0 10px rgba(0,200,120,0)}}
+body.kiosk-mode #bottomNav{display:none!important;}
+body.kiosk-mode .watermark{display:none!important;}
+body.kiosk-mode{padding-bottom:0!important;}
+#kioskExitBtn{display:none;position:fixed;top:12px;right:12px;z-index:99999;background:rgba(10,20,40,0.85);border:1px solid #2a4a7a;color:#66bbff;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:monospace;backdrop-filter:blur(6px);letter-spacing:0.5px;}
+body.kiosk-mode #kioskExitBtn{display:block;}
+#kioskScanFlash{display:none;position:fixed;inset:0;z-index:99998;pointer-events:none;}
+body.kiosk-mode.kiosk-flash-in #kioskScanFlash{display:block;animation:kioskFlash 0.4s ease-out forwards;}
+@keyframes kioskFlash{0%{background:rgba(0,200,120,0.18);opacity:1}100%{background:rgba(0,200,120,0);opacity:0}}
+/* -- Absensi nav: HP hanya untuk admin (gunakan screen.width, kebal desktop-mode) -- */
+body.is-mobile-device #navAbsensi{display:none!important;}
+body.is-mobile-device.is-admin #navAbsensi{display:flex!important;}
 @media(min-width:768px){
   /* Pusatkan dan batasi lebar panel di PC */
   /* 3-col layout only when panel is active - no override of display:none */
@@ -1629,7 +1667,46 @@ table td { font-size: 11px; }
   /* Tombol admin */
   #absensiAdminSection button{font-size:13px!important;padding:11px 16px!important;}
 }
+/* === TEMA 17 AGUSTUS — aktif 1-31 Agustus, PC only === */
+@keyframes merdekaTicker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes agustusStrip{0%,100%{opacity:1;box-shadow:0 0 8px rgba(220,38,38,0.5)}50%{opacity:0.85;box-shadow:0 0 16px rgba(255,255,255,0.3)}}
+@keyframes flagMove{0%{background-position:0 0}100%{background-position:120px 120px}}
+@keyframes badgeShimmer{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}40%{box-shadow:0 0 12px 3px rgba(220,38,38,0.45)}80%{box-shadow:0 0 6px 1px rgba(255,200,200,0.2)}}
+@keyframes borderPulseRed{0%,100%{box-shadow:inset -8px 0 28px rgba(220,38,38,0.06)}50%{box-shadow:inset -8px 0 36px rgba(220,38,38,0.14)}}
+@keyframes borderPulseWhite{0%,100%{box-shadow:inset 8px 0 28px rgba(241,245,249,0.04)}50%{box-shadow:inset 8px 0 36px rgba(241,245,249,0.1)}}
+@keyframes starFloat{0%{transform:translateY(0) scale(1);opacity:0.07}50%{transform:translateY(-18px) scale(1.3);opacity:0.13}100%{transform:translateY(0) scale(1);opacity:0.07}}
+#merdekaMarquee,#hutRiBadge,#augStarsBg{display:none;}
+@media(min-width:768px){
+  /* Panel wrapper */
+  #absensiPanel.aug-theme.active{position:relative!important;overflow:hidden!important;}
+  /* === LATAR BENDERA BERGERAK (diagonal stripes) === */
+  #augStarsBg{display:block!important;position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:
+      repeating-linear-gradient(135deg,rgba(220,38,38,0.055) 0px,rgba(220,38,38,0.055) 18px,transparent 18px,transparent 36px,rgba(241,245,249,0.035) 36px,rgba(241,245,249,0.035) 54px,transparent 54px,transparent 72px,rgba(220,38,38,0.03) 72px,rgba(220,38,38,0.03) 90px,transparent 90px,transparent 108px),
+      radial-gradient(ellipse 80% 60% at 50% 50%,rgba(80,0,0,0.12) 0%,transparent 70%);
+    background-size:120px 120px,100% 100%;
+    animation:flagMove 5s linear infinite;}
+  /* === STRIP MERAH-PUTIH ATAS (lebih tebal + glow) === */
+  #absensiPanel.aug-theme.active::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;
+    background:linear-gradient(90deg,#dc2626 0%,#dc2626 50%,#e5e7eb 50%,#e5e7eb 100%);
+    z-index:10;animation:agustusStrip 2.5s ease-in-out infinite;pointer-events:none;}
+  /* === MARQUEE — posisi ATAS, besar === */
+  #absensiPanel.aug-theme #merdekaMarquee{display:block!important;
+    top:6px!important;bottom:auto!important;height:44px!important;z-index:9!important;}
+  /* === SIDE PANELS === */
+  #absensiPanel.aug-theme.active #petugasPagiSide{border-right:2px solid rgba(220,38,38,0.55)!important;animation:borderPulseRed 3s ease-in-out infinite!important;}
+  #absensiPanel.aug-theme.active #petugasSiangSide{border-left:2px solid rgba(229,231,235,0.35)!important;animation:borderPulseWhite 3s ease-in-out infinite!important;}
+  /* === JAM MERAH, MENIT PUTIH === */
+  #absensiPanel.aug-theme #absensiH{color:#f87171!important;text-shadow:0 0 40px rgba(220,38,38,0.55),0 0 15px rgba(220,38,38,0.25)!important;}
+  #absensiPanel.aug-theme #absensiM{color:#f1f5f9!important;text-shadow:0 0 30px rgba(255,255,255,0.22)!important;}
+  /* === HUT RI BADGE === */
+  #absensiPanel.aug-theme #hutRiBadge{display:block!important;}
+  #absensiPanel.aug-theme #hutRiBadge span{animation:badgeShimmer 2.8s ease-in-out infinite!important;}
+}
 </style>
+<div id="merdekaMarquee" style="display:none;position:absolute;top:6px;left:0;right:0;z-index:9;height:44px;overflow:hidden;border-bottom:1px solid rgba(180,0,0,0.4);background:linear-gradient(180deg,rgba(120,0,0,0.97) 0%,rgba(90,0,0,0.94) 50%,rgba(30,10,10,0.92) 100%);box-shadow:0 4px 24px rgba(220,38,38,0.18);"><div style="display:flex;align-items:center;height:100%;padding:0 0;"><div style="display:inline-block;white-space:nowrap;height:100%;line-height:44px;animation:merdekaTicker 22s linear infinite;"><span style="font-family:monospace;font-size:15px;font-weight:900;letter-spacing:2.5px;color:#fca5a5;text-shadow:0 0 10px rgba(255,100,100,0.5);">&nbsp;&nbsp;&nbsp;&#127470;&#127465;&nbsp; DIRGAHAYU REPUBLIK INDONESIA KE-81 &nbsp;&#11835;&nbsp; MERDEKA! &nbsp;&#11835;&nbsp; 17 AGUSTUS 2026 &nbsp;&#11835;&nbsp; BERSATU PADU UNTUK NEGERI &nbsp;&#11835;&nbsp; JAYALAH BANGSAKU &nbsp;&#11835;&nbsp;&nbsp;&nbsp;</span><span style="font-family:monospace;font-size:15px;font-weight:900;letter-spacing:2.5px;color:#fca5a5;text-shadow:0 0 10px rgba(255,100,100,0.5);">&#127470;&#127465;&nbsp; DIRGAHAYU REPUBLIK INDONESIA KE-81 &nbsp;&#11835;&nbsp; MERDEKA! &nbsp;&#11835;&nbsp; 17 AGUSTUS 2026 &nbsp;&#11835;&nbsp; BERSATU PADU UNTUK NEGERI &nbsp;&#11835;&nbsp; JAYALAH BANGSAKU &nbsp;&#11835;&nbsp;&nbsp;&nbsp;</span></div></div></div>
+<div id="augStarsBg" style="display:none;"></div>
+<script>(function(){var d=new Date(),m=d.getMonth(),y=d.getFullYear();if(m===7&&y===2026){var p=document.getElementById('absensiPanel');if(p)p.classList.add('aug-theme');}})()</script>
 <div id="petugasPagiSide" style="display:none;flex-direction:column;">
   <div style="padding:14px 12px 8px;border-bottom:1px solid #1a2a4a;text-align:center;flex-shrink:0;">
     <div style="font-size:9px;font-weight:900;letter-spacing:3px;color:#6a8cff;font-family:monospace;text-transform:uppercase;margin-bottom:2px;">&#9728; SHIFT PAGI</div>
@@ -1654,7 +1731,8 @@ table td { font-size: 11px; }
 </div>
   <div style="background:#0f0f1a;min-height:100vh;display:flex;flex-direction:column;">
     <div style="background:#0a0a14;padding:16px 14px 12px;text-align:center;border-bottom:1px solid #1a2a4a;flex-shrink:0;">
-      <div id="absensiDate" style="font-size:11px;font-weight:700;color:#6a8cff;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;font-family:monospace;background:#1a1a3e;display:inline-block;padding:3px 14px;border-radius:6px;border:1px solid #2a3a6a;"></div>
+      <div id="absensiDate" style="font-size:11px;font-weight:700;color:#6a8cff;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;font-family:monospace;background:#1a1a3e;display:inline-block;padding:3px 14px;border-radius:6px;border:1px solid #2a3a6a;"></div>
+      <div id="hutRiBadge" style="display:none;margin-top:50px;margin-bottom:6px;"><span style="font-family:monospace;font-size:13px;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,#7f0000,#b91c1c);color:#fde8e8;padding:5px 22px;border-radius:24px;border:1.5px solid rgba(220,38,38,0.55);text-shadow:0 1px 4px rgba(0,0,0,0.7);display:inline-block;">&#127881; HUT RI KE-81 &nbsp;&bull;&nbsp; 17 AGUSTUS 2026 &nbsp;&bull;&nbsp; &#127881;</span></div>
       <div style="display:flex;justify-content:center;align-items:center;gap:0;margin-bottom:10px;">
         <div id="absensiH" style="font-size:clamp(52px,16vw,78px);font-weight:900;color:#e0f0ff;font-family:monospace;min-width:2ch;text-align:center;line-height:1;text-shadow:0 0 30px rgba(100,180,255,0.15);"></div>
         <div style="font-size:clamp(40px,12vw,60px);font-weight:900;color:#2a5a9a;font-family:monospace;line-height:1;padding:0 3px 8px;animation:absensiColon 1s step-end infinite;">:</div>
@@ -1667,6 +1745,7 @@ table td { font-size: 11px; }
         <div id="absensiOfflineBadge" style="display:none;align-items:center;font-size:10px;font-family:monospace;padding:3px 10px;border-radius:10px;font-weight:700;"></div>
         <div id="absensiEmpCount" style="font-size:10px;color:#6a9aff;font-family:monospace;"></div>
         <button onclick="absensiRefreshEmployees()" style="background:#1a3a5a;border:1px solid #2a5a7a;color:#66bbff;border-radius:10px;padding:3px 10px;font-size:10px;cursor:pointer;font-family:monospace;">&#8635; Refresh</button>
+        <button id="absensiKioskBtn" onclick="enterKioskMode()" title="Mode Kiosk" style="background:#1a2a4a;border:1px solid #2a4a7a;color:#8899cc;border-radius:10px;padding:3px 10px;font-size:10px;cursor:pointer;font-family:monospace;letter-spacing:0.5px;">&#9974; Kiosk</button>
       </div>
     </div>
     <div style="background:#0a0a1a;padding:12px 14px 10px;border-bottom:1px solid #1a2a3a;flex-shrink:0;">
@@ -1861,6 +1940,8 @@ table td { font-size: 11px; }
 
 <div id="toastContainer"></div>
 <div class="watermark">Created by OP</div>
+<button id="kioskExitBtn" onclick="exitKioskMode()">&#x26F6; Exit Kiosk</button>
+<div id="kioskScanFlash"></div>
 
 <script>
 var $=function(id){return document.getElementById(id)};
@@ -2275,6 +2356,7 @@ function renderUserNav(){
   lucide.createIcons();
 }
 function renderAdminNav(){
+  document.body.classList.add('is-admin');
   $("navContainer").innerHTML=
     '<div id="navInventory" class="nav-item active flex-1 flex flex-col items-center cursor-pointer relative py-2" onclick="switchMainTab(\'inventory\')"><div class="nav-indicator absolute top-0 w-12 h-1 bg-pro-main rounded-b-full"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span class="text-[10px] font-medium">Inventory</span></div>'+
     '<div id="navLogs" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'logs\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="text-[10px] font-medium">Log Activity</span></div>'+
@@ -3256,8 +3338,8 @@ function switchMainTab(tab){
   else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();loadBarcodeNotFound();if(isAdmin)loadPwResetRequests();if(_bnfInterval)clearInterval(_bnfInterval);_bnfInterval=setInterval(loadBarcodeNotFound,180000);}
   else if(tab==="promo"){$("promoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navPromo");setMarquee(false);loadPromoList();}
   else if(tab==="neo"){$("neoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navNeo");setMarquee(false);loadNeoStatus();}
-  else if(tab==="fotobblm"){$("fotoBblmPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navFotoBblm");setMarquee(false);loadFotoBblmList();fbLoadCategories();}
-  else if(tab==="absensi"){$("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();(function(){var _td=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();if(_absensiLastScanDate!==_td&&(new Date()).getHours()>=2){var _r=$("absensiResult");if(_r)_r.innerHTML="";var _b=$("absensiStatusBadge");if(_b)_b.style.display="none";var _m=$("absensiScanMsg");if(_m){_m.textContent="\u25BA scan ID karyawan untuk absensi";_m.style.color="#445577";}_absensiLastScanDate=_td;_absensiStatusMap={};}})();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
+  else if(tab==="fotobblm"){$("fotoBblmPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navFotoBblm");setMarquee(false);fbLoadCategories();(function(){var _lb=document.getElementById("fbLoadBtn");if(_lb)_lb.style.display="block";var _ls=document.getElementById("fbListSection");if(_ls)_ls.style.display="none";var _fc=document.getElementById("fbListContainer");if(_fc)_fc.innerHTML="";var _ff=document.getElementById("fbFilterBar");if(_ff)_ff.innerHTML="";var _fs=document.getElementById("fbSelectBar");if(_fs)_fs.innerHTML="";var _cnt=document.getElementById("fbCount");if(_cnt)_cnt.textContent="0";})();}
+  else if(tab==="absensi"){if(screen.width<768&&!isAdmin){switchMainTab('inventory');return;}$("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();(function(){var _td=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();if(_absensiLastScanDate!==_td&&(new Date()).getHours()>=2){var _r=$("absensiResult");if(_r)_r.innerHTML="";var _b=$("absensiStatusBadge");if(_b)_b.style.display="none";var _m=$("absensiScanMsg");if(_m){_m.textContent="\u25BA scan ID karyawan untuk absensi";_m.style.color="#445577";}_absensiLastScanDate=_td;_absensiStatusMap={};}})();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
   else if(tab==="dashboard"){$("dashboardPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navDashboard");setMarquee(false);initDashboard();}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
@@ -4939,7 +5021,7 @@ window.addEventListener("beforeunload",function(e){
   if(sn){sn.textContent=STORE_NAME||"";sn.style.display=STORE_NAME?"block":"none";}
   if(st){st.textContent=STORE_TAGLINE||"";st.style.display=STORE_TAGLINE?"block":"none";}
   loadPromos();loadAllBingkai();
-  _bcFallback=setTimeout(_triggerLoginBtn,5000);
+  _bcFallback=setTimeout(_triggerLoginBtn,600);
 })();
 
 /* ===== PROMO LIST ===== */
@@ -5061,6 +5143,81 @@ function renderPromoItems(){
 
 // ===== ABSENSI SYSTEM =====
 var _absensiClockInterval=null;
+/* ══════════════════════════════════════
+   KIOSK MODE
+══════════════════════════════════════ */
+var _kioskActive = false;
+var _kioskWakeLock = null;
+
+async function _kioskRequestWakeLock(){
+  if(!('wakeLock' in navigator)) return;
+  try {
+    _kioskWakeLock = await navigator.wakeLock.request('screen');
+    _kioskWakeLock.addEventListener('release', function(){
+      // Jika kiosk masih aktif tapi wake lock dilepas browser (tab blur dll),
+      // coba minta ulang saat tab kembali visible
+      _kioskWakeLock = null;
+    });
+  } catch(e) { /* browser tidak support atau ditolak */ }
+}
+function _kioskReleaseWakeLock(){
+  if(_kioskWakeLock){ try{ _kioskWakeLock.release(); }catch(e){} _kioskWakeLock=null; }
+}
+// Re-acquire wake lock saat tab kembali visible (browser melepas otomatis saat tab blur)
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState==='visible' && _kioskActive && !_kioskWakeLock){
+    _kioskRequestWakeLock();
+  }
+});
+
+function enterKioskMode(){
+  _kioskActive = true;
+  document.body.classList.add("kiosk-mode");
+  // Cegah screen saver / layar mengunci
+  _kioskRequestWakeLock();
+  // Request fullscreen
+  var el = document.documentElement;
+  try {
+    if(el.requestFullscreen) el.requestFullscreen();
+    else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if(el.mozRequestFullScreen) el.mozRequestFullScreen();
+  } catch(e) {}
+  // Scroll to top & focus scan input
+  window.scrollTo(0,0);
+  setTimeout(function(){ var inp=$("absensiInput"); if(inp) inp.focus(); }, 300);
+}
+function exitKioskMode(){
+  _kioskActive = false;
+  document.body.classList.remove("kiosk-mode");
+  // Lepas wake lock
+  _kioskReleaseWakeLock();
+  try {
+    if(document.exitFullscreen) document.exitFullscreen();
+    else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+    else if(document.mozCancelFullScreen) document.mozCancelFullScreen();
+  } catch(e) {}
+}
+// Exit kiosk when fullscreen is exited via ESC / browser button
+(function(){
+  function _onFsChange(){
+    var fs = document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement;
+    if(!fs && _kioskActive) exitKioskMode();
+  }
+  document.addEventListener("fullscreenchange",_onFsChange);
+  document.addEventListener("webkitfullscreenchange",_onFsChange);
+  document.addEventListener("mozfullscreenchange",_onFsChange);
+})();
+// Flash screen green on successful scan in kiosk mode
+var _kioskFlashTimer = null;
+function kioskFlashSuccess(){
+  if(!_kioskActive) return;
+  document.body.classList.remove("kiosk-flash-in");
+  void document.body.offsetWidth; // reflow to restart animation
+  document.body.classList.add("kiosk-flash-in");
+  if(_kioskFlashTimer) clearTimeout(_kioskFlashTimer);
+  _kioskFlashTimer = setTimeout(function(){ document.body.classList.remove("kiosk-flash-in"); }, 500);
+}
+
 function startAbsensiClock(){
   if(_absensiClockInterval)return;
   var days=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
@@ -5173,18 +5330,26 @@ window.addEventListener('offline',function(){
 // ===== END OFFLINE MODE =====
 
 function absensiRefreshEmployees(){
+  // Selalu tampilkan cache dulu agar UI tidak blank saat GAS lambat
+  var cached=absensiLoadEmpCache();
+  if(cached&&cached.length){
+    _absensiEmpMap={};
+    cached.forEach(function(e){var k=(e.barcode||e.id||'').trim();if(k)_absensiEmpMap[k]=e.name||'';});
+    if($('absensiEmpCount'))$('absensiEmpCount').textContent=cached.length+' karyawan (cache)';
+    renderAbsensiEmpList(cached);
+  }
   if(!_absensiOnline){
-    var cached=absensiLoadEmpCache();
     if(cached&&cached.length){
-      _absensiEmpMap={};
-      cached.forEach(function(e){var k=(e.barcode||e.id||'').trim();if(k)_absensiEmpMap[k]=e.name||'';});
-      if($('absensiEmpCount'))$('absensiEmpCount').textContent=cached.length+' karyawan (cache)';
       updateAbsensiSyncStatus('error','Offline — '+cached.length+' karyawan dari cache');
-      renderAbsensiEmpList(cached);
     }else{updateAbsensiSyncStatus('error','Offline — belum ada cache');}
     absensiUpdateOfflineBadge();return;
   }
-  updateAbsensiSyncStatus('syncing','Memuat...');
+  // Update dari GAS di background (tidak blokir tampilan)
+  if(cached&&cached.length){
+    updateAbsensiSyncStatus('syncing','Memperbarui '+cached.length+' karyawan...');
+  }else{
+    updateAbsensiSyncStatus('syncing','Memuat dari spreadsheet...');
+  }
   fetch(ABSENSI_GAS_URL+'?action=getEmployees')
   .then(function(r){return r.json();})
   .then(function(j){
@@ -5198,18 +5363,25 @@ function absensiRefreshEmployees(){
     absensiSyncQueue();
   })
   .catch(function(){
-    var cached=absensiLoadEmpCache();
-    if(cached&&cached.length){
-      _absensiEmpMap={};
-      cached.forEach(function(e){var k=(e.barcode||e.id||'').trim();if(k)_absensiEmpMap[k]=e.name||'';});
-      if($('absensiEmpCount'))$('absensiEmpCount').textContent=cached.length+' karyawan (cache)';
-      updateAbsensiSyncStatus('error','Gagal — '+cached.length+' karyawan dari cache');
-      renderAbsensiEmpList(cached);
+    var c=absensiLoadEmpCache();
+    if(c&&c.length){
+      if($('absensiEmpCount'))$('absensiEmpCount').textContent=c.length+' karyawan (cache)';
+      updateAbsensiSyncStatus('error','GAS offline — '+c.length+' karyawan dari cache');
     }else{updateAbsensiSyncStatus('error','Gagal memuat data');}
   });
 }
 
 var _absensiInFlight={};
+var _absensiResultTimer=null;
+function _absensiClearResult(){
+  var r=$('absensiResult');if(r)r.innerHTML='';
+  var m=$('absensiScanMsg');if(m){m.textContent='\u25BA scan ID karyawan untuk absensi';m.style.color='#445577';}
+  var b=$('absensiStatusBadge');if(b)b.style.display='none';
+}
+function _absensiStartHideTimer(){
+  if(_absensiResultTimer)clearTimeout(_absensiResultTimer);
+  _absensiResultTimer=setTimeout(function(){_absensiResultTimer=null;_absensiClearResult();},10000);
+}
 var _absensiEmpMap={};
 var _absensiStatusMap={};
 var _absensiLastScanDate=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();
@@ -5368,6 +5540,8 @@ function totalSecsDisplay(secs){
 }
 
 function renderAbsensiResultOptimistic(empId, empName, isIn){
+  if(_absensiResultTimer){clearTimeout(_absensiResultTimer);_absensiResultTimer=null;}
+  var _hasHistory=!!_absensiStatusMap[(empId||'').trim()];
   var res=$('absensiResult');if(!res)return;
   var now=new Date();
   var timeStr=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
@@ -5400,6 +5574,10 @@ function renderAbsensiResultOptimistic(empId, empName, isIn){
     +'<td style="padding:7px 8px;color:#ff8844;font-weight:700;border:1px solid #1a2a4a;text-align:right;">-</td>'
     +'</tr></tbody></table></div>';
   res.innerHTML=h;
+  kioskFlashSuccess();
+  // Hanya mulai timer kalau scan pertama hari ini — kalau sudah ada riwayat,
+  // tunggu GAS balas dulu (renderAbsensiResult) baru timer aktif
+  if(!_hasHistory) _absensiStartHideTimer();
 }
 function renderAbsensiResult(j){
   var res=$('absensiResult');if(!res)return;
@@ -5453,6 +5631,7 @@ function renderAbsensiResult(j){
     +'<td style="padding:7px 8px;color:#ff8844;font-weight:700;border:1px solid #1a2a4a;text-align:right;">'+totalSecsDisplay(totOff)+'</td>'
     +'</tr></tbody></table></div>';
   res.innerHTML=h;
+  _absensiStartHideTimer();
 }
 
 var _showEmpAdmin=false;
@@ -6154,7 +6333,9 @@ var _fbFilterCat = "";
 var _fbFilterPos = "";
 var _fbFilterDate = "";
 var _fbFilterDownload = "";
+var _fbFilterSearch = "";
 var _fbDownloaded = {};
+var _fbCatsCache = null;
 
 var FB_ACTION_PASS = "111";
 function fbCheckPassword(action) {
@@ -6247,7 +6428,13 @@ function fbRenderCatPills(containerId, hiddenId, handlerName, cats) {
 function fbLoadCategories() {
   var section = document.getElementById("fbCatSection");
   if (section && !document.getElementById("fbCategoryVal").value) section.style.display = "none";
+  // Gunakan cache supaya tidak fetch ulang tiap buka tab
+  if(_fbCatsCache) {
+    fbRenderCatPills("fbEditCatPills", "fbEditCatVal", "fbEditPickCat", _fbCatsCache);
+    return;
+  }
   fbGetCategoryList().then(function(cats) {
+    _fbCatsCache = cats;
     fbRenderCatPills("fbEditCatPills", "fbEditCatVal", "fbEditPickCat", cats);
   }).catch(function() {
     var el2 = document.getElementById("fbEditCatPills");
@@ -6293,6 +6480,14 @@ function fbGetFilteredItems() {
     if(_fbFilterDate && fbDateStr(it.createdAt) !== _fbFilterDate) return false;
     if(_fbFilterDownload === "sudah" && !_fbDownloaded[String(it.id)]) return false;
     if(_fbFilterDownload === "belum" && !!_fbDownloaded[String(it.id)]) return false;
+    if(_fbFilterSearch) {
+      var q = _fbFilterSearch.toLowerCase();
+      var nm = (it.prodNm||"").toLowerCase();
+      var bc = (it.barcode||"").toLowerCase();
+      var cd = (it.prodCd||"").toLowerCase();
+      var cdStrip = cd.replace(/000$/,"");
+      if(nm.indexOf(q)<0 && bc.indexOf(q)<0 && cd.indexOf(q)<0 && cdStrip.indexOf(q)<0) return false;
+    }
     return true;
   });
 }
@@ -6333,30 +6528,15 @@ function fbRenderFilterBar() {
     });
     h += "</div>";
   }
-  // DATE filter
-  var allDates = [];
-  fbItems.forEach(function(it){
-    var ds = fbDateStr(it.createdAt);
-    if(ds && allDates.indexOf(ds) < 0) allDates.push(ds);
-  });
-  allDates.sort(function(a,b){ return a > b ? -1 : 1; });
-  if(allDates.length > 0) {
-    var today = fbTodayStr();
-    var yesterday = fbYesterdayStr();
-    h += '<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:5px;">'
-      + '<span style="font-size:9px;color:#475569;text-transform:uppercase;font-weight:700;margin-right:2px;">Tgl:</span>';
-    var dtAll = _fbFilterDate==="" ? "background:rgba(99,102,241,0.3);border-color:#818cf8;color:#c7d2fe;" : "background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.10);color:#64748b;";
-    h += '<span style="'+PILLB+dtAll+'" data-dt="" onclick="fbSetFilterDate(this)">Semua</span>';
-    allDates.forEach(function(ds){
-      var label;
-      if(ds === today) label = "&#128197; Hari Ini";
-      else if(ds === yesterday) label = "&#128337; Kemarin";
-      else { var p=ds.split("-"); label = p[2]+"/"+p[1]; }
-      var act = _fbFilterDate===ds ? "background:rgba(56,189,248,0.2);border-color:#38bdf8;color:#7dd3fc;" : "background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.10);color:#64748b;";
-      h += '<span style="'+PILLB+act+'" data-dt="'+ds+'" onclick="fbSetFilterDate(this)">'+label+'</span>';
-    });
-    h += "</div>";
-  }
+  // DATE filter — pakai calendar picker
+  h += '<div style="display:flex;align-items:center;gap:6px;margin-top:5px;">'
+    + '<span style="font-size:9px;color:#475569;text-transform:uppercase;font-weight:700;flex-shrink:0;">Tgl:</span>'
+    + '<input type="date" id="fbDatePicker" value="'+(_fbFilterDate||'')+'" onchange="fbSetFilterDateVal(this.value)" '
+    + 'style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;'
+    + 'padding:4px 8px;color:#e2e8f0;font-size:12px;outline:none;cursor:pointer;">'
+    + '<button onclick="fbSetFilterDateVal(\"\")" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);'
+    + 'border-radius:8px;padding:4px 9px;color:#94a3b8;font-size:11px;cursor:pointer;flex-shrink:0;">&#10005; Reset</button>'
+    + '</div>';
   // DOWNLOAD STATUS filter
   h += '<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:5px;">'
     + '<span style="font-size:9px;color:#475569;text-transform:uppercase;font-weight:700;margin-right:2px;">Unduh:</span>';
@@ -6372,29 +6552,36 @@ function fbRenderFilterBar() {
 
 function fbSetFilterDownload(el) {
   _fbFilterDownload = el.getAttribute("data-dl") || "";
-  fbRenderFilterBar();
   fbRenderList();
 }
 
 function fbSetFilterDate(el) {
   _fbFilterDate = el.getAttribute("data-dt") || "";
-  fbRenderFilterBar();
   fbRenderList();
 }
+function fbSetFilterDateVal(val) {
+  _fbFilterDate = val || "";
+  fbRenderList();
+  // Sync picker value
+  var pk = document.getElementById('fbDatePicker');
+  if(pk) pk.value = _fbFilterDate;
+}
 
+function fbSetSearch(val) {
+  _fbFilterSearch = (val||"").trim().toLowerCase();
+  fbRenderList();
+}
 function fbSetFilterPos(el) {
   _fbFilterPos = el.getAttribute("data-pos") || "";
-  fbRenderFilterBar();
   fbRenderList();
 }
 
 function fbSetFilterCat(el) {
   _fbFilterCat = el.getAttribute("data-cat") || "";
-  fbRenderFilterBar();
   fbRenderList();
 }
 
-function loadFotoBblmList() {
+function loadFotoBblmList(autoLoadPhotos) {
   var ld = document.getElementById("fbLoading");
   if(ld) ld.style.display = "flex";
   document.getElementById("fbListContainer").innerHTML = "";
@@ -6406,11 +6593,13 @@ function loadFotoBblmList() {
       _fbFilterPos = "";
       _fbFilterDate = "";
       _fbFilterDownload = "";
+      _fbFilterSearch = "";
       _fbSelected = {};
       _fbDownloaded = {};
+      _fbPhotoMap = {}; // reset foto cache supaya foto yang fresh dimuat ulang
       (d.downloadedIds || []).forEach(function(id){ _fbDownloaded[String(id)] = true; });
       fbRenderList();
-      fbAutoLoadAllPhotos();
+      if(autoLoadPhotos) fbAutoLoadAllPhotos(); // hanya kalau diminta
     })
     .catch(function(){ showToast("Gagal memuat data foto BBLM","error"); })
     .finally(function(){ var ld=document.getElementById("fbLoading"); if(ld) ld.style.display="none"; });
@@ -6420,24 +6609,67 @@ function fbAutoLoadAllPhotos() {
   var ids = fbItems.map(function(it){ return it.id; })
     .filter(function(id){ return !_fbPhotoMap[id] && !_fbNoPhoto[id]; });
   if(!ids.length) return;
-  var i = 0;
-  function next() {
-    if(i >= ids.length) return;
-    var id = ids[i++];
+  var idx = 0;
+  var PARALLEL = 3; // muat 3 foto paralel, tidak satu-satu
+  function loadOne(id) {
     fetch(API_BASE_URL + "/bblm-foto/" + id + "/photo")
       .then(function(r){ return r.json(); })
       .then(function(d){
-        if(d.success && d.fotoBase64){ _fbPhotoMap[id] = d.fotoBase64; fbRenderList(); }
-        else { _fbNoPhoto[id] = true; }
-        next();
+        if(d.success && d.fotoBase64){
+          _fbPhotoMap[id] = d.fotoBase64;
+          // Swap elemen DOM langsung — tidak perlu rebuild seluruh list
+          var el = document.getElementById("fbThumb_" + id);
+          if(el) {
+            var img = document.createElement("img");
+            img.src = d.fotoBase64;
+            img.style.cssText = "width:64px;height:48px;object-fit:cover;border-radius:8px;cursor:pointer;";
+            img.dataset.fid = id;
+            img.alt = "foto";
+            img.onclick = function(){ fbOpenPhotoModal(this.dataset.fid); };
+            el.parentNode.replaceChild(img, el);
+          }
+        } else {
+          _fbNoPhoto[id] = true;
+          var el = document.getElementById("fbThumb_" + id);
+          if(el) {
+            el.style.cursor = "default";
+            el.innerHTML = "No<br>Foto";
+            el.style.borderStyle = "dashed";
+            el.style.background = "#0f172a";
+            el.style.borderColor = "#1e293b";
+            el.style.color = "#334155";
+            el.removeAttribute("onclick");
+          }
+        }
       })
-      .catch(function(){ next(); });
+      .catch(function(){ _fbNoPhoto[id] = true; })
+      .finally(function(){ if(idx < ids.length) loadOne(ids[idx++]); });
   }
-  next();
+  // Kickoff PARALLEL workers
+  var start = Math.min(PARALLEL, ids.length);
+  for(var s = 0; s < start; s++) loadOne(ids[idx++]);
 }
 
-function fbRefreshList() { loadFotoBblmList(); }
+function fbRefreshList() {
+  // Hanya update total count badge — tidak tampilkan list, tidak load foto
+  var cnt = document.getElementById("fbCount");
+  if(cnt) cnt.textContent = "...";
+  fetch(API_BASE_URL + "/bblm-foto")
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var total = (d.items || []).length;
+      if(cnt) cnt.textContent = total + " item";
+    })
+    .catch(function(){
+      if(cnt) cnt.textContent = "?";
+    });
+}
 
+function fbShowListSection() {
+  var lb=document.getElementById("fbLoadBtn");if(lb)lb.style.display="none";
+  var ls=document.getElementById("fbListSection");if(ls)ls.style.display="block";
+  loadFotoBblmList(true); // tampilkan list + auto-load semua foto
+}
 function fbRenderList() {
   var c = document.getElementById("fbListContainer");
   if(!c) return;
@@ -6448,6 +6680,12 @@ function fbRenderList() {
   var html = "";
   fbRenderFilterBar();
   var visItems = fbGetFilteredItems();
+  // Sort: hari ini paling atas, lalu terbaru berdasarkan createdAt
+  visItems.sort(function(a,b){
+    var ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    var tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return tb - ta;
+  });
   var cnt2 = document.getElementById("fbCount");
   if(cnt2) cnt2.textContent = visItems.length + (visItems.length !== fbItems.length ? "/" + fbItems.length : "") + " item";
   for(var i = 0; i < visItems.length; i++) {
@@ -6523,13 +6761,38 @@ function fbRenderSelectBar() {
 
 function fbToggleSelectItem(id, checked) {
   _fbSelected[String(id)] = checked;
+  // Update background card item ybs tanpa rebuild list
+  var container = document.getElementById("fbListContainer");
+  if(container) {
+    var box = container.querySelector("input[type=checkbox][data-fid='"+id+"']");
+    if(box) {
+      var card = box.closest("div[style]");
+      if(card) {
+        card.style.background = checked ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.04)";
+        card.style.borderColor = checked ? "rgba(99,102,241,0.35)" : "rgba(255,255,255,0.08)";
+      }
+    }
+  }
   fbRenderSelectBar();
 }
 
 function fbToggleSelectAll(checked) {
   var visItems = fbGetFilteredItems();
   visItems.forEach(function(it){ _fbSelected[String(it.id)] = checked; });
-  fbRenderList();
+  // Update checkbox style di DOM tanpa rebuild seluruh list
+  var container = document.getElementById("fbListContainer");
+  if(container) {
+    var boxes = container.querySelectorAll("input[type=checkbox][data-fid]");
+    boxes.forEach(function(box){
+      box.checked = !!_fbSelected[String(box.dataset.fid)];
+      var card = box.closest("div[style]");
+      if(card) {
+        card.style.background = checked ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.04)";
+        card.style.borderColor = checked ? "rgba(99,102,241,0.35)" : "rgba(255,255,255,0.08)";
+      }
+    });
+  }
+  fbRenderSelectBar();
 }
 
 function fbGetExtFromDataUrl(dataUrl) {
@@ -6859,6 +7122,41 @@ function fbStartScan() {
   }).catch(function(e){ console.error("fbScan:",e); rd.innerHTML=""; });
 }
 
+// Muat fbItems di background tanpa tampilkan list (untuk cek duplikat)
+function fbSilentLoadItems(cb) {
+  if(fbItems.length > 0){ if(cb) cb(); return; }
+  fetch(API_BASE_URL + "/bblm-foto")
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      fbItems = d.items || [];
+      (d.downloadedIds||[]).forEach(function(id){ _fbDownloaded[String(id)]=true; });
+      if(cb) cb();
+    }).catch(function(){ if(cb) cb(); });
+}
+
+function fbCheckDuplicate(barcode, prodCd) {
+  var dw = document.getElementById('fbDupWarning');
+  if(!dw) return;
+  var bc = (barcode||"").trim();
+  var cd = (prodCd||"").trim();
+  var dup = fbItems.filter(function(it){
+    return (bc && String(it.barcode||"").trim() === bc) ||
+           (cd && String(it.prodCd||"").trim() === cd);
+  });
+  if(dup.length > 0){
+    var d0 = dup[0];
+    dw.style.display = 'block';
+    dw.innerHTML = '⚠️ <b>Sudah pernah disimpan!</b> &nbsp;'
+      + (d0.prodNm ? '<span style="color:#fbbf24;">'+d0.prodNm+'</span>' : '')
+      + ' &nbsp;<span style="color:#94a3b8;font-size:10px;">('
+      + (d0.posisi||'-') + ' &middot; ' + (d0.category||'-') + ')</span>'
+      + '<br><span style="font-size:10px;color:#a3a3a3;">Simpan lagi akan <b style="color:#fde047;">memperbarui</b> foto yang ada.</span>';
+  } else {
+    dw.style.display = 'none';
+    dw.innerHTML = '';
+  }
+}
+
 function fbLookupBarcode(bc) {
   bc = (bc||"").trim();
   if(!bc) return;
@@ -6888,6 +7186,24 @@ function fbLookupBarcode(bc) {
         }
       }
     }
+    // Pass 4: cari by PROD_CD — strip trailing "000" agar "MI001" = "MI001000"
+    if(!found) {
+      var stripZ = function(s){ return s.replace(/000$/,""); };
+      var bcUp = stripZ(bc.toUpperCase());
+      for(var i = 1; i < data.length; i++) {
+        var dbCd = stripZ((data[i] && data[i][0]||"").toString().trim().toUpperCase());
+        if(dbCd && dbCd === bcUp) { found = data[i]; break; }
+      }
+    }
+    // Pass 5: cari by PROD_CD prefix (strip trailing "000" juga)
+    if(!found && bc.length >= 2) {
+      var stripZ2 = function(s){ return s.replace(/000$/,""); };
+      var bcUp2 = stripZ2(bc.toUpperCase());
+      for(var i = 1; i < data.length; i++) {
+        var dbCd2 = stripZ2((data[i] && data[i][0]||"").toString().trim().toUpperCase());
+        if(dbCd2 && dbCd2.indexOf(bcUp2) === 0) { found = data[i]; break; }
+      }
+    }
     if(found) {
       document.getElementById("fbProdNm").value = found[2] || "";
       document.getElementById("fbProdCd").value = found[0] || "";
@@ -6897,10 +7213,17 @@ function fbLookupBarcode(bc) {
       if(catVal.toUpperCase()==="#N/A") catVal="";
       fbAutoSelectCategory(catVal);
       showToast("Barang ditemukan: " + (found[2]||bc), "success");
+      // Cek duplikat — muat fbItems diam-diam jika belum ada
+      var _bc = (document.getElementById("fbBarcode").value||"").trim();
+      var _cd = (found[0]||"").trim();
+      fbSilentLoadItems(function(){ fbCheckDuplicate(_bc, _cd); });
     } else {
       document.getElementById("fbProdNm").value = "";
       fbAutoSelectCategory("");
-      showToast("Barcode tidak ditemukan di data inventory", "error");
+      // Sembunyikan warning kalau tidak ketemu
+      var _dw = document.getElementById('fbDupWarning');
+      if(_dw){ _dw.style.display='none'; _dw.innerHTML=''; }
+      showToast("Barcode / PROD_CD tidak ditemukan di data inventory", "error");
     }
   }).catch(function(){ document.getElementById("fbProdNm").value = ""; showToast("Gagal cari data inventory","error"); });
 }
@@ -6958,6 +7281,54 @@ function fbSubmitItem() {
   if(!category){ showToast("Pilih CATEGORY terlebih dahulu","error"); return; }
   if(!posisi){ showToast("Pilih POSISI terlebih dahulu","error"); return; }
   if(!fotoData){ showToast("Ambil foto terlebih dahulu","error"); return; }
+
+  // Cek duplikat barcode di list yang sudah ada
+  var existing = fbItems.filter(function(it){ return String(it.barcode||"").trim() === barcode; });
+  if(existing.length > 0) {
+    var existNm = existing[0].prodNm || barcode;
+    var confirmed = confirm(
+      "⚠️ Barcode ini sudah pernah disimpan!\n\n" +
+      "Produk  : " + existNm + "\n" +
+      "Barcode : " + barcode + "\n\n" +
+      "Foto akan diperbarui ke yang terbaru.\nLanjutkan?"
+    );
+    if(!confirmed) return;
+
+    // Update semua duplikat: PATCH metadata + update foto di entry pertama,
+    // hapus sisa duplikat (jika ada lebih dari 1)
+    var btn = document.getElementById("fbSubmitBtn");
+    btn.disabled = true; btn.textContent = "Memperbarui...";
+    var primaryId = existing[0].id;
+    fetch(API_BASE_URL + "/bblm-foto/" + primaryId, {
+      method:"PATCH", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ prodNm:prodNm, prodCd:prodCd, stkQty:stkQty, category:category, posisi:posisi })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d.success) throw new Error(d.message||"Gagal update");
+      btn.textContent = "Upload foto...";
+      return fetch(API_BASE_URL + "/bblm-foto/" + primaryId + "/photo", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ fotoBase64: fotoData })
+      }).then(function(){ _fbPhotoMap[primaryId] = fotoData; });
+    })
+    .then(function(){
+      document.getElementById("fbBarcode").value = "";
+      document.getElementById("fbProdNm").value = "";
+      document.getElementById("fbProdCd").value = "";
+      document.getElementById("fbStkQty").value = "";
+      document.getElementById("fbPhotoData").value = "";
+      document.getElementById("fbPhotoPreviewWrap").style.display = "none";
+      document.getElementById("fbPhotoInput").value = "";
+      fbResetCatPos();
+      showToast("Foto diperbarui: " + existNm, "success");
+      loadFotoBblmList();
+    })
+    .catch(function(e){ showToast("Gagal: " + e.message,"error"); })
+    .finally(function(){ btn.disabled=false; btn.innerHTML="&#128190; Simpan"; });
+    return;
+  }
+
   var btn = document.getElementById("fbSubmitBtn");
   btn.disabled = true; btn.textContent = "Menyimpan...";
   fetch(API_BASE_URL + "/bblm-foto", {
@@ -7004,11 +7375,12 @@ function fbDeleteItem(id) {
 
 function fbClearAll() {
   if(!confirm("Hapus SEMUA data Upload Foto BBLM?\n\nTindakan ini tidak dapat dibatalkan!")) return;
-  var pw = prompt("Password admin:");
+  var pw = prompt("Masukkan password untuk Hapus Semua:");
   if(pw === null) return;
+  if(pw !== "111") { showToast("Password salah!", "error"); return; }
   fetch(API_BASE_URL + "/bblm-foto/clear", {
     method:"POST", headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({ adminPassword: pw })
+    body:JSON.stringify({ adminPassword: "00000" })
   })
   .then(function(r){ return r.json(); })
   .then(function(d){ if(d.success){ _fbPhotoMap={}; showToast("Semua data dihapus","success"); loadFotoBblmList(); } else showToast("Gagal: "+(d.message||""), "error"); })
@@ -7062,6 +7434,24 @@ function fbShowExportSub(mode) {
             +'<span style="font-size:10px;color:#64748b;">'+cnt+' item</span>'
             +'</label>';
         }).join('');
+  } else if(mode === 'tanggal') {
+    var allDates2 = [];
+    fbItems.forEach(function(i){
+      var ds = fbDateStr(i.createdAt);
+      if(ds && allDates2.indexOf(ds) < 0) allDates2.push(ds);
+    });
+    allDates2.sort(function(a,b){ return a>b?-1:1; });
+    var today2=fbTodayStr(), yest2=fbYesterdayStr();
+    sub.innerHTML = '<p style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;margin:0 0 8px;">Pilih Tanggal:</p>'
+      + allDates2.map(function(ds){
+          var cnt=fbItems.filter(function(i){return fbDateStr(i.createdAt)===ds;}).length;
+          var lbl=ds===today2?'📅 Hari Ini':ds===yest2?'🕙 Kemarin':(function(){var p=ds.split('-');return p[2]+'/'+p[1]+'/'+p[0];})();
+          return '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:4px;cursor:pointer;">'
+            +'<input type="checkbox" name="fbExDate" value="'+ds+'" checked style="accent-color:#6366f1;width:15px;height:15px;">'
+            +'<span style="font-size:12px;color:#e2e8f0;flex:1;">'+lbl+'</span>'
+            +'<span style="font-size:10px;color:#64748b;">'+cnt+' item</span>'
+            +'</label>';
+        }).join('');
   } else if(mode === 'checklist') {
     sub.innerHTML = '<p style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;margin:0 0 8px;">Pilih Item:</p>'
       + fbItems.map(function(it){
@@ -7094,6 +7484,10 @@ function fbDoExportFiltered() {
     document.querySelectorAll('input[name="fbExItem"]:checked').forEach(function(el){selIds[el.value]=true;});
     if(!Object.keys(selIds).length){ showToast("Pilih minimal satu item","error"); return; }
     selectedItems = fbItems.filter(function(i){ return selIds[i.id]; });
+  } else if(mode === 'tanggal') {
+    var selDates = Array.prototype.map.call(document.querySelectorAll('input[name="fbExDate"]:checked'),function(el){return el.value;});
+    if(!selDates.length){ showToast("Pilih minimal satu tanggal","error"); return; }
+    selectedItems = fbItems.filter(function(i){ return selDates.indexOf(fbDateStr(i.createdAt))>=0; });
   }
   if(!selectedItems||!selectedItems.length){ showToast("Tidak ada item yang dipilih","error"); return; }
   document.getElementById('fbExportModal').style.display = 'none';
@@ -7982,6 +8376,258 @@ document.addEventListener("DOMContentLoaded",function(){
   var inp=$("piketSheetUrlInput");
   if(inp&&PIKET_SHEET_URL)inp.value=PIKET_SHEET_URL;
 });
+
+/* =====================================================
+   ABSENSI COOLDOWN — 2 menit per karyawan
+   FIX: pakai localStorage (dibagi semua tab) + re-read
+        dari storage di setiap scan agar tab lain tidak
+        bisa bypass dengan buka tab baru.
+   ===================================================== */
+(function(){
+  var COOLDOWN_MS    = 120000;
+  var STORAGE_KEY    = '_absensiCooldown';
+  var _lastResultMap = {}; // empId -> latest full innerHTML of #absensiResult
+  var _activeEmpId   = null;
+  var _cooldownTimer = null;
+
+  /* ── Helper: tanggal lokal dalam format YYYY-MM-DD ── */
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' +
+      ('0'+(d.getMonth()+1)).slice(-2) + '-' +
+      ('0'+d.getDate()).slice(-2);
+  }
+  function tsToDateStr(ts) {
+    var d = new Date(ts);
+    return d.getFullYear() + '-' +
+      ('0'+(d.getMonth()+1)).slice(-2) + '-' +
+      ('0'+d.getDate()).slice(-2);
+  }
+
+  /* ── Baca / tulis localStorage ── */
+  function readStorage() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { return {}; }
+  }
+  function writeStorage(map) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(map)); } catch(e) {}
+  }
+
+  /* ── Bersihkan semua entry yang bukan hari ini ── */
+  function purgeOldEntries() {
+    var today  = todayStr();
+    var stored = readStorage();
+    var changed = false;
+    Object.keys(stored).forEach(function(k) {
+      if (tsToDateStr(stored[k]) !== today) { delete stored[k]; changed = true; }
+    });
+    if (changed) writeStorage(stored);
+  }
+
+  /* ── Ambil timestamp terakhir scan empId;
+       kembalikan 0 jika beda hari (otomatis hapus entry lama) ── */
+  function getLastScan(empId) {
+    var stored = readStorage();
+    var ts = stored[empId] || 0;
+    if (ts && tsToDateStr(ts) !== todayStr()) {
+      delete stored[empId];
+      writeStorage(stored);
+      return 0;
+    }
+    return ts;
+  }
+  function setLastScan(empId, ts) {
+    var stored = readStorage();
+    stored[empId] = ts;
+    writeStorage(stored);
+  }
+
+  /* Bersihkan entry lama saat halaman dimuat */
+  purgeOldEntries();
+
+  /* ── MutationObserver: tangkap setiap perubahan tabel absensiResult ── */
+  function initObserver() {
+    var res = $('absensiResult');
+    if (!res || res._cooldownObserver) return;
+    var obs = new MutationObserver(function() {
+      if (_activeEmpId && res.innerHTML.trim()) {
+        _lastResultMap[_activeEmpId] = res.innerHTML;
+      }
+    });
+    obs.observe(res, { childList: true, subtree: true, characterData: true });
+    res._cooldownObserver = obs;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initObserver);
+  } else {
+    initObserver();
+  }
+  setTimeout(initObserver, 1000);
+
+  /* ── Format timestamp jadi HH:MM:SS ── */
+  function fmtTime(ts) {
+    var d = new Date(ts);
+    return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2);
+  }
+
+  /* ── Pulihkan tabel history: coba memory dulu, lalu fetch GAS ── */
+  function restoreResult(empId) {
+    var res = $('absensiResult');
+    if (!res) return;
+
+    /* 1. Kalau masih ada di memory tab ini — langsung pakai */
+    if (_lastResultMap[empId]) {
+      res.innerHTML = _lastResultMap[empId];
+      return;
+    }
+
+    /* 2. Tampilkan loading sementara pakai timestamp localStorage */
+    var lastTs = getLastScan(empId);
+    var scanAt = lastTs ? fmtTime(lastTs) : '—';
+    res.innerHTML =
+      '<div style="padding:10px 14px;background:#0d1a00;border:1px solid #1a4a00;border-radius:10px;margin-top:8px;font-family:monospace;">' +
+      '<div style="font-size:10px;color:#557755;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">⏳ Memuat riwayat dari spreadsheet...</div>' +
+      '<div style="font-size:11px;color:#445566;">Terakhir scan tercatat: ' + scanAt + '</div>' +
+      '</div>';
+
+    /* 3. Fetch getSummary hari ini dari GAS, filter per empId */
+    var today = (function(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1<10?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate(); })();
+    var gasUrl = (typeof ABSENSI_GAS_URL !== 'undefined') ? ABSENSI_GAS_URL : '';
+    if (!gasUrl) return;
+
+    fetch(gasUrl + '?action=getSummary&date=' + today)
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (!j.success || !j.records) return;
+        var rec = null;
+        for (var i=0; i<j.records.length; i++) {
+          if (String(j.records[i].employeeId) === String(empId)) { rec = j.records[i]; break; }
+        }
+        if (!rec) return;
+        var statusC = (rec.lastStatus === 'In') ? '#00ff88' : '#ff6644';
+        var html =
+          '<div style="background:#0d0d22;padding:7px 10px 6px;border-bottom:1px solid #1a2a4a;">' +
+          '<span style="font-size:11px;color:#00cc88;font-family:monospace;">&#10003; Riwayat Hari Ini</span>' +
+          (rec.employeeName ? '<span style="font-size:11px;color:#6688bb;font-family:monospace;margin-left:8px;">&#8212; ' + rec.employeeName + '</span>' : '') +
+          '</div>' +
+          '<div style="overflow-x:auto;">' +
+          '<table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:12px;">' +
+          '<thead><tr style="background:#0d0d22;">' +
+          '<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;">Pertama Masuk</th>' +
+          '<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;">Terakhir Scan</th>' +
+          '<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;">Total Scan</th>' +
+          '<th style="padding:7px 8px;color:#6688bb;border:1px solid #1a2a4a;text-align:center;">Status</th>' +
+          '</tr></thead><tbody>' +
+          '<tr>' +
+          '<td style="padding:7px 8px;color:#88ddff;font-weight:700;border:1px solid #12122a;text-align:center;">' + (rec.firstIn || '—') + '</td>' +
+          '<td style="padding:7px 8px;color:#00cc88;font-weight:700;border:1px solid #12122a;text-align:center;">' + (rec.lastOut || rec.firstIn || '—') + '</td>' +
+          '<td style="padding:7px 8px;color:#ffcc44;font-weight:700;border:1px solid #12122a;text-align:center;">' + (rec.scanCount || 1) + 'x</td>' +
+          '<td style="padding:7px 8px;text-align:center;border:1px solid #12122a;"><b style="color:' + statusC + ';">' + (rec.lastStatus || '—') + '</b></td>' +
+          '</tr>' +
+          '</tbody></table></div>';
+        var resEl = $('absensiResult');
+        if (resEl) { resEl.innerHTML = html; _lastResultMap[empId] = html; }
+      })
+      .catch(function(){
+        /* Biarkan tampilan loading tetap ada, tidak crash */
+      });
+  }
+
+  /* ── Tampilkan pesan cooldown + tabel history ── */
+  function showCooldownWarning(empId, remainingMs) {
+    var msg   = $('absensiScanMsg');
+    var badge = $('absensiStatusBadge');
+    var secs  = Math.ceil(remainingMs / 1000);
+    var mins  = Math.floor(secs / 60);
+    var s     = secs % 60;
+    var timeStr = mins > 0 ? mins + ' mnt ' + s + ' dtk' : s + ' dtk';
+    var lastTs  = getLastScan(empId);
+    var scanAt  = lastTs ? ' (pukul ' + fmtTime(lastTs) + ')' : '';
+
+    if (msg) {
+      msg.textContent = ': ' + empId + ' ✓ scan sudah masuk' + scanAt + ' — ⏳ tunggu ' + timeStr + ' lagi';
+      msg.style.color = '#ffaa33';
+    }
+    if (badge) {
+      badge.style.display    = 'inline-block';
+      badge.textContent      = 'TUNGGU';
+      badge.style.background = '#2a1a00';
+      badge.style.color      = '#ffaa33';
+      badge.style.border     = '1px solid #ffaa3355';
+    }
+
+    var inp = $('absensiInput');
+    if (inp) {
+      inp.style.borderColor = '#ffaa33';
+      inp.style.boxShadow   = '0 0 0 3px #ffaa3333';
+      setTimeout(function(){ inp.style.borderColor = ''; inp.style.boxShadow = ''; }, 1000);
+    }
+
+    restoreResult(empId);
+  }
+
+  /* ── Countdown hidup setiap detik ── */
+  function startCountdown(empId, endTime) {
+    if (_cooldownTimer) clearInterval(_cooldownTimer);
+    _cooldownTimer = setInterval(function() {
+      var remaining = endTime - Date.now();
+      if (remaining <= 0) {
+        clearInterval(_cooldownTimer);
+        _cooldownTimer = null;
+        var msg = $('absensiScanMsg');
+        if (msg && msg.textContent.indexOf('⏳') >= 0) {
+          msg.textContent = '► scan ID karyawan untuk absensi';
+          msg.style.color = '#445577';
+        }
+        var badge = $('absensiStatusBadge');
+        if (badge && badge.textContent === 'TUNGGU') badge.style.display = 'none';
+        return;
+      }
+      var msg = $('absensiScanMsg');
+      if (msg && msg.textContent.indexOf('⏳') >= 0) {
+        var secs    = Math.ceil(remaining / 1000);
+        var mins    = Math.floor(secs / 60);
+        var s       = secs % 60;
+        var timeStr = mins > 0 ? mins + ' mnt ' + s + ' dtk' : s + ' dtk';
+        var lastTs2 = getLastScan(empId);
+        var scanAt2 = lastTs2 ? ' (pukul ' + fmtTime(lastTs2) + ')' : '';
+        msg.textContent = ': ' + empId + ' ✓ scan sudah masuk' + scanAt2 + ' — ⏳ tunggu ' + timeStr + ' lagi';
+      }
+    }, 1000);
+  }
+
+  /* ── Wrapper submitAbsensi ── */
+  var _origSubmit = window.submitAbsensi;
+  window.submitAbsensi = function() {
+    var inp = $('absensiInput');
+    if (!inp) { if (_origSubmit) _origSubmit(); return; }
+    var empId = inp.value.trim();
+    if (!empId) { if (_origSubmit) _origSubmit(); return; }
+
+    var now      = Date.now();
+    /* Re-read dari localStorage setiap scan — menangkap scan dari tab lain */
+    var lastScan = getLastScan(empId);
+
+    if (lastScan && (now - lastScan) < COOLDOWN_MS) {
+      showCooldownWarning(empId, COOLDOWN_MS - (now - lastScan));
+      startCountdown(empId, lastScan + COOLDOWN_MS);
+      inp.value = '';
+      if (inp.focus) inp.focus();
+      return;
+    }
+
+    /* Scan valid — catat ke localStorage langsung */
+    _activeEmpId = empId;
+    setLastScan(empId, now);
+
+    if (_cooldownTimer) { clearInterval(_cooldownTimer); _cooldownTimer = null; }
+
+    initObserver();
+    if (_origSubmit) _origSubmit();
+  };
+
+})();
+/* END ABSENSI COOLDOWN */
 
 
 </script>
