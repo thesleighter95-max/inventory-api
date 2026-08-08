@@ -896,6 +896,16 @@
 }
 
 </style>
+ 
+  <script>
+    (function(){
+      try {
+        var raw=localStorage.getItem("inv_sess_v1");
+        var sess=raw?JSON.parse(decodeURIComponent(escape(atob(raw)))):null;
+        if(!sess || !sess.a || !sess.exp || Date.now()>sess.exp){ window.location.replace("./"); }
+      } catch(e) { window.location.replace("./"); }
+    })();
+  </script>
  </head>
  <body data-template-id="__page-root">
   <div class="admin-test-bar"><span>ADMIN TEST • Dashboard KPI v1 — versi terpisah, menu lama tetap aman</span><a href="./">Kembali ke aplikasi</a></div>
