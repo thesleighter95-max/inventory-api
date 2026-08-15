@@ -5350,7 +5350,7 @@ function absensiSyncQueue(){
   processNext();
 }
 
-window.addEventListener('online',function(){window.addEventListener('online',function(){
+window.addEventListener('online',function(){
   _absensiOnline=true;
   updateAbsensiSyncStatus('online','Koneksi pulih — sinkronisasi...');
   absensiSyncQueue();
@@ -5516,7 +5516,7 @@ function submitAbsensi(){
     .catch(function(){queuePending('request_failed');});
 }
 
-function normalizeTimeStr(t){function normalizeTimeStr(t){
+function normalizeTimeStr(t){
   if(!t)return'-';
   // Google Sheets menyimpan time sebagai Date — extract HH:MM:SS saja
   var m=String(t).match(/(\d{2}:\d{2}:\d{2})/);
