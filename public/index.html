@@ -5278,37 +5278,79 @@ function absensiUpdateOfflineBadge(){
   }else{badge.style.display='none';}
 }
 
+
+function absensiNewEventId(){
+  try{if(window.crypto&&window.crypto.randomUUID)return window.crypto.randomUUID();}catch(e){}
+  return 'abs-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
+}
+var _ABSENSI_QUEUE_GAP_MS=2500;
+var _ABSENSI_QUEUE_LAST_SENT_KEY='absensi_queue_last_sent_v2';
+function absensiQueueLastSent(){try{return JSON.parse(localStorage.getItem(_ABSENSI_QUEUE_LAST_SENT_KEY)||'{}');}catch(e){return{};}}
+function absensiSetQueueLastSent(map){try{localStorage.setItem(_ABSENSI_QUEUE_LAST_SENT_KEY,JSON.stringify(map));}catch(e){}}
+function absensiAddOfflineItem(item){
+  var q=absensiGetQueue();
+  var last=null;
+  for(var i=q.length-1;i>=0;i--){if(String(q[i].empId)===String(item.empId)){last=q[i];break;}}
+  var prevTs=last&&Date.parse(last.timestamp||'');
+  var nextTs=Date.parse(item.timestamp||'');
+  if(prevTs&&nextTs&&nextTs-prevTs<120000){
+    return {queued:false,ignored:true,reason:'cooldown'};
+  }
+  q.push(item);absensiSetQueue(q);absensiUpdateOfflineBadge();
+  return {queued:true,ignored:false};
+}
 function absensiSyncQueue(){
   if(_absensiSyncing)return;
   var q=absensiGetQueue();
   if(!q.length){absensiUpdateOfflineBadge();return;}
   _absensiSyncing=true;absensiUpdateOfflineBadge();
   updateAbsensiSyncStatus('syncing','Mengirim '+q.length+' absen offline...');
+  function finishIfEmpty(){
+    var left=absensiGetQueue();
+    if(left.length)return false;
+    _absensiSyncing=false;absensiUpdateOfflineBadge();
+    updateAbsensiSyncStatus('online','Semua absen offline berhasil disinkronkan ✓');
+    var sp=$('absensiSummaryPanel');if(sp&&sp.style.display!=='none')absensiLoadSummary();
+    return true;
+  }
   function processNext(){
     var q2=absensiGetQueue();
-    if(!q2.length){
-      _absensiSyncing=false;absensiUpdateOfflineBadge();
-      updateAbsensiSyncStatus('online','Semua absen terkirim ✓');
-      showToast('✅ Semua absen offline berhasil dikirim ke spreadsheet!','success');
-      var sp=$('absensiSummaryPanel');if(sp&&sp.style.display!=='none')absensiLoadSummary();
+    if(!q2.length){finishIfEmpty();return;}
+    var item=q2[0];
+    var empKey=String(item.empId||'');
+    var sentMap=absensiQueueLastSent();
+    var lastSent=Number(sentMap[empKey]||0);
+    var wait=Math.max(0,120000-(Date.now()-lastSent));
+    if(wait>0){
+      updateAbsensiSyncStatus('syncing','Menjaga jeda karyawan '+Math.ceil(wait/1000)+' dtk...');
+      setTimeout(processNext,Math.min(wait,10000));
       return;
     }
-    var item=q2[0];
-    fetch(ABSENSI_GAS_URL+'?action=scan&employeeId='+encodeURIComponent(item.empId)
-      +'&operator='+encodeURIComponent(item.operator)+'&offlineTs='+encodeURIComponent(item.timestamp))
-    .then(function(r){return r.json();})
-    .then(function(j){
-      if(j.success||j.alreadySynced){
-        var q3=absensiGetQueue();q3.shift();absensiSetQueue(q3);
-        absensiUpdateOfflineBadge();setTimeout(processNext,400);
-      }else{_absensiSyncing=false;absensiUpdateOfflineBadge();}
-    })
-    .catch(function(){_absensiSyncing=false;absensiUpdateOfflineBadge();});
+    var eventId=item.eventId||absensiNewEventId();
+    if(!item.eventId){item.eventId=eventId;absensiSetQueue(q2);}
+    var url=ABSENSI_GAS_URL+'?action=scan&employeeId='+encodeURIComponent(item.empId)
+      +'&operator='+encodeURIComponent(item.operator||'Offline')
+      +'&offlineTs='+encodeURIComponent(item.timestamp||'')
+      +'&eventId='+encodeURIComponent(eventId)
+      +'&clientTs='+encodeURIComponent(item.timestamp||'');
+    fetch(url,{cache:'no-store'})
+      .then(function(r){return r.json();})
+      .then(function(j){
+        var resolved=!!(j.success||j.alreadySynced||j.duplicate||j.ignored||j.cooldown||j.reason==='cooldown');
+        if(!resolved)throw new Error(j.message||'GAS menolak sinkronisasi');
+        sentMap=absensiQueueLastSent();sentMap[empKey]=Date.now();absensiSetQueueLastSent(sentMap);
+        var q3=absensiGetQueue();q3.shift();absensiSetQueue(q3);absensiUpdateOfflineBadge();
+        setTimeout(processNext,_ABSENSI_QUEUE_GAP_MS);
+      })
+      .catch(function(){
+        _absensiSyncing=false;absensiUpdateOfflineBadge();
+        updateAbsensiSyncStatus('error','Sinkronisasi tertunda — akan dicoba lagi saat koneksi stabil');
+      });
   }
   processNext();
 }
 
-window.addEventListener('online',function(){
+window.addEventListener('online',function(){window.addEventListener('online',function(){
   _absensiOnline=true;
   updateAbsensiSyncStatus('online','Koneksi pulih — sinkronisasi...');
   absensiSyncQueue();
@@ -5414,16 +5456,11 @@ function absensiScanFeedback(isIn){
 function submitAbsensi(){
   var inp=$('absensiInput');if(!inp)return;
   var empId=inp.value.trim();if(!empId)return;
-  // Per-employee debounce: if same employee is already being processed, skip
   var nowMs=Date.now();
-  if(_absensiInFlight[empId]&&nowMs-_absensiInFlight[empId]<3000){
-    inp.value='';inp.focus();return;
-  }
+  if(_absensiInFlight[empId]&&nowMs-_absensiInFlight[empId]<3000){inp.value='';inp.focus();return;}
   _absensiInFlight[empId]=nowMs;
   inp.value='';inp.focus();
-  var msg=$('absensiScanMsg');
-  var badge=$('absensiStatusBadge');
-  // Bersihkan tampilan jika hari sudah berganti
+  var msg=$('absensiScanMsg'),badge=$('absensiStatusBadge');
   var _todayStr=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();
   if(_absensiLastScanDate!==_todayStr&&(new Date()).getHours()>=2){
     var _res=$('absensiResult');if(_res)_res.innerHTML='';
@@ -5431,90 +5468,55 @@ function submitAbsensi(){
     var _bdg=$('absensiStatusBadge');if(_bdg)_bdg.style.display='none';
     _absensiStatusMap={};
   }
-  // === OPTIMISTIC: Langsung tampilkan sukses + IN/OUT dari toggle lokal ===
   var _cachedName=_absensiEmpMap[empId.trim()]||'';
-  var _predictedIn=(_absensiStatusMap[empId.trim()]!=='In');
-  var _pBg=_predictedIn?'#0a3a2a':'#3a1a0a';
-  var _pColor=_predictedIn?'#00ff88':'#ff6644';
-  var _pBorder=_predictedIn?'#00ff8855':'#ff664455';
-  if(msg){
-    msg.textContent=': '+empId+(_cachedName?' \u2192 '+_cachedName:' \u2713');
-    msg.style.color=_cachedName?'#88aacc':'#00cc88';
-  }
-  if(badge){
-    badge.style.display='inline-block';
-    badge.textContent=_predictedIn?'IN':'OUT';
-    badge.style.background=_pBg;
-    badge.style.color=_pColor;
-    badge.style.border='1px solid '+_pBorder;
-  }
-  absensiScanFeedback(_predictedIn);
-  renderAbsensiResultOptimistic(empId, _cachedName, _predictedIn);
-  _absensiLastScanDate=_todayStr;
-  // === Kirim ke GAS ===
+  var _eventId=absensiNewEventId();
+  var _scanTs=new Date().toISOString();
   var _op=isAdmin?'Admin':(currentUserNameInv||currentUsernameRaw||'User');
-  var _gasUrl=ABSENSI_GAS_URL+'?action=scan&employeeId='+encodeURIComponent(empId)+'&operator='+encodeURIComponent(_op);
+  if(msg){msg.textContent='\u25A3 '+empId+(_cachedName?' \u2192 '+_cachedName:'')+' — memeriksa...';msg.style.color='#ffcc44';}
+  if(badge){badge.style.display='inline-block';badge.textContent='...';badge.style.background='#2a2400';badge.style.color='#ffcc44';badge.style.border='1px solid #ffcc4455';}
+  updateAbsensiSyncStatus('syncing','Memeriksa scan...');
 
-  // Kalau jaringan benar-benar mati, langsung antri — tidak perlu coba fetch
-  if(!navigator.onLine){
-    var _q=absensiGetQueue();
-    _q.push({empId:empId,operator:_op,timestamp:new Date().toISOString(),predictedIn:_predictedIn});
-    absensiSetQueue(_q);
+  function queuePending(reason){
+    var result=absensiAddOfflineItem({empId:empId,operator:_op,timestamp:_scanTs,eventId:_eventId,predictedIn:null,reason:reason||'network'});
     delete _absensiInFlight[empId];
-    absensiUpdateOfflineBadge();
-    updateAbsensiSyncStatus('error','Offline — absen disimpan lokal');
-    if(msg){msg.textContent=': '+empId+(_cachedName?' → '+_cachedName:'')+' 📵 disimpan, otomatis terkirim saat online';msg.style.color='#ffaa44';}
-    return;
+    if(result.ignored){
+      if(msg){msg.textContent=': '+empId+' — scan diabaikan, terlalu dekat dengan scan sebelumnya';msg.style.color='#ffcc44';}
+      if(badge){badge.textContent='DIABAIKAN';badge.style.background='#2a2400';badge.style.color='#ffcc44';}
+      updateAbsensiSyncStatus('online','Scan duplikat tidak masuk antrean');
+      return;
+    }
+    updateAbsensiSyncStatus('error','Offline — absen tersimpan di perangkat');
+    if(msg){msg.textContent=': '+empId+(_cachedName?' → '+_cachedName:'')+' — tersimpan offline, menunggu sinkronisasi';msg.style.color='#ffaa44';}
+    if(badge){badge.textContent='PENDING';badge.style.background='#2a1a00';badge.style.color='#ffaa44';badge.style.border='1px solid #ffaa4455';}
   }
-
-  function doScan(isRetry){
-    fetch(_gasUrl)
+  var _gasUrl=ABSENSI_GAS_URL+'?action=scan&employeeId='+encodeURIComponent(empId)+'&operator='+encodeURIComponent(_op)
+    +'&eventId='+encodeURIComponent(_eventId)+'&clientTs='+encodeURIComponent(_scanTs);
+  if(!navigator.onLine){queuePending('offline');return;}
+  fetch(_gasUrl,{cache:'no-store'})
     .then(function(r){return r.json();})
     .then(function(j){
       delete _absensiInFlight[empId];
+      var ignored=!!(j.ignored||j.cooldown||j.reason==='cooldown'||j.reason==='duplicate');
+      if(ignored){
+        if(msg){msg.textContent=': '+empId+' — scan diabaikan, masih dalam jeda 2 menit';msg.style.color='#ffcc44';}
+        if(badge){badge.style.display='inline-block';badge.textContent='DIABAIKAN';badge.style.background='#2a2400';badge.style.color='#ffcc44';badge.style.border='1px solid #ffcc4455';}
+        updateAbsensiSyncStatus('online','Scan tidak mengubah status');
+        return;
+      }
+      if(!j.success&&!j.alreadySynced&&!j.duplicate)throw new Error(j.message||'GAS menolak scan');
+      var isIn=j.status==='In';
+      if(j.status)_absensiStatusMap[empId.trim()]=j.status;
       updateAbsensiSyncStatus('online','Terhubung');
-      if(j.success){
-        var isIn=j.status==='In';
-        _absensiStatusMap[empId.trim()]=j.status;
-        if(msg){
-          msg.textContent=': '+j.employeeId+(j.employeeName?' → '+j.employeeName:' ⚠ ID tidak terdaftar di spreadsheet');
-          msg.style.color=j.employeeName?'#88aacc':'#ff8844';
-        }
-        if(badge){
-          badge.style.display='inline-block';badge.textContent=j.status.toUpperCase();
-          badge.style.background=isIn?'#0a3a2a':'#3a1a0a';badge.style.color=isIn?'#00ff88':'#ff6644';
-          badge.style.border='1px solid '+(isIn?'#00ff8855':'#ff664455');
-        }
-        renderAbsensiResult(j);
-        var sumPanel=$('absensiSummaryPanel');
-        if(sumPanel&&sumPanel.style.display!=='none'){absensiLoadSummary();}
-      }
+      if(msg){msg.textContent=': '+j.employeeId+(j.employeeName?' → '+j.employeeName:' ⚠ ID tidak terdaftar di spreadsheet');msg.style.color=j.employeeName?'#88aacc':'#ff8844';}
+      if(badge){badge.style.display='inline-block';badge.textContent=(j.status||'DITERIMA').toUpperCase();badge.style.background=isIn?'#0a3a2a':'#3a1a0a';badge.style.color=isIn?'#00ff88':'#ff6644';badge.style.border='1px solid '+(isIn?'#00ff8855':'#ff664455');}
+      absensiScanFeedback(isIn);
+      if(j.records)renderAbsensiResult(j);
+      var sumPanel=$('absensiSummaryPanel');if(sumPanel&&sumPanel.style.display!=='none')absensiLoadSummary();
     })
-    .catch(function(){
-      if(!navigator.onLine){
-        // Jaringan mati di tengah fetch — antri, akan otomatis terkirim saat online
-        var _q=absensiGetQueue();
-        _q.push({empId:empId,operator:_op,timestamp:new Date().toISOString(),predictedIn:_predictedIn});
-        absensiSetQueue(_q);
-        delete _absensiInFlight[empId];
-        absensiUpdateOfflineBadge();
-        updateAbsensiSyncStatus('error','Offline — absen disimpan lokal');
-        if(msg){msg.textContent=': '+empId+(_cachedName?' → '+_cachedName:'')+' 📵 disimpan, otomatis terkirim saat online';msg.style.color='#ffaa44';}
-      }else if(!isRetry){
-        // Jaringan oke tapi GAS gagal — retry sekali setelah 1 detik
-        setTimeout(function(){doScan(true);},1000);
-      }else{
-        // Jaringan oke, GAS tetap gagal setelah retry — tampilkan peringatan
-        delete _absensiInFlight[empId];
-        updateAbsensiSyncStatus('error','Gagal terhubung ke spreadsheet');
-        if(msg){msg.textContent=': '+empId+(_cachedName?' → '+_cachedName:'')+' ⚠ gagal terkirim ke spreadsheet';msg.style.color='#ff8844';}
-      }
-    });
-  }
-  doScan(false);
+    .catch(function(){queuePending('request_failed');});
 }
 
-function normalizeTimeStr(t){
+function normalizeTimeStr(t){function normalizeTimeStr(t){
   if(!t)return'-';
   // Google Sheets menyimpan time sebagai Date — extract HH:MM:SS saja
   var m=String(t).match(/(\d{2}:\d{2}:\d{2})/);
@@ -8384,7 +8386,7 @@ document.addEventListener("DOMContentLoaded",function(){
         bisa bypass dengan buka tab baru.
    ===================================================== */
 (function(){
-  var COOLDOWN_MS    = 120000;
+  var COOLDOWN_MS    = 120000; // UX guard only; GAS remains authoritative
   var STORAGE_KEY    = '_absensiCooldown';
   var _lastResultMap = {}; // empId -> latest full innerHTML of #absensiResult
   var _activeEmpId   = null;
