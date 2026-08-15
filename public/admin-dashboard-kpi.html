@@ -1467,15 +1467,6 @@
 }
 
 </style>
-<script>
-(function(){
-  try {
-    var raw=localStorage.getItem("inv_sess_v1");
-    var sess=raw?JSON.parse(decodeURIComponent(escape(atob(raw)))):null;
-    if(!sess || !sess.a || !sess.exp || Date.now()>sess.exp){ window.location.replace("./"); }
-  } catch(e) { window.location.replace("./"); }
-})();
-</script>
 </head>
  <body data-template-id="__page-root">
   <div class="dashboard-shell">
