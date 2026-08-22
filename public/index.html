@@ -347,6 +347,930 @@ table td { font-size: 11px; }
 .gpb-deny{flex:1;background:rgba(255,255,255,0.06);color:#94a3b8;border:1px solid rgba(255,255,255,0.1);padding:9px 0;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;}
 /* ─────────────────────────────────────────────── */
 </style>
+<style id="dashboard-kpi-styles">
+    :root {
+      --ink: #14213d;
+      --muted: #64748b;
+      --line: #dbe3ef;
+      --panel: #ffffff;
+      --blue: #1463d9;
+      --blue-dark: #0d4fb8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      font-family: "DM Sans", sans-serif;
+      color: var(--ink);
+    }
+
+    .dashboard-shell {
+      width: 100%;
+      min-height: calc(100 * min(var(--vh, 1vh), 1vh));
+      padding: 24px;
+      background:
+        radial-gradient(circle at 94% 0%, rgba(96, 165, 250, 0.28), transparent 28rem),
+        linear-gradient(180deg, #edf5ff 0%, #f6f9fe 50%, #edf3fa 100%);
+    }
+
+    .floating-header {
+      position: relative;
+      overflow: hidden;
+      color: #173b73 !important;
+      background:
+        radial-gradient(circle at 8% 10%, rgba(59, 130, 246, 0.18), transparent 22rem),
+        radial-gradient(circle at 92% 85%, rgba(14, 165, 233, 0.16), transparent 20rem),
+        linear-gradient(135deg, #ffffff 0%, #f5f9ff 52%, #e8f2ff 100%) !important;
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      box-shadow: 0 18px 45px rgba(30, 86, 150, 0.16);
+    }
+
+    .floating-header::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #2563eb, #06b6d4, #10b981);
+      opacity: .9;
+    }
+
+    .floating-header .header-content { position: relative; z-index: 1; }
+    .floating-header [data-template-id="dashboard-title"] {
+      color: #163d73 !important;
+      font-size: clamp(1.25rem, 2vw, 1.75rem);
+      letter-spacing: -0.025em;
+      text-shadow: none;
+    }
+    .floating-header [data-template-id="dashboard-subtitle"] {
+      color: #5b6f8c !important;
+      font-weight: 500;
+      max-width: 390px;
+    }
+    .floating-header .rounded-full.border-white\/25 {
+      color: #2563eb !important;
+      background: #eff6ff !important;
+      border-color: #bfdbfe !important;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.7);
+    }
+    .floating-header .header-actions > .flex.items-center.gap-2.rounded-full.bg-white\/10 {
+      color: #47617f !important;
+      background: rgba(255,255,255,.72) !important;
+      border: 1px solid rgba(148,163,184,.18);
+      box-shadow: 0 4px 14px rgba(30,64,175,.06);
+    }
+    .floating-header .filter-row > div {
+      background: rgba(255,255,255,.86) !important;
+      border: 1px solid rgba(148,163,184,.20);
+      box-shadow: 0 5px 16px rgba(30,64,175,.07);
+    }
+    .floating-header .filter-row label { color: #47617f !important; }
+    .floating-header select {
+      color: #163d73 !important;
+      background-color: #ffffff !important;
+      box-shadow: inset 0 0 0 1px rgba(203,213,225,.65);
+    }
+    .floating-header .reset-filter-button {
+      color: #2563eb !important;
+      background: #eff6ff !important;
+      border-color: #bfdbfe !important;
+      box-shadow: 0 4px 12px rgba(37,99,235,.08);
+    }
+    .floating-header .reset-filter-button:hover {
+      color: #ffffff !important;
+      background: #2563eb !important;
+      border-color: #2563eb !important;
+    }
+    .floating-header #upload-button,
+    .floating-header #reload-button {
+      color: #ffffff !important;
+      background: linear-gradient(135deg, #2563eb, #0ea5e9) !important;
+      border: 0 !important;
+      box-shadow: 0 8px 18px rgba(37,99,235,.18);
+    }
+    .floating-header #upload-button:hover,
+    .floating-header #reload-button:hover {
+      filter: brightness(.96);
+      transform: translateY(-1px);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      max-width: 1440px;
+      margin: 22px auto 0;
+    }
+
+    .wide-panel {
+      grid-column: 1 / -1;
+    }
+
+    .kpi-panel {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid rgba(203, 213, 225, 0.8);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 12px 32px rgba(15, 47, 92, 0.08);
+      animation: rise-in 0.55s ease both;
+    }
+
+    .kpi-panel:nth-child(2) { animation-delay: 0.08s; }
+    .kpi-panel:nth-child(3) { animation-delay: 0.16s; }
+
+    .table-wrap {
+      overflow-x: auto;
+      scrollbar-color: #b9c8df transparent;
+      scrollbar-width: thin;
+    }
+
+    table {
+      width: 100%;
+      min-width: 660px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 13px 16px;
+      text-align: left;
+      white-space: nowrap;
+      border-bottom: 1px solid #e9eef5;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding-top: 14px;
+      padding-bottom: 14px;
+      font-size: 0.72rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: #ffffff;
+      background: linear-gradient(135deg, #173b73 0%, #2563a8 55%, #0f766e 100%);
+      box-shadow: inset 0 -2px 0 rgba(255,255,255,0.18), 0 3px 8px rgba(15, 47, 92, 0.12);
+    }
+
+    /* CAT header is hidden only on the existing CAT-based tables.
+       OOS Potensial Sales has no CAT column, so its ProdCode header must stay visible. */
+    .kpi-panel:not([data-template-id="oos-potential-panel"]) thead th:nth-child(2) {
+      display: none !important;
+    }
+
+    th:first-child {
+      border-top-left-radius: 8px;
+    }
+
+    th:last-child {
+      border-top-right-radius: 8px;
+    }
+
+    [data-template-id="over-stock-panel"] th {
+      background: linear-gradient(135deg, #9a3412 0%, #ea580c 55%, #f59e0b 100%);
+    }
+
+    [data-template-id="sales-stock-panel"] th {
+      background: linear-gradient(135deg, #047857 0%, #059669 55%, #0891b2 100%);
+    }
+
+    [data-template-id="oos-potential-panel"] th {
+      background: linear-gradient(135deg, #0f766e 0%, #0891b2 55%, #2563eb 100%);
+    }
+
+    [data-template-id="high-stock-panel"] th {
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0284c7 100%);
+    }
+
+    td {
+      font-size: 0.86rem;
+      color: #34435d;
+    }
+
+    tbody tr {
+      transition: transform 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #fbfdff;
+    }
+
+    tbody tr:hover {
+      background: #f0f7ff;
+      transform: translateX(2px);
+      box-shadow: inset 3px 0 0 #3b82f6;
+    }
+
+    /* Hide CAT column in the existing tables, but keep ProdCode visible in OOS Potensial Sales. */
+    .kpi-panel:not([data-template-id="oos-potential-panel"]) tbody td:nth-child(2) {
+      display: none !important;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .number-cell {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      color: #163d73;
+    }
+
+    .rank-cell {
+      width: 46px;
+      color: #7890b0;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    /* Category is controlled by the dashboard filter, so hide it from tables. */
+    .category-column {
+      display: none !important;
+    }
+
+    .std-highlight {
+      display: inline-flex;
+      min-width: 72px;
+      justify-content: flex-end;
+      padding: 5px 9px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #fff7ed, #ffedd5);
+      color: #c2410c;
+      box-shadow: inset 0 0 0 1px #fed7aa;
+    }
+
+    .table-wrap {
+      max-height: 430px;
+      overflow: auto;
+      background: linear-gradient(180deg, rgba(248,250,252,.7), rgba(255,255,255,.95));
+    }
+
+    .kpi-panel {
+      position: relative;
+    }
+
+    .kpi-panel::before {
+      content: "";
+      display: block;
+      height: 4px;
+      background: linear-gradient(90deg, #2563eb, #60a5fa);
+      opacity: .9;
+    }
+
+    [data-template-id="over-stock-panel"]::before {
+      background: linear-gradient(90deg, #f59e0b, #fb7185, #f97316);
+    }
+
+    [data-template-id="sales-stock-panel"]::before {
+      background: linear-gradient(90deg, #10b981, #34d399, #06b6d4);
+    }
+
+    [data-template-id="not-sold-panel"]::before {
+      background: linear-gradient(90deg, #7c3aed, #a855f7, #c084fc);
+    }
+
+    [data-template-id="high-stock-panel"]::before {
+      background: linear-gradient(90deg, #2563eb, #38bdf8);
+    }
+
+    .empty-row td {
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #86efac;
+      box-shadow: 0 0 0 4px rgba(134, 239, 172, 0.2);
+    }
+
+    .status-dot.loading {
+      background: #fbbf24;
+      box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.18);
+      animation: pulse-dot 1.1s infinite;
+    }
+
+    .status-dot.error {
+      background: #fb7185;
+      box-shadow: 0 0 0 4px rgba(251, 113, 133, 0.18);
+    }
+
+    .reload-button {
+      transition: transform 0.18s ease, background 0.18s ease;
+    }
+
+    .reload-button:hover { transform: translateY(-1px); }
+    .reload-button:disabled { opacity: 0.7; cursor: wait; transform: none; }
+
+    .spin-icon { animation: spin 0.85s linear infinite; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse-dot { 50% { transform: scale(0.72); opacity: 0.7; } }
+    @keyframes rise-in {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* KPI SUMMARY CARDS */
+    .summary-kpi-wrap {
+      max-width: 1440px;
+      margin: 22px auto 0;
+      padding-top: 22px;
+    }
+
+    .summary-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .summary-kpi-card {
+      position: relative;
+      min-width: 0;
+      min-height: 76px;
+      border-radius: 8px;
+      background: #5b9bd5;
+      box-shadow: 0 6px 14px rgba(15, 47, 92, 0.10);
+      border: 1px solid rgba(255,255,255,.28);
+    }
+
+    .summary-kpi-label {
+      position: absolute;
+      top: -22px;
+      left: 0;
+      z-index: 2;
+      padding: 6px 12px;
+      min-width: 105px;
+      border-radius: 6px 6px 0 0;
+      background: #050505;
+      color: #fff;
+      font-size: 0.70rem;
+      font-weight: 800;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .summary-kpi-value {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 76px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 1.75rem;
+      line-height: 1;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .filter-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+    .filter-row { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+    .reset-filter-button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 6px 12px; background: rgba(255,255,255,.10); color: #eff6ff; font-size: .72rem; font-weight: 700; cursor: pointer; transition: all .18s ease; }
+    .reset-filter-button:hover { background: rgba(255,255,255,.20); transform: translateY(-1px); }
+
+    /* FULL WIDTH DESKTOP / PC */
+    @media (min-width: 1200px) {
+      .dashboard-shell {
+        padding: 16px;
+      }
+
+      .floating-header {
+        width: 100% !important;
+        max-width: none !important;
+      }
+
+      .dashboard-grid,
+      .summary-kpi-wrap {
+        width: 100%;
+        max-width: none;
+      }
+
+      .dashboard-grid {
+        gap: 16px;
+        margin-top: 18px;
+      }
+
+      .summary-kpi-wrap {
+        margin-top: 20px;
+      }
+
+      .table-wrap {
+        width: 100%;
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        min-width: 0;
+      }
+
+      th, td {
+        padding: 10px 11px;
+        font-size: 0.80rem;
+      }
+
+      th {
+        font-size: 0.68rem;
+        letter-spacing: 0.045em;
+      }
+
+      /* Nama produk boleh turun baris agar semua kolom tetap terbaca. */
+      th:nth-child(4),
+      td:nth-child(4) {
+        white-space: normal;
+        min-width: 190px;
+        max-width: 330px;
+        line-height: 1.25;
+      }
+
+      /* Kolom angka tetap rapat dan mudah dibaca. */
+      th.text-right,
+      td.number-cell {
+        white-space: nowrap;
+      }
+    }
+
+    /* SALES ACHIEVEMENT CHART */
+    .sales-achievement-panel {
+      width: 100%;
+      margin: 20px auto 0;
+      border: 1px solid rgba(203, 213, 225, 0.8);
+      border-radius: 22px;
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 12px 32px rgba(15,47,92,.08);
+      overflow: hidden;
+      position: relative;
+    }
+    .sales-achievement-panel::before {
+      content: "";
+      display: block;
+      height: 4px;
+      background: linear-gradient(90deg, #2563eb, #06b6d4, #10b981);
+    }
+    .sales-achievement-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid #eef2f7;
+    }
+    .sales-achievement-head h2 {
+      margin: 0;
+      font-size: 1.08rem;
+      color: #14213d;
+      font-weight: 800;
+    }
+    .sales-achievement-head p {
+      margin: 3px 0 0;
+      color: #0891b2;
+      font-size: .67rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .sales-achievement-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: 999px;
+      padding: 7px 11px;
+      background: #f0f9ff;
+      color: #0f4c81;
+      font-size: .72rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .sales-achievement-chart-wrap {
+      width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+      padding: 12px 12px 18px;
+    }
+    #sales-achievement-canvas {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      height: 360px;
+    }
+    .sales-achievement-empty {
+      min-height: 180px;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: #64748b;
+      text-align: center;
+      font-size: .9rem;
+    }
+
+    /* RESPONSIVE / MOBILE */
+    @media (max-width: 900px) {
+      .dashboard-shell {
+        padding: 12px;
+      }
+
+      .floating-header {
+        width: 100% !important;
+        max-width: none !important;
+        padding: 18px !important;
+        border-radius: 20px;
+      }
+
+      .header-content {
+        width: 100%;
+        align-items: stretch;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .header-actions {
+        width: 100%;
+        display: grid !important;
+        grid-template-columns: 1fr;
+        gap: 10px !important;
+      }
+
+      .header-actions > .flex.items-center.gap-2.rounded-full.bg-white\/10 {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .filter-stack {
+        width: 100%;
+        align-items: stretch;
+      }
+
+      .filter-row {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .floating-header .filter-row > div {
+        min-width: 0;
+        width: 100%;
+        justify-content: space-between;
+        padding: 8px 10px;
+      }
+
+      .floating-header .filter-row label {
+        flex: 0 0 auto;
+      }
+
+      .floating-header .filter-row select {
+        min-width: 0;
+        max-width: 68%;
+        width: 100%;
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+
+      .reset-filter-button {
+        align-self: center;
+        margin-top: 2px;
+      }
+
+      .header-actions > .flex.items-center.gap-2:not(.rounded-full) {
+        width: 100%;
+        justify-content: stretch;
+      }
+
+      .header-actions #upload-button,
+      .header-actions #reload-button {
+        flex: 1 1 0;
+        justify-content: center;
+        min-height: 42px;
+      }
+
+      .summary-kpi-wrap {
+        width: 100%;
+        padding-top: 18px;
+        margin-top: 10px;
+      }
+
+      .summary-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .summary-kpi-card {
+        min-height: 68px;
+      }
+
+      .summary-kpi-value {
+        min-height: 68px;
+        font-size: clamp(1.15rem, 5vw, 1.5rem);
+      }
+
+      .summary-kpi-label {
+        top: -19px;
+        min-width: auto;
+        padding: 5px 9px;
+        font-size: .58rem;
+      }
+
+      .dashboard-grid {
+        width: 100%;
+        max-width: none;
+        grid-template-columns: 1fr;
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .wide-panel {
+        grid-column: auto;
+      }
+
+      .kpi-panel {
+        width: 100%;
+        border-radius: 17px;
+      }
+
+      .kpi-panel > div:first-child {
+        padding: 14px !important;
+      }
+
+      .table-wrap {
+        width: 100%;
+        max-height: 52vh;
+        overflow-x: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+      }
+
+      table {
+        width: max-content;
+        min-width: 640px;
+      }
+
+      th, td {
+        padding: 10px 9px;
+        font-size: .72rem;
+      }
+
+      th {
+        font-size: .62rem;
+        letter-spacing: .035em;
+      }
+
+      td {
+        line-height: 1.25;
+      }
+
+      /* Keep product names readable while allowing horizontal scrolling. */
+      th:nth-child(3),
+      td:nth-child(3),
+      th:nth-child(4),
+      td:nth-child(4) {
+        white-space: normal;
+        min-width: 180px;
+        max-width: 280px;
+      }
+
+      /* OOS table: ProdCode, ProdName, Avg Sales, DMS, Order QTY. */
+      [data-template-id="oos-potential-panel"] table {
+        min-width: 700px;
+      }
+
+      [data-template-id="oos-potential-panel"] th:nth-child(2),
+      [data-template-id="oos-potential-panel"] td:nth-child(2) {
+        min-width: 125px;
+        max-width: 145px;
+        white-space: nowrap;
+      }
+
+      [data-template-id="oos-potential-panel"] th:nth-child(3),
+      [data-template-id="oos-potential-panel"] td:nth-child(3) {
+        min-width: 230px;
+        max-width: 300px;
+        white-space: normal;
+      }
+
+      /* Keep the rank column visible while scrolling horizontally. */
+      table th:first-child,
+      table td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 3;
+        background: #fff;
+      }
+
+      table th:first-child {
+        background: #173b73;
+        color: #fff;
+      }
+
+      tbody tr:nth-child(even) td:first-child {
+        background: #fbfdff;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .dashboard-shell {
+        padding: 8px;
+      }
+
+      .floating-header {
+        padding: 15px !important;
+        border-radius: 17px;
+      }
+
+      .floating-header [data-template-id="dashboard-title"] {
+        font-size: 1.35rem;
+      }
+
+      .floating-header [data-template-id="dashboard-subtitle"] {
+        max-width: 100%;
+        font-size: .78rem;
+      }
+
+      .filter-row {
+        grid-template-columns: 1fr;
+      }
+
+      .floating-header .filter-row > div {
+        min-height: 42px;
+      }
+
+      .floating-header .filter-row select {
+        max-width: 62%;
+      }
+
+      .header-actions > .flex.items-center.gap-2:not(.rounded-full) {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .summary-kpi-grid {
+        gap: 9px;
+      }
+
+      .summary-kpi-value {
+        font-size: 1.2rem;
+      }
+
+      .summary-kpi-label {
+        font-size: .55rem;
+        padding: 4px 7px;
+      }
+
+      .dashboard-grid {
+        gap: 12px;
+        margin-top: 17px;
+      }
+
+      .kpi-panel > div:first-child {
+        padding: 12px !important;
+      }
+
+      .table-wrap {
+        max-height: 48vh;
+      }
+
+      table {
+        min-width: 610px;
+      }
+
+      [data-template-id="oos-potential-panel"] table {
+        min-width: 660px;
+      }
+
+      th, td {
+        padding: 9px 8px;
+        font-size: .68rem;
+      }
+
+      th {
+        font-size: .58rem;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .summary-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .wide-panel { grid-column: auto; }
+    }
+
+    @media (max-width: 640px) {
+      .summary-kpi-grid { gap: 10px; }
+      .summary-kpi-value { font-size: 1.35rem; }
+      .summary-kpi-label { font-size: 0.62rem; min-width: 88px; }
+      .dashboard-shell { padding: 14px; }
+      .header-content { align-items: flex-start; flex-direction: column; }
+      .header-actions { width: 100%; justify-content: space-between; }
+    }
+  
+/* Sales Achievement responsive sizing */
+.sales-achievement-panel .sales-achievement-chart,
+.sales-achievement-panel canvas,
+.sales-achievement-panel svg {
+  width: 100% !important;
+}
+.sales-achievement-panel .sales-achievement-chart {
+  min-height: 390px;
+}
+.sales-achievement-panel .achv-label,
+.sales-achievement-panel .sales-achv-label {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  letter-spacing: .2px;
+}
+@media (min-width: 1600px) {
+  .sales-achievement-panel .sales-achievement-chart {
+    min-height: 500px;
+  }
+  .sales-achievement-panel .achv-label,
+  .sales-achievement-panel .sales-achv-label {
+    font-size: 19px !important;
+  }
+}
+@media (min-width: 1100px) and (max-width: 1599px) {
+  .sales-achievement-panel .sales-achievement-chart {
+    min-height: 440px;
+  }
+  .sales-achievement-panel .achv-label,
+  .sales-achievement-panel .sales-achv-label {
+    font-size: 18px !important;
+  }
+}
+@media (max-width: 767px) {
+  .sales-achievement-panel {
+    width: 100%;
+    border-radius: 16px;
+  }
+  .sales-achievement-head {
+    padding: 14px 14px 12px;
+    align-items: flex-start;
+  }
+  .sales-achievement-head h2 {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+  .sales-achievement-head p {
+    font-size: .58rem;
+    letter-spacing: .12em;
+  }
+  .sales-achievement-meta {
+    font-size: .62rem;
+    padding: 6px 8px;
+    max-width: 45%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sales-achievement-chart-wrap {
+    width: 100%;
+    overflow: hidden;
+    padding: 8px 6px 14px;
+  }
+  #sales-achievement-canvas {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 350px !important;
+  }
+  .sales-achievement-panel .sales-achievement-chart {
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+  .sales-achievement-panel .sales-achievement-chart > * {
+    min-width: 0 !important;
+    max-width: 100%;
+  }
+  .sales-achievement-panel .achv-label,
+  .sales-achievement-panel .sales-achv-label {
+    font-size: 17px !important;
+    font-weight: 900 !important;
+  }
+}
+@media (max-width: 480px) {
+  .sales-achievement-panel .sales-achievement-chart {
+    min-height: 0;
+  }
+  #sales-achievement-canvas {
+    height: 330px !important;
+  }
+  .sales-achievement-panel .achv-label,
+  .sales-achievement-panel .sales-achv-label {
+    font-size: 16px !important;
+  }
+}
+
+</style>
 </head>
 
 <body class="pb-24 pt-4" style="padding-top:52px;">
@@ -1923,62 +2847,294 @@ body.is-mobile-device.is-admin #navAbsensi{display:flex!important;}
 </div>
 
 <!-- ═══════════════════════════════════════════════════════
-     DASHBOARD PANEL — admin only
+     DASHBOARD PANEL — available to all authenticated users
 ════════════════════════════════════════════════════════ -->
-<div id="dashboardPanel" class="panel-container" style="background:#07070f;min-height:100vh;padding-bottom:80px;">
-  <div style="max-width:900px;margin:0 auto;padding:16px 14px 0;">
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+<div id="dashboardPanel" class="panel-container">
+<div class="dashboard-shell">
+   <header data-template-id="dashboard-header" class="canva-header floating-header mx-auto max-w-7xl rounded-[26px] px-6 py-5 text-white md:px-8">
+    <div class="header-content flex items-center justify-between gap-5">
+     <div>
+      <div class="mb-2 flex items-center gap-2">
+       <span class="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold tracking-[0.15em]">LIVE REPORT</span>
+      </div>
+      <h1 data-template-id="dashboard-title" class="canva-text font-bold tracking-tight">Dashboard KPI</h1>
+      <div id="last-data-update" class="last-update-header" aria-live="polite">
+       <span class="dot"></span>
+       <span class="last-update-text">Last Update : Memuat...</span>
+       <span id="dashboard-view-count" class="view-count" aria-live="polite">👁 0 Views</span>
+      </div>
+      <p data-template-id="dashboard-subtitle" class="canva-text mt-1 text-sm text-blue-100">Ringkasan performa stok dan penjualan dari spreadsheet</p>
+     </div>
+     <div class="header-actions flex items-center gap-4">
+      <div class="flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs text-blue-50">
+       <span id="status-dot" class="status-dot loading" aria-hidden="true"></span>
+<span id="data-status" aria-live="polite">Memuat data...</span>
+      </div>
+      <div class="filter-stack">
+       <div class="filter-row">
+        <div class="flex items-center gap-2 rounded-full bg-white/10 px-3 py-2"><label data-template-id="category-filter-label" class="canva-text text-xs font-semibold text-blue-50" for="category-filter">Category</label> <select id="category-filter" data-template-id="category-filter" class="canva-input rounded-full border-0 bg-white px-3 py-1.5 text-xs font-semibold text-blue-900 focus:outline-none focus:ring-4 focus:ring-white/40" aria-label="Filter berdasarkan category"> <option value="all">Semua category</option> </select>
+        </div>
+        <div class="flex items-center gap-2 rounded-full bg-white/10 px-3 py-2"><label data-template-id="seasonal-filter-label" class="canva-text text-xs font-semibold text-blue-50" for="seasonal-filter">Seasonal</label> <select id="seasonal-filter" data-template-id="seasonal-filter" class="canva-input rounded-full border-0 bg-white px-3 py-1.5 text-xs font-semibold text-blue-900 focus:outline-none focus:ring-4 focus:ring-white/40" aria-label="Filter berdasarkan seasonal"> <option value="all">Semua</option> <option value="seasonal">Seasonal</option> <option value="non-seasonal">Bukan Seasonal</option> </select>
+        </div>
+        <div class="flex items-center gap-2 rounded-full bg-white/10 px-3 py-2"><label data-template-id="division-filter-label" class="canva-text text-xs font-semibold text-blue-50" for="division-filter">Divisi</label> <select id="division-filter" data-template-id="division-filter" class="canva-input rounded-full border-0 bg-white px-3 py-1.5 text-xs font-semibold text-blue-900 focus:outline-none focus:ring-4 focus:ring-white/40" aria-label="Filter berdasarkan divisi"> <option value="all">Semua Divisi</option> </select>
+        </div>
+        <div class="flex items-center gap-2 rounded-full bg-white/10 px-3 py-2">
+         <label data-template-id="consignment-filter-label" class="canva-text text-xs font-semibold text-blue-50" for="consignment-filter">Consigment</label>
+         <select id="consignment-filter" data-template-id="consignment-filter" class="canva-input rounded-full border-0 bg-white px-3 py-1.5 text-xs font-semibold text-blue-900 focus:outline-none focus:ring-4 focus:ring-white/40" aria-label="Filter berdasarkan consigment">
+          <option value="all">Semua</option>
+          <option value="cons">Consigment</option>
+          <option value="non-cons">Bukan Consigment</option>
+         </select>
+        </div>
+        <div class="flex items-center gap-2 rounded-full bg-white/10 px-3 py-2"><label data-template-id="limit-filter-label" class="canva-text text-xs font-semibold text-blue-50" for="limit-filter">Tampilkan</label> <select id="limit-filter" data-template-id="limit-filter" class="canva-input rounded-full border-0 bg-white px-3 py-1.5 text-xs font-semibold text-blue-900 focus:outline-none focus:ring-4 focus:ring-white/40" aria-label="Jumlah data yang ditampilkan"><option value="10">Top 10</option><option value="15">Top 15</option><option value="20">Top 20</option><option value="50">Top 50</option><option value="100">Top 100</option></select>
+        </div>
+       </div>
+       <button id="reset-filter-button" class="reset-filter-button" type="button" aria-label="Reset semua filter"><i data-lucide="rotate-ccw" width="14" height="14" aria-hidden="true"></i><span>Reset Filter</span></button>
+      </div>
+      <div class="flex items-center gap-2">
+       <input id="master-file-input" class="hidden" type="file" accept=".xlsx,.xls,.csv" aria-label="Upload master Excel atau CSV"><button id="upload-button" data-template-id="upload-button" class="canva-button inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-white/40" type="button"> <i data-lucide="upload" width="16" height="16" aria-hidden="true"></i> <span>Upload Master</span> </button><button id="reload-button" data-template-id="reload-button" class="canva-button reload-button inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-white/40" type="button"> <i data-lucide="refresh-cw" width="16" height="16" aria-hidden="true"></i> <span>Muat ulang</span> </button>
+      </div>
+     </div>
+    </div>
+   </header>
+   <section class="summary-kpi-wrap" aria-label="Ringkasan SKU">
+     <div class="summary-kpi-grid">
+      <div class="summary-kpi-card">
+       <div class="summary-kpi-label">TOTAL SKU</div>
+       <div id="kpi-total-sku" class="summary-kpi-value">0</div>
+      </div>
+      <div class="summary-kpi-card">
+       <div class="summary-kpi-label">SKU KEEP</div>
+       <div id="kpi-sku-keep" class="summary-kpi-value">0</div>
+      </div>
+      <div class="summary-kpi-card">
+       <div class="summary-kpi-label">RUNNING SKU</div>
+       <div id="kpi-running-sku" class="summary-kpi-value">0</div>
+      </div>
+      <div class="summary-kpi-card">
+       <div class="summary-kpi-label">OOS</div>
+       <div id="kpi-oos" class="summary-kpi-value">0</div>
+      </div>
+     </div>
+    </section>
+    <section class="sales-achievement-panel" aria-labelledby="sales-achievement-title">
+      <div class="sales-achievement-head">
+        <div>
+          <p>Budget vs Sales</p>
+          <h2 id="sales-achievement-title">Sales Achievement</h2>
+        </div>
+        <div id="sales-achievement-meta" class="sales-achievement-meta">
+          <i data-lucide="bar-chart-3" width="15" height="15" aria-hidden="true"></i>
+          <span></span>
+        </div>
+      </div>
+      <div id="sales-achievement-chart-wrap" class="sales-achievement-chart-wrap">
+</div>
+    
+<canvas id="sales-achievement-canvas" aria-label="Diagram batang Sales Achievement"></canvas>
+      </div>
+      <div id="sales-achievement-empty" class="sales-achievement-empty" aria-hidden="true"></div>
+    </section>
+    <main class="dashboard-grid" aria-label="Dashboard tabel KPI">
+<section data-template-id="high-stock-panel" class="canva-panel kpi-panel" aria-labelledby="high-stock-title">
+     <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-5">
       <div>
-        <div style="font-size:10px;font-weight:700;letter-spacing:3px;color:#6a8cff;font-family:monospace;text-transform:uppercase;">Admin Dashboard</div>
-        <div style="font-size:16px;font-weight:900;color:#e0f0ff;margin-top:2px;">Top High Stock Value</div>
-        <div style="font-size:10px;color:#445577;font-family:monospace;">by Amount MTD — Top 20</div>
+       <p class="mb-1 text-xs font-bold uppercase tracking-[0.17em] text-blue-600">Top 10 Amount</p>
+       <h2 id="high-stock-title" data-template-id="high-stock-title" class="canva-text font-bold">High Stock<span class="table-head-actions"><button type="button" class="table-export-btn" data-export-table="high-stock" onclick="exportDashboardTable('high-stock', 'High Stock')"><span aria-hidden="true">📊</span><span class="export-label">Export Excel</span></button></span></h2>
       </div>
-      <button onclick="loadDashboard()" id="dashRefreshBtn"
-        style="background:#1a3a5a;border:1px solid #2a5a7a;color:#66bbff;border-radius:10px;padding:8px 16px;font-size:11px;font-family:monospace;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">
-        &#8635; Refresh
-      </button>
-    </div>
-
-    <!-- Config URL Sheet (admin) -->
-    <div style="background:#0d1a2a;border:1px solid #1a3a5a;border-radius:12px;padding:12px 14px;margin-bottom:16px;">
-      <div style="font-size:9px;font-weight:700;color:#445577;letter-spacing:2px;text-transform:uppercase;font-family:monospace;margin-bottom:8px;">&#9881; Sumber Data — Google Spreadsheet URL</div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input id="dashSheetUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/..."
-          style="flex:1;background:#07070f;border:1px solid #1a3a5a;border-radius:8px;padding:8px 10px;font-size:11px;color:#88aacc;font-family:monospace;outline:none;">
-        <button onclick="saveDashSheetUrl()"
-          style="background:#1a3a6a;border:1px solid #2a5a9a;color:#6aadff;border-radius:8px;padding:8px 14px;font-size:11px;font-family:monospace;font-weight:700;cursor:pointer;white-space:nowrap;">
-          Simpan &amp; Muat
-        </button>
+      <div class="rounded-xl bg-blue-50 p-2.5 text-blue-600">
+       <i data-lucide="warehouse" width="20" height="20" aria-hidden="true"></i>
       </div>
-      <div id="dashSheetInfo" style="font-size:9px;color:#334466;font-family:monospace;margin-top:6px;">Masukkan URL spreadsheet yang sudah di-publish (File → Share → Publish to web → CSV)</div>
-    </div>
-
-    <!-- Status -->
-    <div id="dashStatus" style="font-size:11px;font-family:monospace;color:#6688aa;margin-bottom:10px;min-height:16px;"></div>
-
-    <!-- Table -->
-    <div style="overflow-x:auto;border-radius:12px;border:1px solid #1a2a4a;">
-      <table style="width:100%;border-collapse:collapse;font-family:monospace;">
-        <thead>
-          <tr style="background:#0d1a30;border-bottom:2px solid #1a3a6a;">
-            <th style="padding:10px 12px;font-size:10px;font-weight:900;color:#6a8cff;letter-spacing:1px;text-align:center;white-space:nowrap;">#</th>
-            <th style="padding:10px 12px;font-size:10px;font-weight:900;color:#6a8cff;letter-spacing:1px;text-align:center;white-space:nowrap;">Cat</th>
-            <th style="padding:10px 12px;font-size:10px;font-weight:900;color:#6a8cff;letter-spacing:1px;text-align:left;white-space:nowrap;">ProdCode</th>
-            <th style="padding:10px 12px;font-size:10px;font-weight:900;color:#6a8cff;letter-spacing:1px;text-align:left;">ProdName</th>
-            <th style="padding:10px 12px;font-size:10px;font-weight:900;color:#6a8cff;letter-spacing:1px;text-align:right;white-space:nowrap;">Qty</th>
-            <th style="padding:10px 12px;font-size:10px;font-weight:900;color:#6a8cff;letter-spacing:1px;text-align:right;white-space:nowrap;">Amount</th>
-          </tr>
-        </thead>
-        <tbody id="dashTableBody">
-          <tr><td colspan="6" style="padding:40px;text-align:center;color:#2a3a5a;font-size:12px;font-family:monospace;">Belum ada data — masukkan URL spreadsheet di atas</td></tr>
-        </tbody>
+     </div>
+     <div class="table-wrap">
+      <table>
+       <thead data-template-id="table-header-row" class="canva-table">
+        <tr>
+         <th>#</th>
+         <th data-template-id="header-cat" class="canva-text category-column">CAT</th>
+         <th data-template-id="header-prodcode" class="canva-text">PRODCODE</th>
+         <th data-template-id="header-prodname" class="canva-text">PRODNAME</th>
+         <th data-template-id="header-uom" class="canva-text">UOM</th>
+         <th data-template-id="header-bookstock" class="canva-text text-right">BOOKSTOCK</th>
+         <th data-template-id="header-amount" class="canva-text text-right">AMOUNT</th>
+        </tr>
+       </thead>
+       <tbody id="high-stock-body"></tbody>
       </table>
-    </div>
-    <div id="dashUpdatedAt" style="font-size:9px;color:#2a3a5a;font-family:monospace;margin-top:8px;text-align:right;"></div>
+     </div>
+    </section>
+    <section data-template-id="over-stock-panel" class="canva-panel kpi-panel" aria-labelledby="over-stock-title">
+     <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-5">
+      <div>
+       <p class="mb-1 text-xs font-bold uppercase tracking-[0.17em] text-amber-600">Top 10 • STD Tertinggi</p>
+       <h2 id="over-stock-title" data-template-id="over-stock-title" class="canva-text font-bold">Over Stock<span class="table-head-actions"><button type="button" class="table-export-btn" data-export-table="over-stock" onclick="exportDashboardTable('over-stock', 'Over Stock')"><span aria-hidden="true">📊</span><span class="export-label">Export Excel</span></button></span></h2>
+      </div>
+      <div class="rounded-xl bg-amber-50 p-2.5 text-amber-600">
+       <i data-lucide="boxes" width="20" height="20" aria-hidden="true"></i>
+      </div>
+     </div>
+     <div class="table-wrap">
+      <table>
+       <thead data-template-id="table-header-row" class="canva-table">
+        <tr>
+         <th>#</th>
+         <th data-template-id="header-cat" class="canva-text category-column">CAT</th>
+         <th data-template-id="header-prodcode" class="canva-text">PRODCODE</th>
+         <th data-template-id="header-prodname" class="canva-text">PRODNAME</th>
+         <th data-template-id="header-uom" class="canva-text">UOM</th>
+         <th data-template-id="header-bookstock" class="canva-text text-right">BOOKSTOCK</th>
+         <th data-template-id="header-amount" class="canva-text text-right">AMOUNT</th>
+         <th data-template-id="header-std" class="canva-text text-right">STD</th>
+        </tr>
+       </thead>
+       <tbody id="over-stock-body"></tbody>
+      </table>
+     </div>
+    </section>
+    <section data-template-id="sales-stock-panel" class="canva-panel kpi-panel" aria-labelledby="sales-stock-title">
+     <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-5">
+      <div>
+       <p class="mb-1 text-xs font-bold uppercase tracking-[0.17em] text-emerald-600">Top 10 Sales TM</p>
+       <h2 id="sales-stock-title" data-template-id="sales-stock-title" class="canva-text font-bold">AVG SALES VS Run SALES VS BOOK STK</h2>
+      </div>
+      <div class="rounded-xl bg-emerald-50 p-2.5 text-emerald-600">
+       <i data-lucide="chart-no-axes-combined" width="20" height="20" aria-hidden="true"></i>
+      </div>
+     </div>
+     <div class="table-wrap">
+      <div class="table-head-actions" style="justify-content:flex-end;margin:0 0 8px;"><button type="button" class="table-export-btn" data-export-table="sales-tm" onclick="exportDashboardTable('sales-tm', 'Sales TM')">📊 <span class="export-label">Export Excel</span></button></div><table>
+       <thead data-template-id="table-header-row" class="canva-table">
+        <tr>
+         <th>#</th>
+         <th data-template-id="header-cat" class="canva-text category-column">CAT</th>
+         <th data-template-id="header-prodcode" class="canva-text">PRODCODE</th>
+         <th data-template-id="header-prodname" class="canva-text">PRODNAME</th>
+         <th data-template-id="header-uom" class="canva-text">UOM</th>
+         <th data-template-id="header-potensi" class="canva-text text-right">POTENSI (AVG SALES)</th>
+         <th data-template-id="header-sales-tm" class="canva-text text-right">SALES TM</th>
+         <th data-template-id="header-soh-tm" class="canva-text text-right">SOH TM</th>
+         <th data-template-id="header-order-amt" class="canva-text text-right">ORDER AMT</th>
+        </tr>
+       </thead>
+       <tbody id="sales-stock-body"></tbody>
+      </table>
+     </div>
+    </section>
+   <section data-template-id="not-sold-panel" class="canva-panel kpi-panel" aria-labelledby="not-sold-title">
+     <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-5">
+      <div>
+       <p class="mb-1 text-xs font-bold uppercase tracking-[0.17em] text-violet-600">Top 10</p>
+       <h2 id="not-sold-title" data-template-id="not-sold-title" class="canva-text font-bold">Not Sold 3 Month<span class="table-head-actions"><button type="button" class="table-export-btn" data-export-table="not-sold" onclick="exportDashboardTable('not-sold', 'Not Sold 3 Month')"><span aria-hidden="true">📊</span><span class="export-label">Export Excel</span></button></span></h2>
+      </div>
+      <div class="rounded-xl bg-violet-50 p-2.5 text-violet-600">
+       <i data-lucide="calendar-off" width="20" height="20" aria-hidden="true"></i>
+      </div>
+     </div>
+     <div class="table-wrap">
+      <table>
+       <thead data-template-id="table-header-row" class="canva-table">
+        <tr>
+         <th>#</th>
+         <th class="canva-text category-column">Cat</th>
+         <th class="canva-text">ProdCode</th>
+         <th class="canva-text">ProdName</th>
+         <th class="canva-text">UOM</th>
+         <th class="canva-text text-right">NS Qty</th>
+         <th class="canva-text text-right">High Stk NS3M</th>
+        </tr>
+       </thead>
+       <tbody id="not-sold-body"></tbody>
+      </table>
+     </div>
+    </section>
+    <section data-template-id="oos-potential-panel" class="canva-panel kpi-panel wide-panel" aria-labelledby="oos-potential-title">
+     <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-5">
+      <div>
+       <p class="mb-1 text-xs font-bold uppercase tracking-[0.17em] text-cyan-600">Top 10 Avg Sales</p>
+       <h2 id="oos-potential-title" data-template-id="oos-potential-title" class="canva-text font-bold">OOS Potensial Sales<span class="table-head-actions"><button type="button" class="table-export-btn" data-export-table="oos-potential" onclick="exportDashboardTable('oos-potential', 'OOS Potensial Sales')"><span aria-hidden="true">📊</span><span class="export-label">Export Excel</span></button></span></h2>
+      </div>
+      <div class="rounded-xl bg-cyan-50 p-2.5 text-cyan-600">
+       <i data-lucide="trending-up" width="20" height="20" aria-hidden="true"></i>
+      </div>
+     </div>
+     <div class="table-wrap">
+      <table>
+       <thead data-template-id="table-header-row" class="canva-table">
+        <tr>
+         <th>#</th>
+         <th class="canva-text">ProdCode</th>
+         <th class="canva-text">ProdName</th>
+         <th class="canva-text">UOM</th>
+         <th class="canva-text text-right">Avg Sales</th>
+         <th class="canva-text text-right">DMS</th>
+         <th class="canva-text text-right">Order QTY</th>
+        </tr>
+       </thead>
+       <tbody id="oos-potential-body"></tbody>
+      </table>
+     </div>
+    </section>
+    </main>
+   <template id="high-stock-row-template">
+    <tr>
+     <td class="rank-cell"></td>
+     <td></td>
+     <td></td>
+     <td></td>
+     <td></td>
+     <td class="number-cell"></td>
+     <td class="number-cell"></td>
+    </tr>
+   </template>
+   <template id="over-stock-row-template">
+    <tr>
+     <td class="rank-cell"></td>
+     <td></td>
+     <td></td>
+     <td></td>
+     <td></td>
+     <td class="number-cell"></td>
+     <td class="number-cell"></td>
+     <td class="number-cell"></td>
+    </tr>
+   </template>
+   <template id="not-sold-row-template">
+    <tr>
+     <td class="rank-cell"></td>
+     <td></td>
+     <td></td>
+     <td></td>
+     <td></td>
+     <td class="number-cell"></td>
+     <td class="number-cell"></td>
+    </tr>
+   </template>
+   <template id="oos-potential-row-template">
+    <tr>
+     <td class="rank-cell"></td>
+     <td></td>
+     <td></td>
+     <td></td>
+     <td class="number-cell"></td>
+     <td class="number-cell"></td>
+     <td class="number-cell"></td>
+    </tr>
+   </template>
+   <template id="sales-stock-row-template">
+    <tr>
+     <td class="rank-cell"></td>
+     <td></td>
+     <td></td>
+     <td></td>
+     <td></td>
+     <td class="number-cell"></td>
+     <td class="number-cell"></td>
+     <td class="number-cell"></td>
+     <td class="number-cell"></td>
+    </tr>
+   </template>
   </div>
 </div>
-
 <div id="toastContainer"></div>
 <div class="watermark">Created by OP</div>
 <button id="kioskExitBtn" onclick="exitKioskMode()">&#x26F6; Exit Kiosk</button>
@@ -2395,7 +3551,8 @@ function renderUserNav(){
     '<div id="navCst" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'cst\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#10b981;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v16H4z M8 8h8v8H8z"/></svg><span class="text-[9px] font-semibold" style="color:#34d399;">CST</span></div>'+
     '<div id="navFotoBblm" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'fotobblm\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#f59e0b;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="text-[9px] font-semibold" style="color:#fbbf24;">Foto BBLM</span></div>'+
 '<div id="navAbsensi" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'absensi\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#3b82f6;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[9px] font-semibold">Absensi</span></div>'+
-'<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
+'<div id="navDashboard" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'dashboard\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#6a8cff;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 01-2-2H5a2 2 0 01-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg><span class="text-[9px] font-semibold" style="color:#6a8cff;">Dashboard</span></div>'+
+    '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
 }
 function renderAdminNav(){
@@ -6657,153 +7814,1011 @@ function splitCSVLine(line){
 // ═══════════════════════════════════════════════════════
 // DASHBOARD — Top 20 High Stock Value by Amount MTD
 // ═══════════════════════════════════════════════════════
-var _DASH_SHEET_KEY='dashboard_stock_sheet_url';
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSEV7BQLrohnTx6omWUktP5pqCDItZCtgF0xnLdIn-xL2WvLjPiKch6H11JBV516kBiuTtUthHXkLB6/pub?output=csv";
+    // Sheet 2 CSV. Set the gid below to the gid of Sheet 2 in the same published spreadsheet.
+    // Column mapping remains A=Divisi, B=Category, D=Budget, E=Sales, F=Achv.
+    const SHEET2_GID = "1792064000";
+    const SHEET2_CSV_URL = "https://docs.google.com/spreadsheets/d/13ZA7PhaSONe_4f437fBZVTmeNolJvislj_hTBycYTrY/gviz/tq?tqx=out:csv&gid=1792064000";
 
-function initDashboard(){
-  var saved=localStorage.getItem(_DASH_SHEET_KEY)||'';
-  var inp=$('dashSheetUrl');if(inp)inp.value=saved;
-  if(saved)loadDashboard();
-}
+    const PUBLISHED_XLSX_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSEV7BQLrohnTx6omWUktP5pqCDItZCtgF0xnLdIn-xL2WvLjPiKch6H11JBV516kBiuTtUthHXkLB6/pub?output=xlsx";
 
-function saveDashSheetUrl(){
-  var inp=$('dashSheetUrl');if(!inp)return;
-  var url=inp.value.trim();
-  if(!url){showToast('Masukkan URL spreadsheet terlebih dahulu','error');return;}
-  localStorage.setItem(_DASH_SHEET_KEY,url);
-  loadDashboard();
-}
+    const columns = {
+      cat: 84,             // CG
+      division: 7,         // H
+      seasonal: 2,         // C
+      prodCode: 12,        // M
+      prodName: 13,        // N
+      uom: 24,             // Y
+      salesTM: 42,
+      bookStock: 43,
+      amount: 44,
+      nsQty: 43,           // AR
+      highStkNs3m: 44,     // AS
+      potensi: 74,
+      std: 75,
+      orderAmt: 78,
+      ns3mQtyFilter: 80,    // CC
+      skuKeep: 77,            // BZ
+      runningSku: 81,         // CD
+      oos: 76,                // BY
+      oosStatus: 0,           // A - status OOS
+      keepStatus: 4,          // E - artikel KEEP
+      avgSales: 74,           // BW - Avg Sales
+      dms: 45,                // AT - DMS
+      orderQty: 27            // AB - Order QTY
+    };
 
-function loadDashboard(){
-  var url=localStorage.getItem(_DASH_SHEET_KEY)||'';
-  var inp=$('dashSheetUrl');
-  if(!url&&inp)url=inp.value.trim();
-  if(!url){
-    var info=$('dashSheetInfo');if(info)info.textContent='Masukkan URL spreadsheet di atas lalu klik Simpan & Muat';
-    return;
-  }
-  // Ubah URL spreadsheet ke CSV jika perlu
-  var csvUrl=url;
-  if(url.indexOf('output=csv')>=0||url.indexOf('/pub?')>=0||url.indexOf('/pub ')>=0){
-    // Sudah format publish CSV — pakai langsung
-    csvUrl=url;
-  } else {
-    // URL spreadsheet biasa /d/<id>/ — konversi ke export CSV
-    var idMatch=url.match(/\/spreadsheets\/d\/(?!e\/)([A-Za-z0-9_-]+)/);
-    if(idMatch){
-      var sheetId=idMatch[1];
-      var gidMatch=url.match(/[#&?]gid=([0-9]+)/);
-      var gid=gidMatch?gidMatch[1]:'0';
-      csvUrl='https://docs.google.com/spreadsheets/d/'+sheetId+'/export?format=csv&gid='+gid;
+    const formatter = new Intl.NumberFormat("id-ID", {
+      maximumFractionDigits: 2
+    });
+
+    const reloadButton = document.getElementById("reload-button");
+    const uploadButton = document.getElementById("upload-button");
+    const masterFileInput = document.getElementById("master-file-input");
+    const categoryFilter = document.getElementById("category-filter");
+    const seasonalFilter = document.getElementById("seasonal-filter");
+    const divisionFilter = document.getElementById("division-filter");
+    const consignmentFilter = document.getElementById("consignment-filter");
+    const limitFilter = document.getElementById("limit-filter");
+    const resetFilterButton = document.getElementById("reset-filter-button");
+    const statusLabel = document.getElementById("data-status");
+    let dashboardData = [];
+    let salesAchievementData = [];
+    let localFileName = "";
+    const DASHBOARD_CACHE_KEY = "dashboard_master_cache_v10";
+    const DASHBOARD_CACHE_VERSION = "19";
+
+    function populateCategories(rows, preserveSelection = true) {
+      const selected = preserveSelection ? categoryFilter.value : "all";
+      const selectedDivision = divisionFilter.value;
+      const sourceRows = selectedDivision === "all"
+        ? rows
+        : rows.filter(item => item.division === selectedDivision);
+      const categories = [...new Set(
+        sourceRows.map(item => item.cat).filter(category => category && category !== "-")
+      )].sort((a, b) => a.localeCompare(b, "id"));
+
+      categoryFilter.replaceChildren(new Option("Semua category", "all"));
+      categories.forEach(category => categoryFilter.appendChild(new Option(category, category)));
+      categoryFilter.value = categories.includes(selected) ? selected : "all";
     }
-  }
-  var btn=$('dashRefreshBtn');
-  if(btn){btn.disabled=true;btn.textContent='⏳ Memuat...';}
-  var status=$('dashStatus');if(status)status.textContent='Mengambil data dari spreadsheet...';
-  fetch(csvUrl+'&_cb='+Date.now())
-  .then(function(r){
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    return r.text();
-  })
-  .then(function(csv){
-    var rows=parseDashCSV(csv);
-    if(rows.length<2){throw new Error('Data kosong atau format tidak dikenali');}
-    var headers=rows[0].map(function(h){return String(h).trim().toLowerCase();});
-    // Deteksi kolom berdasarkan nama header
-    var iCat=findColIdx(headers,['cat','c','kategori','category']);
-    var iProdCd=findColIdx(headers,['prod cd','prodcd','prod_cd','kode','barcode','product code','prodcode']);
-    var iProdNm=findColIdx(headers,['prod nm','prodnm','prod_nm','nama','name','product name','prodname','product nm']);
-    var iQty=findColIdx(headers,['stk qty','stkqty','stk_qty','qty','quantity','jumlah','stock qty']);
-    var iAmt=findColIdx(headers,['stock camt','stockcamt','stock_camt','amount','nilai','value','amt','camt','stock amt']);
-    // Fallback ke posisi kolom tetap jika header tidak dikenali (C=2,E=4,G=6,AF=31,AH=33)
-    if(iCat<0)iCat=2;if(iProdCd<0)iProdCd=4;if(iProdNm<0)iProdNm=6;
-    if(iQty<0)iQty=31;if(iAmt<0)iAmt=33;
-    var data=[];
-    for(var i=1;i<rows.length;i++){
-      var r=rows[i];
-      if(!r||!r.length)continue;
-      var amt=parseNum(r[iAmt]);
-      if(!amt&&amt!==0)continue;
-      data.push({
-        cat:String(r[iCat]||'').trim(),
-        prodCd:String(r[iProdCd]||'').trim(),
-        prodNm:String(r[iProdNm]||'').trim(),
-        qty:parseNum(r[iQty]),
-        amt:amt
+
+    function populateDivisions(rows) {
+      const selected = divisionFilter.value;
+      const divisions = [...new Set(
+        rows
+          .map(item => item.division)
+          .filter(division => division && division !== "-")
+      )].sort((a, b) => a.localeCompare(b, "id"));
+
+      divisionFilter.replaceChildren(new Option("Semua Divisi", "all"));
+      divisions.forEach(division => {
+        divisionFilter.appendChild(new Option(division, division));
       });
+      divisionFilter.value = divisions.includes(selected) ? selected : "all";
     }
-    // Sort by amount desc, take top 20
-    data.sort(function(a,b){return b.amt-a.amt;});
-    var top20=data.slice(0,20);
-    renderDashTable(top20);
-    if(status)status.textContent='✓ '+data.length+' baris diproses — menampilkan Top 20';
-    var upd=$('dashUpdatedAt');if(upd)upd.textContent='Diperbarui: '+new Date().toLocaleString('id-ID',{timeZone:'Asia/Makassar'});
-    var info=$('dashSheetInfo');if(info)info.textContent='URL tersimpan. Klik Refresh untuk memperbarui data.';
-  })
-  .catch(function(e){
-    if(status)status.textContent='⚠ Gagal mengambil data: '+e.message+'. Pastikan spreadsheet sudah di-publish.';
-    showToast('Gagal memuat dashboard: '+e.message,'error');
-  })
-  .finally(function(){
-    if(btn){btn.disabled=false;btn.textContent='⇄ Refresh';}
-  });
-}
 
-function findColIdx(headers,keywords){
-  for(var k=0;k<keywords.length;k++){
-    for(var i=0;i<headers.length;i++){
-      if(headers[i].indexOf(keywords[k])>=0)return i;
+    function updateKpiCards(rows) {
+      const totalSku = rows.filter(item => item.prodName && item.prodName !== "-").length;
+      const skuKeep = rows.filter(item => numericValue(item.skuKeep) === 1).length;
+      const runningSku = rows.filter(item => numericValue(item.runningSku) === 1).length;
+      const oos = rows.filter(item => numericValue(item.oos) === 1).length;
+
+      document.getElementById("kpi-total-sku").textContent = totalSku.toLocaleString("id-ID");
+      document.getElementById("kpi-sku-keep").textContent = skuKeep.toLocaleString("id-ID");
+      document.getElementById("kpi-running-sku").textContent = runningSku.toLocaleString("id-ID");
+      document.getElementById("kpi-oos").textContent = oos.toLocaleString("id-ID");
     }
-  }
-  return -1;
-}
 
-function parseNum(v){
-  if(v===undefined||v===null||v==='')return 0;
-  // Hapus semua karakter selain angka — aman untuk format 482,296,584 maupun 482.296.584
-  var n=parseInt(String(v).replace(/[^0-9]/g,''),10);
-  return isNaN(n)?0:n;
-}
-
-function parseDashCSV(text){
-  var rows=[];var lines=text.split(/\r?\n/);
-  for(var i=0;i<lines.length;i++){
-    var line=lines[i];if(!line.trim())continue;
-    var cols=[];var cur='';var inQ=false;
-    for(var j=0;j<line.length;j++){
-      var ch=line[j];
-      if(ch==='"'){if(inQ&&line[j+1]==='"'){cur+='"';j++;}else{inQ=!inQ;}}
-      else if(ch===','&&!inQ){cols.push(cur);cur='';}
-      else cur+=ch;
+    function isSalesAchievementTotalRow(item) {
+      const division = String(item?.division || "").trim().toLowerCase();
+      const category = String(item?.cat || "").trim().toLowerCase();
+      const totalWords = ["total", "grand total", "grandtotal", "total all", "all total", "jumlah total"];
+      return totalWords.includes(division) || totalWords.includes(category) ||
+             /^(grand\s*)?total(\s+all)?$/.test(division) ||
+             /^(grand\s*)?total(\s+all)?$/.test(category);
     }
-    cols.push(cur);rows.push(cols);
+
+    function mapSalesAchievementRows(sheetRows) {
+      if (!Array.isArray(sheetRows) || sheetRows.length < 2) return [];
+      return sheetRows.slice(1).map(row => ({
+        division: row[0] !== undefined ? String(row[0]).trim() : "",
+        cat: row[1] !== undefined ? String(row[1]).trim() : "",
+        budget: row[3] !== undefined ? row[3] : "0",
+        sales: row[4] !== undefined ? row[4] : "0",
+        achv: row[5] !== undefined ? row[5] : "0"
+      })).filter(item => (item.division || item.cat || numericValue(item.budget) || numericValue(item.sales)) && !isSalesAchievementTotalRow(item));
+    }
+
+    function getSalesAchievementGroups() {
+      const selectedDivision = divisionFilter.value;
+      const selectedCategory = categoryFilter.value;
+      const limit = Number(limitFilter.value) || 10;
+      let rows = salesAchievementData.slice();
+
+      /*
+       * Sheet 2 still has Category in column B.
+       * Dashboard Category now comes from Sheet 1 column CG.
+       * Build a bridge:
+       *   Sheet 2 B -> Sheet 1 I (legacyCat) -> Sheet 1 CG (cat)
+       */
+      const normalizeCat = (value) => String(value ?? "").trim().toLowerCase();
+
+      const categoryBridge = new Map();
+      dashboardData.forEach(master => {
+        const legacy = normalizeCat(master.legacyCat);
+        const current = String(master.cat ?? "").trim();
+        if (legacy && current && current !== "-") {
+          if (!categoryBridge.has(legacy)) categoryBridge.set(legacy, new Set());
+          categoryBridge.get(legacy).add(current);
+        }
+      });
+
+      const sheet2CategoryToCurrent = (sheet2Cat) => {
+        const key = normalizeCat(sheet2Cat);
+        const mapped = categoryBridge.get(key);
+        if (mapped && mapped.size) return [...mapped][0];
+        return String(sheet2Cat ?? "").trim();
+      };
+
+      if (selectedDivision !== "all") {
+        rows = rows.filter(item => item.division === selectedDivision);
+      }
+
+      if (selectedCategory !== "all") {
+        rows = rows.filter(item => {
+          const mappedCategory = sheet2CategoryToCurrent(item.cat);
+          return mappedCategory === selectedCategory;
+        });
+      }
+
+      const grouped = new Map();
+
+      rows.forEach(item => {
+        const mappedCategory = sheet2CategoryToCurrent(item.cat);
+
+        let key;
+        if (selectedDivision === "all") {
+          // Semua divisi digabung menjadi satu grup ALL Store.
+          key = "ALL Store";
+        } else if (selectedCategory === "all") {
+          // Tampilkan Category terbaru dari Sheet 1 kolom CG,
+          // bukan Category lama Sheet 2 kolom B.
+          key = mappedCategory || "Tanpa Category";
+        } else {
+          key = selectedCategory || mappedCategory || "Terpilih";
+        }
+
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            label: key,
+            budget: 0,
+            sales: 0,
+            achvSum: 0,
+            achvCount: 0
+          });
+        }
+
+        const group = grouped.get(key);
+        group.budget += numericValue(item.budget);
+        group.sales += numericValue(item.sales);
+
+        const rawAchv = numericValue(item.achv);
+        if (Number.isFinite(rawAchv) && rawAchv !== 0) {
+          group.achvSum += Math.abs(rawAchv) <= 1.5 ? rawAchv * 100 : rawAchv;
+          group.achvCount += 1;
+        }
+      });
+
+      const categorySortValue = (value) => {
+        const text = String(value ?? "").trim();
+        const numeric = Number(text.replace(/,/g, ""));
+        return text !== "" && Number.isFinite(numeric) ? numeric : null;
+      };
+
+      return [...grouped.values()]
+        .map(group => ({
+          ...group,
+          achv: selectedDivision === "all"
+            ? (group.budget ? (group.sales / group.budget) * 100 : 0)
+            : (group.achvCount
+                ? group.achvSum / group.achvCount
+                : (group.budget ? (group.sales / group.budget) * 100 : 0))
+        }))
+        .sort((a, b) => {
+          if (selectedDivision !== "all" && selectedCategory === "all") {
+            const an = categorySortValue(a.label);
+            const bn = categorySortValue(b.label);
+            if (an !== null && bn !== null && an !== bn) return an - bn;
+            if (an !== null && bn === null) return -1;
+            if (an === null && bn !== null) return 1;
+            return String(a.label).localeCompare(
+              String(b.label), "id",
+              { numeric: true, sensitivity: "base" }
+            );
+          }
+
+          return String(a.label).localeCompare(
+            String(b.label), "id",
+            { numeric: true, sensitivity: "base" }
+          );
+        })
+        .slice(0, limit);
+    }
+
+    function drawSalesAchievementChart() {
+      const canvas = document.getElementById("sales-achievement-canvas");
+      const empty = document.getElementById("sales-achievement-empty");
+      const meta = document.getElementById("sales-achievement-meta");
+      const wrap = document.getElementById("sales-achievement-chart-wrap");
+      if (!canvas || !empty || !meta || !wrap) return;
+
+      const groups = getSalesAchievementGroups();
+      if (!salesAchievementData.length || !groups.length) {
+        canvas.style.display = "none";
+        empty.style.display = "grid";
+        empty.innerHTML = salesAchievementData.length
+          ? "Tidak ada data Sheet 2 yang sesuai dengan filter Category / Divisi."
+          : "";
+        meta.innerHTML = "";
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      canvas.style.display = "block";
+      empty.style.display = "none";
+      meta.innerHTML = `<i data-lucide="bar-chart-3" width="15" height="15" aria-hidden="true"></i><span>${groups.length} grup • Budget vs Sales • Achv</span>`;
+      if (window.lucide) lucide.createIcons();
+
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const viewportWidth = Math.max(280, wrap.clientWidth || canvas.parentElement?.clientWidth || 360);
+      const isMobile = window.matchMedia("(max-width: 767px)").matches;
+
+      // On mobile the chart must fit inside the screen. Do NOT force a
+      // 720px canvas, otherwise the first/last bars are clipped and the
+      // user sees only part of the chart.
+      const cssWidth = Math.max(280, viewportWidth - (isMobile ? 4 : 20));
+      const cssHeight = isMobile ? (groups.length > 6 ? 370 : 330) : 330;
+
+      canvas.style.width = `${cssWidth}px`;
+      canvas.style.height = `${cssHeight}px`;
+      canvas.width = Math.floor(cssWidth * dpr);
+      canvas.height = Math.floor(cssHeight * dpr);
+
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+      const margin = isMobile
+        ? { top: 30, right: 8, bottom: groups.length > 6 ? 86 : 54, left: 54 }
+        : { top: 32, right: 24, bottom: groups.length > 6 ? 86 : 58, left: 72 };
+      const chartW = cssWidth - margin.left - margin.right;
+      const chartH = cssHeight - margin.top - margin.bottom;
+      const maxValue = Math.max(1, ...groups.flatMap(g => [g.budget, g.sales]));
+      const exponent = Math.max(0, Math.floor(Math.log10(maxValue)) - 1);
+      const step = Math.pow(10, exponent);
+      const yMax = Math.ceil(maxValue / step) * step || maxValue;
+      const tickCount = 5;
+
+      ctx.font = "12px DM Sans, sans-serif";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for (let i = 0; i <= tickCount; i++) {
+        const value = yMax * i / tickCount;
+        const y = margin.top + chartH - (value / yMax) * chartH;
+        ctx.strokeStyle = "#e5edf6";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(margin.left, y);
+        ctx.lineTo(cssWidth - margin.right, y);
+        ctx.stroke();
+        ctx.fillStyle = "#64748b";
+        ctx.fillText(formatCompactChart(value), margin.left - 10, y);
+      }
+
+      const groupW = chartW / groups.length;
+      const barGap = isMobile
+        ? Math.min(5, Math.max(2, groupW * .07))
+        : Math.min(8, groupW * .08);
+      const barW = isMobile
+        ? Math.max(6, Math.min(18, (groupW - barGap * 3) / 2))
+        : Math.max(8, Math.min(28, (groupW - barGap * 3) / 2));
+
+      groups.forEach((group, index) => {
+        const center = margin.left + groupW * index + groupW / 2;
+        const budgetH = (group.budget / yMax) * chartH;
+        const salesH = (group.sales / yMax) * chartH;
+        const achvText = `${Number(group.achv || 0).toFixed(1)}%`;
+        const budgetX = center - barW - barGap / 2;
+        const salesX = center + barGap / 2;
+        const baseY = margin.top + chartH;
+        drawBar(ctx, budgetX, baseY - budgetH, barW, budgetH, "#2563eb");
+        drawBar(ctx, salesX, baseY - salesH, barW, salesH, "#10b981");
+
+        // Achievement dari Sheet 2 kolom F ditampilkan di atas batang Sales.
+        ctx.fillStyle = "#0f766e";
+        ctx.font = isMobile ? "800 10px DM Sans, sans-serif" : "700 10px DM Sans, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(achvText, salesX + barW / 2, Math.max(margin.top + 16, baseY - salesH - 6));
+
+        ctx.fillStyle = "#475569";
+        ctx.font = "600 11px DM Sans, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        if (groups.length > 6) {
+          ctx.save();
+          ctx.translate(center - 4, baseY + 12);
+          ctx.rotate(-Math.PI / 4);
+          ctx.fillText(truncateChartLabel(group.label, 22), 0, 0);
+          ctx.restore();
+        } else {
+          ctx.fillText(truncateChartLabel(group.label, 18), center, baseY + 12);
+        }
+      });
+
+      drawLegendItem(ctx, margin.left, 13, "Budget", "#2563eb");
+      drawLegendItem(ctx, margin.left + 88, 13, "Sales", "#10b981");
+    }
+
+    function drawBar(ctx, x, y, width, height, fill) {
+      if (height <= 0) return;
+      ctx.fillStyle = fill;
+      const radius = Math.min(6, width / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height);
+      ctx.lineTo(x, y + height);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawLegendItem(ctx, x, y, label, fill) {
+      ctx.fillStyle = fill;
+      ctx.fillRect(x, y - 5, 10, 10);
+      ctx.fillStyle = "#475569";
+      ctx.font = "700 11px DM Sans, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, x + 16, y);
+    }
+
+    function formatCompactChart(value) {
+      const abs = Math.abs(value);
+      if (abs >= 1e9) return `${(value / 1e9).toFixed(1)}B`;
+      if (abs >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
+      if (abs >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
+      return formatter.format(value);
+    }
+
+    function truncateChartLabel(value, max) {
+      const text = String(value || "-");
+      return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+    }
+
+    let salesAchievementResizeTimer;
+    window.addEventListener("resize", () => {
+      clearTimeout(salesAchievementResizeTimer);
+      salesAchievementResizeTimer = setTimeout(() => {
+        drawSalesAchievementChart();
+      }, 120);
+    });
+
+    function renderFilteredTables() {
+      const selectedCategory = categoryFilter.value;
+      const selectedSeasonal = seasonalFilter.value;
+      const selectedDivision = divisionFilter.value;
+      const selectedConsignment = consignmentFilter.value;
+      const displayLimit = Number(limitFilter.value) || 10;
+
+      const categoryData = selectedCategory === "all"
+        ? dashboardData
+        : dashboardData.filter(item => item.cat === selectedCategory);
+
+      const seasonalData = selectedSeasonal === "all"
+        ? categoryData
+        : categoryData.filter(item => {
+            const isSeasonal = String(item.seasonal ?? "").trim() !== "";
+            return selectedSeasonal === "seasonal" ? isSeasonal : !isSeasonal;
+          });
+
+      const divisionData = selectedDivision === "all"
+        ? seasonalData
+        : seasonalData.filter(item => item.division === selectedDivision);
+
+      // Sheet 1 kolom V:
+      // CONS = Consigment
+      // selain CONS = Bukan Consigment
+      const filteredData = selectedConsignment === "all"
+        ? divisionData
+        : divisionData.filter(item => {
+            const value = String(item.consignment ?? "").trim().toUpperCase();
+            return selectedConsignment === "cons"
+              ? value === "CONS"
+              : value !== "CONS";
+          });
+
+      updateKpiCards(filteredData);
+
+      // Semua tabel menggunakan jumlah Top yang dipilih user.
+      renderTable("high-stock-body", "high-stock-row-template", topTen(filteredData, "amount", displayLimit), "high");
+
+      // Over Stock: STD tertinggi.
+      const overStockTop = [...filteredData]
+        .map(item => ({ item, stdValue: numericValue(item.std) }))
+        .filter(entry => entry.stdValue > 0)
+        .sort((a, b) => b.stdValue - a.stdValue)
+        .slice(0, displayLimit)
+        .map(entry => entry.item);
+
+      renderTable("over-stock-body", "over-stock-row-template", overStockTop, "over");
+
+      // Not Sold 3 Month: CC = 0, lalu High Stk NS3M terbesar.
+      const notSoldTop = filteredData
+        .filter(item => numericValue(item.ns3mQtyFilter) === 0)
+        .sort((a, b) => numericValue(b.highStkNs3m) - numericValue(a.highStkNs3m))
+        .slice(0, displayLimit);
+
+      renderTable("not-sold-body", "not-sold-row-template", notSoldTop, "notSold");
+      renderTable("sales-stock-body", "sales-stock-row-template", topTen(filteredData, "salesTM", displayLimit), "sales");
+
+      // OOS Potensial Sales:
+      // 1) Status OOS wajib = OOS dari Sheet 1 kolom A.
+      // 2) Setelah itu hanya artikel KEEP dari Sheet 1 kolom E.
+      // 3) Terakhir diurutkan Avg Sales kolom BW tertinggi dan diambil Top N.
+      // Filter KEEP hanya berlaku untuk tabel OOS Potensial Sales.
+      const oosPotentialTop = filteredData
+        .filter(item => String(item.oosStatus).trim().toUpperCase() === "OOS")
+        .filter(item => String(item.keepStatus).trim().toUpperCase() === "KEEP")
+        .map((item, originalIndex) => ({
+          item,
+          originalIndex,
+          avgSalesValue: numericValue(item.avgSales)
+        }))
+        .filter(entry => Number.isFinite(entry.avgSalesValue) && entry.avgSalesValue > 0)
+        .sort((a, b) => {
+          if (b.avgSalesValue !== a.avgSalesValue) return b.avgSalesValue - a.avgSalesValue;
+          return a.originalIndex - b.originalIndex;
+        })
+        .slice(0, displayLimit)
+        .map(entry => entry.item);
+
+      renderTable("oos-potential-body", "oos-potential-row-template", oosPotentialTop, "oosPotential");
+
+      drawSalesAchievementChart();
+
+      // Judul panel ikut menunjukkan jumlah data yang dipilih.
+      document.querySelector('[data-template-id="high-stock-panel"] .uppercase').textContent = `Top ${displayLimit} Amount`;
+      document.querySelector('[data-template-id="over-stock-panel"] .uppercase').textContent = `Top ${displayLimit} • STD Tertinggi`;
+      document.querySelector('[data-template-id="sales-stock-panel"] .uppercase').textContent = `Top ${displayLimit} Sales TM`;
+      document.querySelector('[data-template-id="not-sold-panel"] .uppercase').textContent = `Top ${displayLimit}`;
+      document.querySelector('[data-template-id="oos-potential-panel"] .uppercase').textContent = `Top ${displayLimit} Avg Sales`;
+    }
+    const statusDot = document.getElementById("status-dot");
+
+    function parseCSV(text) {
+      const rows = [];
+      let row = [];
+      let value = "";
+      let insideQuotes = false;
+
+      for (let index = 0; index < text.length; index++) {
+        const char = text[index];
+        const next = text[index + 1];
+
+        if (char === '"') {
+          if (insideQuotes && next === '"') {
+            value += '"';
+            index++;
+          } else {
+            insideQuotes = !insideQuotes;
+          }
+        } else if (char === "," && !insideQuotes) {
+          row.push(value.trim());
+          value = "";
+        } else if ((char === "\n" || char === "\r") && !insideQuotes) {
+          if (char === "\r" && next === "\n") index++;
+          row.push(value.trim());
+          if (row.some(cell => cell !== "")) rows.push(row);
+          row = [];
+          value = "";
+        } else {
+          value += char;
+        }
+      }
+
+      if (value.length || row.length) {
+        row.push(value.trim());
+        if (row.some(cell => cell !== "")) rows.push(row);
+      }
+      return rows;
+    }
+
+    function numericValue(value) {
+      if (value === undefined || value === null || value === "") return 0;
+      const cleaned = String(value)
+        .replace(/\s/g, "")
+        .replace(/[^\d,.\-]/g, "");
+
+      if (!cleaned) return 0;
+
+      const commaCount = (cleaned.match(/,/g) || []).length;
+      const dotCount = (cleaned.match(/\./g) || []).length;
+      let normalized = cleaned;
+
+      if (commaCount && dotCount) {
+        normalized = cleaned.lastIndexOf(",") > cleaned.lastIndexOf(".")
+          ? cleaned.replace(/\./g, "").replace(",", ".")
+          : cleaned.replace(/,/g, "");
+      } else if (commaCount) {
+        normalized = commaCount > 1 || /,\d{3}$/.test(cleaned)
+          ? cleaned.replace(/,/g, "")
+          : cleaned.replace(",", ".");
+      } else if (dotCount) {
+        normalized = dotCount > 1 || /\.\d{3}$/.test(cleaned)
+          ? cleaned.replace(/\./g, "")
+          : cleaned;
+      }
+
+      const parsed = Number(normalized);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function formatValue(value) {
+      const numeric = numericValue(value);
+      return formatter.format(numeric);
+    }
+
+    function mapRows(csvRows) {
+      return csvRows.slice(1).map(row => ({
+        cat: row[columns.cat] || "-", legacyCat: row[8] || "-",
+        division: row[columns.division] !== undefined ? String(row[columns.division]).trim() : "",
+        seasonal: row[columns.seasonal] !== undefined ? String(row[columns.seasonal]).trim() : "",
+        consignment: row[21] !== undefined ? String(row[21]).trim() : "", // V
+        prodCode: row[columns.prodCode] || "-",
+        prodName: row[columns.prodName] || "-",
+        uom: row[columns.uom] !== undefined && String(row[columns.uom]).trim() !== "" ? String(row[columns.uom]).trim() : "-",
+        bookStock: row[columns.bookStock] || "0",
+        amount: row[columns.amount] || "0",
+        std: row[columns.std] !== undefined && row[columns.std] !== "" ? row[columns.std] : "0",
+        nsQty: row[columns.nsQty] || "0",
+        highStkNs3m: row[columns.highStkNs3m] || "0",
+        ns3mQtyFilter: row[columns.ns3mQtyFilter] || "0",
+        skuKeep: row[columns.skuKeep] || "0",
+        runningSku: row[columns.runningSku] || "0",
+        oos: row[columns.oos] || "0",
+        oosStatus: row[columns.oosStatus] !== undefined ? String(row[columns.oosStatus]).trim() : "",
+        keepStatus: row[columns.keepStatus] !== undefined ? String(row[columns.keepStatus]).trim() : "",
+        avgSales: row[columns.avgSales] || "0",
+        dms: row[columns.dms] || "0",
+        orderQty: row[columns.orderQty] || "0",
+        potensi: row[columns.potensi] || "0",
+        salesTM: row[columns.salesTM] || "0",
+        sohTM: row[columns.amount] || "0",
+        orderAmt: row[columns.orderAmt] || "0"
+      })).filter(item => item.prodCode !== "-" || item.prodName !== "-");
+    }
+
+    function sortByValue(rows, key) {
+      return [...rows]
+        .sort((a, b) => numericValue(b[key]) - numericValue(a[key]));
+    }
+
+    function topTen(rows, key, limit = 10) {
+      return [...rows]
+        .map((item, originalIndex) => ({
+          item,
+          originalIndex,
+          numeric: numericValue(item[key])
+        }))
+        .filter(entry => Number.isFinite(entry.numeric) && entry.numeric > 0)
+        .sort((a, b) => {
+          if (b.numeric !== a.numeric) return b.numeric - a.numeric;
+          return a.originalIndex - b.originalIndex;
+        })
+        .slice(0, limit)
+        .map(entry => entry.item);
+    }
+
+    function createEmptyRow(colspan, message) {
+      const row = document.createElement("tr");
+      row.className = "empty-row";
+      const cell = document.createElement("td");
+      cell.colSpan = colspan;
+      cell.textContent = message;
+      row.appendChild(cell);
+      return row;
+    }
+
+    function fillRow(fragment, values) {
+      const cells = fragment.querySelectorAll("td");
+      values.forEach((value, index) => {
+        cells[index].textContent = value;
+      });
+      return fragment;
+    }
+
+    function renderTable(bodyId, templateId, rows, tableType) {
+      const body = document.getElementById(bodyId);
+      body.replaceChildren();
+
+      if (!rows.length) {
+        const colspan =
+          tableType === "high" ? 7 :
+          tableType === "over" ? 8 :
+          tableType === "notSold" ? 7 :
+          tableType === "oosPotential" ? 7 : 9;
+        body.appendChild(createEmptyRow(colspan, "Data tidak tersedia pada spreadsheet."));
+        return;
+      }
+
+      const template = document.getElementById(templateId);
+      const output = document.createDocumentFragment();
+
+      rows.forEach((item, index) => {
+        const clone = template.content.cloneNode(true);
+        let values;
+
+        if (tableType === "high") {
+          values = [index + 1, item.cat, item.prodCode, item.prodName, item.uom, formatValue(item.bookStock), formatValue(item.amount)];
+        } else if (tableType === "over") {
+          values = [index + 1, item.cat, item.prodCode, item.prodName, item.uom, formatValue(item.bookStock), formatValue(item.amount), formatValue(item.std)];
+        } else if (tableType === "notSold") {
+          values = [index + 1, item.cat, item.prodCode, item.prodName, item.uom, formatValue(item.nsQty), formatValue(item.highStkNs3m)];
+        } else if (tableType === "oosPotential") {
+          values = [index + 1, item.prodCode, item.prodName, item.uom, formatValue(item.avgSales), formatValue(item.dms), formatValue(item.orderQty)];
+        } else {
+          values = [index + 1, item.cat, item.prodCode, item.prodName, item.uom, formatValue(item.potensi), formatValue(item.salesTM), formatValue(item.sohTM), formatValue(item.orderAmt)];
+        }
+
+        const filledRow = fillRow(clone, values);
+        if (tableType === "over") {
+          const cells = filledRow.querySelectorAll("td");
+          if (cells[6]) cells[6].classList.add("std-highlight");
+        }
+        output.appendChild(filledRow);
+      });
+
+      body.appendChild(output);
+    }
+
+    function updateStatus(message, type) {
+      statusLabel.textContent = message;
+      statusDot.className = "status-dot";
+      if (type === "loading") statusDot.classList.add("loading");
+      if (type === "error") statusDot.classList.add("error");
+    }
+
+    async function loadCsvText(csvText, sourceLabel, sheet2Rows = null) {
+      dashboardData = mapRows(parseCSV(csvText));
+      if (Array.isArray(sheet2Rows)) salesAchievementData = mapSalesAchievementRows(sheet2Rows);
+      populateDivisions(dashboardData);
+      populateCategories(dashboardData);
+      renderFilteredTables();
+      updateStatus(`${dashboardData.length.toLocaleString("id-ID")} baris data dimuat${sourceLabel ? ` dari ${sourceLabel}` : ""}`, "success");
+    }
+
+    function saveDashboardCache(csvText, sheet2Rows) {
+      try {
+        localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({
+          version: DASHBOARD_CACHE_VERSION,
+          savedAt: Date.now(),
+          csvText: csvText || "",
+          sheet2Rows: Array.isArray(sheet2Rows) ? sheet2Rows : []
+        }));
+      } catch (error) {
+        console.warn("Cache dashboard tidak dapat disimpan:", error);
+      }
+    }
+
+    async function loadDashboardFromCache() {
+      try {
+        const raw = localStorage.getItem(DASHBOARD_CACHE_KEY);
+        if (!raw) return false;
+        const cached = JSON.parse(raw);
+        if (!cached || cached.version !== DASHBOARD_CACHE_VERSION || !cached.csvText) return false;
+
+        await loadCsvText(
+          cached.csvText,
+          "Cache • terakhir diperbarui " +
+            new Date(cached.savedAt || Date.now()).toLocaleString("id-ID"),
+          cached.sheet2Rows || []
+        );
+        updateStatus("Data dari cache • klik Muat ulang untuk mengambil data terbaru", "success");
+        return true;
+      } catch (error) {
+        console.warn("Cache dashboard tidak valid:", error);
+        return false;
+      }
+    }
+
+    async function loadDashboard() {
+      reloadButton.disabled = true;
+      const icon = reloadButton.querySelector("svg");
+      if (icon) icon.classList.add("spin-icon");
+      updateStatus("Memuat Google Spreadsheet • Sheet 1 + Sheet 2...", "loading");
+
+      try {
+        const [csvResponse, sheet2Response] = await Promise.all([
+          fetch(CSV_URL, { cache: "no-store" }),
+          fetch(SHEET2_CSV_URL, { cache: "no-store" })
+        ]);
+
+        if (!csvResponse.ok) {
+          throw new Error("Sheet 1 tidak dapat diakses.");
+        }
+
+        const csvText = await csvResponse.text();
+
+        let sheet2Rows = [];
+        if (sheet2Response && sheet2Response.ok) {
+          const sheet2CsvText = await sheet2Response.text();
+          sheet2Rows = parseCSV(sheet2CsvText);
+        } else {
+          console.warn("Sheet 2 tidak dapat diakses:", SHEET2_CSV_URL);
+        }
+
+        // Simpan cache hanya setelah Sheet 1 berhasil. Sheet 2 ikut disimpan
+        // jika berhasil, sehingga diagram tetap tersedia saat offline/reopen.
+        saveDashboardCache(csvText, sheet2Rows);
+
+        await loadCsvText(
+          csvText,
+          sheet2Rows.length
+            ? "spreadsheet online • Sheet 1 + Sheet 2"
+            : "spreadsheet online • Sheet 1",
+          sheet2Rows
+        );
+
+        if (!sheet2Rows.length) {
+          salesAchievementData = [];
+          drawSalesAchievementChart();
+          updateSalesAchievementSummary();
+        }
+      } catch (error) {
+        console.error("Gagal memuat spreadsheet:", error);
+
+        // Jangan menghapus data cache/data yang sedang tampil.
+        // Jika ada data lama, tetap dipertahankan.
+        updateStatus("Gagal memperbarui spreadsheet", "error");
+      } finally {
+        reloadButton.disabled = false;
+        const icon = reloadButton.querySelector("svg");
+        if (icon) icon.classList.remove("spin-icon");
+      }
+    }
+
+    uploadButton.addEventListener("click", () => masterFileInput.click());
+    masterFileInput.addEventListener("change", async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      uploadButton.disabled = true;
+      updateStatus("Membaca file master...", "loading");
+      try {
+        localFileName = file.name;
+        if (/\.xlsx?$/i.test(file.name)) {
+          const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const secondSheet = workbook.Sheets[workbook.SheetNames[1]];
+          const csvText = XLSX.utils.sheet_to_csv(firstSheet);
+          const sheet2Rows = secondSheet ? XLSX.utils.sheet_to_json(secondSheet, { header: 1, defval: "" }) : [];
+          await loadCsvText(csvText, `${file.name} • Sheet 1 + Sheet 2`, sheet2Rows);
+        } else {
+          salesAchievementData = [];
+          await loadCsvText(await file.text(), file.name);
+        }
+      } catch (error) {
+        updateStatus("Gagal membaca file master", "error");
+      } finally {
+        uploadButton.disabled = false;
+        masterFileInput.value = "";
+      }
+    });
+
+    reloadButton.addEventListener("click", loadDashboard);
+    categoryFilter.addEventListener("change", renderFilteredTables);
+    seasonalFilter.addEventListener("change", renderFilteredTables);
+    limitFilter.addEventListener("change", renderFilteredTables);
+    consignmentFilter.addEventListener("change", renderFilteredTables);
+    divisionFilter.addEventListener("change", () => {
+      populateCategories(dashboardData);
+      renderFilteredTables();
+    });
+
+    resetFilterButton.addEventListener("click", () => {
+      divisionFilter.value = "all";
+      seasonalFilter.value = "all";
+      consignmentFilter.value = "all";
+      limitFilter.value = "10";
+      populateCategories(dashboardData, false);
+      categoryFilter.value = "all";
+      renderFilteredTables();
+    });
+
+    window.addEventListener("resize", () => {
+      window.requestAnimationFrame(drawSalesAchievementChart);
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+
+    
+    async function ensureXlsxLibrary() {
+      if (window.XLSX) return window.XLSX;
+      if (window.__xlsxLoading) return window.__xlsxLoading;
+      window.__xlsxLoading = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+        script.onload = () => window.XLSX ? resolve(window.XLSX) : reject(new Error("SheetJS gagal dimuat."));
+        script.onerror = () => reject(new Error("Library Excel tidak dapat dimuat."));
+        document.head.appendChild(script);
+      });
+      return window.__xlsxLoading;
+    }
+
+
+
+window.exportDashboardTable = function exportDashboardTable(tableKey, fileTitle) {
+  const btn = document.querySelector(`[data-export-table="${tableKey}"]`);
+
+  try {
+    if (!btn) throw new Error("Tombol export tidak ditemukan.");
+
+    // Setiap tombol berada di dalam <section> tabelnya masing-masing.
+    const section = btn.closest("section");
+    const table = section ? section.querySelector("table") : null;
+
+    if (!table) throw new Error("Tabel tidak ditemukan.");
+
+    const rows = [];
+    const header = table.querySelector("thead tr:last-child");
+
+    if (header) {
+      rows.push(Array.from(header.querySelectorAll("th")).map(cell =>
+        cell.innerText.trim()
+      ));
+    }
+
+    table.querySelectorAll("tbody tr").forEach(tr => {
+      const cells = Array.from(tr.querySelectorAll("td"));
+      if (cells.length) {
+        rows.push(cells.map(cell => cell.innerText.trim()));
+      }
+    });
+
+    if (rows.length <= 1) {
+      throw new Error("Belum ada data pada tabel.");
+    }
+
+    // Buat Excel-compatible HTML table.
+    // Metode ini TIDAK membutuhkan SheetJS/CDN sehingga lebih stabil
+    // ketika dashboard dibuka di HP maupun PC.
+    const escapeHtml = value => String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+    let tableHtml = `
+      <table border="1">
+        <thead>
+          <tr>
+            ${rows[0].map(v => `<th style="background:#dbeafe;font-weight:bold;">${escapeHtml(v)}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    rows.slice(1).forEach(row => {
+      tableHtml += "<tr>";
+      row.forEach(value => {
+        tableHtml += `<td>${escapeHtml(value)}</td>`;
+      });
+      tableHtml += "</tr>";
+    });
+
+    tableHtml += "</tbody></table>";
+
+    const now = new Date();
+    const stamp =
+      `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+
+    const safeName = String(fileTitle || tableKey)
+      .replace(/[\\/:*?"<>|]/g, "_")
+      .trim() || "Export";
+
+    const excelHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: Arial, sans-serif; }
+  table { border-collapse: collapse; }
+  th { background:#dbeafe; font-weight:bold; }
+  th, td { border:1px solid #999; padding:6px 8px; }
+</style>
+</head>
+<body>
+<h3>${escapeHtml(fileTitle || "Dashboard")}</h3>
+<p>Export dari Dashboard KPI — ${stamp}</p>
+${tableHtml}
+</body>
+</html>`;
+
+    const blob = new Blob(
+      ["\ufeff", excelHtml],
+      { type: "application/vnd.ms-excel;charset=utf-8" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `${safeName}_${stamp}.xls`;
+    link.style.display = "none";
+
+    document.body.appendChild(link);
+    link.click();
+
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      link.remove();
+    }, 1500);
+
+    const original = btn.innerHTML;
+    btn.innerHTML = "✓ Exported";
+    setTimeout(() => {
+      btn.innerHTML = original;
+    }, 1200);
+
+  } catch (err) {
+    console.error("Export Excel gagal:", err);
+    alert("Export Excel gagal: " + (err?.message || err));
   }
-  return rows;
+};
+
+
+
+
+    document.addEventListener("click", (event) => {
+      const exportButton = event.target.closest(".table-export-btn[data-export-table]");
+      if (!exportButton) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const tableKey = exportButton.getAttribute("data-export-table");
+      const title =
+        exportButton.closest("section")?.querySelector("h2")?.innerText
+        ?.replace(/Export Excel/gi, "")
+        .replace(/📊/g, "")
+        .trim() || tableKey;
+
+      if (typeof window.exportDashboardTable === "function") {
+        window.exportDashboardTable(tableKey, title);
+      }
+    }, true);
+
+
+    (async () => {
+      // Saat membuka halaman, gunakan cache terlebih dahulu.
+      // Spreadsheet hanya diambil otomatis jika belum ada cache.
+      const hasCache = await loadDashboardFromCache();
+      if (!hasCache) await loadDashboard();
+    })();
+    });
+
+// Dashboard is loaded when its tab is opened; the data script also supports
+// loading on DOMContentLoaded for a fresh session.
+function initDashboard(){
+  if(typeof loadDashboard === "function") loadDashboard();
 }
 
-function renderDashTable(data){
-  var tbody=$('dashTableBody');if(!tbody)return;
-  if(!data.length){
-    tbody.innerHTML='<tr><td colspan="6" style="padding:40px;text-align:center;color:#2a3a5a;font-size:12px;font-family:monospace;">Tidak ada data ditemukan</td></tr>';
-    return;
-  }
-  var fmtNum=function(n){return new Intl.NumberFormat('id-ID').format(Math.round(n));};
-  var h='';
-  for(var i=0;i<data.length;i++){
-    var d=data[i];
-    var isOdd=i%2===0;
-    var bg=isOdd?'#07080f':'#0a0d18';
-    var rankColor=i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':'#445577';
-    h+='<tr style="background:'+bg+';border-bottom:1px solid #0d1a2a;">'+
-      '<td style="padding:9px 12px;text-align:center;font-size:12px;font-weight:900;color:'+rankColor+';font-family:monospace;">'+(i+1)+'</td>'+
-      '<td style="padding:9px 12px;text-align:center;font-size:11px;font-weight:700;color:#88aacc;font-family:monospace;">'+d.cat+'</td>'+
-      '<td style="padding:9px 12px;font-size:11px;color:#6688aa;font-family:monospace;white-space:nowrap;">'+d.prodCd+'</td>'+
-      '<td style="padding:9px 12px;font-size:12px;color:#ddeeff;font-weight:600;max-width:240px;">'+d.prodNm+'</td>'+
-      '<td style="padding:9px 12px;text-align:right;font-size:12px;color:#88ddff;font-family:monospace;white-space:nowrap;">'+fmtNum(d.qty)+'</td>'+
-      '<td style="padding:9px 12px;text-align:right;font-size:12px;color:#00ee88;font-weight:800;font-family:monospace;white-space:nowrap;">'+fmtNum(d.amt)+'</td>'+
-    '</tr>';
-  }
-  tbody.innerHTML=h;
-}
 </script>
 </body>
 </html>
