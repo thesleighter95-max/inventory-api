@@ -1,1 +1,1 @@
-{"name":"pda-mini-mataram","version":"1.0.0","type":"module","dependencies":{"@vercel/blob":"^0.27.3"}}
+{"name":"pda-mini-mataram","version":"1.0.0","type":"module","dependencies":{"@vercel/blob":"^0.27.3","@netlify/blobs":"^9.0.0"}}
