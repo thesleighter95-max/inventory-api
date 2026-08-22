@@ -1,4 +1,5 @@
 import { put, list as vbList, del } from "@vercel/blob";
+import { getStore } from "@netlify/blobs";
 import { randomUUID } from "crypto";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "00000";
@@ -37,6 +38,21 @@ function cacheInvalidate(key) {
 // VERCEL BLOB helpers
 // ============================================================
 const BLOB_PREFIX = "inventory/";
+
+// Netlify Blob khusus foto CST — dapat diakses lintas user melalui endpoint API
+const NETLIFY_CST_STORE = getStore("cst-photos");
+
+async function nbPut(key, value) {
+  await NETLIFY_CST_STORE.set(key, value);
+}
+
+async function nbFetch(key) {
+  try { return await NETLIFY_CST_STORE.get(key, { type: "text" }); } catch { return null; }
+}
+
+async function nbDel(key) {
+  try { await NETLIFY_CST_STORE.delete(key); } catch {}
+}
 
 async function vbFetch(pathname) {
   try {
@@ -1288,7 +1304,7 @@ loadCurrentSetting();
       if (!Number.isFinite(qtyNum) || qtyNum <= 0) return json({ success: false, message: "qty harus lebih besar dari 0" }, 400);
       if (!fotoBase64 || typeof fotoBase64 !== "string" || fotoBase64.length > 18_000_000) return json({ success: false, message: "foto wajib diisi dan ukurannya terlalu besar" }, 400);
       const id = randomUUID();
-      await vbPut(BLOB_PREFIX + "cst-photo-" + id + ".txt", fotoBase64, "text/plain");
+      await nbPut("cst-photo-" + id + ".txt", fotoBase64);
       const item = {
         id, barcode: String(barcode).trim(), prodCd: String(prodCd || "").trim(), prodNm: String(prodNm).trim(),
         uom: String(uom || "PCS").trim(), category: String(category || "").trim(), qty: qtyNum,
@@ -1305,7 +1321,8 @@ loadCurrentSetting();
 
     const cstPhotoMatch = path.match(/^\/cst\/([^/]+)\/photo$/);
     if (cstPhotoMatch && method === "GET") {
-      const fotoBase64 = await vbFetch(BLOB_PREFIX + "cst-photo-" + cstPhotoMatch[1] + ".txt");
+      const cstPhotoKey = "cst-photo-" + cstPhotoMatch[1] + ".txt";
+      const fotoBase64 = (await nbFetch(cstPhotoKey)) || (await vbFetch(BLOB_PREFIX + cstPhotoKey));
       if (!fotoBase64) return json({ success: false, message: "Foto CST tidak ditemukan" }, 404);
       return json({ success: true, fotoBase64 });
     }
@@ -1313,7 +1330,10 @@ loadCurrentSetting();
     if (path === "/cst/clear" && method === "POST") {
       if (body.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
       const items = await getJson("cst-items", []);
-      await Promise.all(items.map(it => vbDel(BLOB_PREFIX + "cst-photo-" + it.id + ".txt").catch(() => {})));
+      await Promise.all(items.flatMap(it => [
+        nbDel("cst-photo-" + it.id + ".txt"),
+        vbDel(BLOB_PREFIX + "cst-photo-" + it.id + ".txt")
+      ]));
       await setJson("cst-items", []);
       return json({ success: true, deleted: items.length });
     }
