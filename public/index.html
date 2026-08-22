@@ -6503,6 +6503,20 @@ function cstRenderList(){var list=$('cstList');if(!list)return;var total=0;cstIt
     return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
   }
 
+  // Normalisasi foto MOD dari ID/URL Google Drive atau URL gambar biasa.
+  // Spreadsheet sering menyimpan ID file saja, bukan URL thumbnail lengkap.
+  function driveThumb(value){
+    var raw=String(value||"").trim();
+    if(!raw)return null;
+    if(/^data:image\//i.test(raw))return raw;
+    var id=null, match=raw.match(/[?&]id=([a-zA-Z0-9_-]+)/)||raw.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if(match)id=match[1];
+    else if(/^[a-zA-Z0-9_-]{15,}$/.test(raw))id=raw;
+    if(id)return "https://drive.google.com/thumbnail?id="+encodeURIComponent(id)+"&sz=w1000";
+    if(/^https?:\/\//i.test(raw))return raw;
+    return null;
+  }
+
   function _renderModPanels(rows){
     var today=_todayMod();
     var todayPagi=null,todaySiang=null;
