@@ -2005,6 +2005,43 @@ loadCurrentSetting();
       return send({ success: true, sheetUrl: sheetUrl || "" });
     }
 
+
+    // CST proxy + persistent edit/delete overlays. Original CST records remain on Netlify.
+    if (path === "/cst" && method === "GET") {
+      const upstream = await fetch("https://pda-mini-mataram.netlify.app/api/cst?limit=" + encodeURIComponent(query.limit || "200"));
+      const data = await upstream.json();
+      let items = Array.isArray(data.items) ? data.items : [];
+      const overrides = await getJson("cst-overrides", {});
+      const deleted = await getJson("cst-deleted", []);
+      items = items.filter(i => !deleted.includes(String(i.id))).map(i => ({ ...i, ...(overrides[String(i.id)] || {}) }));
+      return send({ ...data, success: true, total: items.length, items });
+    }
+    if (path === "/cst" && method === "POST") {
+      const upstream = await fetch("https://pda-mini-mataram.netlify.app/api/cst", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const data = await upstream.json();
+      return send(data, upstream.status);
+    }
+    const cstIdMatch = path.match(/^\/cst\/([^/]+)$/);
+    if (cstIdMatch && (method === "PATCH" || method === "DELETE")) {
+      const id = decodeURIComponent(cstIdMatch[1]);
+      if (method === "PATCH") {
+        const overrides = await getJson("cst-overrides", {});
+        overrides[id] = { ...(overrides[id] || {}), ...body, updatedAt: new Date().toISOString() };
+        await setJson("cst-overrides", overrides);
+        return send({ success: true, item: { id, ...overrides[id] } });
+      }
+      const deleted = await getJson("cst-deleted", []);
+      if (!deleted.includes(id)) deleted.push(id);
+      await setJson("cst-deleted", deleted);
+      return send({ success: true });
+    }
+    const cstPhotoMatch = path.match(/^\/cst\/([^/]+)\/photo$/);
+    if (cstPhotoMatch && method === "GET") {
+      const upstream = await fetch("https://pda-mini-mataram.netlify.app/api/cst/" + encodeURIComponent(cstPhotoMatch[1]) + "/photo");
+      const data = await upstream.json();
+      return send(data, upstream.status);
+    }
+
         return send({ error: "Not found" }, 404);
   } catch (err) {
     return send({ error: "Internal server error", detail: String(err) }, 500);
