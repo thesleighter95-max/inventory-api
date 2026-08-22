@@ -6422,6 +6422,34 @@ function cstRenderList(){var list=$('cstList');if(!list)return;var total=0;cstIt
   </div>
 
 <script>
+function parseCSVPiket(csv){
+  var lines=String(csv||"").split(/\r?\n/);
+  if(!lines.length)return[];
+  var hdr=splitCSVLine(lines[0]).map(function(h){return String(h||"").trim().toLowerCase().replace(/[^a-z]/g,"");});
+  var iT=hdr.indexOf("tanggal"),iN=hdr.indexOf("nama"),iS=hdr.indexOf("shift"),iF=hdr.indexOf("foto");
+  if(iT<0)iT=0;if(iN<0)iN=1;if(iS<0)iS=2;if(iF<0)iF=3;
+  var rows=[];
+  for(var i=1;i<lines.length;i++){
+    var line=lines[i].trim();if(!line)continue;
+    var cols=splitCSVLine(line);
+    var tgl=String(cols[iT]||"").trim().replace(/^"|"$/g,"");
+    var nama=String(cols[iN]||"").trim().replace(/^"|"$/g,"");
+    var shift=String(cols[iS]||"").trim().replace(/^"|"$/g,"");
+    var foto=String(cols[iF]||"").trim().replace(/^"|"$/g,"");
+    if(tgl&&nama)rows.push({tanggal:tgl,nama:nama,shift:shift,foto:foto});
+  }
+  return rows;
+}
+
+function splitCSVLine(line){
+  var cols=[],cur="",inQ=false;
+  for(var i=0;i<line.length;i++){
+    var c=line[i];
+    if(c==='"')inQ=!inQ;else if(c===','&&!inQ){cols.push(cur);cur="";}else{cur+=c;}
+  }
+  cols.push(cur);return cols;
+}
+
 // ===== MOD/PIMPINAN SHEET =====
 (function(){
   var _MOD_SHEET_URL="";
