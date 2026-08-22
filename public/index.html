@@ -8137,7 +8137,7 @@ function galleryOpenDB(){
 async function gallerySaveFolderInfo(name){
   try{var db=await galleryOpenDB();var tx=db.transaction('folderHandles','readwrite');tx.objectStore('folderHandles').put({id:'gallery-folder',name:name,ts:Date.now()});return true;}catch(e){return false;}
 }
-async function galleryGetSavedFolder(){
+async async function galleryGetSavedFolder(){
   try{var db=await galleryOpenDB();var tx=db.transaction('folderHandles','readonly');return new Promise(function(res,rej){var r=tx.objectStore('folderHandles').get('gallery-folder');r.onsuccess=function(){res(r.result||null);};r.onerror=function(){res(null);};});}catch(e){return null;}
 }
 async function galleryDeleteSavedFolder(){
