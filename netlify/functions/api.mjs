@@ -54,6 +54,17 @@ async function nbDel(key) {
   try { await NETLIFY_CST_STORE.delete(key); } catch {}
 }
 
+async function getCstItems() {
+  try {
+    const raw = await nbFetch("cst-items.json");
+    return raw === null ? [] : (JSON.parse(raw) || []);
+  } catch { return []; }
+}
+
+async function setCstItems(items) {
+  await nbPut("cst-items.json", JSON.stringify(items));
+}
+
 async function vbFetch(pathname) {
   try {
     const { blobs } = await vbList({ prefix: pathname, limit: 1 });
@@ -1292,7 +1303,7 @@ loadCurrentSetting();
 
     // ── CST: Count Stock Taking ─────────────────────────────────────────
     if (path === "/cst" && method === "GET") {
-      const items = await getJson("cst-items", []);
+      const items = await getCstItems();
       const limit = Math.min(500, Math.max(1, Number(query.limit) || 100));
       return json({ success: true, total: items.length, items: items.slice(0, limit) });
     }
@@ -1312,10 +1323,10 @@ loadCurrentSetting();
         longitude: longitude == null ? null : Number(longitude), accuracy: accuracy == null ? null : Number(accuracy),
         photoUrl: "/api/cst/" + id + "/photo", capturedAt: capturedAt || new Date().toISOString(), createdAt: new Date().toISOString()
       };
-      const items = await getJson("cst-items", []);
+      const items = await getCstItems();
       items.unshift(item);
       if (items.length > 1000) items.length = 1000;
-      await setJson("cst-items", items);
+      await setCstItems(items);
       return json({ success: true, item });
     }
 
@@ -1329,7 +1340,7 @@ loadCurrentSetting();
 
     if (path === "/cst/clear" && method === "POST") {
       if (body.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
-      const items = await getJson("cst-items", []);
+      const items = await getCstItems();
       await Promise.all(items.flatMap(it => [
         nbDel("cst-photo-" + it.id + ".txt"),
         vbDel(BLOB_PREFIX + "cst-photo-" + it.id + ".txt")
