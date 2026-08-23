@@ -39,6 +39,26 @@ function cacheInvalidate(key) {
 // ============================================================
 const BLOB_PREFIX = "inventory/";
 
+// Fallback untuk data lama yang tersimpan di Netlify Blob sebelum migrasi.
+// Jangan biarkan kegagalan Vercel terlihat sebagai data kosong.
+const LEGACY_INVENTORY_STORE = getStore("inventory");
+
+async function legacyFetch(key) {
+  try {
+    const raw = await LEGACY_INVENTORY_STORE.get(key, { type: "text" });
+    return raw || null;
+  } catch { return null; }
+}
+
+async function legacyPut(key, value) {
+  await LEGACY_INVENTORY_STORE.set(key, value);
+}
+
+function legacyKeyFromPath(pathname) {
+  if (!pathname.startsWith(BLOB_PREFIX)) return null;
+  return pathname.slice(BLOB_PREFIX.length);
+}
+
 // Netlify Blob khusus foto CST — dapat diakses lintas user melalui endpoint API
 const NETLIFY_CST_STORE = getStore("cst-photos");
 
@@ -68,20 +88,30 @@ async function setCstItems(items) {
 async function vbFetch(pathname) {
   try {
     const { blobs } = await vbList({ prefix: pathname, limit: 1 });
-    if (!blobs.length) return null;
-    const res = await fetch(blobs[0].url + "?_t=" + Date.now());
-    if (!res.ok) return null;
-    return await res.text();
-  } catch { return null; }
+    if (blobs.length) {
+      const res = await fetch(blobs[0].url + "?_t=" + Date.now());
+      if (res.ok) return await res.text();
+    }
+  } catch {}
+  // Data BBLM lama tetap dicari di Netlify Blob jika Vercel gagal/kosong.
+  const legacyKey = legacyKeyFromPath(pathname);
+  return legacyKey ? await legacyFetch(legacyKey) : null;
 }
 
 async function vbPut(pathname, value, contentType = "application/json") {
-  await put(pathname, value, {
-    access: "public",
-    addRandomSuffix: false,
-    contentType,
-    cacheControlMaxAge: 0,
-  });
+  try {
+    await put(pathname, value, {
+      access: "public",
+      addRandomSuffix: false,
+      contentType,
+      cacheControlMaxAge: 0,
+    });
+    return;
+  } catch (err) {
+    const legacyKey = legacyKeyFromPath(pathname);
+    if (!legacyKey) throw err;
+    await legacyPut(legacyKey, value);
+  }
 }
 
 async function vbDel(pathname) {
