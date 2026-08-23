@@ -6672,7 +6672,7 @@ function submitAbsensi(){
   }
   var _cachedName=_absensiEmpMap[empId.trim()]||'';
   var _eventId=absensiNewEventId();
-  var _scanTs=new Date().toISOString();
+  var _scanTs=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Makassar',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date()).replace(' ','T')+'+08:00';
   var _op=isAdmin?'Admin':(currentUserNameInv||currentUsernameRaw||'User');
   if(msg){msg.textContent='\u25A3 '+empId+(_cachedName?' \u2192 '+_cachedName:'')+' — memeriksa...';msg.style.color='#ffcc44';}
   if(badge){badge.style.display='inline-block';badge.textContent='...';badge.style.background='#2a2400';badge.style.color='#ffcc44';badge.style.border='1px solid #ffcc4455';}
