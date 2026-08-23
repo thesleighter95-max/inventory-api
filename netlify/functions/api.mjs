@@ -41,17 +41,19 @@ const BLOB_PREFIX = "inventory/";
 
 // Fallback untuk data lama yang tersimpan di Netlify Blob sebelum migrasi.
 // Jangan biarkan kegagalan Vercel terlihat sebagai data kosong.
-const LEGACY_INVENTORY_STORE = getStore("inventory");
+const NETLIFY_INVENTORY_STORE = getStore("inventory");
 
 async function legacyFetch(key) {
   try {
-    const raw = await LEGACY_INVENTORY_STORE.get(key, { type: "text" });
+    // Netlify Blob's default get() returns the stored text and matches the
+    // format used by the original BBLM implementation.
+    const raw = await NETLIFY_INVENTORY_STORE.get(key);
     return raw || null;
   } catch { return null; }
 }
 
 async function legacyPut(key, value) {
-  await LEGACY_INVENTORY_STORE.set(key, value);
+  await NETLIFY_INVENTORY_STORE.set(key, value);
 }
 
 function legacyKeyFromPath(pathname) {
@@ -1384,10 +1386,11 @@ loadCurrentSetting();
     // POST /bblm-foto/clear — clear all (must be before :id match)
     if (path === "/bblm-foto/clear" && method === "POST") {
       if (body.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
-      const list = await getJson("bblm-foto", []);
-      await Promise.all(list.map(it => vbDel(BLOB_PREFIX + "bblm-foto-photo-" + it.id + ".txt").catch(() => {})));
-      await setJson("bblm-foto", []);
-      await setJson("bblm-foto-downloaded", []);
+      const listRaw = await legacyFetch("bblm-foto.json");
+      const list = listRaw ? (JSON.parse(listRaw) || []) : [];
+      await Promise.all(list.map(it => nbDel("bblm-foto-photo-" + it.id + ".txt")));
+      await legacyPut("bblm-foto.json", "[]");
+      await legacyPut("bblm-foto-downloaded.json", "[]");
       return json({ success: true, deleted: list.length });
     }
 
@@ -1404,9 +1407,11 @@ loadCurrentSetting();
 
     // GET /bblm-foto — list metadata (no photos embedded)
     if (path === "/bblm-foto" && method === "GET") {
-      const list = await getJson("bblm-foto", []);
-      const downloadedIds = await getJson("bblm-foto-downloaded", []);
-      return json({ success: true, count: list.length, items: list, downloadedIds });
+      const listRaw = await legacyFetch("bblm-foto.json");
+      const downloadedRaw = await legacyFetch("bblm-foto-downloaded.json");
+      const list = listRaw ? (JSON.parse(listRaw) || []) : [];
+      const downloadedIds = downloadedRaw ? (JSON.parse(downloadedRaw) || []) : [];
+      return json({ success: true, count: list.length, items: list, downloadedIds, storage: "netlify" });
     }
 
     // POST /bblm-foto — add item (photo stored separately)
@@ -1414,7 +1419,8 @@ loadCurrentSetting();
       const { barcode, prodCd, prodNm, stkQty, category, posisi, username } = body;
       if (!barcode) return json({ success: false, message: "barcode wajib diisi" }, 400);
       const id = Date.now().toString() + Math.random().toString(36).slice(2, 6);
-      const list = await getJson("bblm-foto", []);
+      const listRaw = await legacyFetch("bblm-foto.json");
+      const list = listRaw ? (JSON.parse(listRaw) || []) : [];
       const newItem = {
         id, barcode: barcode || "", prodCd: prodCd || "", prodNm: prodNm || "",
         stkQty: stkQty || "", category: category || "", posisi: posisi || "",
@@ -1422,7 +1428,7 @@ loadCurrentSetting();
         capturedAt: new Date().toISOString(), hasPhoto: false
       };
       list.push(newItem);
-      await setJson("bblm-foto", list);
+      await legacyPut("bblm-foto.json", JSON.stringify(list));
       return json({ success: true, id, item: newItem });
     }
 
@@ -1431,17 +1437,18 @@ loadCurrentSetting();
     if (bblmFotoPhotoMatch) {
       const id = bblmFotoPhotoMatch[1];
       if (method === "GET") {
-        const photo = await vbFetch(BLOB_PREFIX + "bblm-foto-photo-" + id + ".txt");
+        const photo = await legacyFetch("bblm-foto-photo-" + id + ".txt");
         if (!photo) return json({ success: false, message: "foto tidak ditemukan" }, 404);
         return json({ success: true, fotoBase64: photo });
       }
       if (method === "POST") {
         const { fotoBase64 } = body;
         if (!fotoBase64) return json({ success: false, message: "fotoBase64 wajib" }, 400);
-        await vbPut(BLOB_PREFIX + "bblm-foto-photo-" + id + ".txt", fotoBase64, "text/plain");
-        const list = await getJson("bblm-foto", []);
+        await legacyPut("bblm-foto-photo-" + id + ".txt", fotoBase64);
+        const listRaw = await legacyFetch("bblm-foto.json");
+        const list = listRaw ? (JSON.parse(listRaw) || []) : [];
         const idx = list.findIndex(it => it.id === id);
-        if (idx >= 0) { list[idx].hasPhoto = true; await setJson("bblm-foto", list); }
+        if (idx >= 0) { list[idx].hasPhoto = true; await legacyPut("bblm-foto.json", JSON.stringify(list)); }
         return json({ success: true });
       }
     }
@@ -1451,7 +1458,8 @@ loadCurrentSetting();
     if (bblmFotoDelMatch && method === "PATCH") {
       const id = bblmFotoDelMatch[1];
       const { prodNm, stkQty, category, posisi } = body;
-      const list = await getJson("bblm-foto", []);
+      const listRaw = await legacyFetch("bblm-foto.json");
+      const list = listRaw ? (JSON.parse(listRaw) || []) : [];
       const idx = list.findIndex(it => it.id === id);
       if (idx < 0) return json({ success: false, message: "Item tidak ditemukan" }, 404);
       if (prodNm   !== undefined) list[idx].prodNm   = prodNm;
@@ -1459,7 +1467,7 @@ loadCurrentSetting();
       if (category !== undefined) list[idx].category = category;
       if (posisi   !== undefined) list[idx].posisi   = posisi;
       list[idx].updatedAt = new Date().toISOString();
-      await setJson("bblm-foto", list);
+      await legacyPut("bblm-foto.json", JSON.stringify(list));
       return json({ success: true, item: list[idx] });
     }
 
@@ -1469,7 +1477,7 @@ loadCurrentSetting();
       const list = await getJson("bblm-foto", []);
       const newList = list.filter(it => it.id !== id);
       await setJson("bblm-foto", newList);
-      try { await vbDel(BLOB_PREFIX + "bblm-foto-photo-" + id + ".txt"); } catch {}
+      try { await nbDel("bblm-foto-photo-" + id + ".txt"); } catch {}
       return json({ success: true });
     }
 
