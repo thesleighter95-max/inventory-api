@@ -101,6 +101,17 @@ async function setCstItems(items) {
   await nbPut("cst-items.json", JSON.stringify(items));
 }
 
+async function getCstMigrationProgress() {
+  try {
+    const raw = await nbFetch("cst-migration-progress.json");
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+async function setCstMigrationProgress(progress) {
+  await nbPut("cst-migration-progress.json", JSON.stringify(progress));
+}
+
 async function vbFetch(pathname) {
   try {
     const { blobs } = await vbList({ prefix: pathname, limit: 1 });
@@ -1348,6 +1359,81 @@ loadCurrentSetting();
 
 
     // ── CST: Count Stock Taking ─────────────────────────────────────────
+    // Salin data/foto dari site Netlify lama tanpa mengubah sumber.
+    const LEGACY_CST_API = "https://pda-mini-mataram.netlify.app/api";
+
+    // POST /cst/migrate-from-legacy — migrasi idempoten dan dapat dilanjutkan
+    if (path === "/cst/migrate-from-legacy" && method === "POST") {
+      if (body.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
+      const offset = Math.max(0, Number(body.offset) || 0);
+      const limit = Math.min(5, Math.max(1, Number(body.limit) || 5));
+      let source;
+      try {
+        const response = await fetch(LEGACY_CST_API + "/cst?limit=500&migrate=" + Date.now());
+        if (!response.ok) throw new Error("Legacy Netlify " + response.status);
+        source = await response.json();
+      } catch (err) {
+        return json({ success: false, message: "Gagal membaca CST lama: " + err.message }, 502);
+      }
+
+      const sourceItems = Array.isArray(source.items) ? source.items : [];
+      const sourceTotal = Number(source.total) || sourceItems.length;
+      const existing = await getCstItems();
+      const byId = new Map(existing.map(item => [String(item.id), item]));
+      const batch = sourceItems.slice(offset, offset + limit);
+      let metadataAdded = 0, copied = 0, skipped = 0, missing = 0;
+
+      for (const sourceItem of batch) {
+        const id = String(sourceItem.id || "").trim();
+        if (!id) { missing++; continue; }
+        let destination = byId.get(id);
+        if (!destination) {
+          destination = {
+            ...sourceItem,
+            id,
+            photoUrl: "/api/cst/" + id + "/photo",
+            createdAt: sourceItem.createdAt || sourceItem.capturedAt || new Date().toISOString()
+          };
+          existing.push(destination);
+          byId.set(id, destination);
+          metadataAdded++;
+        }
+
+        const photoKey = "cst-photo-" + id + ".txt";
+        if (await nbFetch(photoKey)) {
+          skipped++;
+          continue;
+        }
+        try {
+          const photoResponse = await fetch(LEGACY_CST_API + "/cst/" + encodeURIComponent(id) + "/photo?migrate=" + Date.now());
+          const photoData = photoResponse.ok ? await photoResponse.json() : null;
+          if (!photoData || !photoData.success || typeof photoData.fotoBase64 !== "string" || !photoData.fotoBase64) {
+            missing++;
+            continue;
+          }
+          await nbPut(photoKey, photoData.fotoBase64);
+          copied++;
+        } catch {
+          missing++;
+        }
+      }
+
+      await setCstItems(existing);
+      const nextOffset = offset + batch.length;
+      const complete = nextOffset >= sourceItems.length && sourceTotal <= sourceItems.length;
+      const progress = {
+        sourceTotal, fetched: sourceItems.length, offset, nextOffset, complete,
+        metadataAdded, copied, skipped, missing, updatedAt: new Date().toISOString()
+      };
+      await setCstMigrationProgress(progress);
+      return json({ success: true, ...progress, message: complete ? "Migrasi CST selesai" : "Batch CST tersalin, lanjutkan dengan nextOffset" });
+    }
+
+    if (path === "/cst/migrate-status" && method === "GET") {
+      if (query.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
+      return json({ success: true, progress: await getCstMigrationProgress() });
+    }
+
     if (path === "/cst" && method === "GET") {
       const items = await getCstItems();
       const limit = Math.min(500, Math.max(1, Number(query.limit) || 100));
