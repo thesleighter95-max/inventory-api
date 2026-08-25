@@ -8321,23 +8321,30 @@ function fbStartScan() {
 function fbLookupBarcode(bc) {
   bc = (bc||"").trim();
   if(!bc) return;
+  var queryCode = bc.toUpperCase();
   document.getElementById("fbProdNm").value = "Mencari...";
   document.getElementById("fbProdCd").value = "";
   document.getElementById("fbStkQty").value = "";
   getBarang().then(function(data) {
     var found = null;
     var bcN = normalizeBarcode(bc);
-    // Pass 1: exact match
+    // Pass 1: PROD_CD exact (case-insensitive).
     for(var i = 1; i < data.length; i++) {
-      if(data[i] && (data[i][1]||"").trim() === bc) { found = data[i]; break; }
+      if(data[i] && String(data[i][0]||"").trim().toUpperCase() === queryCode) { found = data[i]; break; }
     }
-    // Pass 2: strip leading zeros both sides
+    // Pass 2: barcode exact.
+    if(!found) {
+      for(var i = 1; i < data.length; i++) {
+        if(data[i] && String(data[i][1]||"").trim() === bc) { found = data[i]; break; }
+      }
+    }
+    // Pass 3: barcode dengan leading zero yang berbeda.
     if(!found) {
       for(var i = 1; i < data.length; i++) {
         if(data[i] && normalizeBarcode(data[i][1]) === bcN) { found = data[i]; break; }
       }
     }
-    // Pass 3: numeric compare (handles extra/missing zeros mid-string)
+    // Pass 4: perbandingan barcode numerik.
     if(!found) {
       var bcNum = parseInt(bcN, 10);
       if(!isNaN(bcNum) && bcNum > 0) {
@@ -8348,6 +8355,9 @@ function fbLookupBarcode(bc) {
       }
     }
     if(found) {
+      // Jika dicari memakai PROD_CD, simpan barcode asli dari master barang.
+      var actualBarcode = String(found[1]||bc).trim() || bc;
+      document.getElementById("fbBarcode").value = actualBarcode;
       document.getElementById("fbProdNm").value = found[2] || "";
       document.getElementById("fbProdCd").value = found[0] || "";
       var rawQty = (found[4]||"").toString().replace(/[^0-9.,]/g,"").replace(",",".");
@@ -8359,7 +8369,7 @@ function fbLookupBarcode(bc) {
     } else {
       document.getElementById("fbProdNm").value = "";
       fbAutoSelectCategory("");
-      showToast("Barcode tidak ditemukan di data inventory", "error");
+      showToast("Barcode/PROD_CD tidak ditemukan di data inventory", "error");
     }
   }).catch(function(){ document.getElementById("fbProdNm").value = ""; showToast("Gagal cari data inventory","error"); });
 }
