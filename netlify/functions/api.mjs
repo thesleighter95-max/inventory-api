@@ -1472,6 +1472,20 @@ loadCurrentSetting();
       return json({ success: true, item });
     }
 
+    const cstItemMatch = path.match(/^\/cst\/([^/]+)$/);
+    if (cstItemMatch && method === "DELETE") {
+      const id = decodeURIComponent(cstItemMatch[1]);
+      const items = await getCstItems();
+      const target = items.find(item => String(item.id) === id);
+      if (!target) return json({ success: false, message: "Data CST tidak ditemukan" }, 404);
+      const requester = String(body.username || "").trim();
+      const isOwner = requester && requester === String(target.username || "").trim();
+      if (body.adminPassword !== ADMIN_PASSWORD && !isOwner) return json({ success: false, message: "Unauthorized" }, 403);
+      const photoKey = "cst-photo-" + id + ".txt";
+      await Promise.all([nbDel(photoKey), vbDel(BLOB_PREFIX + photoKey)]);
+      await setCstItems(items.filter(item => String(item.id) !== id));
+      return json({ success: true, deleted: 1 });
+    }
     const cstPhotoMatch = path.match(/^\/cst\/([^/]+)\/photo$/);
     if (cstPhotoMatch && method === "GET") {
       const cstPhotoKey = "cst-photo-" + cstPhotoMatch[1] + ".txt";
