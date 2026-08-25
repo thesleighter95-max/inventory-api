@@ -1529,7 +1529,12 @@ loadCurrentSetting();
       for (const item of batch) {
         const id = String(item.id);
         const key = "bblm-foto-photo-" + id + ".txt";
-        if (await bblmFetch(key)) { skipped++; continue; }
+        if (await bblmFetch(key)) {
+          const destination = byId.get(id);
+          if (destination) destination.hasPhoto = true;
+          skipped++;
+          continue;
+        }
         try {
           const r = await fetch(LEGACY_BBLM_API + "/bblm-foto/" + encodeURIComponent(id) + "/photo?migrate=" + Date.now());
           const data = r.ok ? await r.json() : null;
