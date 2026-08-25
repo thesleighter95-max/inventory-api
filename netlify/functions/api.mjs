@@ -41,7 +41,17 @@ const BLOB_PREFIX = "inventory/";
 
 // Fallback untuk data lama yang tersimpan di Netlify Blob sebelum migrasi.
 // Jangan biarkan kegagalan Vercel terlihat sebagai data kosong.
-const NETLIFY_INVENTORY_STORE = getStore("inventory");
+const NETLIFY_BLOBS_SITE_ID = process.env.NETLIFY_BLOBS_SITE_ID || process.env.NETLIFY_SITE_ID;
+const NETLIFY_BLOBS_ACCESS_TOKEN = process.env.NETLIFY_BLOBS_ACCESS_TOKEN;
+
+function openNetlifyStore(name) {
+  if (NETLIFY_BLOBS_SITE_ID && NETLIFY_BLOBS_ACCESS_TOKEN) {
+    return getStore(name, { siteID: NETLIFY_BLOBS_SITE_ID, token: NETLIFY_BLOBS_ACCESS_TOKEN });
+  }
+  return getStore(name);
+}
+
+const NETLIFY_INVENTORY_STORE = openNetlifyStore("inventory");
 
 async function legacyFetch(key) {
   try {
@@ -62,9 +72,9 @@ function legacyKeyFromPath(pathname) {
 }
 
 // Netlify Blob khusus foto CST — dapat diakses lintas user melalui endpoint API
-const NETLIFY_CST_STORE = getStore("cst-photos");
+const NETLIFY_CST_STORE = openNetlifyStore("cst-photos");
 // Store khusus Foto BBLM. Data baru selalu masuk ke sini.
-const NETLIFY_BBLM_STORE = getStore("bblm-photos");
+const NETLIFY_BBLM_STORE = openNetlifyStore("bblm-photos");
 
 async function nbPut(key, value) {
   await NETLIFY_CST_STORE.set(key, value);
