@@ -7850,12 +7850,12 @@ function fbAutoLoadAllPhotos() {
 }
 
 function fbRefreshList() {
-  // Refresh juga membuka list jika tombol ditekan sebelum list ditampilkan.
+  // Refresh hanya memuat daftar; foto dimuat setelah user memilih Tampilkan List Foto.
   var lb=document.getElementById("fbLoadBtn");
   if(lb)lb.style.display="none";
   var ls=document.getElementById("fbListSection");
   if(ls)ls.style.display="block";
-  loadFotoBblmList(true);
+  loadFotoBblmList(false);
 }
 
 function fbShowListSection() {
