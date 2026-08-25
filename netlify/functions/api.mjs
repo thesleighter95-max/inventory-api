@@ -1475,12 +1475,19 @@ loadCurrentSetting();
     const cstItemMatch = path.match(/^\/cst\/([^/]+)$/);
     if (cstItemMatch && method === "DELETE") {
       const id = decodeURIComponent(cstItemMatch[1]);
-      const items = await getCstItems();
-      const target = items.find(item => String(item.id) === id);
+      const isAdmin = body.adminPassword === ADMIN_PASSWORD;
+      let items = [];
+      let target = null;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        items = await getCstItems();
+        target = items.find(item => String(item.id) === id) || null;
+        if (target) break;
+        if (attempt < 4) await new Promise(resolve => setTimeout(resolve, 500));
+      }
       if (!target) return json({ success: false, message: "Data CST tidak ditemukan" }, 404);
       const requester = String(body.username || "").trim();
       const isOwner = requester && requester === String(target.username || "").trim();
-      if (body.adminPassword !== ADMIN_PASSWORD && !isOwner) return json({ success: false, message: "Unauthorized" }, 403);
+      if (!isAdmin && !isOwner) return json({ success: false, message: "Unauthorized" }, 403);
       const photoKey = "cst-photo-" + id + ".txt";
       await Promise.all([nbDel(photoKey), vbDel(BLOB_PREFIX + photoKey)]);
       await setCstItems(items.filter(item => String(item.id) !== id));
