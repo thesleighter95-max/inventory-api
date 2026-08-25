@@ -63,6 +63,8 @@ function legacyKeyFromPath(pathname) {
 
 // Netlify Blob khusus foto CST — dapat diakses lintas user melalui endpoint API
 const NETLIFY_CST_STORE = getStore("cst-photos");
+// Store khusus Foto BBLM. Data baru selalu masuk ke sini.
+const NETLIFY_BBLM_STORE = getStore("bblm-photos");
 
 async function nbPut(key, value) {
   await NETLIFY_CST_STORE.set(key, value);
@@ -74,6 +76,18 @@ async function nbFetch(key) {
 
 async function nbDel(key) {
   try { await NETLIFY_CST_STORE.delete(key); } catch {}
+}
+
+async function bblmFetch(key) {
+  try { return await NETLIFY_BBLM_STORE.get(key, { type: "text" }); } catch { return null; }
+}
+
+async function bblmPut(key, value) {
+  await NETLIFY_BBLM_STORE.set(key, value);
+}
+
+async function bblmDel(key) {
+  try { await NETLIFY_BBLM_STORE.delete(key); } catch {}
 }
 
 async function getCstItems() {
@@ -1382,106 +1396,171 @@ loadCurrentSetting();
     }
 
     // ── BBLM FOTO routes ──────────────────────────────────────────────────
+    // Foto BBLM baru disimpan langsung ke Netlify Blob. Vercel hanya dipakai
+    // sebagai sumber baca/fallback untuk arsip sebelum migrasi.
+    const LEGACY_BBLM_API = "https://pda-mini-mataram.vercel.app/api";
 
-    // POST /bblm-foto/clear — clear all (must be before :id match)
+    // POST /bblm-foto/migrate-from-vercel — salin arsip secara bertahap tanpa menghapus Vercel
+    if (path === "/bblm-foto/migrate-from-vercel" && method === "POST") {
+      if (body.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
+      const offset = Math.max(0, Number(body.offset) || 0);
+      const limit = Math.min(20, Math.max(1, Number(body.limit) || 20));
+      let source;
+      try {
+        const r = await fetch(LEGACY_BBLM_API + "/bblm-foto?migrate=" + Date.now());
+        if (!r.ok) throw new Error("Vercel " + r.status);
+        source = await r.json();
+      } catch (err) {
+        return json({ success: false, message: "Gagal membaca arsip Vercel: " + err.message }, 502);
+      }
+      const sourceItems = Array.isArray(source.items) ? source.items : [];
+      const raw = await bblmFetch("bblm-foto.json");
+      const list = raw ? (JSON.parse(raw) || []) : [];
+      const byId = new Map(list.map(item => [String(item.id), item]));
+      sourceItems.forEach(item => {
+        const id = String(item.id);
+        if (!byId.has(id)) {
+          const copy = { ...item, id, createdAt: item.createdAt || item.capturedAt || new Date().toISOString(), capturedAt: item.capturedAt || item.createdAt || new Date().toISOString(), hasPhoto: false };
+          list.push(copy);
+          byId.set(id, copy);
+        }
+      });
+      const downloadedRaw = await bblmFetch("bblm-foto-downloaded.json");
+      const downloaded = new Set((downloadedRaw ? JSON.parse(downloadedRaw) : []).map(String));
+      (source.downloadedIds || []).forEach(id => downloaded.add(String(id)));
+      const batch = sourceItems.slice(offset, offset + limit);
+      let copied = 0, skipped = 0, missing = 0;
+      for (const item of batch) {
+        const id = String(item.id);
+        const key = "bblm-foto-photo-" + id + ".txt";
+        if (await bblmFetch(key)) { skipped++; continue; }
+        try {
+          const r = await fetch(LEGACY_BBLM_API + "/bblm-foto/" + encodeURIComponent(id) + "/photo?migrate=" + Date.now());
+          const data = r.ok ? await r.json() : null;
+          if (!data || !data.success || !data.fotoBase64) { missing++; continue; }
+          await bblmPut(key, data.fotoBase64);
+          const destination = byId.get(id);
+          if (destination) destination.hasPhoto = true;
+          copied++;
+        } catch { missing++; }
+      }
+      await bblmPut("bblm-foto.json", JSON.stringify(list));
+      await bblmPut("bblm-foto-downloaded.json", JSON.stringify([...downloaded]));
+      const nextOffset = offset + batch.length;
+      return json({ success: true, total: sourceItems.length, offset, nextOffset, complete: nextOffset >= sourceItems.length, copied, skipped, missing });
+    }
+
+    // POST /bblm-foto/clear — bersihkan Netlify saja; arsip Vercel tidak disentuh
     if (path === "/bblm-foto/clear" && method === "POST") {
       if (body.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
-      const listRaw = await legacyFetch("bblm-foto.json");
-      const list = listRaw ? (JSON.parse(listRaw) || []) : [];
-      await Promise.all(list.map(it => nbDel("bblm-foto-photo-" + it.id + ".txt")));
-      await legacyPut("bblm-foto.json", "[]");
-      await legacyPut("bblm-foto-downloaded.json", "[]");
+      const raw = await bblmFetch("bblm-foto.json");
+      const list = raw ? (JSON.parse(raw) || []) : [];
+      await Promise.all(list.map(item => bblmDel("bblm-foto-photo-" + item.id + ".txt")));
+      await bblmPut("bblm-foto.json", "[]");
+      await bblmPut("bblm-foto-downloaded.json", "[]");
       return json({ success: true, deleted: list.length });
     }
 
-    // POST /bblm-foto/mark-downloaded — tandai item sudah diunduh
+    // POST /bblm-foto/mark-downloaded
     if (path === "/bblm-foto/mark-downloaded" && method === "POST") {
       const { ids } = body;
-      if (!Array.isArray(ids) || ids.length === 0) return json({ success: false, message: "ids wajib array" }, 400);
-      const current = await getJson("bblm-foto-downloaded", []);
-      const set = new Set(current.map(String));
-      ids.forEach(id => set.add(String(id)));
-      await setJson("bblm-foto-downloaded", [...set]);
-      return json({ success: true, total: set.size });
+      if (!Array.isArray(ids) || !ids.length) return json({ success: false, message: "ids wajib array" }, 400);
+      const raw = await bblmFetch("bblm-foto-downloaded.json");
+      const downloaded = new Set((raw ? JSON.parse(raw) : []).map(String));
+      ids.forEach(id => downloaded.add(String(id)));
+      await bblmPut("bblm-foto-downloaded.json", JSON.stringify([...downloaded]));
+      return json({ success: true, total: downloaded.size });
     }
 
-    // GET /bblm-foto — list metadata (no photos embedded)
+    // GET /bblm-foto — data Netlify; isi metadata dari Vercel bila migrasi belum dimulai
     if (path === "/bblm-foto" && method === "GET") {
-      const listRaw = await legacyFetch("bblm-foto.json");
-      const downloadedRaw = await legacyFetch("bblm-foto-downloaded.json");
-      const list = listRaw ? (JSON.parse(listRaw) || []) : [];
+      let raw = await bblmFetch("bblm-foto.json");
+      let list = raw ? (JSON.parse(raw) || []) : [];
+      if (!list.length) {
+        try {
+          const r = await fetch(LEGACY_BBLM_API + "/bblm-foto?fallback=" + Date.now());
+          const source = r.ok ? await r.json() : null;
+          if (source && Array.isArray(source.items)) {
+            list = source.items.map(item => ({ ...item, id: String(item.id), createdAt: item.createdAt || item.capturedAt || new Date().toISOString(), capturedAt: item.capturedAt || item.createdAt || new Date().toISOString(), hasPhoto: false }));
+            await bblmPut("bblm-foto.json", JSON.stringify(list));
+          }
+        } catch {}
+      }
+      const downloadedRaw = await bblmFetch("bblm-foto-downloaded.json");
       const downloadedIds = downloadedRaw ? (JSON.parse(downloadedRaw) || []) : [];
       return json({ success: true, count: list.length, items: list, downloadedIds, storage: "netlify" });
     }
 
-    // POST /bblm-foto — add item (photo stored separately)
+    // POST /bblm-foto — data baru langsung ke Netlify Blob
     if (path === "/bblm-foto" && method === "POST") {
       const { barcode, prodCd, prodNm, stkQty, category, posisi, username } = body;
       if (!barcode) return json({ success: false, message: "barcode wajib diisi" }, 400);
-      const id = Date.now().toString() + Math.random().toString(36).slice(2, 6);
-      const listRaw = await legacyFetch("bblm-foto.json");
-      const list = listRaw ? (JSON.parse(listRaw) || []) : [];
-      const newItem = {
-        id, barcode: barcode || "", prodCd: prodCd || "", prodNm: prodNm || "",
-        stkQty: stkQty || "", category: category || "", posisi: posisi || "",
-        username: username || "",
-        capturedAt: new Date().toISOString(), hasPhoto: false
-      };
-      list.push(newItem);
-      await legacyPut("bblm-foto.json", JSON.stringify(list));
-      return json({ success: true, id, item: newItem });
+      const id = Date.now().toString() + "_" + Math.random().toString(36).slice(2, 7);
+      const raw = await bblmFetch("bblm-foto.json");
+      const list = raw ? (JSON.parse(raw) || []) : [];
+      const now = new Date().toISOString();
+      const item = { id, barcode: barcode || "", prodCd: prodCd || "", prodNm: prodNm || "", stkQty: stkQty || "", category: category || "", posisi: posisi || "", username: username || "", createdAt: now, capturedAt: now, hasPhoto: false };
+      list.push(item);
+      await bblmPut("bblm-foto.json", JSON.stringify(list));
+      return json({ success: true, id, item, storage: "netlify" });
     }
 
-    // /bblm-foto/:id/photo — GET or POST photo
+    // GET/POST /bblm-foto/:id/photo — Netlify Blob, dengan fallback Vercel untuk arsip lama
     const bblmFotoPhotoMatch = path.match(/^\/bblm-foto\/([^/]+)\/photo$/);
     if (bblmFotoPhotoMatch) {
       const id = bblmFotoPhotoMatch[1];
+      const key = "bblm-foto-photo-" + id + ".txt";
       if (method === "GET") {
-        const photo = await legacyFetch("bblm-foto-photo-" + id + ".txt");
+        let photo = await bblmFetch(key);
+        if (!photo) {
+          try {
+            const r = await fetch(LEGACY_BBLM_API + "/bblm-foto/" + encodeURIComponent(id) + "/photo?fallback=" + Date.now());
+            const source = r.ok ? await r.json() : null;
+            if (source && source.success && source.fotoBase64) {
+              photo = source.fotoBase64;
+              await bblmPut(key, photo);
+            }
+          } catch {}
+        }
         if (!photo) return json({ success: false, message: "foto tidak ditemukan" }, 404);
-        return json({ success: true, fotoBase64: photo });
+        return json({ success: true, fotoBase64: photo, storage: "netlify" });
       }
       if (method === "POST") {
         const { fotoBase64 } = body;
         if (!fotoBase64) return json({ success: false, message: "fotoBase64 wajib" }, 400);
-        await legacyPut("bblm-foto-photo-" + id + ".txt", fotoBase64);
-        const listRaw = await legacyFetch("bblm-foto.json");
-        const list = listRaw ? (JSON.parse(listRaw) || []) : [];
-        const idx = list.findIndex(it => it.id === id);
-        if (idx >= 0) { list[idx].hasPhoto = true; await legacyPut("bblm-foto.json", JSON.stringify(list)); }
-        return json({ success: true });
+        await bblmPut(key, fotoBase64);
+        const raw = await bblmFetch("bblm-foto.json");
+        const list = raw ? (JSON.parse(raw) || []) : [];
+        const item = list.find(entry => String(entry.id) === String(id));
+        if (item) { item.hasPhoto = true; await bblmPut("bblm-foto.json", JSON.stringify(list)); }
+        return json({ success: true, storage: "netlify" });
       }
     }
 
-    // PATCH /bblm-foto/:id — update metadata
-    const bblmFotoDelMatch = path.match(/^\/bblm-foto\/([^/]+)$/);
-    if (bblmFotoDelMatch && method === "PATCH") {
-      const id = bblmFotoDelMatch[1];
-      const { prodNm, stkQty, category, posisi } = body;
-      const listRaw = await legacyFetch("bblm-foto.json");
-      const list = listRaw ? (JSON.parse(listRaw) || []) : [];
-      const idx = list.findIndex(it => it.id === id);
-      if (idx < 0) return json({ success: false, message: "Item tidak ditemukan" }, 404);
-      if (prodNm   !== undefined) list[idx].prodNm   = prodNm;
-      if (stkQty   !== undefined) list[idx].stkQty   = stkQty;
-      if (category !== undefined) list[idx].category = category;
-      if (posisi   !== undefined) list[idx].posisi   = posisi;
-      list[idx].updatedAt = new Date().toISOString();
-      await legacyPut("bblm-foto.json", JSON.stringify(list));
-      return json({ success: true, item: list[idx] });
+    // PATCH /bblm-foto/:id
+    const bblmFotoItemMatch = path.match(/^\/bblm-foto\/([^/]+)$/);
+    if (bblmFotoItemMatch && method === "PATCH") {
+      const id = bblmFotoItemMatch[1];
+      const raw = await bblmFetch("bblm-foto.json");
+      const list = raw ? (JSON.parse(raw) || []) : [];
+      const item = list.find(entry => String(entry.id) === String(id));
+      if (!item) return json({ success: false, message: "Item tidak ditemukan" }, 404);
+      ["prodNm", "stkQty", "category", "posisi"].forEach(field => { if (body[field] !== undefined) item[field] = body[field]; });
+      item.updatedAt = new Date().toISOString();
+      await bblmPut("bblm-foto.json", JSON.stringify(list));
+      return json({ success: true, item });
     }
 
-    // DELETE /bblm-foto/:id
-    if (bblmFotoDelMatch && method === "DELETE") {
-      const id = bblmFotoDelMatch[1];
-      const list = await getJson("bblm-foto", []);
-      const newList = list.filter(it => it.id !== id);
-      await setJson("bblm-foto", newList);
-      try { await nbDel("bblm-foto-photo-" + id + ".txt"); } catch {}
+    // DELETE /bblm-foto/:id — hapus dari Netlify; arsip Vercel tetap dipertahankan
+    if (bblmFotoItemMatch && method === "DELETE") {
+      const id = bblmFotoItemMatch[1];
+      const raw = await bblmFetch("bblm-foto.json");
+      const list = raw ? (JSON.parse(raw) || []) : [];
+      await bblmPut("bblm-foto.json", JSON.stringify(list.filter(item => String(item.id) !== String(id))));
+      await bblmDel("bblm-foto-photo-" + id + ".txt");
       return json({ success: true });
     }
 
-  
   // v2 — POST /propose-order — user kirim usulan order, simpan ke Vercel Blob
   if (path === "/propose-order" && method === "POST") {
     const { barcode, namaBarang, qty, username, harga } = body;

@@ -3205,6 +3205,8 @@ var ADMIN_PASSWORD="00000";
 var BBLM_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQEzQCYwJLIK6KkHBBIJPDprj0OqiJj7KrI_FJHX_mFxCFqa9fXR6ksl9tZfq-6RQ/pub?gid=1514838244&single=true&output=csv";
 var API_BASE_URL=window.location.protocol+"//"+window.location.host+"/api";
 var CST_API_BASE_URL="https://pda-mini-mataram.netlify.app/api";
+// Foto BBLM baru langsung menggunakan Netlify Blob.
+var BBLM_FOTO_API_URL=CST_API_BASE_URL;
 var BBLM_STATUS_API_URL=API_BASE_URL;
 /* Isi URL ini dengan link Google Sheets CSV yang berisi daftar promo.
    Format sheet: Kolom A = URL gambar (Google Drive), Kolom B = Judul (opsional), Kolom C = Subjudul (opsional)
@@ -7554,7 +7556,7 @@ function fbCheckPassword(action) {
 
 function fbMarkDownloaded(id) {
   _fbDownloaded[String(id)] = true;
-  fetch(API_BASE_URL + "/bblm-foto/mark-downloaded", {
+  fetch(BBLM_FOTO_API_URL + "/bblm-foto/mark-downloaded", {
     method: "POST",
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify({ ids: [String(id)] })
@@ -7790,7 +7792,7 @@ function loadFotoBblmList(autoLoadPhotos) {
   var ld = document.getElementById("fbLoading");
   if(ld) ld.style.display = "flex";
   document.getElementById("fbListContainer").innerHTML = "";
-  fetch(API_BASE_URL + "/bblm-foto")
+  fetch(BBLM_FOTO_API_URL + "/bblm-foto")
     .then(function(r){ return r.json(); })
     .then(function(d){
       fbItems = d.items || [];
@@ -7816,7 +7818,7 @@ function fbAutoLoadAllPhotos() {
   var idx = 0;
   var PARALLEL = 3; // muat 3 foto paralel, tidak satu-satu
   function loadOne(id) {
-    fetch(API_BASE_URL + "/bblm-foto/" + id + "/photo")
+    fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + id + "/photo")
       .then(function(r){ return r.json(); })
       .then(function(d){
         if(d.success && d.fotoBase64){
@@ -8015,7 +8017,7 @@ function fbDownloadOnePromise(it) {
       resolve(true);
       return;
     }
-    fetch(API_BASE_URL + "/bblm-foto/" + it.id + "/photo")
+    fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + it.id + "/photo")
       .then(function(r){ return r.json(); })
       .then(function(d){
         if(d.success && d.fotoBase64) {
@@ -8076,7 +8078,7 @@ function fbDeleteSelected() {
       return;
     }
     var id = ids[idx++];
-    fetch(API_BASE_URL + "/bblm-foto/" + id, { method: "DELETE" })
+    fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + id, { method: "DELETE" })
       .then(function(r){ return r.json(); })
       .then(function(d){ if(d.success){ delete _fbPhotoMap[id]; okCount++; } next(); })
       .catch(function(){ next(); });
@@ -8090,7 +8092,7 @@ function fbFmtDt(iso){ if(!iso) return "-"; try{ var d=new Date(iso); return d.t
 function fbLoadPhoto(id) {
   var el = document.getElementById("fbThumb_"+id);
   if(el) { el.style.background="#0f172a"; el.innerHTML='<div style="font-size:9px;color:#60a5fa;text-align:center;line-height:1.3;"><div style="width:16px;height:16px;border:2px solid #1e3a5f;border-top-color:#60a5fa;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 3px;"></div>Muat...</div>'; }
-  fetch(API_BASE_URL + "/bblm-foto/" + id + "/photo")
+  fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + id + "/photo")
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.success && d.fotoBase64){
@@ -8123,7 +8125,7 @@ function fbOpenPhotoModal(id) {
     // Not cached yet — load then open
     var thumb = document.getElementById("fbThumb_"+id);
     if(thumb) thumb.innerHTML = '<div style="font-size:9px;color:#94a3b8;text-align:center;line-height:1.3;">Memuat...</div>';
-    fetch(API_BASE_URL + "/bblm-foto/" + id + "/photo")
+    fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + id + "/photo")
       .then(function(r){ return r.json(); })
       .then(function(d){ if(d.success && d.fotoBase64){ _fbPhotoMap[id]=d.fotoBase64; fbRenderList(); fbOpenPhotoModal(id); } })
       .catch(function(){});
@@ -8207,7 +8209,7 @@ function fbLbRender() {
       + '<div style="font-size:13px;margin-bottom:8px;">Memuat foto...</div>'
       + '<div id="fbLbSpinnerInner" style="width:24px;height:24px;border:2px solid #334155;border-top-color:#60a5fa;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div>'
       + '</div>';
-    fetch(API_BASE_URL + "/bblm-foto/" + id + "/photo")
+    fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + id + "/photo")
       .then(function(r){ return r.json(); })
       .then(function(d){ if(d.success&&d.fotoBase64){ _fbPhotoMap[id]=d.fotoBase64; if(_fbLbIds[_fbLbIdx]===id) fbLbRender(); fbRenderList(); } })
       .catch(function(){});
@@ -8433,7 +8435,7 @@ function fbSubmitItem() {
     var btn = document.getElementById("fbSubmitBtn");
     btn.disabled = true; btn.textContent = "Memperbarui...";
     var primaryId = existing[0].id;
-    fetch(API_BASE_URL + "/bblm-foto/" + primaryId, {
+    fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + primaryId, {
       method:"PATCH", headers:{"Content-Type":"application/json"},
       body:JSON.stringify({ prodNm:prodNm, prodCd:prodCd, stkQty:stkQty, category:category, posisi:posisi })
     })
@@ -8441,7 +8443,7 @@ function fbSubmitItem() {
     .then(function(d){
       if(!d.success) throw new Error(d.message||"Gagal update");
       btn.textContent = "Upload foto...";
-      return fetch(API_BASE_URL + "/bblm-foto/" + primaryId + "/photo", {
+      return fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + primaryId + "/photo", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body:JSON.stringify({ fotoBase64: fotoData })
       }).then(function(){ _fbPhotoMap[primaryId] = fotoData; });
@@ -8465,7 +8467,7 @@ function fbSubmitItem() {
 
   var btn = document.getElementById("fbSubmitBtn");
   btn.disabled = true; btn.textContent = "Menyimpan...";
-  fetch(API_BASE_URL + "/bblm-foto", {
+  fetch(BBLM_FOTO_API_URL + "/bblm-foto", {
     method:"POST", headers:{"Content-Type":"application/json"},
     body:JSON.stringify({ barcode:barcode, prodNm:prodNm, prodCd:prodCd, stkQty:stkQty, category:category, posisi:posisi, username:currentUsernameRaw||currentUserNameInv||"" })
   })
@@ -8475,7 +8477,7 @@ function fbSubmitItem() {
     var newId = d1.id;
     if(fotoData) {
       btn.textContent = "Upload foto...";
-      return fetch(API_BASE_URL + "/bblm-foto/" + newId + "/photo", {
+      return fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + newId + "/photo", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body:JSON.stringify({ fotoBase64: fotoData })
       }).then(function(){ _fbPhotoMap[newId] = fotoData; return newId; });
@@ -8501,7 +8503,7 @@ function fbSubmitItem() {
 function fbDeleteItem(id) {
   if(!fbCheckPassword("hapus item")) return;
   if(!confirm("Hapus item ini?")) return;
-  fetch(API_BASE_URL + "/bblm-foto/" + id, {method:"DELETE"})
+  fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + id, {method:"DELETE"})
     .then(function(r){ return r.json(); })
     .then(function(d){ if(d.success){ delete _fbPhotoMap[id]; showToast("Dihapus","success"); loadFotoBblmList(); } else showToast("Gagal hapus","error"); })
     .catch(function(e){ showToast("Error: "+e.message,"error"); });
@@ -8511,7 +8513,7 @@ function fbClearAll() {
   if(!confirm("Hapus SEMUA data Upload Foto BBLM?\n\nTindakan ini tidak dapat dibatalkan!")) return;
   var pw = prompt("Password admin:");
   if(pw === null) return;
-  fetch(API_BASE_URL + "/bblm-foto/clear", {
+  fetch(BBLM_FOTO_API_URL + "/bblm-foto/clear", {
     method:"POST", headers:{"Content-Type":"application/json"},
     body:JSON.stringify({ adminPassword: pw })
   })
@@ -8684,7 +8686,7 @@ function fbExportExcelItems(exportItems) {
 
       var cached = _fbPhotoMap[it.id];
       if(cached) { addPhotoAndNext(cached); return; }
-      fetch(API_BASE_URL + "/bblm-foto/" + it.id + "/photo")
+      fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + it.id + "/photo")
         .then(function(r){ return r.json(); })
         .then(function(pd){ if(pd.success && pd.fotoBase64){ _fbPhotoMap[it.id]=pd.fotoBase64; addPhotoAndNext(pd.fotoBase64); } else addPhotoAndNext(null); })
         .catch(function(){ addPhotoAndNext(null); });
@@ -8803,7 +8805,7 @@ function fbSaveEdit(){
   if(!id) return;
   var btn=document.getElementById('fbEditSaveBtn');
   btn.disabled=true; btn.textContent='Menyimpan...';
-  fetch(API_BASE_URL+'/bblm-foto/'+id,{
+  fetch(BBLM_FOTO_API_URL + '/bblm-foto/'+id,{
     method:'PATCH',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({prodNm,stkQty,category,posisi})
   }).then(function(r){return r.json();})
@@ -8813,7 +8815,7 @@ function fbSaveEdit(){
     if(it){it.prodNm=prodNm;it.stkQty=stkQty;it.category=category;it.posisi=posisi;}
     if(fotoData){
       btn.textContent='Upload foto...';
-      return fetch(API_BASE_URL+'/bblm-foto/'+id+'/photo',{
+      return fetch(BBLM_FOTO_API_URL + '/bblm-foto/'+id+'/photo',{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({fotoBase64:fotoData})
       }).then(function(){_fbPhotoMap[id]=fotoData;});
@@ -8845,7 +8847,7 @@ function fbExportPPT(exportItems){
     }
     if(!toFetch.length){afterPhotos();return;}
     toFetch.forEach(function(it){
-      fetch(API_BASE_URL+'/bblm-foto/'+it.id+'/photo')
+      fetch(BBLM_FOTO_API_URL + '/bblm-foto/'+it.id+'/photo')
         .then(function(r){return r.json();})
         .then(function(pd){if(pd.success&&pd.fotoBase64)_fbPhotoMap[it.id]=pd.fotoBase64;else _fbNoPhoto[it.id]=true;})
         .catch(function(){_fbNoPhoto[it.id]=true;})
