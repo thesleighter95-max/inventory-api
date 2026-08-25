@@ -2315,11 +2315,14 @@ table td { font-size: 11px; }
         <button id="fbExportPptBtn" onclick="fbShowPptModal()" style="background:rgba(99,102,241,0.15);border:1.5px solid rgba(99,102,241,0.35);border-radius:10px;padding:8px 10px;color:#a5b4fc;font-size:11px;font-weight:700;cursor:pointer;">&#128202; PPT</button>
       </div>
     </div>
-    <!-- Count + Clear -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <div style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:20px;padding:4px 14px;font-size:12px;color:#a5b4fc;font-weight:700;">Total: <span id="fbCount">0</span> item</div>
-      <button onclick="fbRefreshList()" style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:5px 10px;color:#818cf8;font-size:11px;cursor:pointer;">&#8635; Refresh</button>
-      <button onclick="fbClearAll()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:5px 10px;color:#f87171;font-size:11px;cursor:pointer;">&#128465; Hapus Semua</button>
+    <!-- Count + Refresh + Clear -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:12px;">
+      <div style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:20px;padding:4px 14px;font-size:12px;color:#a5b4fc;font-weight:700;white-space:nowrap;">Total: <span id="fbCount">0</span> item</div>
+      <div style="display:flex;align-items:center;gap:5px;white-space:nowrap;">
+        <button onclick="fbRefreshList()" style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:5px 10px;color:#818cf8;font-size:11px;cursor:pointer;">&#8635; Refresh</button>
+        <span style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:5px 8px;color:#86efac;font-size:11px;font-weight:700;">Foto: <span id="fbPhotoCount">0</span></span>
+      </div>
+      <button onclick="fbClearAll()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:5px 10px;color:#f87171;font-size:11px;cursor:pointer;white-space:nowrap;">&#128465; Hapus Semua</button>
     </div>
     <!-- Form Section -->
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;margin-bottom:12px;">
@@ -7850,11 +7853,11 @@ function fbAutoLoadAllPhotos() {
 }
 
 function fbRefreshList() {
-  // Refresh hanya memuat daftar; foto dimuat setelah user memilih Tampilkan List Foto.
+  // Refresh hanya mengambil jumlah data; daftar tetap tersembunyi.
   var lb=document.getElementById("fbLoadBtn");
-  if(lb)lb.style.display="none";
+  if(lb)lb.style.display="block";
   var ls=document.getElementById("fbListSection");
-  if(ls)ls.style.display="block";
+  if(ls)ls.style.display="none";
   loadFotoBblmList(false);
 }
 
@@ -7875,6 +7878,8 @@ function fbRenderList() {
   var visItems = fbGetFilteredItems();
   var cnt2 = document.getElementById("fbCount");
   if(cnt2) cnt2.textContent = visItems.length + (visItems.length !== fbItems.length ? "/" + fbItems.length : "") + " item";
+  var photoCnt = document.getElementById("fbPhotoCount");
+  if(photoCnt) photoCnt.textContent = fbItems.length;
   for(var i = 0; i < visItems.length; i++) {
     var it = visItems[i];
     var pid = "fbThumb_" + it.id;
