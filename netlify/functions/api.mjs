@@ -1451,7 +1451,7 @@ loadCurrentSetting();
     }
 
     if (path === "/cst" && method === "POST") {
-      const { barcode, prodCd, prodNm, uom, category, qty, username, latitude, longitude, accuracy, fotoBase64, capturedAt } = body;
+      const { barcode, prodCd, prodNm, uom, category, qty, username, lokasiBarang, latitude, longitude, accuracy, fotoBase64, capturedAt } = body;
       const qtyNum = Number(qty);
       if (!barcode || !prodNm) return json({ success: false, message: "barcode dan nama barang wajib diisi" }, 400);
       if (!Number.isFinite(qtyNum) || qtyNum <= 0) return json({ success: false, message: "qty harus lebih besar dari 0" }, 400);
@@ -1461,7 +1461,7 @@ loadCurrentSetting();
       const item = {
         id, barcode: String(barcode).trim(), prodCd: String(prodCd || "").trim(), prodNm: String(prodNm).trim(),
         uom: String(uom || "PCS").trim(), category: String(category || "").trim(), qty: qtyNum,
-        username: String(username || "User").trim(), latitude: latitude == null ? null : Number(latitude),
+        username: String(username || "User").trim(), lokasiBarang: String(lokasiBarang || "").trim(), latitude: latitude == null ? null : Number(latitude),
         longitude: longitude == null ? null : Number(longitude), accuracy: accuracy == null ? null : Number(accuracy),
         photoUrl: "/api/cst/" + id + "/photo", capturedAt: capturedAt || new Date().toISOString(), createdAt: new Date().toISOString()
       };
@@ -1472,6 +1472,36 @@ loadCurrentSetting();
       return json({ success: true, item });
     }
 
+    const cstPatchMatch = path.match(/^\/cst\/([^/]+)$/);
+    if (cstPatchMatch && method === "PATCH") {
+      const id = decodeURIComponent(cstPatchMatch[1]);
+      let items = [];
+      let target = null;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        items = await getCstItems();
+        target = items.find(item => String(item.id) === id) || null;
+        if (target) break;
+        if (attempt < 4) await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      if (!target) return json({ success: false, message: "Data CST tidak ditemukan" }, 404);
+      const requester = String(body.username || "").trim();
+      const isOwner = requester && requester === String(target.username || "").trim();
+      if (body.adminPassword !== ADMIN_PASSWORD && !isOwner) return json({ success: false, message: "Unauthorized" }, 403);
+      if (body.qty !== undefined) {
+        const qtyNum = Number(body.qty);
+        if (!Number.isFinite(qtyNum) || qtyNum <= 0) return json({ success: false, message: "qty harus lebih besar dari 0" }, 400);
+        target.qty = qtyNum;
+      }
+      ["barcode", "prodCd", "prodNm", "uom", "category", "username", "lokasiBarang"].forEach(key => {
+        if (body[key] !== undefined) target[key] = String(body[key] || "").trim();
+      });
+      if (body.latitude !== undefined) target.latitude = body.latitude == null ? null : Number(body.latitude);
+      if (body.longitude !== undefined) target.longitude = body.longitude == null ? null : Number(body.longitude);
+      if (body.accuracy !== undefined) target.accuracy = body.accuracy == null ? null : Number(body.accuracy);
+      target.updatedAt = new Date().toISOString();
+      await setCstItems(items);
+      return json({ success: true, item: target });
+    }
     const cstItemMatch = path.match(/^\/cst\/([^/]+)$/);
     if (cstItemMatch && method === "DELETE") {
       const id = decodeURIComponent(cstItemMatch[1]);
