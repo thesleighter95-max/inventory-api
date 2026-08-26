@@ -45,9 +45,9 @@ const NETLIFY_BLOBS_SITE_ID = process.env.NETLIFY_BLOBS_SITE_ID || process.env.N
 const NETLIFY_BLOBS_ACCESS_TOKEN = process.env.NETLIFY_BLOBS_ACCESS_TOKEN;
 
 function openNetlifyStore(name) {
-  if (NETLIFY_BLOBS_SITE_ID && NETLIFY_BLOBS_ACCESS_TOKEN) {
-    return getStore(name, { siteID: NETLIFY_BLOBS_SITE_ID, token: NETLIFY_BLOBS_ACCESS_TOKEN });
-  }
+  // Netlify Functions automatically provide the current site credentials.
+  // Do not prefer NETLIFY_BLOBS_ACCESS_TOKEN here: an old user-defined token
+  // can expire and break every Blob read/write even after the site is upgraded.
   return getStore(name);
 }
 
