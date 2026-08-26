@@ -7608,6 +7608,13 @@ var _fbFilterDate = "";
 var _fbFilterDownload = "";
 var _fbDownloaded = {};
 var _fbCatsCache = null;
+var FB_NETLIFY_LIST_CACHE_KEY = "bblm_netlify_list_v1";
+function fbReadNetlifyListCache(){try{var raw=localStorage.getItem(FB_NETLIFY_LIST_CACHE_KEY);var data=raw?JSON.parse(raw):null;return data&&Array.isArray(data.items)?data:null;}catch(e){return null;}}
+function fbWriteNetlifyListCache(data){try{localStorage.setItem(FB_NETLIFY_LIST_CACHE_KEY,JSON.stringify({items:data.items||[],downloadedIds:data.downloadedIds||[],savedAt:Date.now()}));}catch(e){}}
+function fbClearNetlifyListCache(){try{localStorage.removeItem(FB_NETLIFY_LIST_CACHE_KEY);}catch(e){}}
+function fbListContains(all,subset){var ids={};(all||[]).forEach(function(item){ids[String(item.id)]=true;});return (subset||[]).every(function(item){return ids[String(item.id)];});}
+function fbFetchNetlifyList(){return fetch(BBLM_FOTO_API_URL+"/bblm-foto?_="+Date.now()+"_"+Math.random(),{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}).then(function(data){if(!data.success||!Array.isArray(data.items))throw new Error(data.message||"Data BBLM tidak valid");return data;});}
+function fbChooseStableNetlifyList(results){var selected=fbReadNetlifyListCache();(results||[]).forEach(function(data){if(!data||!Array.isArray(data.items))return;if(!selected||fbListContains(data.items,selected.items))selected=data;});return selected||{items:[],downloadedIds:[]};}
 
 var FB_ACTION_PASS = "111";
 function fbCheckPassword(action) {
@@ -7852,26 +7859,12 @@ function fbSetFilterCat(el) {
 }
 
 function loadFotoBblmList(autoLoadPhotos) {
-  var ld = document.getElementById("fbLoading");
-  if(ld) ld.style.display = "flex";
-  document.getElementById("fbListContainer").innerHTML = "";
-  fetch(BBLM_FOTO_API_URL + "/bblm-foto")
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      fbItems = d.items || [];
-      _fbFilterCat = "";
-      _fbFilterPos = "";
-      _fbFilterDate = "";
-      _fbFilterDownload = "";
-      _fbSelected = {};
-      _fbDownloaded = {};
-      _fbPhotoMap = {}; // reset foto cache supaya foto yang fresh dimuat ulang
-      (d.downloadedIds || []).forEach(function(id){ _fbDownloaded[String(id)] = true; });
-      fbRenderList();
-      if(autoLoadPhotos) fbAutoLoadAllPhotos(); // hanya kalau diminta
-    })
-    .catch(function(){ showToast("Gagal memuat data foto BBLM","error"); })
-    .finally(function(){ var ld=document.getElementById("fbLoading"); if(ld) ld.style.display="none"; });
+  var ld=document.getElementById("fbLoading");if(ld)ld.style.display="flex";
+  document.getElementById("fbListContainer").innerHTML="";
+  var cached=fbReadNetlifyListCache();var reads=cached?[fbFetchNetlifyList().catch(function(){return null;})]:[fbFetchNetlifyList().catch(function(){return null;}),fbFetchNetlifyList().catch(function(){return null;}),fbFetchNetlifyList().catch(function(){return null;})];
+  Promise.all(reads).then(function(results){var d=fbChooseStableNetlifyList(results);if(!d.items.length&&!results.some(function(item){return item;}))throw new Error("Netlify tidak merespons");fbWriteNetlifyListCache(d);fbItems=d.items||[];_fbFilterCat="";_fbFilterPos="";_fbFilterDate="";_fbFilterDownload="";_fbSelected={};_fbDownloaded={};_fbPhotoMap={};_fbNoPhoto={};(d.downloadedIds||[]).forEach(function(id){_fbDownloaded[String(id)]=true;});fbRenderList();if(autoLoadPhotos)fbAutoLoadAllPhotos();})
+    .catch(function(){showToast("Gagal memuat data foto Netlify","error");})
+    .finally(function(){var el=document.getElementById("fbLoading");if(el)el.style.display="none";});
 }
 
 function fbAutoLoadAllPhotos() {
@@ -8143,7 +8136,7 @@ function fbDeleteSelected() {
     var id = ids[idx++];
     fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + id, { method: "DELETE" })
       .then(function(r){ return r.json(); })
-      .then(function(d){ if(d.success){ delete _fbPhotoMap[id]; okCount++; } next(); })
+      .then(function(d){ if(d.success){ delete _fbPhotoMap[id]; fbClearNetlifyListCache(); okCount++; } next(); })
       .catch(function(){ next(); });
   }
   next();
@@ -8519,7 +8512,7 @@ function fbSubmitItem() {
       return fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + primaryId + "/photo", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body:JSON.stringify({ fotoBase64: fotoData })
-      }).then(function(){ _fbPhotoMap[primaryId] = fotoData; });
+      }).then(function(r){return r.json();}).then(function(d){if(!d.success)throw new Error(d.message||"Gagal upload foto Netlify");_fbPhotoMap[primaryId]=fotoData;});
     })
     .then(function(){
       document.getElementById("fbBarcode").value = "";
@@ -8553,7 +8546,7 @@ function fbSubmitItem() {
       return fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + newId + "/photo", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body:JSON.stringify({ fotoBase64: fotoData })
-      }).then(function(){ _fbPhotoMap[newId] = fotoData; return newId; });
+      }).then(function(r){return r.json();}).then(function(d){if(!d.success)throw new Error(d.message||"Gagal upload foto Netlify");_fbPhotoMap[newId]=fotoData;return newId;});
     }
     return newId;
   })
@@ -8578,7 +8571,7 @@ function fbDeleteItem(id) {
   if(!confirm("Hapus item ini?")) return;
   fetch(BBLM_FOTO_API_URL + "/bblm-foto/" + id, {method:"DELETE"})
     .then(function(r){ return r.json(); })
-    .then(function(d){ if(d.success){ delete _fbPhotoMap[id]; showToast("Dihapus","success"); loadFotoBblmList(); } else showToast("Gagal hapus","error"); })
+    .then(function(d){ if(d.success){ delete _fbPhotoMap[id]; fbClearNetlifyListCache(); showToast("Dihapus","success"); loadFotoBblmList(); } else showToast("Gagal hapus","error"); })
     .catch(function(e){ showToast("Error: "+e.message,"error"); });
 }
 
@@ -8591,7 +8584,7 @@ function fbClearAll() {
     body:JSON.stringify({ adminPassword: pw })
   })
   .then(function(r){ return r.json(); })
-  .then(function(d){ if(d.success){ _fbPhotoMap={}; showToast("Semua data dihapus","success"); loadFotoBblmList(); } else showToast("Gagal: "+(d.message||""), "error"); })
+  .then(function(d){ if(d.success){ _fbPhotoMap={}; fbClearNetlifyListCache(); showToast("Semua data dihapus","success"); loadFotoBblmList(); } else showToast("Gagal: "+(d.message||""), "error"); })
   .catch(function(e){ showToast("Error: "+e.message,"error"); });
 }
 
@@ -8891,7 +8884,7 @@ function fbSaveEdit(){
       return fetch(BBLM_FOTO_API_URL + '/bblm-foto/'+id+'/photo',{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({fotoBase64:fotoData})
-      }).then(function(){_fbPhotoMap[id]=fotoData;});
+      }).then(function(r){return r.json();}).then(function(d){if(!d.success)throw new Error(d.message||'Gagal upload foto Netlify');_fbPhotoMap[id]=fotoData;});
     }
   })
   .then(function(){
