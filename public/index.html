@@ -6647,6 +6647,8 @@ window.addEventListener('offline',function(){
 });
 // ===== END OFFLINE MODE =====
 
+function absensiFetchJson(url,attempts){attempts=attempts==null?3:attempts;var controller=window.AbortController?new AbortController():null;var timer=controller?setTimeout(function(){controller.abort();},30000):null;return fetch(url,{cache:'no-store',signal:controller?controller.signal:undefined}).then(function(r){if(timer)clearTimeout(timer);if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).catch(function(e){if(timer)clearTimeout(timer);if(attempts>1)return new Promise(function(resolve){setTimeout(resolve,1000);}).then(function(){return absensiFetchJson(url,attempts-1);});throw e;});}
+
 function absensiRefreshEmployees(){
   // Selalu tampilkan cache dulu agar UI tidak blank saat GAS lambat
   var cached=absensiLoadEmpCache();
@@ -6656,22 +6658,15 @@ function absensiRefreshEmployees(){
     if($('absensiEmpCount'))$('absensiEmpCount').textContent=cached.length+' karyawan (cache)';
     renderAbsensiEmpList(cached);
   }
-  if(!_absensiOnline){
-    if(cached&&cached.length){
-      updateAbsensiSyncStatus('error','Offline — '+cached.length+' karyawan dari cache');
-    }else{updateAbsensiSyncStatus('error','Offline — belum ada cache');}
-    absensiUpdateOfflineBadge();return;
-  }
   // Update dari GAS di background (tidak blokir tampilan)
   if(cached&&cached.length){
     updateAbsensiSyncStatus('syncing','Memperbarui '+cached.length+' karyawan...');
   }else{
     updateAbsensiSyncStatus('syncing','Memuat dari spreadsheet...');
   }
-  fetch(ABSENSI_GAS_URL+'?action=getEmployees')
-  .then(function(r){return r.json();})
+  absensiFetchJson(ABSENSI_GAS_URL+'?action=getEmployees',3)
   .then(function(j){
-    var employees=j.employees||[];var count=employees.length;
+    _absensiOnline=true;absensiUpdateOfflineBadge();var employees=j.employees||[];var count=employees.length;
     if(count>0)absensiSaveEmpCache(employees);
     _absensiEmpMap={};
     employees.forEach(function(e){var k=(e.barcode||e.id||'').trim();if(k)_absensiEmpMap[k]=e.name||'';});
@@ -6953,8 +6948,7 @@ function absensiSyncFromSpreadsheet(){
   var btn=$('abseSyncBtn');
   if(btn){btn.disabled=true;btn.textContent='Syncing...';}
   // Langsung ke GAS — tidak melalui server
-  fetch(ABSENSI_GAS_URL+'?action=getEmployees')
-  .then(function(r){return r.json();})
+  absensiFetchJson(ABSENSI_GAS_URL+'?action=getEmployees',3)
   .then(function(j){
     if(btn){btn.disabled=false;btn.textContent='Sync';}
     if(j.success){
