@@ -1624,23 +1624,13 @@ loadCurrentSetting();
       return json({ success: true, total: downloaded.size });
     }
 
-    // GET /bblm-foto — data Netlify; isi metadata dari Vercel bila migrasi belum dimulai
+    // GET /bblm-foto — metadata hanya dari Netlify Blob.
     if (path === "/bblm-foto" && method === "GET") {
-      let raw = await bblmFetch("bblm-foto.json");
-      let list = raw ? (JSON.parse(raw) || []) : [];
-      if (!list.length) {
-        try {
-          const r = await fetch(LEGACY_BBLM_API + "/bblm-foto?fallback=" + Date.now());
-          const source = r.ok ? await r.json() : null;
-          if (source && Array.isArray(source.items)) {
-            list = source.items.map(item => ({ ...item, id: String(item.id), createdAt: item.createdAt || item.capturedAt || new Date().toISOString(), capturedAt: item.capturedAt || item.createdAt || new Date().toISOString(), hasPhoto: false }));
-            await bblmPut("bblm-foto.json", JSON.stringify(list));
-          }
-        } catch {}
-      }
+      const raw = await bblmFetch("bblm-foto.json");
+      const list = raw ? (JSON.parse(raw) || []) : [];
       const downloadedRaw = await bblmFetch("bblm-foto-downloaded.json");
       const downloadedIds = downloadedRaw ? (JSON.parse(downloadedRaw) || []) : [];
-      return json({ success: true, count: list.length, items: list, downloadedIds, storage: "netlify" });
+      return json({ success: true, count: list.length, items: list, downloadedIds, storage: "netlify" }, 200, { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" });
     }
 
     // POST /bblm-foto — data baru langsung ke Netlify Blob
@@ -1663,19 +1653,9 @@ loadCurrentSetting();
       const id = bblmFotoPhotoMatch[1];
       const key = "bblm-foto-photo-" + id + ".txt";
       if (method === "GET") {
-        let photo = await bblmFetch(key);
-        if (!photo) {
-          try {
-            const r = await fetch(LEGACY_BBLM_API + "/bblm-foto/" + encodeURIComponent(id) + "/photo?fallback=" + Date.now());
-            const source = r.ok ? await r.json() : null;
-            if (source && source.success && source.fotoBase64) {
-              photo = source.fotoBase64;
-              await bblmPut(key, photo);
-            }
-          } catch {}
-        }
-        if (!photo) return json({ success: false, message: "foto tidak ditemukan" }, 404);
-        return json({ success: true, fotoBase64: photo, storage: "netlify" });
+        const photo = await bblmFetch(key);
+        if (!photo) return json({ success: false, message: "foto Netlify tidak ditemukan" }, 404, { "Cache-Control": "no-store" });
+        return json({ success: true, fotoBase64: photo, storage: "netlify" }, 200, { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" });
       }
       if (method === "POST") {
         const { fotoBase64 } = body;
