@@ -107,6 +107,13 @@ async function getCstItems() {
   } catch { return []; }
 }
 
+async function getCstItemsStrict() {
+  try {
+    const raw = await nbFetch("cst-items.json");
+    return raw === null ? null : (JSON.parse(raw) || []);
+  } catch { return null; }
+}
+
 async function setCstItems(items) {
   await nbPut("cst-items.json", JSON.stringify(items));
 }
@@ -1445,7 +1452,8 @@ loadCurrentSetting();
     }
 
     if (path === "/cst" && method === "GET") {
-      const items = await getCstItems();
+      const items = await getCstItemsStrict();
+      if (items === null) return json({ success: false, message: "Data CST Netlify belum tersedia" }, 503);
       const limit = Math.min(500, Math.max(1, Number(query.limit) || 100));
       return json({ success: true, total: items.length, items: items.slice(0, limit) });
     }
@@ -1456,6 +1464,8 @@ loadCurrentSetting();
       if (!barcode || !prodNm) return json({ success: false, message: "barcode dan nama barang wajib diisi" }, 400);
       if (!Number.isFinite(qtyNum) || qtyNum <= 0) return json({ success: false, message: "qty harus lebih besar dari 0" }, 400);
       if (!fotoBase64 || typeof fotoBase64 !== "string" || fotoBase64.length > 18_000_000) return json({ success: false, message: "foto wajib diisi dan ukurannya terlalu besar" }, 400);
+      const items = await getCstItemsStrict();
+      if (items === null) return json({ success: false, message: "Data CST Netlify belum tersedia; penyimpanan dihentikan agar data tidak tertimpa" }, 503);
       const id = randomUUID();
       await nbPut("cst-photo-" + id + ".txt", fotoBase64);
       const item = {
@@ -1465,7 +1475,6 @@ loadCurrentSetting();
         longitude: longitude == null ? null : Number(longitude), accuracy: accuracy == null ? null : Number(accuracy),
         photoUrl: "/api/cst/" + id + "/photo", capturedAt: capturedAt || new Date().toISOString(), createdAt: new Date().toISOString()
       };
-      const items = await getCstItems();
       items.unshift(item);
       if (items.length > 1000) items.length = 1000;
       await setCstItems(items);
@@ -1533,7 +1542,8 @@ loadCurrentSetting();
 
     if (path === "/cst/clear" && method === "POST") {
       if (body.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
-      const items = await getCstItems();
+      const items = await getCstItemsStrict();
+      if (items === null) return json({ success: false, message: "Data CST Netlify belum tersedia; pembersihan dihentikan" }, 503);
       await Promise.all(items.flatMap(it => [
         nbDel("cst-photo-" + it.id + ".txt"),
         vbDel(BLOB_PREFIX + "cst-photo-" + it.id + ".txt")
@@ -1606,7 +1616,8 @@ loadCurrentSetting();
     if (path === "/bblm-foto/clear" && method === "POST") {
       if (body.adminPassword !== ADMIN_PASSWORD) return json({ success: false, message: "Unauthorized" }, 403);
       const raw = await bblmFetch("bblm-foto.json");
-      const list = raw ? (JSON.parse(raw) || []) : [];
+      if (raw === null) return json({ success: false, message: "Data BBLM Netlify belum tersedia; pembersihan dihentikan" }, 503);
+      const list = JSON.parse(raw) || [];
       await Promise.all(list.map(item => bblmDel("bblm-foto-photo-" + item.id + ".txt")));
       await bblmPut("bblm-foto.json", "[]");
       await bblmPut("bblm-foto-downloaded.json", "[]");
@@ -1618,7 +1629,8 @@ loadCurrentSetting();
       const { ids } = body;
       if (!Array.isArray(ids) || !ids.length) return json({ success: false, message: "ids wajib array" }, 400);
       const raw = await bblmFetch("bblm-foto-downloaded.json");
-      const downloaded = new Set((raw ? JSON.parse(raw) : []).map(String));
+      if (raw === null) return json({ success: false, message: "Data BBLM Netlify belum tersedia" }, 503);
+      const downloaded = new Set((JSON.parse(raw) || []).map(String));
       ids.forEach(id => downloaded.add(String(id)));
       await bblmPut("bblm-foto-downloaded.json", JSON.stringify([...downloaded]));
       return json({ success: true, total: downloaded.size });
@@ -1627,7 +1639,8 @@ loadCurrentSetting();
     // GET /bblm-foto — metadata hanya dari Netlify Blob.
     if (path === "/bblm-foto" && method === "GET") {
       const raw = await bblmFetch("bblm-foto.json");
-      const list = raw ? (JSON.parse(raw) || []) : [];
+      if (raw === null) return json({ success: false, message: "Data BBLM Netlify belum tersedia" }, 503, { "Cache-Control": "no-store" });
+      const list = JSON.parse(raw) || [];
       const downloadedRaw = await bblmFetch("bblm-foto-downloaded.json");
       const downloadedIds = downloadedRaw ? (JSON.parse(downloadedRaw) || []) : [];
       return json({ success: true, count: list.length, items: list, downloadedIds, storage: "netlify" }, 200, { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" });
@@ -1639,7 +1652,8 @@ loadCurrentSetting();
       if (!barcode) return json({ success: false, message: "barcode wajib diisi" }, 400);
       const id = Date.now().toString() + "_" + Math.random().toString(36).slice(2, 7);
       const raw = await bblmFetch("bblm-foto.json");
-      const list = raw ? (JSON.parse(raw) || []) : [];
+      if (raw === null) return json({ success: false, message: "Data BBLM Netlify belum tersedia; penyimpanan dihentikan agar data tidak tertimpa" }, 503);
+      const list = JSON.parse(raw) || [];
       const now = new Date().toISOString();
       const item = { id, barcode: barcode || "", prodCd: prodCd || "", prodNm: prodNm || "", stkQty: stkQty || "", category: category || "", posisi: posisi || "", username: username || "", createdAt: now, capturedAt: now, hasPhoto: false };
       list.push(item);
@@ -1660,10 +1674,11 @@ loadCurrentSetting();
       if (method === "POST") {
         const { fotoBase64 } = body;
         if (!fotoBase64) return json({ success: false, message: "fotoBase64 wajib" }, 400);
-        await bblmPut(key, fotoBase64);
         const raw = await bblmFetch("bblm-foto.json");
-        const list = raw ? (JSON.parse(raw) || []) : [];
+        if (raw === null) return json({ success: false, message: "Data BBLM Netlify belum tersedia; foto tidak disimpan" }, 503);
+        const list = JSON.parse(raw) || [];
         const item = list.find(entry => String(entry.id) === String(id));
+        await bblmPut(key, fotoBase64);
         if (item) { item.hasPhoto = true; await bblmPut("bblm-foto.json", JSON.stringify(list)); }
         return json({ success: true, storage: "netlify" });
       }
@@ -1674,7 +1689,8 @@ loadCurrentSetting();
     if (bblmFotoItemMatch && method === "PATCH") {
       const id = bblmFotoItemMatch[1];
       const raw = await bblmFetch("bblm-foto.json");
-      const list = raw ? (JSON.parse(raw) || []) : [];
+      if (raw === null) return json({ success: false, message: "Data BBLM Netlify belum tersedia; perubahan dihentikan" }, 503);
+      const list = JSON.parse(raw) || [];
       const item = list.find(entry => String(entry.id) === String(id));
       if (!item) return json({ success: false, message: "Item tidak ditemukan" }, 404);
       ["prodNm", "stkQty", "category", "posisi"].forEach(field => { if (body[field] !== undefined) item[field] = body[field]; });
@@ -1687,7 +1703,8 @@ loadCurrentSetting();
     if (bblmFotoItemMatch && method === "DELETE") {
       const id = bblmFotoItemMatch[1];
       const raw = await bblmFetch("bblm-foto.json");
-      const list = raw ? (JSON.parse(raw) || []) : [];
+      if (raw === null) return json({ success: false, message: "Data BBLM Netlify belum tersedia; penghapusan dihentikan" }, 503);
+      const list = JSON.parse(raw) || [];
       await bblmPut("bblm-foto.json", JSON.stringify(list.filter(item => String(item.id) !== String(id))));
       await bblmDel("bblm-foto-photo-" + id + ".txt");
       return json({ success: true });
