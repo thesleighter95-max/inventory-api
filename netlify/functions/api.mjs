@@ -88,8 +88,42 @@ async function nbDel(key) {
   try { await NETLIFY_CST_STORE.delete(key); } catch {}
 }
 
+const _bblmMetadataReadCache = new Map();
+
+function waitForBlobRetry(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function bblmFetch(key) {
-  try { return await NETLIFY_BBLM_STORE.get(key, { type: "text" }); } catch { return null; }
+  const isMetadata = key === "bblm-foto.json" || key === "bblm-foto-downloaded.json";
+  const attempts = isMetadata ? 4 : 1;
+  const retryDelays = [200, 600, 1400];
+  let lastError = null;
+
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      const value = await NETLIFY_BBLM_STORE.get(key, { type: "text" });
+      if (value !== null && value !== undefined && value !== "") {
+        if (isMetadata) _bblmMetadataReadCache.set(key, value);
+        return value;
+      }
+    } catch (err) {
+      lastError = err;
+    }
+
+    if (attempt < attempts - 1) await waitForBlobRetry(retryDelays[attempt]);
+  }
+
+  if (isMetadata && _bblmMetadataReadCache.has(key)) {
+    return _bblmMetadataReadCache.get(key);
+  }
+
+  if (lastError) {
+    console.warn("Netlify BBLM Blob read failed", key, lastError.message || String(lastError));
+  } else if (isMetadata) {
+    console.warn("Netlify BBLM metadata returned empty after retries", key);
+  }
+  return null;
 }
 
 async function bblmPut(key, value) {
