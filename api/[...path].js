@@ -287,6 +287,14 @@ export default async function handler(req, res) {
       return send({ success: true });
     }
 
+    // Admin password is verified only on the server; never expose it in public HTML.
+    if (path === "/admin-auth" && method === "POST") {
+      const password = typeof body.password === "string" ? body.password : "";
+      if (!password) return send({ success: false, message: "Password admin wajib diisi" }, 400);
+      if (password !== ADMIN_PASSWORD) return send({ success: false, message: "Password admin salah" }, 401);
+      return send({ success: true });
+    }
+
     if (path === "/login" && method === "POST") {
       const { username, password } = body;
       if (!username || !password) return send({ success: false, message: "username dan password wajib diisi" }, 400);

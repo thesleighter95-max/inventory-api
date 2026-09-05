@@ -3244,6 +3244,9 @@ function sessionClear(){
 function restoreSession(){
   var sess=sessionLoad();
   if(!sess)return false;
+  // Password admin tidak disimpan dalam session HTML/localStorage.
+  // Setelah refresh, admin harus diverifikasi kembali oleh server.
+  if(sess.a){sessionClear();return false;}
   $("homePage").style.display="none";
   $("loginPage").style.display="none";
   if(sess.a){
@@ -3270,7 +3273,25 @@ var LOGIN_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQUOmxLN_--OjkRvb
 var LOG_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRI1O8jYI_Q1fpueN0eD-QeVRXI-U4JDm-XuPhyZZYfy-ihz_objP_uFIbuhQep-UFpu808DELcLj4k/pub?gid=0&single=true&output=csv";
 var LOG_POST_URL="https://script.google.com/macros/s/AKfycbxwad12DdJMvOMXny6u9h1l2-e-5gu7t48O7UASVeu7M73DaCF-BUROOjsIEyQ9nmFQkw/exec";
 var ABSENSI_GAS_URL="https://script.google.com/macros/s/AKfycbyhaxiRF0HmmVgLOqW4CBGCq6l5pTK4ZP566eq9gjOMAzpDBOQBglan0lKEIXKiZD5X/exec";
-var ADMIN_PASSWORD="00000";
+var ADMIN_PASSWORD="";
+function verifyAdminPassword(pass){
+  return fetch(API_BASE_URL+"/admin-auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass})})
+    .then(function(r){return r.json().then(function(d){return{ok:r.ok,data:d}})})
+    .then(function(res){return !!(res.ok&&res.data&&res.data.success)});
+}
+function completeAdminLogin(pass,offerSetup){
+  ADMIN_PASSWORD=pass;
+  currentUserNameInv="Admin";currentUsernameRaw="admin";isAdmin=true;
+  kirimLog("admin");kirimAktivitas("login","Admin login");
+  $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
+  renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();updateBBLMSyncDisplay();
+  fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();loadPwResetRequests();
+  if(typeof checkMorningReset==="function")checkMorningReset();
+  if($("absensiAdminSection"))$("absensiAdminSection").style.display="block";
+  if(typeof loadMaintenanceStatus==="function")loadMaintenanceStatus();
+  sessionSave("Admin","admin",true);
+  if(offerSetup&&typeof offerQuickLoginSetup==="function")offerQuickLoginSetup("admin",pass,"Admin",true);
+}
 var BBLM_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRr3Tp-zY_Iui55tIjNpjU1VTMRpV5FHdweDlojt2LbXT-Vc4k5URE8GuSPm16fiuWnCU7MEedZwOLM/pub?output=csv";
 var API_BASE_URL=window.location.protocol+"//"+window.location.host+"/api";
 var CST_API_BASE_URL="https://myblob-pda-mini.netlify.app/api";
@@ -3575,13 +3596,11 @@ function login(){
   if(!user||!pass){errorEl.innerText="Username/Password tidak boleh kosong!";return}
   errorEl.innerText="Memproses...";
   if(user==="admin"){
-    if(pass===ADMIN_PASSWORD){
-      currentUserNameInv="Admin";isAdmin=true;kirimLog("admin");kirimAktivitas("login","Admin login");loadPwResetRequests();
-      $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
-      renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();checkMorningReset();if($("absensiAdminSection"))$("absensiAdminSection").style.display="block";
-      loadMaintenanceStatus();
-      return;
-    }else{errorEl.innerText="Password admin salah!";return}
+    verifyAdminPassword(pass).then(function(valid){
+      if(valid){completeAdminLogin(pass,false);return}
+      errorEl.innerText="Password admin salah!";
+    }).catch(function(){errorEl.innerText="Gagal menghubungi server login.";});
+    return;
   }
   if(_maintenanceActive){errorEl.innerText="Sistem sedang dalam pemeliharaan. Hubungi admin.";return}
   fetch(API_BASE_URL+"/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:user,password:pass})})
@@ -5953,12 +5972,11 @@ function proceedQuickLogin(data) {
   if (errorEl) errorEl.innerText = "Masuk sebagai " + (data.nama || creds.n) + "...";
   // Admin quick login
   if (creds.a) {
-    currentUserNameInv = "Admin"; isAdmin = true;
-    kirimLog("admin"); kirimAktivitas("login", "Admin quick-login (biometric/PIN)");
-    $("loginPage").classList.add("hidden");
-    $("mainApp").classList.remove("hidden"); setMarquee(true);
-    renderAdminNav(); updateUserInfo("Admin"); tampilkanUpdate();
-    updateBBLMSyncDisplay(); fetchDataExp(); loadAdminData(); fetchBBLM(); getUOMData(); fetchBBLMStatus(); checkMorningReset(); loadPwResetRequests();
+    verifyAdminPassword(creds.p).then(function(valid){
+      if(valid){completeAdminLogin(creds.p,false);return}
+      qlClear();
+      if(errorEl)errorEl.innerText="Login admin tersimpan sudah tidak valid.";
+    }).catch(function(){if(errorEl)errorEl.innerText="Gagal menghubungi server login.";});
     return;
   }
   // Regular user quick login — tetap verifikasi via Google Sheets untuk keamanan
@@ -5998,16 +6016,11 @@ function proceedQuickLogin(data) {
     if (!user || !pass) { if (errorEl) errorEl.innerText = "Username/Password tidak boleh kosong!"; return; }
     if (errorEl) errorEl.innerText = "Memproses...";
     if (user === "admin") {
-      if (pass === ADMIN_PASSWORD) {
-        currentUserNameInv = "Admin"; isAdmin = true;
-        kirimLog("admin"); kirimAktivitas("login", "Admin login");
-        $("loginPage").classList.add("hidden"); $("mainApp").classList.remove("hidden"); setMarquee(true);
-        renderAdminNav(); updateUserInfo("Admin"); tampilkanUpdate(); updateBBLMSyncDisplay();
-        fetchDataExp(); loadAdminData(); fetchBBLM(); getUOMData(); fetchBBLMStatus(); loadPwResetRequests();
-        sessionSave("Admin","admin",true);
-        offerQuickLoginSetup("admin", pass, "Admin", true);
-        return;
-      } else { if (errorEl) errorEl.innerText = "Password admin salah!"; return; }
+      verifyAdminPassword(pass).then(function(valid){
+        if(valid){completeAdminLogin(pass,true);return}
+        if(errorEl)errorEl.innerText="Password admin salah!";
+      }).catch(function(){if(errorEl)errorEl.innerText="Gagal menghubungi server login.";});
+      return;
     }
     getCSVFresh(LOGIN_URL).then(function(data) {
       if (data.length === 0) { if (errorEl) errorEl.innerText = "Gagal koneksi ke server login."; return; }
