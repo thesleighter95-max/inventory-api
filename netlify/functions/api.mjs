@@ -80,8 +80,38 @@ async function nbPut(key, value) {
   await NETLIFY_CST_STORE.set(key, value);
 }
 
+const _cstMetadataReadCache = new Map();
+
 async function nbFetch(key) {
-  try { return await NETLIFY_CST_STORE.get(key, { type: "text" }); } catch { return null; }
+  const isMetadata = key === "cst-items.json";
+  const attempts = isMetadata ? 4 : 1;
+  const retryDelays = [200, 600, 1400];
+  let lastError = null;
+
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      const value = await NETLIFY_CST_STORE.get(key, { type: "text" });
+      if (value !== null && value !== undefined && value !== "") {
+        if (isMetadata) _cstMetadataReadCache.set(key, value);
+        return value;
+      }
+    } catch (err) {
+      lastError = err;
+    }
+
+    if (attempt < attempts - 1) await waitForBlobRetry(retryDelays[attempt]);
+  }
+
+  if (isMetadata && _cstMetadataReadCache.has(key)) {
+    return _cstMetadataReadCache.get(key);
+  }
+
+  if (lastError) {
+    console.warn("Netlify CST Blob read failed", key, lastError.message || String(lastError));
+  } else if (isMetadata) {
+    console.warn("Netlify CST metadata returned empty after retries", key);
+  }
+  return null;
 }
 
 async function nbDel(key) {
