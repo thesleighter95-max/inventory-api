@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=1200, initial-scale=1">
+<meta name="theme-color" content="#101827"><title>AST Summary Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{--bg:#f3f6fb;--panel:#fff;--ink:#172235;--muted:#718096;--line:#e7edf5;--nav:#101827;--blue:#326cf4;--cyan:#18b6c9;--green:#16a36a;--orange:#ee9b32;--red:#e05252;--shadow:0 8px 28px #1b2b4810}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif}.shell{display:grid;grid-template-columns:245px 1fr;min-height:100vh}.sidebar{background:var(--nav);color:#fff;padding:26px 18px;display:flex;flex-direction:column;gap:30px}.brand{display:flex;align-items:center;gap:12px;padding:0 8px}.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#3677ff,#18c6cf);display:grid;place-items:center;font-weight:800;font-size:17px}.brand strong{font:800 17px Manrope}.brand small{display:block;color:#93a2b8;font-size:11px;margin-top:3px}.nav-label{color:#71829b;font-size:10px;font-weight:800;letter-spacing:1.5px;padding:0 12px}.nav-item{padding:12px 13px;border-radius:10px;color:#b8c4d6;font-size:13px;display:flex;gap:12px;align-items:center;margin-top:5px}.nav-item.active{background:#25334b;color:white}.nav-item span:first-child{font-size:16px;width:18px;text-align:center}.side-foot{margin-top:auto;color:#71829b;font-size:11px;line-height:1.7;padding:0 10px}.main{padding:28px 34px;max-width:1600px;width:100%;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:28px}.eyebrow{font-size:11px;color:var(--blue);font-weight:800;letter-spacing:1.3px;text-transform:uppercase}.top h1{font:800 27px Manrope;margin:5px 0}.sub{color:var(--muted);font-size:13px}.actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;padding:10px 14px;border-radius:10px;font:600 12px 'DM Sans';color:var(--ink);cursor:pointer}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.status{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:7px}.dot{width:7px;height:7px;border-radius:50%;background:var(--green)}.banner{background:linear-gradient(110deg,#173b83,#326cf4 65%,#21aebc);color:white;border-radius:16px;padding:21px 24px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;box-shadow:0 12px 28px #326cf426}.banner h2{font:800 18px Manrope;margin:0 0 5px}.banner p{margin:0;color:#dce8ff;font-size:12px}.banner .big{font:800 32px Manrope}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow)}.metric{padding:18px}.metric-head{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px}.metric-icon{width:34px;height:34px;border-radius:10px;background:#edf3ff;color:var(--blue);display:grid;place-items:center;font-size:16px}.metric-value{font:800 26px Manrope;margin:14px 0 4px}.metric-note{font-size:11px;color:var(--muted)}.grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-bottom:18px}.panel{padding:19px}.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px}.panel h3{font:800 14px Manrope;margin:0}.panel-head small{color:var(--muted);font-size:11px}.chart-wrap{height:240px;position:relative}.lower{display:grid;grid-template-columns:1fr;gap:16px}.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}.filters input,.filters select{border:1px solid var(--line);background:#fbfcfe;border-radius:9px;padding:10px 12px;font:12px 'DM Sans';outline:none}.filters input{min-width:220px;flex:1}.table-wrap{overflow:auto;max-height:430px}table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:12px}th{text-align:left;color:#7b8799;background:#f8fafd;position:sticky;top:0;z-index:1;font-size:10px;text-transform:uppercase;letter-spacing:.5px}td,th{padding:12px 13px;border-bottom:1px solid #edf1f6}td{color:#344256}tr:hover td{background:#fbfcff}.pill{padding:4px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#e9f8f1;color:#138454}.pill.warn{background:#fff4e4;color:#b7791f}.pill.bad{background:#ffeded;color:#c24141}.empty{padding:34px;text-align:center;color:var(--muted);font-size:12px}.loading{padding:20px;color:var(--muted);font-size:12px}.error{color:#c24141;background:#fff1f1;border:1px solid #ffdada;padding:12px;border-radius:10px;font-size:12px;margin-bottom:15px;display:none}.footnote{font-size:10px;color:#8793a5;margin-top:12px}.progress-line{height:8px;border-radius:10px;background:#edf1f7;overflow:hidden;margin-top:12px}.progress-line i{display:block;height:100%;background:linear-gradient(90deg,#326cf4,#20bec4);border-radius:10px;width:0}.mobile-menu{display:none}
+@media(max-width:1050px){.cards{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.shell{grid-template-columns:205px 1fr}.main{padding:24px}}
+@media(max-width:700px){.shell{display:block}.sidebar{display:none}.main{padding:18px 14px}.top{align-items:flex-start;flex-direction:column}.top h1{font-size:23px}.cards{gap:9px}.metric{padding:14px}.metric-value{font-size:22px}.banner{padding:17px}.banner .big{font-size:25px}.actions{width:100%}.btn{flex:1}.status{width:100%}}
+
+.simple-shell{display:block;min-height:100vh}
+.main{max-width:1450px;padding:28px 34px}
+.top{margin-bottom:20px}
+.summary-panel{padding:22px}
+.summary-table-wrap{max-height:none;overflow-x:auto}
+.summary-table-wrap table{min-width:760px}
+.summary-table-wrap td,.summary-table-wrap th{padding:14px 16px}
+.cat-click:hover td{background:#edf4ff}
+.detail-panel{margin-top:18px;padding:18px;background:#fbfcff}
+.detail-table-wrap{max-height:65vh;overflow:auto}
+.detail-table-wrap table{min-width:600px}
+@media(max-width:700px){
+ .main{padding:16px 12px}
+ .top{gap:12px;margin-bottom:14px}
+ .top h1{font-size:22px}
+ .sub{font-size:12px}
+ .actions{width:100%;gap:7px}
+ .actions .status{width:100%;font-size:10px}
+ .btn{flex:1;padding:10px 9px}
+ .summary-panel{padding:13px;border-radius:13px}
+ .panel-head{align-items:flex-start}
+ .panel-head small{font-size:10px}
+ .summary-table-wrap table{min-width:700px}
+ .summary-table-wrap td,.summary-table-wrap th{padding:12px 10px}
+ .detail-panel{padding:12px}
+ .detail-table-wrap{max-height:60vh}
+}
+
+
+.detail-filters{display:grid;grid-template-columns:minmax(210px,1fr) minmax(150px,230px) auto;gap:9px;margin:14px 0 8px}
+.sortable-th{cursor:pointer;user-select:none}
+.sortable-th:hover{background:#edf4ff;color:var(--blue)}
+.sorted-th{color:var(--blue)!important;background:#edf4ff!important}
+.sortable-th::after{content:""}
+.detail-filters input,.detail-filters select{width:100%;min-width:0;border:1px solid var(--line);background:#fff;border-radius:9px;padding:11px 12px;font:12px 'DM Sans';color:var(--ink);outline:none}
+.detail-filters input:focus,.detail-filters select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #326cf418}
+.detail-results{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:10px;margin:8px 2px 10px}
+.detail-pagination{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:12px;font-size:11px;color:var(--muted)}
+.detail-pagination .btn{flex:0 0 auto}
+@media(max-width:700px){
+ .detail-filters{grid-template-columns:1fr 1fr}
+ .detail-filters input{grid-column:1/-1}
+ .detail-filters .btn{grid-column:1/-1}
+ .detail-results{flex-direction:column;gap:4px}
+ .detail-pagination{gap:8px}
+}
+
+
+/* Compact responsive table: preserve the familiar grid, fit all columns on phones */
+.detail-table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.detail-table-wrap table{width:100%;min-width:0;table-layout:fixed;white-space:normal}
+.detail-table-wrap th,.detail-table-wrap td{overflow-wrap:anywhere;word-break:break-word}
+@media(max-width:700px){
+ .main{padding:12px 8px 22px}
+ .detail-panel{padding:10px}
+ .detail-table-wrap{overflow-x:hidden;max-height:none}
+ .detail-table-wrap table{width:100%;min-width:0;table-layout:fixed;font-size:8.5px}
+ .detail-table-wrap th{font-size:7px;letter-spacing:0;text-transform:none;padding:7px 2px;line-height:1.15}
+ .detail-table-wrap td{font-size:8px;padding:8px 2px;line-height:1.25;vertical-align:top}
+ .detail-table-wrap th,.detail-table-wrap td{white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+ .detail-table-wrap th:nth-child(1),.detail-table-wrap td:nth-child(1){width:6%}
+ .detail-table-wrap th:nth-child(2),.detail-table-wrap td:nth-child(2){width:12%}
+ .detail-table-wrap th:nth-child(3),.detail-table-wrap td:nth-child(3){width:13%}
+ .detail-table-wrap th:nth-child(4),.detail-table-wrap td:nth-child(4){width:20%}
+ .detail-table-wrap th:nth-child(5),.detail-table-wrap td:nth-child(5){width:9%}
+ .detail-table-wrap th:nth-child(6),.detail-table-wrap td:nth-child(6){width:7%}
+ .detail-table-wrap th:nth-child(7),.detail-table-wrap td:nth-child(7){width:8%}
+ .detail-table-wrap th:nth-child(8),.detail-table-wrap td:nth-child(8){width:9%}
+ .detail-table-wrap th:nth-child(9),.detail-table-wrap td:nth-child(9){width:9%}
+ .detail-table-wrap th:nth-child(10),.detail-table-wrap td:nth-child(10){width:7%}
+ .detail-table-wrap th{cursor:pointer}
+ .detail-pagination{gap:5px;justify-content:space-between}
+ .detail-pagination .btn{font-size:10px;padding:8px 7px}
+ .detail-pagination span{font-size:9px;white-space:nowrap}
+}
+
+
+@media(max-width:700px){
+ /* Sembunyikan kolom yang tidak dibutuhkan di layar HP */
+ .detail-table-wrap th:nth-child(1),.detail-table-wrap td:nth-child(1),
+ .detail-table-wrap th:nth-child(3),.detail-table-wrap td:nth-child(3),
+ .detail-table-wrap th:nth-child(10),.detail-table-wrap td:nth-child(10){display:none}
+ /* Lebarkan kolom penting agar tidak terpotong atau membungkus terlalu sempit */
+ .detail-table-wrap table{table-layout:fixed;width:100%;min-width:0}
+ .detail-table-wrap th:nth-child(2),.detail-table-wrap td:nth-child(2){width:17%}
+ .detail-table-wrap th:nth-child(4),.detail-table-wrap td:nth-child(4){width:29%}
+ .detail-table-wrap th:nth-child(5),.detail-table-wrap td:nth-child(5){width:12%}
+ .detail-table-wrap th:nth-child(6),.detail-table-wrap td:nth-child(6){width:8%}
+ .detail-table-wrap th:nth-child(7),.detail-table-wrap td:nth-child(7){width:10%}
+ .detail-table-wrap th:nth-child(8),.detail-table-wrap td:nth-child(8){width:11%}
+ .detail-table-wrap th:nth-child(9),.detail-table-wrap td:nth-child(9){width:13%}
+ .detail-table-wrap th,.detail-table-wrap td{overflow-wrap:break-word;word-break:normal}
+}
+
+
+/* Phone: keep the detail grid in desktop/table mode and allow horizontal swipe */
+@media(max-width:700px){
+ .detail-table-wrap{
+   display:block!important;
+   width:100%!important;
+   max-width:100%!important;
+   overflow-x:auto!important;
+   overflow-y:auto!important;
+   -webkit-overflow-scrolling:touch;
+ }
+ .detail-table-wrap table{
+   display:table!important;
+   width:1180px!important;
+   min-width:1180px!important;
+   max-width:none!important;
+   table-layout:auto!important;
+   border-collapse:collapse!important;
+   white-space:nowrap!important;
+   font-size:11px!important;
+ }
+ .detail-table-wrap thead{display:table-header-group!important}
+ .detail-table-wrap tbody{display:table-row-group!important}
+ .detail-table-wrap tr{display:table-row!important}
+ .detail-table-wrap th,.detail-table-wrap td{
+   display:table-cell!important;
+   white-space:nowrap!important;
+   word-break:normal!important;
+   overflow-wrap:normal!important;
+   padding:10px 9px!important;
+   font-size:11px!important;
+   line-height:1.25!important;
+   vertical-align:middle!important;
+ }
+ /* Product name may wrap, numeric adjustment fields must remain on one line */
+ .detail-table-wrap th:nth-child(4),.detail-table-wrap td:nth-child(4){
+   min-width:210px!important;max-width:250px!important;white-space:normal!important;
+ }
+ .detail-table-wrap th:nth-child(8),.detail-table-wrap td:nth-child(8),
+ .detail-table-wrap th:nth-child(9),.detail-table-wrap td:nth-child(9){
+   min-width:125px!important;width:125px!important;white-space:nowrap!important;
+ }
+ .detail-table-wrap th:nth-child(1),.detail-table-wrap td:nth-child(1),
+ .detail-table-wrap th:nth-child(2),.detail-table-wrap td:nth-child(2),
+ .detail-table-wrap th:nth-child(3),.detail-table-wrap td:nth-child(3),
+ .detail-table-wrap th:nth-child(5),.detail-table-wrap td:nth-child(5),
+ .detail-table-wrap th:nth-child(6),.detail-table-wrap td:nth-child(6),
+ .detail-table-wrap th:nth-child(7),.detail-table-wrap td:nth-child(7),
+ .detail-table-wrap th:nth-child(10),.detail-table-wrap td:nth-child(10){
+   display:table-cell!important;
+ }
+ .detail-filters{grid-template-columns:minmax(0,1fr) minmax(130px,190px)!important;gap:7px!important}
+ .detail-filters input{grid-column:1/-1!important;font-size:12px!important}
+ .detail-filters select{font-size:11px!important;min-width:0!important}
+ .detail-filters .btn{grid-column:auto!important;font-size:11px!important}
+ .detail-pagination{display:flex!important;justify-content:space-between!important;gap:6px!important}
+}
+
+
+/* Desktop-width layout on phones; keep the detail table wide and readable */
+.detail-table-wrap{width:100%;overflow:auto;-webkit-overflow-scrolling:touch}
+.detail-table-wrap table{
+ width:1580px;
+ min-width:1580px;
+ table-layout:fixed;
+ white-space:nowrap;
+}
+.detail-table-wrap th,.detail-table-wrap td{
+ white-space:nowrap;
+ overflow-wrap:normal;
+ word-break:normal;
+}
+.detail-table-wrap th:nth-child(1),.detail-table-wrap td:nth-child(1){width:70px}
+.detail-table-wrap th:nth-child(2),.detail-table-wrap td:nth-child(2){width:145px}
+.detail-table-wrap th:nth-child(3),.detail-table-wrap td:nth-child(3){width:150px}
+.detail-table-wrap th:nth-child(4),.detail-table-wrap td:nth-child(4){
+ width:360px;min-width:360px;max-width:360px;
+ white-space:normal;overflow-wrap:break-word;word-break:normal;
+}
+.detail-table-wrap th:nth-child(5),.detail-table-wrap td:nth-child(5){width:125px}
+.detail-table-wrap th:nth-child(6),.detail-table-wrap td:nth-child(6){width:90px}
+.detail-table-wrap th:nth-child(7),.detail-table-wrap td:nth-child(7){width:110px}
+.detail-table-wrap th:nth-child(8),.detail-table-wrap td:nth-child(8){width:145px;white-space:nowrap}
+.detail-table-wrap th:nth-child(9),.detail-table-wrap td:nth-child(9){width:155px;white-space:nowrap}
+.detail-table-wrap th:nth-child(10),.detail-table-wrap td:nth-child(10){width:170px}
+
+
+.detail-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.detail-actions .btn{flex:0 0 auto}
+.export-excel{background:#168353;color:#fff;border-color:#168353;font-weight:700}
+.export-excel:hover{background:#106d44;color:#fff}
+.export-excel:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:700px){.detail-actions{gap:6px}.detail-actions .btn{font-size:11px;padding:9px 12px}}
+
+.view-nav{display:flex;gap:8px;margin:0 0 16px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.view-tab{border:1px solid var(--line);background:#fff;color:#64748b;border-radius:10px;padding:11px 16px;font:700 12px 'DM Sans';cursor:pointer}
+.view-tab.active{background:#eaf1ff;color:var(--blue);border-color:#cbdcff}
+.view-panel{display:block}
+.sector-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.sector-kpi{background:#f8fafd;border:1px solid var(--line);border-radius:10px;padding:13px}
+.sector-kpi span{display:block;color:var(--muted);font-size:11px}
+.sector-kpi strong{display:block;font:800 21px Manrope;margin-top:5px}
+.sector-filters{margin-top:10px}
+.sector-columns{display:grid;grid-template-columns:minmax(270px,.8fr) minmax(0,1.7fr);gap:14px;margin-top:12px}
+.sector-list-box,.sector-detail-box{border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.sector-subhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;font-size:12px}
+.sector-subhead span{font-size:10px;color:var(--muted)}
+.sector-summary-wrap,.ast-article-wrap{max-height:65vh;overflow:auto}
+.sector-summary-wrap table,.ast-article-wrap table{min-width:600px}
+.sector-pick{cursor:pointer}
+.sector-pick.selected td{background:#eaf1ff;color:#2456bd;font-weight:700}
+@media(max-width:700px){
+ .view-nav{position:sticky;top:0;background:var(--bg);z-index:5}
+ .view-tab{flex:1;padding:10px 8px;font-size:11px}
+ .sector-kpis{gap:6px}
+ .sector-kpi{padding:9px}
+ .sector-kpi strong{font-size:17px}
+ .sector-columns{grid-template-columns:1fr}
+ .sector-summary-wrap,.ast-article-wrap{max-height:48vh}
+ .sector-filters{grid-template-columns:1fr 1fr}
+ .sector-filters input{grid-column:1/-1}
+ .sector-filters button{grid-column:1/-1}
+}
+
+
+/* AST Article Locator-style search */
+.locator-search{display:grid;grid-template-columns:minmax(150px,220px) minmax(180px,1fr) auto auto;gap:9px;align-items:center;margin:18px 0 12px}
+.locator-search select,.locator-search input{width:100%;min-width:0;min-height:44px;border:1px solid #dce3ed;border-radius:10px;background:#fff;padding:0 13px;color:#243247;font:inherit;outline:none}
+.locator-search select:focus,.locator-search input:focus{border-color:#3978ed;box-shadow:0 0 0 3px #3978ed18}
+.locator-search .btn{min-height:44px;padding:0 20px;white-space:nowrap}
+.locator-search #astFind{background:#e11d2e;border-color:#e11d2e;color:#fff}
+.locator-status{font-size:12px;color:#718096;margin:8px 2px 14px}
+.locator-results{display:grid;grid-template-columns:1fr;gap:12px}
+.locator-results .sector-list-box,.locator-results .sector-detail-box{min-width:0;border:1px solid #e3e9f1;border-radius:13px;overflow:hidden;background:#fff}
+.locator-results .sector-subhead{padding:13px 15px;background:#fff}
+.locator-results .table-wrap{max-height:65vh;overflow:auto}
+.locator-results table{width:100%;min-width:650px;border-collapse:collapse}
+.locator-results th{position:sticky;top:0;z-index:2;background:#f4f7fb;color:#69778c}
+.locator-results td,.locator-results th{padding:10px 11px;border-bottom:1px solid #edf1f5;font-size:12px;text-align:left;white-space:nowrap}
+.locator-results tr[data-sector],.locator-results tr[data-article]{cursor:pointer}
+.locator-results tr[data-sector]:hover,.locator-results tr[data-article]:hover{background:#f0f6ff}
+.locator-results tr.selected{background:#eaf2ff}
+.article-result-card{border:1px solid #e2e8f0;border-radius:12px;margin:10px 10px 0;overflow:hidden;background:#fff}
+.article-result-head{padding:12px 14px 9px;font-weight:750;color:#26364d}
+.article-result-meta{padding:0 14px 10px;color:#7a8798;font-size:11px}
+.article-result-card table{min-width:560px}
+@media(max-width:640px){.locator-search{grid-template-columns:1fr 1fr;gap:8px}.locator-search select,.locator-search input{grid-column:span 1}.locator-search input{grid-column:1/-1;grid-row:2}.locator-search .btn{width:100%;padding:0 10px}.locator-results .table-wrap{max-height:60vh}.locator-results td,.locator-results th{font-size:11px;padding:9px 8px}}
+
+/* Article search: preserve each source row/address and its own quantities */
+.ast-article-cards{display:flex;flex-direction:column;gap:10px}
+.ast-article-card{border:1px solid #e1e7ef;border-radius:12px;overflow:hidden;background:#fff}
+.ast-article-card-head{padding:12px 14px 8px;font-size:13px;font-weight:750;color:#253247}
+.ast-article-card-meta{padding:0 14px 10px;font-size:11px;color:#7b8798}
+.ast-article-card .table-wrap{overflow-x:auto}
+.ast-article-card table{width:100%;min-width:520px;border-collapse:collapse}
+.ast-article-card th{background:#f4f7fb;color:#738096;font-size:10px;font-weight:700}
+.ast-article-card td,.ast-article-card th{padding:10px 11px;border-bottom:1px solid #edf1f5;font-size:11px;white-space:nowrap}
+.ast-article-card td:not(:first-child),.ast-article-card th:not(:first-child){text-align:right}
+.ast-article-card td:first-child,.ast-article-card th:first-child{text-align:left}
+.ast-article-card tr:last-child td{border-bottom:0}
+
+.selected-sector td{background:#eaf1ff!important;font-weight:700}
+.ast-article-wrap table{min-width:980px}
+.ast-article-wrap th,.ast-article-wrap td{white-space:nowrap}
+.ast-article-wrap td:nth-child(3){white-space:normal;min-width:220px}
+</style>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style id="ast-clean-layout-v1">
+/* Sembunyikan header informasi yang ditandai tanpa mengubah proses data/refresh/export. */
+.simple-shell > .main > .top { display:none !important; }
+#refreshAst { display:none !important; }
+.footnote { display:none !important; }
+</style>
+</head>
+<body>
+<div class="shell simple-shell">
+<main class="main">
+ <header class="top">
+  <div><div class="eyebrow">OPERATIONS DASHBOARD</div><h1>AST Summary Dashboard</h1><div class="sub">Ringkasan amount stock take per kategori.</div></div>
+  <div class="actions"><span class="status"><i class="dot"></i><span id="connection">Menghubungkan spreadsheet...</span></span><button class="btn" id="refresh">↻ Refresh</button><button class="btn primary" id="download">↓ Export CSV</button></div>
+ </header>
+
+ <nav class="view-nav" style="display:none" aria-hidden="true">
+  <button class="view-tab active" id="tabSummary" type="button">Category Summary</button>
+  <button class="view-tab" id="tabSector" type="button">Sector & Article</button>
+ </nav>
+ <div id="error" class="error"></div>
+ <section id="summaryView" class="view-panel">
+ <section class="panel summary-panel">
+  <div class="panel-head">
+   <div><h3>Category Stock Summary</h3><small id="categoryHint">Ringkasan amount positif, negatif, dan total AST</small></div>
+  </div>
+  <div class="table-wrap summary-table-wrap">
+   <table>
+    <thead><tr>
+     <th>CAT</th><th>Cat Name</th>
+     <th style="text-align:right">AMOUNT POSITIF</th>
+     <th style="text-align:right">AMOUNT NEGATIF</th>
+     <th style="text-align:right">Total Amount AST</th>
+    </tr></thead>
+    <tbody id="categoryBody"><tr><td class="empty" colspan="5">Menunggu data HASIL...</td></tr></tbody>
+   </table>
+  </div>
+  <div id="sumDetail" class="panel detail-panel" style="display:none">
+   <div class="panel-head"><h3 id="sumDetailTitle">Detail CAT</h3><div class="detail-actions"><button class="btn export-excel" id="exportDetailExcel" type="button" disabled>⬇ Export Excel</button><button class="btn" id="closeDetail">Tutup detail ✕</button></div></div>
+   <div id="sumDetailMessage" style="display:none"></div>
+   <div class="detail-filters">
+    <input id="detailSearch" type="search" placeholder="Cari nama produk, barcode, kode, stock, value, atau data lainnya...">
+    <select id="detailField"><option value="*">Cari di semua kolom</option></select>
+    <button class="btn" id="clearDetailSearch">Reset</button>
+   </div>
+   <div class="detail-results"><span id="detailResultCount">0 data</span><span>Gunakan pencarian untuk menyaring detail CAT</span></div>
+   <div class="table-wrap detail-table-wrap"><table><thead id="sumThead"></thead><tbody id="sumTbody"></tbody></table></div>
+   <div class="detail-pagination"><button class="btn" id="detailPrev">‹ Sebelumnya</button><span id="detailPageInfo">Halaman 1</span><button class="btn" id="detailNext">Berikutnya ›</button></div>
+  </div>
+ </section>
+ </section>
+ <section id="sectorView" class="view-panel" style="display:none">
+  <section class="panel summary-panel">
+   <div class="panel-head">
+    <div><h3>Sector & Article Summary</h3><small id="sectorHint">Daftar sector dan artikel dari sheet AST</small></div>
+    <button class="btn" id="refreshAst" type="button">↻ Refresh AST</button>
+   </div>
+   <div class="locator-search">
+    <select id="astSearchMode" aria-label="Jenis pencarian">
+     <option value="sector">Cari Sector</option>
+     <option value="article">Cari Artikel</option>
+    </select>
+    <input id="astSearch" type="search" placeholder="Masukkan nomor atau nama sector...">
+    <button class="btn" id="astFind" type="button">Cari</button>
+    <button class="btn" id="astReset" type="button">Reset</button>
+   </div>
+   <div class="locator-status" id="astLocatorStatus">Pilih pencarian Sector atau Artikel, lalu masukkan kata kunci.</div>
+   <div class="locator-results" id="astLocatorResults">
+    <div class="sector-list-box" id="astSectorTableBox">
+     <div class="sector-subhead"><strong id="astResultTitle">Hasil Pencarian</strong><span id="astSectorResultCount">0 data</span></div>
+     <div class="table-wrap sector-summary-wrap">
+      <table><thead id="astSectorHead"><tr><th>SECTOR</th><th>BARIS</th><th>ARTIKEL</th><th>FINAL QTY</th></tr></thead><tbody id="astSectorBody"><tr><td class="empty" colspan="4">Masukkan kata kunci untuk mencari data.</td></tr></tbody></table>
+     </div>
+    </div>
+    <div id="astArticleCards" class="ast-article-cards" style="display:none"></div>
+    <div class="sector-detail-box" id="astArticlePanel" style="display:none">
+     <div class="sector-subhead"><strong id="astDetailTitle">Detail Artikel</strong><span id="astDetailCount">-</span></div>
+     <div class="table-wrap ast-article-wrap">
+      <table><thead id="astArticleHead"></thead><tbody id="astArticleBody"><tr><td class="empty">Pilih hasil untuk melihat detail.</td></tr></tbody></table>
+     </div>
+    </div>
+   </div>
+  </section>
+ </section>
+ <div class="footnote" style="text-align:center;margin:20px 0">AST SUMMARY DASHBOARD • Sumber: Google Sheets HASIL & SUM • Auto refresh setiap 60 detik</div>
+</main></div>
+<script>
+const HASIL_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSnlONZ-p5AkcV9jgi_JWOJRvSXg49aBvN7GiPebIE08rTtvIJXLp-qCzvHvM2vXcuF8z9p0xM-6pxZ/pub?gid=1283553116&single=true&output=csv';
+const SUM_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSnlONZ-p5AkcV9jgi_JWOJRvSXg49aBvN7GiPebIE08rTtvIJXLp-qCzvHvM2vXcuF8z9p0xM-6pxZ/pub?gid=0&single=true&output=csv';
+const AST_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSnlONZ-p5AkcV9jgi_JWOJRvSXg49aBvN7GiPebIE08rTtvIJXLp-qCzvHvM2vXcuF8z9p0xM-6pxZ/pub?gid=368396964&single=true&output=csv';
+let hasilHeaders=[],hasilRows=[],sumHeaders=[],sumRows=[],activeCat='',detailMatches=[],detailPage=1,astHeaders=[],astRows=[],astLoaded=false,activeSector='';
+const DETAIL_PAGE_SIZE=50;
+let sortAscending=true,sortColumn=-1;
+const $=id=>document.getElementById(id);
+const norm=s=>String(s??'').toLowerCase().replace(/[^a-z0-9]/g,'');
+function parseCSV(text){
+ let out=[],row=[],v='',q=false;
+ for(let i=0;i<text.length;i++){
+  const c=text[i];
+  if(c==='"'){if(q&&text[i+1]==='"'){v+='"';i++}else q=!q}
+  else if(c===','&&!q){row.push(v);v=''}
+  else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&text[i+1]==='\n')i++;row.push(v);if(row.some(x=>x.trim()!==''))out.push(row);row=[];v=''}
+  else v+=c;
+ }
+ row.push(v);if(row.some(x=>x.trim()!==''))out.push(row);return out;
+}
+function fmt(n){return new Intl.NumberFormat('id-ID',{maximumFractionDigits:0}).format(n)}
+function num(x){
+ if(x==null)return 0;let s=String(x).trim().replace(/\s/g,'');if(!s)return 0;
+ if(/^\(?-?\d{1,3}(\.\d{3})+(,\d+)?\)?$/.test(s)){s=s.replace(/[()]/g,'').replace(/\./g,'').replace(',','.')}
+ else s=s.replace(/,/g,'');
+ const n=Number(s);return Number.isFinite(n)?n:0;
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function setError(message){$('error').style.display=message?'block':'none';$('error').textContent=message||''}
+async function fetchCSV(url){
+ const response=await fetch(url+(url.includes('?')?'&':'?')+'_='+Date.now(),{cache:'no-store'});
+ if(!response.ok)throw Error('HTTP '+response.status);
+ const text=await response.text();
+ if(text.trim().startsWith('<'))throw Error('Google Sheets mengembalikan HTML, bukan CSV. Periksa publikasi tab.');
+ const parsed=parseCSV(text);if(parsed.length<2)throw Error('CSV kosong atau hanya berisi header.');
+ const headers=parsed[0].map(x=>x.trim());
+ return {headers,rows:parsed.slice(1).map(a=>Object.fromEntries(headers.map((h,i)=>[h,a[i]??''])))};
+}
+
+function switchView(view){
+ const summary=view==='summary';
+ $('summaryView').style.display=summary?'block':'none';
+ $('sectorView').style.display=summary?'none':'block';
+ $('tabSummary').classList.toggle('active',summary);
+ $('tabSector').classList.toggle('active',!summary);
+ if(!summary&&!astLoaded)loadAstData();
+}
+function astColumn(keys){
+ return astHeaders.find(h=>keys.some(k=>norm(h)===norm(k)||norm(h).includes(norm(k))))||'';
+}
+function astVal(row,keys){const key=astColumn(keys);return key?String(row[key]??'').trim():''}
+function loadAstData(){
+ $('astSectorBody').innerHTML='<tr><td class="empty" colspan="4">Memuat data AST...</td></tr>';
+ $('astArticleBody').innerHTML='<tr><td class="empty">Memuat data AST...</td></tr>';
+ fetchCSV(AST_CSV_URL).then(data=>{
+  astHeaders=data.headers;astRows=data.rows;astLoaded=true;
+  const required=['Prod cd','Barcode','Prod nm','Sector','Count1','Count3','Final Qty'];
+  const missing=required.filter(k=>!astColumn([k]));
+  if(missing.length)throw Error('Kolom tidak ditemukan: '+missing.join(', '));
+  populateAstSectorFilter();renderAstSummary();
+  $('sectorHint').textContent='Sumber: sheet AST • pilih sector untuk melihat artikel di dalamnya';
+ }).catch(error=>{
+  astLoaded=false;
+  $('astSectorBody').innerHTML=`<tr><td class="empty" colspan="4">Gagal memuat sheet AST: ${esc(error.message)}</td></tr>`;
+ });
+}
+function getAstGroups(){
+ const groups=new Map();
+ astRows.forEach(row=>{
+  const sector=astVal(row,['Sector'])||'(Sector kosong)';
+  if(!groups.has(sector))groups.set(sector,[]);
+  groups.get(sector).push(row);
+ });
+ return {groups};
+}
+function populateAstSectorFilter(){
+ // Keep the legacy element available for compatibility; it now selects search mode.
+ $('astSearchMode').value='sector';
+}
+function renderAstSummary(){
+ const mode=$('astSearchMode').value;
+ const query=$('astSearch').value.trim().toLocaleLowerCase('id-ID');
+ const {groups}=getAstGroups();
+ const productKey=astColumn(['Prod cd']);
+ const nameKey=astColumn(['Prod nm']);
+ const barcodeKey=astColumn(['Barcode']);
+ const sectorKey=astColumn(['Sector']);
+ const count1Key=astColumn(['Count1']);
+ const count3Key=astColumn(['Count3']);
+ const finalKey=astColumn(['Final Qty']);
+ const tableBox=$('astSectorTableBox');
+ const cards=$('astArticleCards');
+ $('astArticlePanel').style.display='none';
+ cards.style.display='none';
+ tableBox.style.display='block';
+ $('astSectorHead').innerHTML=mode==='sector'
+  ?'<tr><th>SECTOR</th><th>BARIS</th><th>ARTIKEL</th><th>FINAL QTY</th></tr>'
+  :'<tr><th>PRODCODE / ARTIKEL</th><th>BARCODE</th><th>SECTOR</th><th>FINAL QTY</th></tr>';
+ if(!query){
+  $('astResultTitle').textContent='Hasil Pencarian';
+  $('astSectorResultCount').textContent='0 data';
+  $('astSectorBody').innerHTML='<tr><td class="empty" colspan="4">Masukkan kata kunci lalu tekan Cari.</td></tr>';
+  $('astLocatorStatus').textContent='Pilih Cari Sector atau Cari Artikel, lalu masukkan kata kunci.';
+  cards.innerHTML='';
+  return;
+ }
+ if(mode==='sector'){
+  const found=[...groups.entries()].filter(([sector])=>sector.toLocaleLowerCase('id-ID').includes(query))
+   .sort((a,b)=>a[0].localeCompare(b[0],'id',{numeric:true}));
+  $('astResultTitle').textContent='Hasil Sector';
+  $('astSectorResultCount').textContent=fmt(found.length)+' sector';
+  $('astLocatorStatus').textContent=found.length+' sector ditemukan. Pilih salah satu sector untuk melihat daftar artikelnya.';
+  $('astSectorBody').innerHTML=found.map(([sector,rows])=>{
+   const uniq=new Set(rows.map(r=>String(r[productKey]??'').trim()).filter(Boolean)).size;
+   const qty=rows.reduce((sum,r)=>sum+num(r[finalKey]),0);
+   return `<tr data-sector="${esc(sector)}"><td><b>${esc(sector)}</b></td><td>${fmt(rows.length)}</td><td>${fmt(uniq)}</td><td>${fmt(qty)}</td></tr>`;
+  }).join('')||'<tr><td class="empty" colspan="4">Sector tidak ditemukan.</td></tr>';
+  const showSectorArticles=(sector,scroll=false)=>{
+   activeSector=sector;
+   const rows=groups.get(activeSector)||[];
+   // Setiap baris spreadsheet dipertahankan sebagai satu alamat dan qty tersendiri.
+   const cols=[
+    {label:'PROD CODE',key:productKey},
+    {label:'BARCODE',key:barcodeKey},
+    {label:'NAMA ARTIKEL',key:nameKey},
+    {label:'SECTOR / ALAMAT',key:sectorKey},
+    {label:'COUNT 1',key:count1Key},
+    {label:'COUNT 3',key:count3Key},
+    {label:'FINAL QTY',key:finalKey}
+   ].filter(c=>c.key);
+   $('astArticlePanel').style.display='block';
+   $('astDetailTitle').textContent='Daftar Artikel • Sector '+activeSector;
+   $('astDetailCount').textContent=fmt(rows.length)+' baris spreadsheet • qty per alamat';
+   $('astArticleHead').innerHTML='<tr>'+cols.map(c=>`<th>${esc(c.label)}</th>`).join('')+'</tr>';
+   $('astArticleBody').innerHTML=rows.map(row=>'<tr>'+cols.map(c=>{
+    const value=String(row[c.key]??'').trim();
+    return `<td>${esc(value||'-')}</td>`;
+   }).join('')+'</tr>').join('')||`<tr><td class="empty" colspan="${Math.max(1,cols.length)}">Tidak ada artikel.</td></tr>`;
+   $('astSectorBody').querySelectorAll('[data-sector]').forEach(row=>{
+    row.classList.toggle('selected-sector',row.dataset.sector===sector);
+   });
+   if(scroll)$('astArticlePanel').scrollIntoView({behavior:'smooth',block:'start'});
+  };
+  // Langsung tampilkan isi sector pertama setelah pencarian; pengguna tetap bisa memilih sector lain.
+  if(found.length)showSectorArticles(found[0][0]);
+  else $('astArticlePanel').style.display='none';
+  $('astSectorBody').querySelectorAll('[data-sector]').forEach(tr=>tr.addEventListener('click',()=>{
+   showSectorArticles(tr.dataset.sector,true);
+  }));
+ }else{
+  const matches=astRows.filter(row=>{
+   const hay=[row[productKey],row[nameKey],row[barcodeKey]].join(' ').toLocaleLowerCase('id-ID');
+   return hay.includes(query);
+  });
+  // Group only to create one visual card per article. Never aggregate sector/address rows or quantities.
+  const products=new Map();
+  matches.forEach(row=>{
+   const key=String(row[productKey]??'').trim()+'|'+String(row[nameKey]??'').trim();
+   if(!products.has(key))products.set(key,[]);
+   products.get(key).push(row);
+  });
+  $('astResultTitle').textContent='Hasil Artikel';
+  $('astSectorResultCount').textContent=fmt(products.size)+' artikel • '+fmt(matches.length)+' baris alamat';
+  $('astLocatorStatus').textContent=fmt(products.size)+' artikel ditemukan pada '+fmt(matches.length)+' baris alamat. Setiap alamat dan qty ditampilkan terpisah sesuai baris spreadsheet.';
+  tableBox.style.display='none';
+  cards.style.display='flex';
+  cards.innerHTML=[...products.entries()].map(([key,rows])=>{
+   const first=rows[0];
+   const code=String(first[productKey]??'');
+   const name=String(first[nameKey]??'');
+   const barcode=String(first[barcodeKey]??'');
+   const cardRows=rows.map(r=>`<tr>
+    <td>${esc(r[sectorKey]??'')}</td>
+    <td>${esc(r[count1Key]??'')}</td>
+    <td>${esc(r[count3Key]??'')}</td>
+    <td>${esc(r[finalKey]??'')}</td>
+   </tr>`).join('');
+   return `<article class="ast-article-card">
+    <div class="ast-article-card-head">${esc(name)}</div>
+    <div class="ast-article-card-meta">Prodcode: ${esc(code)} &nbsp;•&nbsp; Barcode: ${esc(barcode)}</div>
+    <div class="table-wrap"><table>
+     <thead><tr><th>SECTOR / ALAMAT</th><th>COUNT 1</th><th>COUNT 3</th><th>FINAL QTY</th></tr></thead>
+     <tbody>${cardRows}</tbody>
+    </table></div>
+   </article>`;
+  }).join('')||'<div class="empty">Artikel tidak ditemukan.</div>';
+ }
+}
+function renderAstArticles(){renderAstSummary();}
+$('tabSummary').addEventListener('click',()=>switchView('summary'));
+$('tabSector').addEventListener('click',()=>switchView('sector'));
+$('refreshAst').addEventListener('click',()=>{astLoaded=false;loadAstData()});
+$('astFind').addEventListener('click',()=>renderAstSummary());
+$('astSearch').addEventListener('keydown',e=>{if(e.key==='Enter')renderAstSummary()});
+$('astSearchMode').addEventListener('change',()=>{
+ $('astSearch').value='';
+ $('astSearch').placeholder=$('astSearchMode').value==='sector'?'Masukkan nomor atau nama sector...':'Masukkan nama artikel, product code, atau barcode...';
+ $('astArticlePanel').style.display='none';
+ renderAstSummary();
+});
+$('astReset').addEventListener('click',()=>{
+ $('astSearch').value='';
+ $('astSearchMode').value='sector';
+ $('astSearch').placeholder='Masukkan nomor atau nama sector...';
+ $('astArticlePanel').style.display='none';
+ renderAstSummary();
+});
+
+async function load(){
+ $('connection').textContent='Mengambil data HASIL...';setError('');
+ try{
+  const hasil=await fetchCSV(HASIL_CSV_URL);
+  hasilHeaders=hasil.headers;hasilRows=hasil.rows;renderCategorySummary();
+  const now=new Date().toLocaleString('id-ID');
+  $('connection').textContent='Terhubung • '+now;
+ }catch(error){
+  $('connection').textContent='Gagal memuat data';
+  setError('Tidak dapat membaca sheet HASIL: '+error.message);
+  $('categoryBody').innerHTML='<tr><td class="empty" colspan="5">Data HASIL belum tersedia.</td></tr>';
+ }
+}
+function renderCategorySummary(){
+ const body=$('categoryBody');
+ const pick=keys=>hasilHeaders.find(h=>keys.some(k=>norm(h)===norm(k)||norm(h).includes(norm(k))));
+ const catKey=pick(['Cat','CAT']),nameKey=pick(['Cat Name','Category Name']);
+ const posKey=pick(['AMOUNT POSITIF']),negKey=pick(['AMOUNT NEGATIF']),totalKey=pick(['Total Amount AST']);
+ if(!catKey||!posKey||!negKey||!totalKey){
+  body.innerHTML='<tr><td class="empty" colspan="5">Header HASIL tidak sesuai. Dibutuhkan Cat, Cat Name, AMOUNT POSITIF, AMOUNT NEGATIF, dan Total Amount AST.</td></tr>';return;
+ }
+ const fmtCell=value=>{const n=num(value);return n===0?'0':(n<0?'-'+fmt(Math.abs(n)):fmt(n))};
+ let html='';
+ for(const row of hasilRows){
+  const code=String(row[catKey]??'').trim();
+  const name=String(nameKey?row[nameKey]??'':'').trim();
+  const label=(code+' '+name).trim().toUpperCase();
+  if(!code&&!name)continue;
+  const isStore=label.includes('STORE');
+  const isSubtotal=['TOTAL DF','TOTAL FF','TOTAL NF'].some(x=>label.includes(x));
+  const isCategory=/^\d+$/.test(code);
+  const style=isStore?'background:#fff200;font-weight:900':isSubtotal?'background:#ffe7a3;font-weight:800':'';
+  html+=`<tr ${isCategory?`class="cat-click" data-cat="${esc(code)}" title="Klik untuk melihat detail CAT ${esc(code)}"`:''} style="${style}${isCategory?';cursor:pointer':''}">
+   <td>${esc(code||name)}</td><td>${esc(name)}</td>
+   <td style="text-align:right;color:#138454;font-weight:700">${fmtCell(row[posKey])}</td>
+   <td style="text-align:right;color:#c24141;font-weight:700">${fmtCell(row[negKey])}</td>
+   <td style="text-align:right;font-weight:800">${fmtCell(row[totalKey])}</td>
+  </tr>`;
+ }
+ body.innerHTML=html||'<tr><td class="empty" colspan="5">Tidak ada data HASIL.</td></tr>';
+ $('categoryHint').textContent=`${hasilRows.length} baris • Sumber: sheet HASIL • klik CAT untuk membuka detail SUM`;
+ body.querySelectorAll('tr[data-cat]').forEach(tr=>tr.addEventListener('click',()=>showSumDetail(tr.dataset.cat)));
+}
+async function showSumDetail(cat){
+ activeCat=String(cat);$('sumDetail').style.display='block';$('exportDetailExcel').disabled=true;
+ $('sumDetailTitle').textContent='Detail CAT '+cat;
+ $('sumDetailMessage').textContent='Mengambil detail dari sheet SUM...';
+ $('sumTbody').innerHTML='<tr><td class="empty">Memuat detail...</td></tr>';
+ $('sumDetail').scrollIntoView({behavior:'smooth',block:'start'});
+ try{
+  const result=await fetchCSV(SUM_CSV_URL);sumHeaders=result.headers;sumRows=result.rows;
+  // Muat AST untuk mengambil Sector sebagai alamat artikel.
+  if(!astLoaded){const ast=await fetchCSV(AST_CSV_URL);astHeaders=ast.headers;astRows=ast.rows;astLoaded=true;}
+  const addressHeader='ALAMAT / SECTOR';
+  if(!sumHeaders.includes(addressHeader))sumHeaders.push(addressHeader);
+  const catIndex=sumHeaders.findIndex(h=>['cat','catcode','category'].some(k=>norm(h).includes(k)));
+  if(catIndex<0)throw Error('Kolom CAT tidak ditemukan pada sheet SUM.');
+  const catHeader=sumHeaders[catIndex];
+  detailMatches=sumRows.filter(row=>String(row[catHeader]??'').trim()===activeCat);
+  // Cocokkan Product Code; gunakan Barcode sebagai cadangan.
+  const astProdKey=astColumn(['Prod cd','Product Code','Prod Code']);
+  const astBarcodeKey=astColumn(['Barcode','Bar Code']);
+  const astSectorKey=astColumn(['Sector','Alamat','Address','Location','Rack','Rak']);
+  const sumProdKey=sumHeaders.find(h=>['prodcd','productcode','prodcode','itemcode','articlecode','sku'].includes(norm(h)));
+  const sumBarcodeKey=sumHeaders.find(h=>['barcode','barcode1','ean','ean13'].includes(norm(h)));
+  const cleanKey=v=>String(v??'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const byCode=new Map(),byBarcode=new Map();
+  if(astSectorKey)astRows.forEach(r=>{
+   const sector=String(r[astSectorKey]??'').trim();if(!sector)return;
+   const code=cleanKey(astProdKey?r[astProdKey]:'');
+   const barcode=cleanKey(astBarcodeKey?r[astBarcodeKey]:'');
+   if(code){if(!byCode.has(code))byCode.set(code,new Set());byCode.get(code).add(sector);}
+   if(barcode){if(!byBarcode.has(barcode))byBarcode.set(barcode,new Set());byBarcode.get(barcode).add(sector);}
+  });
+  detailMatches.forEach(row=>{
+   const code=cleanKey(sumProdKey?row[sumProdKey]:'');
+   const barcode=cleanKey(sumBarcodeKey?row[sumBarcodeKey]:'');
+   const found=(code&&byCode.get(code))||(barcode&&byBarcode.get(barcode));
+   row[addressHeader]=found?[...found].sort((a,b)=>a.localeCompare(b,'id',{numeric:true})).join(', '):'Tidak ditemukan di AST';
+  });
+  detailPage=1;
+  $('sumDetailMessage').textContent=`${fmt(detailMatches.length)} baris detail dari sheet SUM untuk CAT ${activeCat}`;
+  $('detailField').innerHTML='<option value="*">Cari di semua kolom</option>'+sumHeaders.map((h,i)=>`<option value="${i}">${esc(h)}</option>`).join('');
+  $('detailSearch').value='';
+  sortAscending=true;sortColumn=-1;
+  renderDetailRows();$('exportDetailExcel').disabled=false;
+ }catch(error){
+  $('sumDetailMessage').textContent='Gagal membaca detail SUM: '+error.message;
+  $('sumTbody').innerHTML='<tr><td class="empty">Detail tidak dapat ditampilkan.</td></tr>';
+ }
+}
+
+function updateSortDirection(){$('detailSortDirection').textContent=sortAscending?'↑ A–Z / Kecil–Besar':'↓ Z–A / Besar–Kecil'}
+function getFilteredDetailRows(){
+ const query=$('detailSearch').value.trim().toLocaleLowerCase('id-ID');
+ const field=$('detailField').value;
+ const filtered=!query?detailMatches:detailMatches.filter(row=>{
+  const values=field==='*'?sumHeaders.map(h=>row[h]):[row[sumHeaders[Number(field)]]];
+  return values.some(value=>String(value??'').toLocaleLowerCase('id-ID').includes(query));
+ });
+ if(sortColumn>=0){
+  const header=sumHeaders[sortColumn];
+  const compare=new Intl.Collator('id-ID',{numeric:true,sensitivity:'base'});
+  filtered.sort((a,b)=>{
+   const av=String(a[header]??'').trim(),bv=String(b[header]??'').trim();
+   const numeric=/^[-(]?[\d.,]+\)?$/.test(av)&&/^[-(]?[\d.,]+\)?$/.test(bv);
+   const result=numeric?num(av)-num(bv):compare.compare(av,bv);
+   return sortAscending?result:-result;
+  });
+ }
+ return filtered;
+}
+function renderDetailRows(){
+ const filtered=getFilteredDetailRows();
+ const totalPages=Math.max(1,Math.ceil(filtered.length/DETAIL_PAGE_SIZE));
+ detailPage=Math.min(detailPage,totalPages);
+ const start=(detailPage-1)*DETAIL_PAGE_SIZE;
+ const pageRows=filtered.slice(start,start+DETAIL_PAGE_SIZE);
+ $('detailResultCount').textContent=`${fmt(filtered.length)} dari ${fmt(detailMatches.length)} baris`;
+ $('detailPageInfo').textContent=`Halaman ${detailPage} / ${totalPages}`;
+ $('detailPrev').disabled=detailPage<=1;
+ $('detailNext').disabled=detailPage>=totalPages;
+ const hiddenDetailColumn=(h,i)=>{
+  const n=norm(h);
+  return (i>=9&&i<=11) || ['cat1name','stockamt','stocktakeamount'].some(x=>n===x||n.includes(x));
+ };
+ const visibleSumHeaders=sumHeaders.filter((h,i)=>!hiddenDetailColumn(h,i));
+ $('sumThead').innerHTML='<tr>'+visibleSumHeaders.map(h=>{
+  const i=sumHeaders.indexOf(h);
+  return `<th class="sortable-th ${sortColumn===i?'sorted-th':''}" data-col="${i}" title="Klik untuk mengurutkan">${esc(h)}${sortColumn===i?(sortAscending?' ▲':' ▼'):' ↕'}</th>`;
+ }).join('')+'</tr>';
+ $('sumThead').querySelectorAll('th[data-col]').forEach(th=>th.addEventListener('click',()=>{
+  const col=Number(th.dataset.col);
+  if(sortColumn===col)sortAscending=!sortAscending;else{sortColumn=col;sortAscending=true}
+  detailPage=1;renderDetailRows();
+ }));
+ $('sumTbody').innerHTML=pageRows.map(row=>'<tr>'+visibleSumHeaders.map(h=>`<td>${esc(row[h])}</td>`).join('')+'</tr>').join('')||
+  `<tr><td class="empty" colspan="${Math.max(1,visibleSumHeaders.length)}">Tidak ada data yang cocok dengan pencarian.</td></tr>`;
+}
+$('detailSearch').addEventListener('input',()=>{detailPage=1;renderDetailRows()});
+$('detailField').addEventListener('change',()=>{detailPage=1;renderDetailRows()});
+$('clearDetailSearch').onclick=()=>{$('detailSearch').value='';$('detailField').value='*';sortColumn=-1;sortAscending=true;detailPage=1;renderDetailRows()};
+$('detailPrev').onclick=()=>{if(detailPage>1){detailPage--;renderDetailRows()}};
+$('detailNext').onclick=()=>{detailPage++;renderDetailRows()};
+
+$('exportDetailExcel').onclick=()=>{
+ if(!activeCat||!sumHeaders.length)return;
+ if(typeof XLSX==='undefined'){alert('Library Excel belum termuat. Pastikan internet aktif lalu refresh halaman.');return}
+ const data=getFilteredDetailRows();
+ if(!data.length){alert('Tidak ada data yang cocok untuk diekspor.');return}
+ const exportHeaders=sumHeaders.filter((h,i)=>{
+  const n=norm(h);
+  return !((i>=9&&i<=11)||['cat1name','stockamt','stocktakeamount'].some(x=>n===x||n.includes(x)));
+ });
+ const rows=[exportHeaders,...data.map(row=>exportHeaders.map(h=>String(row[h]??'')))];
+ const sheet=XLSX.utils.aoa_to_sheet(rows);
+ sheet['!cols']=exportHeaders.map(h=>({wch:/PROD NM|NAME/i.test(h)?42:/BARCODE|PROD CD/i.test(h)?20:18}));
+ sheet['!autofilter']={ref:sheet['!ref']};
+ const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,sheet,'CAT '+activeCat);
+ XLSX.writeFile(book,'AST_Detail_CAT_'+activeCat+'.xlsx');
+};
+$('closeDetail').onclick=()=>{$('sumDetail').style.display='none';activeCat=''};
+$('refresh').onclick=()=>{load();if(astLoaded)loadAstData()};
+$('download').onclick=()=>{
+ if(!hasilRows.length)return;
+ const csv=[hasilHeaders,...hasilRows.map(row=>hasilHeaders.map(h=>row[h]??''))]
+  .map(row=>row.map(value=>'"'+String(value).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+ const link=document.createElement('a');
+ link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+ link.download='AST_Category_Summary_HASIL.csv';link.click();URL.revokeObjectURL(link.href);
+};
+const initialView=new URLSearchParams(location.search).get('view');
+if(initialView==='sector')switchView('sector');
+load();setInterval(()=>{load();if(astLoaded)loadAstData()},60000);
+</script></body></html>
