@@ -5055,19 +5055,27 @@ async function ensurePopLoaded(){
  if(_dshPopLoaded)return true;
  if(_dshPopLoading){while(_dshPopLoading)await new Promise(r=>setTimeout(r,40));return _dshPopLoaded;}
  _dshPopLoading=true;
+ var host=document.getElementById("popPanel");
  try{
-  var response=await fetch("/pop.html",{cache:"force-cache"});
+  if(!host)throw new Error("POP panel host not found");
+  host.classList.add("active");
+  host.style.display="block";
+  var response=await fetch("/pop.html?v=20261115fix1",{cache:"no-store"});
   if(!response.ok)throw new Error("POP module HTTP "+response.status);
   var markup=await response.text();
-  var host=document.getElementById("popPanel");
-  if(!host)throw new Error("POP panel host not found");
-  host.innerHTML=markup;
+  // pop.html may contain a standalone #popPanel wrapper. Remove that wrapper
+  // before inserting it into the existing DSH panel to avoid nested display:none.
+  var parsed=new DOMParser().parseFromString(markup,"text/html");
+  var studio=parsed.querySelector(".pop-studio");
+  if(!studio)throw new Error("Konten .pop-studio tidak ditemukan di pop.html");
+  host.innerHTML=studio.outerHTML;
+  host.classList.add("active");
+  host.style.display="block";
   _dshPopLoaded=true;
   return true;
  }catch(err){
   console.error("DSH POP lazy-load:",err);
-  var host=document.getElementById("popPanel");
-  if(host)host.innerHTML='<div style="padding:24px;color:#fca5a5">POP Studio gagal dimuat. Periksa koneksi lalu buka menu POP kembali.</div>';
+  if(host){host.classList.add("active");host.style.display="block";host.innerHTML='<div style="padding:24px;margin:16px;background:#451a1a;color:#fecaca;border:1px solid #b91c1c;border-radius:12px">POP Studio gagal dimuat: '+String(err.message||err)+'</div>';}
   return false;
  }finally{_dshPopLoading=false;}
 }
