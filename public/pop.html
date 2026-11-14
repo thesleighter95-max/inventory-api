@@ -25,6 +25,7 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><div><label class="pop-label">Harga Normal</label><input id="popOldPrice" class="pop-field" inputmode="numeric" placeholder="0"></div><div><label class="pop-label">Harga Promo</label><input id="popNewPrice" class="pop-field" inputmode="numeric" placeholder="0"></div></div>
             <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1"><input id="popShowStrike" type="checkbox" checked> Tampilkan harga normal dicoret</label>
             <div><label class="pop-label">Catatan / Satuan</label><input id="popSpec" class="pop-field" placeholder="Contoh: 5 Liter / Pcs"></div>
+            <div class="pop-icon-field"><label class="pop-label">Icons</label><button type="button" class="pop-field pop-icon-trigger" onclick="popOpenIconGallery()"><span id="popIconSelectedThumb"><img src="/assets/pop-icon-hot-deals.png" alt=""></span><span id="popIconSelectedLabel">HOT DEALS</span><span class="pop-icon-trigger-arrow">▾</span></button><div class="pop-icon-help">Pilih ikon POP. Ikon akan langsung tampil di preview dan ikut tercetak.</div></div>
           </div>
           <div style="border-top:1px solid #29364d;margin-top:16px;padding-top:14px">
             <div style="font-weight:900;margin-bottom:10px">03 / FOTO PRODUK</div>
@@ -36,8 +37,24 @@
         </div>
         <div class="pop-card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-weight:900">04 / LIVE PREVIEW</div><span id="popPreviewSizeLabel" style="font-size:10px;color:#93c5fd;font-weight:900">MAILER 24 • A3 LANDSCAPE</span></div>
-          <div id="popPrintArea"><div class="pop-preview" id="popPreview"><div class="pop-mailer-banner"><img class="pop-banner-art" src="/assets/mailer24-banner.webp" alt="Solusi Belanja Lengkap & Murah"><img class="pop-hotdeal-art" src="/assets/hot-deals.webp" alt="Hot Deals"></div><div class="pop-preview-period" id="popPreviewPeriod">Periode : 10 – 16 November 2026</div><div class="pop-preview-product" id="popPreviewName">NAMA PRODUK<small id="popPreviewDesc">Deskripsi produk</small></div><div class="pop-preview-image" id="popPreviewImage"><span style="color:#9ca3af;font-size:12px">FOTO PRODUK</span></div><div class="pop-preview-prices"><div class="pop-price-oldline"><span class="pop-unit">Rp<br>/pc</span><span class="pop-old" id="popPreviewOld">0</span></div><div class="pop-price-newline"><span class="pop-unit">Rp<br>/pc</span><div class="pop-new" id="popPreviewNew">0</div></div></div><div class="pop-preview-footer" id="popPreviewFooter"></div></div></div>
+          <div id="popPrintArea"><div class="pop-preview" id="popPreview"><div class="pop-mailer-banner"><img class="pop-banner-art" src="/assets/mailer24-banner.webp" alt="Solusi Belanja Lengkap & Murah"><img class="pop-hotdeal-art pop-selected-icon" id="popPreviewIcon" src="/assets/pop-icon-hot-deals.png" alt="HOT DEALS"></div><div class="pop-preview-period" id="popPreviewPeriod">Periode : 10 – 16 November 2026</div><div class="pop-preview-product" id="popPreviewName">NAMA PRODUK<small id="popPreviewDesc">Deskripsi produk</small></div><div class="pop-preview-image" id="popPreviewImage"><span style="color:#9ca3af;font-size:12px">FOTO PRODUK</span></div><div class="pop-preview-prices"><div class="pop-price-oldline"><span class="pop-unit">Rp<br>/pc</span><span class="pop-old" id="popPreviewOld">0</span></div><div class="pop-price-newline"><span class="pop-unit">Rp<br>/pc</span><div class="pop-new" id="popPreviewNew">0</div></div></div><div class="pop-preview-footer" id="popPreviewFooter"></div></div></div>
           <div style="display:flex;gap:8px;margin-top:14px"><button class="pop-btn" style="flex:1" onclick="popReset()">RESET</button><button class="pop-btn primary" style="flex:1" onclick="popPrint()">CETAK / PDF</button></div>
         </div>
       </div>
+    <div id="popIconGallery" class="pop-icon-gallery" style="display:none" onclick="if(event.target===this)popCloseIconGallery()">
+      <div class="pop-icon-dialog" role="dialog" aria-modal="true" aria-label="Pilih Icons POP">
+        <div class="pop-icon-dialog-head"><div><strong>PILIH ICONS</strong><small>Pilih satu ikon untuk ditampilkan pada POP</small></div><button type="button" class="pop-icon-close" onclick="popCloseIconGallery()" aria-label="Tutup">×</button></div>
+        <div class="pop-icon-grid">
+          <button type="button" class="pop-icon-option" data-icon="none" onclick="popSelectIcon('none')"><img src="/assets/pop-icon-no-icon.png" alt="NO ICON"><span>NO ICON</span></button>
+          <button type="button" class="pop-icon-option" data-icon="hot-deals" onclick="popSelectIcon('hot-deals')"><img src="/assets/pop-icon-hot-deals.png" alt="HOT DEALS"><span>HOT DEALS</span></button>
+          <button type="button" class="pop-icon-option" data-icon="bblm" onclick="popSelectIcon('bblm')"><img src="/assets/pop-icon-bblm.png" alt="BBLM"><span>BBLM</span></button>
+          <button type="button" class="pop-icon-option" data-icon="ambil-sepuasnya" onclick="popSelectIcon('ambil-sepuasnya')"><img src="/assets/pop-icon-ambil-sepuasnya.png" alt="AMBIL SEPUASNYA"><span>AMBIL SEPUASNYA</span></button>
+          <button type="button" class="pop-icon-option" data-icon="promo-kjsm" onclick="popSelectIcon('promo-kjsm')"><img src="/assets/pop-icon-promo-kjsm.png" alt="PROMO KJSM"><span>PROMO KJSM</span></button>
+          <button type="button" class="pop-icon-option" data-icon="promo-member-hijau" onclick="popSelectIcon('promo-member-hijau')"><img src="/assets/pop-icon-promo-member-hijau.png" alt="PROMO MEMBER HIJAU"><span>PROMO MEMBER HIJAU</span></button>
+          <button type="button" class="pop-icon-option" data-icon="promo-member-cokelat" onclick="popSelectIcon('promo-member-cokelat')"><img src="/assets/pop-icon-promo-member-cokelat.png" alt="PROMO MEMBER COKELAT"><span>PROMO MEMBER COKELAT</span></button>
+          <button type="button" class="pop-icon-option" data-icon="buy-1-get-1" onclick="popSelectIcon('buy-1-get-1')"><img src="/assets/pop-icon-buy-1-get-1.png" alt="BUY 1 GET 1"><span>BUY 1 GET 1</span></button>
+        </div>
+      </div>
+    </div>
+
     </div>
