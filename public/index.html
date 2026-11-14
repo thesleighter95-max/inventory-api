@@ -2861,6 +2861,87 @@ body.is-mobile-device.is-admin #navAbsensi{display:flex!important;}
   #absensiPanel #absensiPanelMain,#absensiPanel #absensiResult{max-width:100%!important;min-width:0!important;}
 }
 </style>
+<style id="dsh-absensi-layout-final-fix">
+/* Final layout: use the full content area left by the DSH sidebar. */
+@media (min-width: 768px) {
+  #absensiPanel.active {
+    display: grid !important;
+    grid-template-columns: clamp(112px, 17vw, 190px) minmax(0, 1fr) clamp(112px, 17vw, 190px) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    align-items: stretch !important;
+    overflow-x: hidden !important;
+  }
+  #absensiPanel.active > #petugasPagiSide,
+  #absensiPanel.active > #petugasSiangSide {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+  #absensiPanel.active > #petugasPagiSide { grid-column: 1 !important; grid-row: 1 !important; }
+  #absensiPanel.active > #petugasSiangSide { grid-column: 3 !important; grid-row: 1 !important; }
+  #absensiPanel.active > div:not(#petugasPagiSide):not(#petugasSiangSide):not(#merdekaMarquee):not(#augStarsBg) {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    justify-self: stretch !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+  #pagiPhotoBox, #siangPhotoBox {
+    width: clamp(76px, 10vw, 132px) !important;
+    height: clamp(76px, 10vw, 132px) !important;
+    max-width: calc(100% - 12px) !important;
+    flex: 0 0 auto !important;
+  }
+  #petugasPagiSide > div, #petugasSiangSide > div {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  #absensiPanel #absensiResult,
+  #absensiPanel #absensiResult table,
+  #absensiPanel #absensiPanelMain {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+}
+@media (min-width: 768px) and (max-width: 900px) {
+  #absensiPanel.active {
+    grid-template-columns: 104px minmax(0, 1fr) 104px !important;
+  }
+  #pagiPhotoBox, #siangPhotoBox { width: 76px !important; height: 76px !important; }
+}
+@media (max-width: 767px) {
+  #absensiPanel.active {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+  }
+  #absensiPanel.active > #petugasPagiSide,
+  #absensiPanel.active > #petugasSiangSide { display: none !important; }
+  #absensiPanel.active > div:not(#petugasPagiSide):not(#petugasSiangSide):not(#merdekaMarquee):not(#augStarsBg) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+}
+</style>
 <div id="merdekaMarquee" style="display:none;position:absolute;top:6px;left:0;right:0;z-index:9;height:44px;overflow:hidden;border-bottom:1px solid rgba(180,0,0,0.4);background:linear-gradient(180deg,rgba(120,0,0,0.97) 0%,rgba(90,0,0,0.94) 50%,rgba(30,10,10,0.92) 100%);box-shadow:0 4px 24px rgba(220,38,38,0.18);"><div style="display:flex;align-items:center;height:100%;padding:0 0;"><div style="display:inline-block;white-space:nowrap;height:100%;line-height:44px;animation:merdekaTicker 22s linear infinite;"><span style="font-family:monospace;font-size:15px;font-weight:900;letter-spacing:2.5px;color:#fca5a5;text-shadow:0 0 10px rgba(255,100,100,0.5);">&nbsp;&nbsp;&nbsp;&#127470;&#127465;&nbsp; DIRGAHAYU REPUBLIK INDONESIA KE-81 &nbsp;&#11835;&nbsp; MERDEKA! &nbsp;&#11835;&nbsp; 17 AGUSTUS 2026 &nbsp;&#11835;&nbsp; BERSATU PADU UNTUK NEGERI &nbsp;&#11835;&nbsp; JAYALAH BANGSAKU &nbsp;&#11835;&nbsp;&nbsp;&nbsp;</span><span style="font-family:monospace;font-size:15px;font-weight:900;letter-spacing:2.5px;color:#fca5a5;text-shadow:0 0 10px rgba(255,100,100,0.5);">&#127470;&#127465;&nbsp; DIRGAHAYU REPUBLIK INDONESIA KE-81 &nbsp;&#11835;&nbsp; MERDEKA! &nbsp;&#11835;&nbsp; 17 AGUSTUS 2026 &nbsp;&#11835;&nbsp; BERSATU PADU UNTUK NEGERI &nbsp;&#11835;&nbsp; JAYALAH BANGSAKU &nbsp;&#11835;&nbsp;&nbsp;&nbsp;</span></div></div></div>
 <div id="augStarsBg" style="display:none;"></div>
 <script>(function(){var d=new Date(),m=d.getMonth(),y=d.getFullYear();if(m===7&&y===2026){var p=document.getElementById('absensiPanel');if(p)p.classList.add('aug-theme');}})()</script>
