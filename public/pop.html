@@ -1,0 +1,45 @@
+  <div id="popPanel" class="panel-container">
+    <div class="pop-studio">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        <div><div style="font-size:10px;font-weight:900;letter-spacing:.18em;color:#60a5fa">DSH CREATIVE WORKSPACE</div><h1 style="font-size:25px;font-weight:1000;color:#f8fafc;margin:3px 0">POP STUDIO</h1><p style="font-size:12px;color:#94a3b8;margin:0">Buat POP berdasarkan Master Inventory DSH</p></div>
+        <span style="background:#123b36;color:#6ee7b7;border:1px solid #176b5c;border-radius:20px;padding:7px 11px;font-size:10px;font-weight:900">INVENTORY CONNECTED</span>
+      </div>
+      <div class="pop-card" style="margin-bottom:14px">
+        <div style="font-weight:900;margin-bottom:12px">01 / PILIH TEMPLATE</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+          <div><label class="pop-label">Header POP</label><select id="popHeader" class="pop-field"><option value="MAILER 24">MAILER 24</option></select></div>
+          <div><label class="pop-label">Ukuran</label><select id="popSize" class="pop-field"><option>A3</option><option>A3 Portrait</option><option>A4</option><option>A5 Portrait</option><option>10 x 8</option><option>Endcap</option></select></div>
+          <div><label class="pop-label">Periode Promo</label><input id="popPeriod" class="pop-field" placeholder="Contoh: 14 - 20 November 2026"></div>
+        </div>
+        <p style="font-size:10px;color:#94a3b8;margin:9px 0 0">Mailer 24 adalah template awal. Header lain dapat ditambahkan sebagai pilihan template terpisah.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:14px;align-items:start">
+        <div class="pop-card">
+          <div style="font-weight:900;margin-bottom:12px">02 / DATA PRODUK</div>
+          <label class="pop-label">Barcode atau PROD CODE</label>
+          <div style="display:flex;gap:8px"><input id="popCode" class="pop-field" placeholder="Scan atau ketik barcode / prodcode" autocomplete="off"><button class="pop-btn primary" onclick="popFindProduct()">CARI</button></div>
+          <div id="popLookupStatus" style="font-size:11px;color:#94a3b8;margin-top:8px">Pencarian menggunakan data Inventory yang sudah dimuat DSH.</div>
+          <div style="display:grid;gap:10px;margin-top:14px">
+            <div><label class="pop-label">Nama / Brand Produk</label><input id="popName" class="pop-field" placeholder="Contoh: BIMOLI"></div>
+            <div><label class="pop-label">Deskripsi Produk</label><input id="popDescription" class="pop-field" placeholder="Contoh: Klasik Minyak Grg Jrg 5 L"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><div><label class="pop-label">PROD CODE</label><input id="popProdCode" class="pop-field"></div><div><label class="pop-label">BARCODE</label><input id="popBarcode" class="pop-field"></div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><div><label class="pop-label">Harga Normal</label><input id="popOldPrice" class="pop-field" inputmode="numeric" placeholder="0"></div><div><label class="pop-label">Harga Promo</label><input id="popNewPrice" class="pop-field" inputmode="numeric" placeholder="0"></div></div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1"><input id="popShowStrike" type="checkbox" checked> Tampilkan harga normal dicoret</label>
+            <div><label class="pop-label">Catatan / Satuan</label><input id="popSpec" class="pop-field" placeholder="Contoh: 5 Liter / Pcs"></div>
+          </div>
+          <div style="border-top:1px solid #29364d;margin-top:16px;padding-top:14px">
+            <div style="font-weight:900;margin-bottom:10px">03 / FOTO PRODUK</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="pop-btn primary" onclick="popSearchImage()">✦ CARI FOTO DI INTERNET</button><label class="pop-btn" style="cursor:pointer">UPLOAD FOTO<input id="popImageUpload" type="file" accept="image/*" style="display:none" onchange="popUploadImage(event)"></label></div>
+            <p style="font-size:10px;color:#94a3b8;margin:8px 0">Pencarian membuka hasil gambar berdasarkan nama produk, merek, ukuran dan kode. Periksa kecocokan kemasan sebelum digunakan.</p>
+            <input id="popImageUrl" class="pop-field" style="margin-top:4px" placeholder="Tempel URL gambar langsung (opsional)" oninput="popSetImage(this.value)">
+            <div id="popImageStatus" style="font-size:10px;color:#94a3b8;margin-top:7px">Belum ada foto dipilih.</div>
+          </div>
+        </div>
+        <div class="pop-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-weight:900">04 / LIVE PREVIEW</div><span id="popPreviewSizeLabel" style="font-size:10px;color:#93c5fd;font-weight:900">MAILER 24 • A3 LANDSCAPE</span></div>
+          <div id="popPrintArea"><div class="pop-preview" id="popPreview"><div class="pop-mailer-banner"><img class="pop-banner-art" src="/assets/mailer24-banner.webp" alt="Solusi Belanja Lengkap & Murah"><img class="pop-hotdeal-art" src="/assets/hot-deals.webp" alt="Hot Deals"></div><div class="pop-preview-period" id="popPreviewPeriod">Periode : 10 – 16 November 2026</div><div class="pop-preview-product" id="popPreviewName">NAMA PRODUK<small id="popPreviewDesc">Deskripsi produk</small></div><div class="pop-preview-image" id="popPreviewImage"><span style="color:#9ca3af;font-size:12px">FOTO PRODUK</span></div><div class="pop-preview-prices"><div class="pop-price-oldline"><span class="pop-unit">Rp<br>/pc</span><span class="pop-old" id="popPreviewOld">0</span></div><div class="pop-price-newline"><span class="pop-unit">Rp<br>/pc</span><div class="pop-new" id="popPreviewNew">0</div></div></div><div class="pop-preview-footer" id="popPreviewFooter"></div></div></div>
+          <div style="display:flex;gap:8px;margin-top:14px"><button class="pop-btn" style="flex:1" onclick="popReset()">RESET</button><button class="pop-btn primary" style="flex:1" onclick="popPrint()">CETAK / PDF</button></div>
+        </div>
+      </div>
+    </div>
+  </div>

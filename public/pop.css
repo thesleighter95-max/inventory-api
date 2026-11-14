@@ -1,0 +1,35 @@
+
+
+/* DSH POP STUDIO - scoped module only; Mailer 24 based on supplied A3 PDF */
+.pop-studio{max-width:1180px;margin:0 auto;padding:18px 16px 40px;color:#e5e7eb}
+.pop-card{background:linear-gradient(145deg,#151d31,#101827);border:1px solid #29364d;border-radius:16px;padding:16px;box-shadow:0 12px 30px #02061735}
+.pop-field{width:100%;background:#0b1220;border:1px solid #334155;border-radius:9px;padding:11px 12px;color:#f8fafc;outline:none;min-width:0}
+.pop-field:focus{border-color:#60a5fa;box-shadow:0 0 0 3px #3b82f622}
+.pop-label{display:block;color:#9fb0c7;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin:0 0 6px}
+.pop-btn{border:1px solid #385276;background:#1d3554;color:#eaf4ff;border-radius:9px;padding:10px 13px;font-size:12px;font-weight:800;cursor:pointer}
+.pop-btn.primary{background:linear-gradient(100deg,#2563eb,#0e7490);border:0}
+#popPrintArea{width:100%;overflow-x:auto;padding:2px}
+.pop-preview{background:#fff;color:#080808;width:100%;max-width:900px;aspect-ratio:420/297;margin:0 auto;padding:0;display:grid;grid-template-columns:56% 44%;grid-template-rows:25% 10% 1fr 24%;position:relative;box-shadow:0 12px 35px #0005;overflow:hidden;font-family:Arial,Helvetica,sans-serif}
+.pop-mailer-banner{grid-column:1/3;grid-row:1;position:relative;overflow:visible;background:#eee;z-index:2}
+.pop-banner-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:left center}
+.pop-hotdeal-art{position:absolute;z-index:3;right:3.5%;top:7%;width:22%;height:132%;object-fit:contain;filter:drop-shadow(0 2px 3px #3335)}
+.pop-preview-period{grid-column:1/3;grid-row:2;align-self:center;text-align:left;font-size:clamp(9px,1.25vw,15px);font-weight:700;padding-left:4%;padding-top:1%}
+.pop-preview-product{grid-column:1;grid-row:3;align-self:start;text-align:left;font-size:clamp(20px,3.2vw,38px);line-height:1.02;font-weight:1000;margin:1% 0 0 4%;text-transform:uppercase;overflow-wrap:anywhere}
+.pop-preview-product small{display:block;font-size:.57em;line-height:1.12;text-transform:none;font-weight:700;margin-top:3px}
+.pop-preview-image{grid-column:2;grid-row:3/5;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:4% 8% 5% 0;min-height:0}
+.pop-preview-image img{max-width:100%;max-height:100%;object-fit:contain}
+.pop-preview-prices{grid-column:1;grid-row:4;align-self:end;text-align:left;padding:0 0 5% 4%;display:flex;flex-direction:column;justify-content:flex-end;gap:2%}
+.pop-price-oldline,.pop-price-newline{display:flex;align-items:center;gap:5px;line-height:1}
+.pop-unit{font-size:clamp(8px,1.1vw,13px);font-weight:800;line-height:1.05;min-width:20px;text-align:right}
+.pop-old{display:inline-block;font-size:clamp(17px,2.8vw,31px);color:#080808;text-decoration:line-through;text-decoration-thickness:2px;font-weight:800}
+.pop-new{font-size:clamp(38px,6.8vw,78px);line-height:.88;color:#050505;font-weight:1000;letter-spacing:-.045em;white-space:nowrap}
+.pop-preview-footer{position:absolute;right:2.2%;bottom:1.2%;font-size:clamp(6px,.7vw,9px);font-weight:600;color:#111;text-align:right;z-index:4}
+@media(max-width:700px){.pop-studio{padding:12px 10px 30px}.pop-preview{min-width:620px}}
+@media print{
+ @page{size:A3 landscape;margin:0}
+ body.pop-printing *{visibility:hidden!important}
+ body.pop-printing #popPrintArea,body.pop-printing #popPrintArea *{visibility:visible!important}
+ body.pop-printing #popPrintArea{position:absolute;left:0;top:0;width:var(--pop-print-width,420mm);height:var(--pop-print-height,297mm);max-width:none;margin:0;overflow:visible}
+ body.pop-printing .pop-preview{width:var(--pop-print-width,420mm);height:var(--pop-print-height,297mm);max-width:none;aspect-ratio:auto;box-shadow:none;padding:0;gap:0}
+}
+
