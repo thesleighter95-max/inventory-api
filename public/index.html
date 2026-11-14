@@ -1338,6 +1338,18 @@ body.dsh-absensi-focus #absensiPanel.active{
 }
 </style>
 
+
+<style id="dsh-absensi-top-align-fix">
+/* Absensi harus selalu dimulai dari bagian paling atas, tanpa ruang kosong bekas posisi scroll panel sebelumnya. */
+body.dsh-absensi-focus { scroll-padding-top: 0 !important; }
+body.dsh-absensi-focus #mainApp { padding-top: 0 !important; margin-top: 0 !important; }
+body.dsh-absensi-focus #mainApp > #absensiPanel.active {
+  margin-top: 0 !important; padding-top: 0 !important; top: 0 !important;
+  align-self: flex-start !important; transform: none !important;
+  scroll-margin-top: 0 !important;
+}
+body.dsh-absensi-focus #mainApp > .panel-container { padding-top: 0 !important; margin-top: 0 !important; }
+</style>
 </head>
 
 <body class="pb-24 pt-4" style="padding-top:52px;">
@@ -4875,7 +4887,7 @@ function switchMainTab(tab){
   else if(tab==="neo"){$("neoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navNeo");setMarquee(false);loadNeoStatus();}
   else if(tab==="cst"){$("cstPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navCst");setMarquee(false);cstInit();}
   else if(tab==="fotobblm"){$("fotoBblmPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navFotoBblm");setMarquee(false);fbLoadCategories();(function(){var _lb=document.getElementById("fbLoadBtn");if(_lb)_lb.style.display="block";var _ls=document.getElementById("fbListSection");if(_ls)_ls.style.display="none";var _fc=document.getElementById("fbListContainer");if(_fc)_fc.innerHTML="";var _ff=document.getElementById("fbFilterBar");if(_ff)_ff.innerHTML="";var _fs=document.getElementById("fbSelectBar");if(_fs)_fs.innerHTML="";var _cnt=document.getElementById("fbCount");if(_cnt)_cnt.textContent="0";})();}
-  else if(tab==="absensi"){if(screen.width<768&&!isAdmin){switchMainTab('inventory');return;}document.body.classList.add("dsh-absensi-focus");$("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();(function(){var _td=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();if(_absensiLastScanDate!==_td&&(new Date()).getHours()>=2){var _r=$("absensiResult");if(_r)_r.innerHTML="";var _b=$("absensiStatusBadge");if(_b)_b.style.display="none";var _m=$("absensiScanMsg");if(_m){_m.textContent="\u25BA scan ID karyawan untuk absensi";_m.style.color="#445577";}_absensiLastScanDate=_td;_absensiStatusMap={};}})();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
+  else if(tab==="absensi"){if(screen.width<768&&!isAdmin){switchMainTab('inventory');return;}document.body.classList.add("dsh-absensi-focus");$("absensiPanel").classList.add("active");/* Reset posisi halaman agar Absensi langsung tampil dari bagian atas. */window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;setTimeout(function(){window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;},80);document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();(function(){var _td=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();if(_absensiLastScanDate!==_td&&(new Date()).getHours()>=2){var _r=$("absensiResult");if(_r)_r.innerHTML="";var _b=$("absensiStatusBadge");if(_b)_b.style.display="none";var _m=$("absensiScanMsg");if(_m){_m.textContent="\u25BA scan ID karyawan untuk absensi";_m.style.color="#445577";}_absensiLastScanDate=_td;_absensiStatusMap={};}})();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
   else if(tab==="dashboard"){$("dashboardPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navDashboard");setMarquee(false);initDashboard();}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
