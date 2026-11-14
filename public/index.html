@@ -1310,6 +1310,34 @@ table td { font-size: 11px; }
   }
 </style>
 
+
+<style id="dsh-absensi-fullscreen-nav-hide">
+/* Mode fokus Absensi: sembunyikan sidebar dan gunakan seluruh lebar layar. */
+body.dsh-absensi-focus #bottomNav{display:none!important;transform:translateX(-110%)!important;}
+body.dsh-absensi-focus #sideMenuToggle,
+body.dsh-absensi-focus #sideMenuBackdrop{display:none!important;}
+body.dsh-absensi-focus #mainApp>.panel-container{
+  margin-left:0!important;
+  width:100%!important;
+  max-width:none!important;
+  padding-left:clamp(8px,1.2vw,20px)!important;
+  padding-right:clamp(8px,1.2vw,20px)!important;
+  box-sizing:border-box!important;
+}
+body.dsh-absensi-focus #absensiPanel.active{
+  width:100%!important;max-width:none!important;min-width:0!important;
+  margin-left:0!important;margin-right:0!important;box-sizing:border-box!important;
+}
+@media(min-width:768px){
+  body.dsh-absensi-focus #absensiPanel.active{
+    grid-template-columns:clamp(150px,18vw,250px) minmax(0,1fr) clamp(150px,18vw,250px)!important;
+  }
+  body.dsh-absensi-focus #absensiPanel.active>div:not(#petugasPagiSide):not(#petugasSiangSide):not(#merdekaMarquee):not(#augStarsBg){
+    max-width:none!important;width:100%!important;
+  }
+}
+</style>
+
 </head>
 
 <body class="pb-24 pt-4" style="padding-top:52px;">
@@ -4835,6 +4863,8 @@ function logout(){sessionClear();showHomePage()}
 function setMarquee(show){var m=$("marqueeBar");if(m)m.style.display=show?"flex":"none";}
 function switchMainTab(tab){
   closeDshSideMenuAfterNav();
+  /* Sidebar hanya disembunyikan selama panel Absensi aktif. */
+  if(tab!=="absensi")document.body.classList.remove("dsh-absensi-focus");
   var ps=document.querySelectorAll(".panel-container");for(var p=0;p<ps.length;p++)ps[p].classList.remove("active");
   var ns=document.querySelectorAll("#navContainer .nav-item");for(var n=0;n<ns.length;n++){ns[n].classList.remove("active");ns[n].classList.add("text-gray-500");var ind=ns[n].querySelector(".nav-indicator");if(ind)ind.style.opacity="0"}
   if(_bnfInterval){clearInterval(_bnfInterval);_bnfInterval=null;}if(tab==="inventory"){$("inventoryPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navInventory");setMarquee(true);kirimAktivitas("tab_inventory","Buka panel Inventory")}
@@ -4845,7 +4875,7 @@ function switchMainTab(tab){
   else if(tab==="neo"){$("neoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navNeo");setMarquee(false);loadNeoStatus();}
   else if(tab==="cst"){$("cstPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navCst");setMarquee(false);cstInit();}
   else if(tab==="fotobblm"){$("fotoBblmPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navFotoBblm");setMarquee(false);fbLoadCategories();(function(){var _lb=document.getElementById("fbLoadBtn");if(_lb)_lb.style.display="block";var _ls=document.getElementById("fbListSection");if(_ls)_ls.style.display="none";var _fc=document.getElementById("fbListContainer");if(_fc)_fc.innerHTML="";var _ff=document.getElementById("fbFilterBar");if(_ff)_ff.innerHTML="";var _fs=document.getElementById("fbSelectBar");if(_fs)_fs.innerHTML="";var _cnt=document.getElementById("fbCount");if(_cnt)_cnt.textContent="0";})();}
-  else if(tab==="absensi"){if(screen.width<768&&!isAdmin){switchMainTab('inventory');return;}$("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();(function(){var _td=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();if(_absensiLastScanDate!==_td&&(new Date()).getHours()>=2){var _r=$("absensiResult");if(_r)_r.innerHTML="";var _b=$("absensiStatusBadge");if(_b)_b.style.display="none";var _m=$("absensiScanMsg");if(_m){_m.textContent="\u25BA scan ID karyawan untuk absensi";_m.style.color="#445577";}_absensiLastScanDate=_td;_absensiStatusMap={};}})();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
+  else if(tab==="absensi"){if(screen.width<768&&!isAdmin){switchMainTab('inventory');return;}document.body.classList.add("dsh-absensi-focus");$("absensiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();(function(){var _td=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();if(_absensiLastScanDate!==_td&&(new Date()).getHours()>=2){var _r=$("absensiResult");if(_r)_r.innerHTML="";var _b=$("absensiStatusBadge");if(_b)_b.style.display="none";var _m=$("absensiScanMsg");if(_m){_m.textContent="\u25BA scan ID karyawan untuk absensi";_m.style.color="#445577";}_absensiLastScanDate=_td;_absensiStatusMap={};}})();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
   else if(tab==="dashboard"){$("dashboardPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navDashboard");setMarquee(false);initDashboard();}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
