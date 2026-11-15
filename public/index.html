@@ -6690,7 +6690,7 @@ function syncFlyerOrderAdminAccess(){
   }
 }
 function openFlyerOrderManager(){
-  if(!isAdmin){alert('Fitur ini hanya dapat digunakan oleh admin.');return;}
+  if(!isAdmin || !ADMIN_PASSWORD){alert('Fitur ini hanya dapat digunakan oleh admin yang sudah login.');return;}
   var collection=prompt('Pilih koleksi flyer (1 sampai 5):','1');
   if(collection===null)return;
   collection=Number(collection);
@@ -6724,15 +6724,15 @@ function escapeFlyerOrderText(v){return String(v).replace(/[&<>"']/g,function(c)
 function refreshFlyerOrderLabels(){var rows=document.querySelectorAll('#dshFlyerOrderList .dsh-flyer-order-row');rows.forEach(function(row,i){var t=row.querySelector('div div:last-child');if(t)t.textContent='Posisi '+(i+1);});}
 function closeFlyerOrderDialog(){var el=document.getElementById('dshFlyerOrderOverlay');if(el)el.remove();}
 function saveFlyerOrder(){
-  var token=prompt('Masukkan shared token receiver DSH untuk mengesahkan perubahan urutan:');
-  if(token===null)return;
-  if(!token.trim()){alert('Token tidak boleh kosong.');return;}
+  if(!isAdmin || !ADMIN_PASSWORD){alert('Sesi admin tidak ditemukan. Silakan login admin kembali.');return;}
   var rows=Array.prototype.slice.call(document.querySelectorAll('#dshFlyerOrderList .dsh-flyer-order-row'));
   var ordered=rows.map(function(row){return _flyerOrderDraft[Number(row.getAttribute('data-index'))];}).filter(Boolean);
   var status=document.getElementById('dshFlyerOrderStatus'),btn=document.getElementById('dshFlyerOrderSave');
-  btn.disabled=true;btn.style.opacity='.55';status.textContent='Menyimpan urutan ke Google Spreadsheet…';
-  fetch(DSH_FLYER_WEBAPP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:token.trim(),action:'reorder',collection:_flyerOrderCollection,order:ordered.map(function(x){return x.sourceUrl;})})})
-  .then(function(){status.textContent='Permintaan dikirim. Memuat ulang data untuk memastikan urutan…';setTimeout(function(){loadBingkai(_flyerOrderCollection,BINGKAI_URLS[_flyerOrderCollection-1],BINGKAI_TITLES[_flyerOrderCollection-1]);status.textContent='Jika Apps Script menerima permintaan, urutan baru akan tampil setelah data CSV diperbarui.';btn.disabled=false;btn.style.opacity='1';},1800);})
+  btn.disabled=true;btn.style.opacity='.55';status.textContent='Memverifikasi login admin dan menyimpan urutan…';
+  // Apps Script memvalidasi password melalui endpoint admin-auth DSH di server.
+  // Tidak menggunakan shared token dan tidak mempercayai flag isAdmin dari browser saja.
+  fetch(DSH_FLYER_WEBAPP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'reorder',adminPassword:ADMIN_PASSWORD,collection:_flyerOrderCollection,order:ordered.map(function(x){return x.sourceUrl;})})})
+  .then(function(){status.textContent='Permintaan dikirim. Memuat ulang data…';setTimeout(function(){loadBingkai(_flyerOrderCollection,BINGKAI_URLS[_flyerOrderCollection-1],BINGKAI_TITLES[_flyerOrderCollection-1]);status.textContent='Permintaan pengurutan dikirim. Jika password admin valid, urutan akan diperbarui di Spreadsheet.';btn.disabled=false;btn.style.opacity='1';},2200);})
   .catch(function(){status.textContent='Gagal mengirim permintaan. Periksa koneksi dan deployment Apps Script.';btn.disabled=false;btn.style.opacity='1';});
 }
 
