@@ -5066,9 +5066,11 @@ async function ensurePopLoaded(){
  var host=document.getElementById("popPanel");
  try{
   if(!host)throw new Error("POP panel host not found");
+  // Visibility is controlled ONLY by .panel-container.active.
+  // Do not set inline display:block: it would keep POP visible after switching tabs.
   host.classList.add("active");
-  host.style.display="block";
-  var response=await fetch("/pop.html?v=20261115fix1",{cache:"no-store"});
+  host.style.removeProperty("display");
+  var response=await fetch("/pop.html?v=20261115fix2",{cache:"no-store"});
   if(!response.ok)throw new Error("POP module HTTP "+response.status);
   var markup=await response.text();
   // pop.html may contain a standalone #popPanel wrapper. Remove that wrapper
@@ -5078,12 +5080,12 @@ async function ensurePopLoaded(){
   if(!studio)throw new Error("Konten .pop-studio tidak ditemukan di pop.html");
   host.innerHTML=studio.outerHTML;
   host.classList.add("active");
-  host.style.display="block";
+  host.style.removeProperty("display");
   _dshPopLoaded=true;
   return true;
  }catch(err){
   console.error("DSH POP lazy-load:",err);
-  if(host){host.classList.add("active");host.style.display="block";host.innerHTML='<div style="padding:24px;margin:16px;background:#451a1a;color:#fecaca;border:1px solid #b91c1c;border-radius:12px">POP Studio gagal dimuat: '+String(err.message||err)+'</div>';}
+  if(host){host.classList.add("active");host.style.removeProperty("display");host.innerHTML='<div style="padding:24px;margin:16px;background:#451a1a;color:#fecaca;border:1px solid #b91c1c;border-radius:12px">POP Studio gagal dimuat: '+String(err.message||err)+'</div>';}
   return false;
  }finally{_dshPopLoading=false;}
 }
@@ -5106,7 +5108,28 @@ function popSearchImage(){var q=[$("popName").value,$("popSpec").value,$("popPro
 function popSetImage(url){popCurrentImage=String(url||"").trim();var box=$("popPreviewImage");if(!box)return;if(!popCurrentImage){box.innerHTML='<span style="color:#9ca3af;font-size:12px">FOTO PRODUK</span>';$("popImageStatus").textContent="Belum ada foto dipilih.";return;}var im=new Image();im.onload=function(){box.innerHTML="";im.style.maxWidth="100%";im.style.maxHeight="100%";im.style.objectFit="contain";box.appendChild(im);$("popImageStatus").textContent="Foto berhasil dimuat.";};im.onerror=function(){$("popImageStatus").textContent="URL gambar tidak dapat dimuat. Coba URL gambar langsung atau upload manual.";};im.src=popCurrentImage;}
 function popUploadImage(e){var f=e.target.files&&e.target.files[0];if(!f)return;if(!/^image\//.test(f.type)){alert("File harus berupa gambar.");return;}var reader=new FileReader();reader.onload=function(){popSetImage(reader.result);$("popImageUrl").value="";$("popImageStatus").textContent="Foto diunggah dari perangkat.";};reader.readAsDataURL(f);}
 function popReset(){["popCode","popName","popDescription","popProdCode","popBarcode","popOldPrice","popNewPrice","popSpec","popPeriod","popImageUrl"].forEach(function(id){if($(id))$(id).value="";});$("popShowStrike").checked=true;popSetImage("");$("popLookupStatus").textContent="Masukkan barcode atau PROD CODE.";popUpdatePreview();}
-function popPrint(){popUpdatePreview();var size=(($("popSize")||{}).value||"A3").toUpperCase();var dims={"A3":["420mm","297mm"],"A3 PORTRAIT":["297mm","420mm"],"A4":["297mm","210mm"],"A5 PORTRAIT":["148mm","210mm"],"10 X 8":["10in","8in"],"ENDCAP":["210mm","297mm"]};var d=dims[size]||dims["A3"];document.documentElement.style.setProperty("--pop-print-width",d[0]);document.documentElement.style.setProperty("--pop-print-height",d[1]);var st=document.getElementById("popDynamicPrintPage");if(!st){st=document.createElement("style");st.id="popDynamicPrintPage";document.head.appendChild(st);}st.textContent="@media print{@page{size:"+d[0]+" "+d[1]+";margin:0}}";document.body.classList.add("pop-printing");window.print();setTimeout(function(){document.body.classList.remove("pop-printing");},1200);}
+var _popPdfBusy=false;
+function popLoadScript(src){return new Promise(function(resolve,reject){var found=document.querySelector('script[data-pop-lib="'+src+'"]');if(found){if(found.dataset.loaded==="1")return resolve();found.addEventListener("load",resolve,{once:true});found.addEventListener("error",reject,{once:true});return;}var sc=document.createElement("script");sc.src=src;sc.async=true;sc.dataset.popLib=src;sc.onload=function(){sc.dataset.loaded="1";resolve();};sc.onerror=function(){reject(new Error("Gagal memuat library PDF"));};document.head.appendChild(sc);});}
+function popGetPdfDimensions(){var size=(($("popSize")||{}).value||"A3").toUpperCase();var dims={"A3":[420,297],"A3 PORTRAIT":[297,420],"A4":[297,210],"A5 PORTRAIT":[148,210],"10 X 8":[254,203.2],"ENDCAP":[210,297]};return dims[size]||dims.A3;}
+function popPrint(){
+ if(_popPdfBusy)return;var area=document.getElementById("popPreview");if(!area){alert("Preview POP belum siap.");return;}
+ popUpdatePreview();var d=popGetPdfDimensions();var size=(($("popSize")||{}).value||"A3").toUpperCase();
+ // Samakan rasio preview dengan ukuran kertas yang dipilih sebelum dirender.
+ area.style.aspectRatio=d[0]+" / "+d[1];
+ _popPdfBusy=true;var btn=document.querySelector('#popPanel button[onclick="popPrint()"]');var oldText=btn?btn.textContent:"";if(btn){btn.disabled=true;btn.textContent="MENYIAPKAN PDF...";}
+ Promise.all([
+  popLoadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),
+  popLoadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js")
+ ]).then(function(){
+  return html2canvas(area,{scale:3,backgroundColor:"#ffffff",useCORS:true,allowTaint:false,logging:false,scrollX:0,scrollY:0}).then(function(canvas){
+   var JsPDF=window.jspdf&&window.jspdf.jsPDF;if(!JsPDF)throw new Error("Library PDF tidak tersedia");
+   var pdf=new JsPDF({orientation:d[0]>=d[1]?"landscape":"portrait",unit:"mm",format:d,compress:true});
+   pdf.addImage(canvas.toDataURL("image/jpeg",0.96),"JPEG",0,0,d[0],d[1],undefined,"FAST");
+   var safeName=(($("popName")||{}).value||"POP").replace(/[^a-z0-9_-]+/gi,"_").replace(/^_+|_+$/g,"")||"POP";
+   pdf.save("DSH_POP_"+safeName+"_"+size.replace(/[^A-Z0-9]+/g,"_")+".pdf");
+  });
+ }).catch(function(err){console.error("POP PDF export:",err);alert("PDF langsung belum berhasil dibuat. Periksa koneksi internet lalu coba lagi. Detail: "+(err&&err.message?err.message:"Gagal memproses PDF"));}).finally(function(){_popPdfBusy=false;if(btn){btn.disabled=false;btn.textContent=oldText||"CETAK / PDF";}});
+}
 
 
 function switchMainTab(tab){
