@@ -80,3 +80,70 @@
 .pop-icon-gallery:not(.secondary-mode) .pop-best-seller-option{display:none!important}
 .pop-icon-trigger #popIcon2SelectedThumb{width:38px;height:38px;flex:0 0 38px;display:flex;align-items:center;justify-content:center}
 .pop-icon-trigger #popIcon2SelectedThumb img{width:100%;height:100%;object-fit:contain}
+
+
+/* ===== MAILER 24: CLOSE MATCH TO OFFICIAL A3 REFERENCE ===== */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;600;700;800;900&display=swap');
+.pop-preview{
+  grid-template-columns:56% 44% !important;
+  grid-template-rows:17.8% 7.5% 1fr 25% !important;
+  font-family:"Roboto Condensed","Arial Narrow",Arial,sans-serif !important;
+}
+.pop-mailer-banner{
+  background:#e9e9e9 url('/assets/mailer24-header-exact.webp') center center / 100% 100% no-repeat !important;
+  overflow:visible !important;
+}
+.pop-banner-art{display:none!important}
+.pop-hotdeal-art{
+  right:3.8%!important; top:7%!important; width:22%!important; height:132%!important;
+  object-fit:contain!important; z-index:5!important;
+}
+.pop-preview-period{
+  font-family:"Roboto Condensed","Arial Narrow",Arial,sans-serif!important;
+  font-size:clamp(11px,1.55vw,18px)!important;font-weight:700!important;
+  padding-left:6%!important;padding-top:0!important;transform:translateY(-2%)!important;
+}
+.pop-preview-product{
+  font-family:"Roboto Condensed","Arial Narrow",Arial,sans-serif!important;
+  font-size:clamp(24px,4.15vw,49px)!important;line-height:1.02!important;
+  font-weight:900!important;letter-spacing:-.025em!important;
+  margin:0 0 0 6%!important;text-transform:uppercase!important;
+}
+.pop-preview-product small{
+  font-family:"Roboto Condensed","Arial Narrow",Arial,sans-serif!important;
+  display:block;font-size:.66em!important;line-height:1.12!important;
+  font-weight:700!important;letter-spacing:-.015em!important;margin-top:3px!important;
+}
+.pop-secondary-icon{
+  margin-top:12%!important;width:17%!important;aspect-ratio:1/1!important;height:auto!important;
+  flex:0 0 auto!important;
+}
+.pop-secondary-icon img{width:100%!important;height:100%!important;object-fit:contain!important;display:block!important}
+.pop-preview-prices{
+  padding:0 0 5.5% 6%!important;gap:2.5%!important;
+}
+.pop-price-oldline,.pop-price-newline{gap:6px!important;align-items:center!important}
+.pop-unit{font-family:"Roboto Condensed","Arial Narrow",Arial,sans-serif!important;font-size:clamp(9px,1.35vw,15px)!important;min-width:24px!important;font-weight:800!important}
+.pop-old{
+  position:relative!important;display:inline-block!important;
+  font-family:"Roboto Condensed","Arial Narrow",Arial,sans-serif!important;
+  font-size:clamp(22px,3.8vw,39px)!important;font-weight:800!important;
+  text-decoration:none!important;line-height:1!important;white-space:nowrap!important;
+}
+.pop-old::after{
+  content:"";position:absolute;left:-1%;right:-1%;top:53%;height:2.5px;
+  background:#080808;transform:rotate(-7deg);transform-origin:center;pointer-events:none;
+}
+.pop-new{
+  font-family:"Roboto Condensed","Arial Narrow",Arial,sans-serif!important;
+  font-size:clamp(48px,9vw,100px)!important;line-height:.88!important;
+  font-weight:900!important;letter-spacing:-.045em!important;white-space:nowrap!important;
+}
+.pop-preview-footer{font-family:"Roboto Condensed","Arial Narrow",Arial,sans-serif!important}
+.pop-icon-gallery.secondary-mode .pop-icon-option:not([data-icon="none"]):not([data-icon="best-seller"]){display:none!important}
+.pop-icon-gallery:not(.secondary-mode) .pop-best-seller-option{display:none!important}
+.pop-icon-trigger #popIcon2SelectedThumb{width:38px;height:38px;flex:0 0 38px;display:flex;align-items:center;justify-content:center}
+.pop-icon-trigger #popIcon2SelectedThumb img{width:100%;height:100%;object-fit:contain}
+@media print{
+ .pop-preview{grid-template-rows:17.8% 7.5% 1fr 25%!important}
+}
