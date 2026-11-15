@@ -195,3 +195,49 @@
  .pop-preview{width:var(--pop-print-width,420mm)!important;height:var(--pop-print-height,297mm)!important;max-width:none!important;aspect-ratio:auto!important}
  .pop-mailer-banner{height:29.45%!important}
 }
+
+
+/* ===== V5 FIX: MAIN ICON NO ICON + PRICE VISIBILITY ===== */
+/* Hide header badge reliably even when older rules use display:block!important. */
+.pop-hotdeal-art.is-hidden,
+.pop-hotdeal-art[hidden]{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+}
+/* Keep price layer and both price rows visible in preview and exported PDF. */
+.pop-preview-prices{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  overflow:visible!important;
+  z-index:8!important;
+}
+.pop-price-oldline{
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  z-index:9!important;
+  top:76.8%!important;
+}
+.pop-price-newline{
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  z-index:9!important;
+  top:82.8%!important;
+}
+.pop-unit,.pop-old,.pop-new{
+  color:#050505!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+.pop-new{
+  display:block!important;
+  min-width:0!important;
+  line-height:.9!important;
+}
