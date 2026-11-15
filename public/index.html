@@ -6674,56 +6674,47 @@ function loadBingkai(id,url,title){
     }).catch(function(){});
 }
 
-/* ===== MANAJEMEN URUTAN FLYER (TERSIMPAN DI GOOGLE SHEET) ===== */
+/* ===== MANAJEMEN FLYER: REORDER + PINDAH ANTAR KOLEKSI ===== */
 var DSH_FLYER_WEBAPP_URL="https://script.google.com/macros/s/AKfycbw7hJ2ik5FwMlMFMhJJ-WvzOEoZu0WvnGlwBSU57vmoTLvCFC0CWGMlUKn3WHPar9jU7Q/exec";
-var _flyerOrderCollection=1,_flyerOrderDraft=[];
+var _flyerOrderCollection=1,_flyerCollectionsDraft={};
 function syncFlyerOrderAdminAccess(){
-  var entry=document.getElementById('flyerManageEntry');
-  if(entry)entry.style.display='none'; // Jangan tampilkan kontrol pengurutan pada halaman publik.
+  var entry=document.getElementById('flyerManageEntry');if(entry)entry.style.display='none';
   var old=document.getElementById('dshFlyerOrderAdminButton');
   if(!isAdmin){if(old)old.remove();return;}
-  if(!old){
-    old=document.createElement('button');old.id='dshFlyerOrderAdminButton';
-    old.type='button';old.textContent='☷ Kelola Urutan Flyer';
-    old.style.cssText='position:fixed;right:18px;bottom:22px;z-index:9997;padding:11px 15px;border-radius:999px;border:1px solid rgba(129,140,248,.5);background:#312e81;color:#fff;font-size:12px;font-weight:800;box-shadow:0 8px 24px rgba(49,46,129,.35);';
-    old.onclick=openFlyerOrderManager;document.body.appendChild(old);
-  }
+  if(!old){old=document.createElement('button');old.id='dshFlyerOrderAdminButton';old.type='button';old.textContent='☷ Kelola Urutan Flyer';old.style.cssText='position:fixed;right:18px;bottom:22px;z-index:9997;padding:11px 15px;border-radius:999px;border:1px solid rgba(129,140,248,.5);background:#312e81;color:#fff;font-size:12px;font-weight:800;box-shadow:0 8px 24px rgba(49,46,129,.35);';old.onclick=openFlyerOrderManager;document.body.appendChild(old);}
 }
 function openFlyerOrderManager(){
-  if(!isAdmin || !ADMIN_PASSWORD){alert('Fitur ini hanya dapat digunakan oleh admin yang sudah login.');return;}
-  var first=1;
-  while(first<=5 && !(bingSlidesAll[first]||[]).length) first++;
-  if(first>5){alert('Data flyer masih dimuat atau belum tersedia. Coba beberapa saat lagi.');return;}
-  _flyerOrderCollection=first;
-  _flyerOrderDraft=(bingSlidesAll[first]||[]).slice();
-  renderFlyerOrderDialog();
-}
-function changeFlyerOrderCollection(n){
-  n=Number(n);
-  var slides=bingSlidesAll[n]||[];
-  if(!slides.length){alert('Flyer koleksi '+n+' belum tersedia atau masih dimuat.');return;}
-  _flyerOrderCollection=n;
-  _flyerOrderDraft=slides.slice();
+  if(!isAdmin||!ADMIN_PASSWORD){alert('Fitur ini hanya dapat digunakan oleh admin yang sudah login.');return;}
+  _flyerCollectionsDraft={};
+  for(var c=1;c<=5;c++)_flyerCollectionsDraft[c]=(bingSlidesAll[c]||[]).slice();
+  if(!Object.keys(_flyerCollectionsDraft).some(function(k){return _flyerCollectionsDraft[k].length;})){alert('Data flyer masih dimuat atau belum tersedia. Coba beberapa saat lagi.');return;}
+  _flyerOrderCollection=1;while(_flyerOrderCollection<=5&&!_flyerCollectionsDraft[_flyerOrderCollection].length)_flyerOrderCollection++;
+  if(_flyerOrderCollection>5)_flyerOrderCollection=1;
   renderFlyerOrderDialog();
 }
 function renderFlyerOrderDialog(){
   var old=document.getElementById('dshFlyerOrderOverlay');if(old)old.remove();
-  var overlay=document.createElement('div');overlay.id='dshFlyerOrderOverlay';
-  overlay.style.cssText='position:fixed;inset:0;z-index:10020;background:rgba(2,6,23,.88);display:flex;align-items:center;justify-content:center;padding:14px;';
-  var box=document.createElement('div');box.style.cssText='width:100%;max-width:520px;max-height:88vh;overflow:auto;background:#151929;border:1px solid #334155;border-radius:18px;padding:16px;color:#e2e8f0;';
-  var html='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px"><b style="font-size:16px">Kelola Urutan Flyer</b><button id="dshFlyerOrderClose" style="font-size:22px;color:#94a3b8">×</button></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">';
-  for(var c=1;c<=5;c++){var active=c===_flyerOrderCollection;html+='<button type="button" data-collection="'+c+'" style="flex:1;min-width:64px;padding:9px 10px;border-radius:9px;border:1px solid '+(active?'#818cf8':'#475569')+';background:'+(active?'#3730a3':'#202a3c')+';color:#fff;font-weight:800">Flyer '+c+'</button>';}
-  html+='</div><p style="font-size:11px;color:#94a3b8;margin-bottom:12px">Tekan dan tahan ikon ☰ lalu geser flyer ke posisi yang diinginkan.</p><div id="dshFlyerOrderList">';
-  _flyerOrderDraft.forEach(function(slide,i){html+='<div class="dsh-flyer-order-row" draggable="true" data-index="'+i+'" style="display:flex;align-items:center;gap:10px;padding:8px;margin:6px 0;background:#202a3c;border:1px solid #334155;border-radius:12px;cursor:grab"><span style="font-size:20px;color:#a5b4fc">☰</span><img src="'+slide.img.replace(/"/g,'&quot;')+'" style="width:52px;height:58px;object-fit:cover;border-radius:7px;background:#0b1220"><div style="min-width:0;flex:1"><div style="font-size:12px;font-weight:700;overflow-wrap:anywhere">'+escapeFlyerOrderText(slide.title||'Promo')+'</div><div style="font-size:10px;color:#94a3b8">Posisi '+(i+1)+'</div></div></div>';});
-  html+='</div><div style="display:flex;gap:8px;margin-top:14px"><button id="dshFlyerOrderCancel" style="flex:1;padding:11px;border-radius:10px;background:#334155;font-weight:700">Batal</button><button id="dshFlyerOrderSave" style="flex:1;padding:11px;border-radius:10px;background:#4f46e5;color:white;font-weight:800">Simpan Urutan</button></div><div id="dshFlyerOrderStatus" style="font-size:11px;color:#94a3b8;text-align:center;margin-top:10px"></div>';
+  var overlay=document.createElement('div');overlay.id='dshFlyerOrderOverlay';overlay.style.cssText='position:fixed;inset:0;z-index:10020;background:rgba(2,6,23,.88);display:flex;align-items:center;justify-content:center;padding:14px;';
+  var box=document.createElement('div');box.style.cssText='width:100%;max-width:560px;max-height:90vh;overflow:auto;background:#151929;border:1px solid #334155;border-radius:18px;padding:16px;color:#e2e8f0;';
+  var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:16px">Kelola Urutan & Koleksi Flyer</b><button id="dshFlyerOrderClose" style="font-size:22px;color:#94a3b8">×</button></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">';
+  for(var c=1;c<=5;c++){var active=c===_flyerOrderCollection;html+='<button type="button" data-collection="'+c+'" style="flex:1;min-width:64px;padding:9px 10px;border-radius:9px;border:1px solid '+(active?'#818cf8':'#475569')+';background:'+(active?'#3730a3':'#202a3c')+';color:#fff;font-weight:800">Flyer '+c+' ('+(_flyerCollectionsDraft[c]||[]).length+')</button>';}
+  html+='</div><p style="font-size:11px;color:#cbd5e1;margin-bottom:10px">Geser flyer ke atas/bawah untuk mengurutkan. Untuk memindahkan flyer ke koleksi lain, tahan flyer lalu lepaskan pada tab Flyer 1–5.</p><div id="dshFlyerOrderList" data-drop-collection="'+_flyerOrderCollection+'">';
+  var slides=_flyerCollectionsDraft[_flyerOrderCollection]||[];
+  slides.forEach(function(slide,i){html+='<div class="dsh-flyer-order-row" draggable="true" data-index="'+i+'" style="display:flex;align-items:center;gap:10px;padding:8px;margin:6px 0;background:#202a3c;border:1px solid #334155;border-radius:12px;cursor:grab"><span style="font-size:20px;color:#a5b4fc">☰</span><img src="'+String(slide.img||'').replace(/"/g,'&quot;')+'" style="width:52px;height:58px;object-fit:cover;border-radius:7px;background:#0b1220"><div style="min-width:0;flex:1"><div style="font-size:12px;font-weight:700;overflow-wrap:anywhere">'+escapeFlyerOrderText(slide.title||'Promo')+'</div><div style="font-size:10px;color:#94a3b8">Posisi '+(i+1)+'</div></div></div>';});
+  if(!slides.length)html+='<div style="padding:24px;text-align:center;color:#94a3b8;border:1px dashed #475569;border-radius:12px">Koleksi ini kosong. Pindahkan flyer ke sini dengan melepasnya pada tab Flyer '+_flyerOrderCollection+'.</div>';
+  html+='</div><div style="display:flex;gap:8px;margin-top:14px"><button id="dshFlyerOrderCancel" style="flex:1;padding:11px;border-radius:10px;background:#334155;font-weight:700">Batal</button><button id="dshFlyerOrderSave" style="flex:1;padding:11px;border-radius:10px;background:#4f46e5;color:white;font-weight:800">Simpan Perubahan</button></div><div id="dshFlyerOrderStatus" style="font-size:11px;color:#94a3b8;text-align:center;margin-top:10px"></div>';
   box.innerHTML=html;overlay.appendChild(box);document.body.appendChild(overlay);
-  document.getElementById('dshFlyerOrderClose').onclick=closeFlyerOrderDialog;
-  document.querySelectorAll('#dshFlyerOrderOverlay [data-collection]').forEach(function(tab){tab.onclick=function(){changeFlyerOrderCollection(tab.getAttribute('data-collection'));};});
-  document.getElementById('dshFlyerOrderCancel').onclick=closeFlyerOrderDialog;
+  document.getElementById('dshFlyerOrderClose').onclick=closeFlyerOrderDialog;document.getElementById('dshFlyerOrderCancel').onclick=closeFlyerOrderDialog;
+  document.querySelectorAll('#dshFlyerOrderOverlay [data-collection]').forEach(function(tab){
+    tab.addEventListener('dragover',function(e){e.preventDefault();tab.style.outline='2px dashed #a5b4fc';});
+    tab.addEventListener('dragleave',function(){tab.style.outline='none';});
+    tab.addEventListener('drop',function(e){e.preventDefault();tab.style.outline='none';var from=Number(e.dataTransfer.getData('text/plain'));var to=Number(tab.getAttribute('data-collection'));if(!from||from===to)return;var item=window._dshDraggedFlyer;if(!item)return;var a=_flyerCollectionsDraft[from]||[];var idx=a.indexOf(item);if(idx<0)return;a.splice(idx,1);(_flyerCollectionsDraft[to]||(_flyerCollectionsDraft[to]=[])).push(item);_flyerOrderCollection=to;renderFlyerOrderDialog();var st=document.getElementById('dshFlyerOrderStatus');if(st)st.textContent='Flyer berhasil dipindahkan ke Koleksi '+to+'. Klik Simpan Perubahan untuk menyimpan.';});
+    tab.onclick=function(){_flyerOrderCollection=Number(tab.getAttribute('data-collection'));renderFlyerOrderDialog();};
+  });
   var list=document.getElementById('dshFlyerOrderList'),dragged=null;
   list.querySelectorAll('.dsh-flyer-order-row').forEach(function(row){
-    row.addEventListener('dragstart',function(e){dragged=row;e.dataTransfer.effectAllowed='move';row.style.opacity='.45';});
-    row.addEventListener('dragend',function(){row.style.opacity='1';dragged=null;refreshFlyerOrderLabels();});
+    row.addEventListener('dragstart',function(e){dragged=row;var item=(_flyerCollectionsDraft[_flyerOrderCollection]||[])[Number(row.getAttribute('data-index'))];window._dshDraggedFlyer=item;e.dataTransfer.setData('text/plain',String(_flyerOrderCollection));e.dataTransfer.effectAllowed='move';row.style.opacity='.4';});
+    row.addEventListener('dragend',function(){row.style.opacity='1';dragged=null;window._dshDraggedFlyer=null;refreshFlyerOrderLabels();});
     row.addEventListener('dragover',function(e){e.preventDefault();if(!dragged||dragged===row)return;var r=row.getBoundingClientRect();if(e.clientY<r.top+r.height/2)list.insertBefore(dragged,row);else list.insertBefore(dragged,row.nextSibling);});
   });
   document.getElementById('dshFlyerOrderSave').onclick=saveFlyerOrder;
@@ -6732,16 +6723,14 @@ function escapeFlyerOrderText(v){return String(v).replace(/[&<>"']/g,function(c)
 function refreshFlyerOrderLabels(){var rows=document.querySelectorAll('#dshFlyerOrderList .dsh-flyer-order-row');rows.forEach(function(row,i){var t=row.querySelector('div div:last-child');if(t)t.textContent='Posisi '+(i+1);});}
 function closeFlyerOrderDialog(){var el=document.getElementById('dshFlyerOrderOverlay');if(el)el.remove();}
 function saveFlyerOrder(){
-  if(!isAdmin || !ADMIN_PASSWORD){alert('Sesi admin tidak ditemukan. Silakan login admin kembali.');return;}
+  if(!isAdmin||!ADMIN_PASSWORD){alert('Sesi admin tidak ditemukan. Silakan login admin kembali.');return;}
   var rows=Array.prototype.slice.call(document.querySelectorAll('#dshFlyerOrderList .dsh-flyer-order-row'));
-  var ordered=rows.map(function(row){return _flyerOrderDraft[Number(row.getAttribute('data-index'))];}).filter(Boolean);
-  var status=document.getElementById('dshFlyerOrderStatus'),btn=document.getElementById('dshFlyerOrderSave');
-  btn.disabled=true;btn.style.opacity='.55';status.textContent='Memverifikasi login admin dan menyimpan urutan…';
-  // Apps Script memvalidasi password melalui endpoint admin-auth DSH di server.
-  // Tidak menggunakan shared token dan tidak mempercayai flag isAdmin dari browser saja.
-  fetch(DSH_FLYER_WEBAPP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'reorder',adminPassword:ADMIN_PASSWORD,collection:_flyerOrderCollection,order:ordered.map(function(x){return x.sourceUrl;})})})
-  .then(function(){status.textContent='Permintaan dikirim. Memuat ulang data…';setTimeout(function(){loadBingkai(_flyerOrderCollection,BINGKAI_URLS[_flyerOrderCollection-1],BINGKAI_TITLES[_flyerOrderCollection-1]);status.textContent='Permintaan pengurutan dikirim. Jika password admin valid, urutan akan diperbarui di Spreadsheet.';btn.disabled=false;btn.style.opacity='1';},2200);})
-  .catch(function(){status.textContent='Gagal mengirim permintaan. Periksa koneksi dan deployment Apps Script.';btn.disabled=false;btn.style.opacity='1';});
+  _flyerCollectionsDraft[_flyerOrderCollection]=rows.map(function(row){return (_flyerCollectionsDraft[_flyerOrderCollection]||[])[Number(row.getAttribute('data-index'))];}).filter(Boolean);
+  var payload={};for(var c=1;c<=5;c++)payload[c]=(_flyerCollectionsDraft[c]||[]).map(function(x){return x.sourceUrl;});
+  var status=document.getElementById('dshFlyerOrderStatus'),btn=document.getElementById('dshFlyerOrderSave');btn.disabled=true;btn.style.opacity='.55';status.textContent='Memverifikasi admin dan menyimpan semua koleksi…';
+  fetch(DSH_FLYER_WEBAPP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'saveCollections',adminPassword:ADMIN_PASSWORD,collections:payload})})
+  .then(function(){status.textContent='Permintaan penyimpanan dikirim. Memuat ulang flyer…';setTimeout(function(){for(var c=1;c<=5;c++)loadBingkai(c,BINGKAI_URLS[c-1],BINGKAI_TITLES[c-1]);status.textContent='Perubahan dikirim ke Spreadsheet. Muat ulang halaman jika urutan belum terlihat.';btn.disabled=false;btn.style.opacity='1';},1800);})
+  .catch(function(){status.textContent='Gagal mengirim. Periksa koneksi dan Apps Script.';btn.disabled=false;btn.style.opacity='1';});
 }
 
 function openBingkaiSlideshow(id){
