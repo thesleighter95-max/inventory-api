@@ -1484,7 +1484,7 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
   @media(max-width:767px){#navContainer .dsh-brand-header{min-height:94px!important;margin-bottom:8px!important;padding:4px 7px 12px!important;gap:10px!important;}#navContainer .dsh-brand-mark{width:52px!important;height:52px!important;flex-basis:52px!important;}#navContainer .dsh-brand-mark svg{width:49px!important;height:49px!important;flex-basis:49px!important;}#navContainer .dsh-brand-name{font-size:23px!important;}#navContainer .dsh-brand-full{max-width:150px!important;font-size:7.5px!important;letter-spacing:.45px!important;white-space:normal!important;overflow-wrap:anywhere!important;}#navContainer .dsh-brand-tagline{font-size:8px!important;}}
 </style>
 
-<link rel="stylesheet" href="/pop.css?v=20261115exact4">
+<link rel="stylesheet" href="/pop.css?v=20261115fix5">
 </head>
 
 <body class="pb-24 pt-4" style="padding-top:52px;">
@@ -5055,7 +5055,7 @@ var popIconCatalog={"none":{label:"NO ICON",file:"pop-icon-no-icon.png"},"hot-de
 function popOpenIconGallery(mode){var g=$("popIconGallery");if(!g)return;var secondary=mode==="secondary";g.dataset.mode=secondary?"secondary":"primary";g.classList.toggle("secondary-mode",secondary);g.style.display="grid";popMarkSelectedIcon();}
 function popCloseIconGallery(){var g=$("popIconGallery");if(g)g.style.display="none";}
 function popMarkSelectedIcon(){var g=$("popIconGallery");if(!g)return;var secondary=g.dataset.mode==="secondary";var selected=secondary?popSelectedIcon2:popSelectedIcon;g.querySelectorAll(".pop-icon-option").forEach(function(b){b.classList.toggle("selected",b.getAttribute("data-icon")===selected);});}
-function popApplyIconToPreview(){var item=popIconCatalog[popSelectedIcon]||popIconCatalog["none"];var img=$("popPreviewIcon"),thumb=$("popIconSelectedThumb"),label=$("popIconSelectedLabel");if(label)label.textContent=item.label;if(thumb)thumb.innerHTML=popSelectedIcon==="none"?"<span>NO ICON</span>":'<img src="/assets/'+item.file+'" alt="'+item.label+'">';if(img){if(popSelectedIcon==="none"){img.style.display="none";}else{img.style.display="block";img.src="/assets/"+item.file;img.alt=item.label;}}popMarkSelectedIcon();}
+function popApplyIconToPreview(){var item=popIconCatalog[popSelectedIcon]||popIconCatalog["none"];var img=$("popPreviewIcon"),thumb=$("popIconSelectedThumb"),label=$("popIconSelectedLabel");if(label)label.textContent=item.label;if(thumb)thumb.innerHTML=popSelectedIcon==="none"?"<span>NO ICON</span>":'<img src="/assets/'+item.file+'" alt="'+item.label+'">';if(img){var hide=popSelectedIcon==="none";img.classList.toggle("is-hidden",hide);img.hidden=hide;if(hide){img.removeAttribute("src");img.style.setProperty("display","none","important");}else{img.src="/assets/"+item.file+"?v=20261115fix5";img.alt=item.label;img.hidden=false;img.style.setProperty("display","block","important");img.style.visibility="visible";img.style.opacity="1";}}popMarkSelectedIcon();}
 function popApplyIcon2ToPreview(){var item=popIconCatalog[popSelectedIcon2]||popIconCatalog["none"];var wrap=$("popPreviewIcon2"),thumb=$("popIcon2SelectedThumb"),label=$("popIcon2SelectedLabel");if(label)label.textContent=item.label;if(thumb)thumb.innerHTML=popSelectedIcon2==="none"?"<span>NO ICON</span>":'<img src="/assets/'+item.file+'" alt="'+item.label+'">';if(wrap){if(popSelectedIcon2==="none"){wrap.style.display="none";wrap.innerHTML="";}else{wrap.style.display="flex";wrap.innerHTML='<img src="/assets/'+item.file+'" alt="'+item.label+'">';}}popMarkSelectedIcon();}
 function popSelectIcon(key){var g=$("popIconGallery");var secondary=g&&g.dataset.mode==="secondary";if(secondary){if(key!=="none"&&key!=="best-seller")return;popSelectedIcon2=key;popApplyIcon2ToPreview();}else{if(!popIconCatalog[key]||key==="best-seller")return;popSelectedIcon=key;popApplyIconToPreview();}popCloseIconGallery();}
 
@@ -5071,7 +5071,7 @@ async function ensurePopLoaded(){
   // Do not set inline display:block: it would keep POP visible after switching tabs.
   host.classList.add("active");
   host.style.removeProperty("display");
-  var response=await fetch("/pop.html?v=20261115exact4",{cache:"no-store"});
+  var response=await fetch("/pop.html?v=20261115fix5",{cache:"no-store"});
   if(!response.ok)throw new Error("POP module HTTP "+response.status);
   var markup=await response.text();
   // pop.html may contain a standalone #popPanel wrapper. Remove that wrapper
@@ -5098,12 +5098,14 @@ function popFindProduct(){var q=String($("popCode").value||"").trim();if(!q){$("
 function popMoney(v){var n=String(v||"").replace(/[^0-9]/g,"");return n?"Rp "+Number(n).toLocaleString("id-ID"):"Rp 0";}
 function popUpdatePreview(){
  var name=$("popName"),descInput=$("popDescription"),period=$("popPeriod"),old=$("popOldPrice"),now=$("popNewPrice"),strike=$("popShowStrike");
- if($("popPreviewName")){var pn=$("popPreviewName");pn.childNodes[0].textContent=(name.value||"NAMA PRODUK");var desc=$("popPreviewDesc");if(desc)desc.textContent=descInput?descInput.value:"";}
- if($("popPreviewPeriod"))$("popPreviewPeriod").textContent=period.value?("Periode : "+period.value):"Periode : PERIODE PROMO";
- if($("popPreviewOld")){$("popPreviewOld").textContent=(Number(String(old.value||"").replace(/[^0-9]/g,""))||0).toLocaleString("id-ID");$("popPreviewOld").style.display=strike.checked&&old.value?"block":"none";}
- if($("popPreviewNew"))$("popPreviewNew").textContent=(Number(String(now.value||"").replace(/[^0-9]/g,""))||0).toLocaleString("id-ID");
- var size=(($("popSize")||{}).value||"A3").toUpperCase();var label=$("popPreviewSizeLabel");if(label)label.textContent="MAILER 24 • "+size+(size==="A3"?" LANDSCAPE":"");
- var footer=$("popPreviewFooter");if(footer)footer.textContent=(($("popBarcode")||{}).value||"")+" | "+new Date().toLocaleDateString("id-ID",{day:"2-digit",month:"2-digit"});
+ if($("popPreviewName")){var pn=$("popPreviewName");pn.childNodes[0].textContent=(name&&name.value)||"NAMA PRODUK";var desc=$("popPreviewDesc");if(desc)desc.textContent=descInput?descInput.value:"";}
+ if($("popPreviewPeriod"))$("popPreviewPeriod").textContent=(period&&period.value)?("Periode : "+period.value):"Periode : PERIODE PROMO";
+ var oldEl=$("popPreviewOld"),oldLine=oldEl&&oldEl.closest(".pop-price-oldline");
+ if(oldEl){var oldDigits=String(old&&old.value||"").replace(/[^0-9]/g,"");oldEl.textContent=oldDigits?Number(oldDigits).toLocaleString("id-ID"):"";var showOld=!!(strike&&strike.checked&&oldDigits);oldEl.style.setProperty("display",showOld?"inline-block":"none","important");if(oldLine)oldLine.style.setProperty("display",showOld?"flex":"none","important");}
+ var newEl=$("popPreviewNew"),newLine=newEl&&newEl.closest(".pop-price-newline");
+ if(newEl){var newDigits=String(now&&now.value||"").replace(/[^0-9]/g,"");newEl.textContent=newDigits?Number(newDigits).toLocaleString("id-ID"):"";newEl.style.setProperty("display","block","important");if(newLine)newLine.style.setProperty("display","flex","important");}
+ var size=((($("popSize")||{}).value)||"A3").toUpperCase();var label=$("popPreviewSizeLabel");if(label)label.textContent="MAILER 24 • "+size+(size==="A3"?" LANDSCAPE":"");
+ var footer=$("popPreviewFooter");if(footer)footer.textContent=((($("popBarcode")||{}).value)||"")+" | "+new Date().toLocaleDateString("id-ID",{day:"2-digit",month:"2-digit"});
 }
 var popImageSearchItems=[];
 function popSearchImage(){
