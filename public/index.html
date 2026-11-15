@@ -1591,6 +1591,9 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
       </div>
     </div>
   </div>
+  <div id="flyerManageEntry" style="display:flex;justify-content:center;margin:10px 0 2px;">
+    <button type="button" onclick="openFlyerOrderManager()" style="border:1px solid rgba(129,140,248,.35);background:rgba(99,102,241,.10);color:#a5b4fc;border-radius:999px;padding:8px 14px;font-size:11px;font-weight:700;">☷ Kelola Urutan Flyer</button>
+  </div>
 
   <div class="home-footer">
     <div class="home-app-info">
@@ -6631,43 +6634,6 @@ function _triggerLoginBtn(){
     },2200);
   },remaining);
 }
-// CSV parser: aman untuk koma dan tanda kutip di dalam judul/subjudul.
-function parseBingkaiCSV(text){
-  var rows=[],row=[],cell='',quoted=false;
-  for(var i=0;i<text.length;i++){
-    var ch=text[i],next=text[i+1];
-    if(ch==='"'&&quoted&&next==='"'){cell+='"';i++;}
-    else if(ch==='"'){quoted=!quoted;}
-    else if(ch===','&&!quoted){row.push(cell);cell='';}
-    else if((ch==='\n'||ch==='\r')&&!quoted){
-      if(ch==='\r'&&next==='\n')i++;
-      row.push(cell);cell='';
-      if(row.some(function(v){return String(v).trim()!=='';}))rows.push(row);
-      row=[];
-    }else{cell+=ch;}
-  }
-  row.push(cell);
-  if(row.some(function(v){return String(v).trim()!=='';}))rows.push(row);
-  return rows;
-}
-// D = berlaku_mulai, E = berlaku_selesai. Tanggal boleh DD-MM-YYYY atau YYYY-MM-DD.
-function bingkaiParseDate(value){
-  value=String(value||'').trim();
-  if(!value)return null;
-  var m=value.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
-  if(m)return new Date(Number(m[3]),Number(m[2])-1,Number(m[1]));
-  m=value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-  if(m)return new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));
-  var d=new Date(value);
-  return isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate());
-}
-function bingkaiIsActive(startValue,endValue){
-  var today=new Date();today=new Date(today.getFullYear(),today.getMonth(),today.getDate());
-  var start=bingkaiParseDate(startValue),end=bingkaiParseDate(endValue);
-  if(start&&today<start)return false;
-  if(end&&today>end)return false;
-  return true;
-}
 function loadBingkai(id,url,title){
   var titleEl=$('btitle'+id),coverEl=$('bcov'+id),countEl=$('bcount'+id),card=$('bcard'+id);
   if(titleEl&&title)titleEl.textContent=title;
@@ -6675,19 +6641,18 @@ function loadBingkai(id,url,title){
   fetch(url+(/\?/.test(url)?'&':'?')+'_t='+Date.now())
     .then(function(r){if(!r.ok)throw new Error();return r.text();})
     .then(function(csv){
-      var slides=[],rows=parseBingkaiCSV(csv);
+      var slides=[],rows=csv.split('\n');
       for(var i=1;i<rows.length;i++){
-        var cols=rows[i].map(function(c){return String(c||'').trim();});
-        var img=driveImgUrl(cols[0]||'');
-        if(!img||!bingkaiIsActive(cols[3]||'',cols[4]||''))continue;
-        slides.push({img:img,title:cols[1]||'',subtitle:cols[2]||''});
+        var cols=rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(function(c){return c.replace(/^"|"$/g,'').trim();});
+        var img=driveImgUrl((cols[0]||'').trim());
+        if(!img)continue;
+        slides.push({img:img,title:(cols[1]||'').trim(),subtitle:(cols[2]||'').trim(),startDate:(cols[3]||'').trim(),endDate:(cols[4]||'').trim(),sortOrder:Number(cols[5])||0,sourceUrl:(cols[0]||'').trim()});
       }
-      if(!slides.length){
-        bingSlidesAll[id]=[];
-        if(countEl)countEl.textContent='0 foto aktif';
-        if(card)card.style.display='none';
-        return;
-      }
+      slides.sort(function(a,b){
+        if(a.sortOrder&&b.sortOrder)return a.sortOrder-b.sortOrder;
+        if(a.sortOrder)return -1;if(b.sortOrder)return 1;return 0;
+      });
+      if(!slides.length)return;
       bingSlidesAll[id]=slides;
       if(coverEl)coverEl.innerHTML='<img src="'+slides[0].img+'" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display=\'none\'">';
       if(countEl)countEl.textContent=slides.length+(slides.length===1?' foto':' foto');
@@ -6705,6 +6670,55 @@ function loadBingkai(id,url,title){
         },_stagger);
       }
     }).catch(function(){});
+}
+
+/* ===== MANAJEMEN URUTAN FLYER (TERSIMPAN DI GOOGLE SHEET) ===== */
+var DSH_FLYER_WEBAPP_URL="https://script.google.com/macros/s/AKfycbw7hJ2ik5FwMlMFMhJJ-WvzOEoZu0WvnGlwBSU57vmoTLvCFC0CWGMlUKn3WHPar9jU7Q/exec";
+var _flyerOrderCollection=1,_flyerOrderDraft=[];
+function openFlyerOrderManager(){
+  var collection=prompt('Pilih koleksi flyer (1 sampai 5):','1');
+  if(collection===null)return;
+  collection=Number(collection);
+  if(![1,2,3,4,5].includes(collection)){alert('Koleksi harus 1 sampai 5.');return;}
+  var slides=bingSlidesAll[collection]||[];
+  if(!slides.length){alert('Flyer koleksi ini belum selesai dimuat atau masih kosong.');return;}
+  _flyerOrderCollection=collection;
+  _flyerOrderDraft=slides.slice();
+  renderFlyerOrderDialog();
+}
+function renderFlyerOrderDialog(){
+  var old=document.getElementById('dshFlyerOrderOverlay');if(old)old.remove();
+  var overlay=document.createElement('div');overlay.id='dshFlyerOrderOverlay';
+  overlay.style.cssText='position:fixed;inset:0;z-index:10020;background:rgba(2,6,23,.88);display:flex;align-items:center;justify-content:center;padding:14px;';
+  var box=document.createElement('div');box.style.cssText='width:100%;max-width:520px;max-height:88vh;overflow:auto;background:#151929;border:1px solid #334155;border-radius:18px;padding:16px;color:#e2e8f0;';
+  var html='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px"><b style="font-size:15px">Atur Urutan Flyer '+_flyerOrderCollection+'</b><button id="dshFlyerOrderClose" style="font-size:22px;color:#94a3b8">×</button></div><p style="font-size:11px;color:#94a3b8;margin-bottom:12px">Tekan dan tahan ikon ☰ lalu geser flyer ke posisi yang diinginkan. Urutan tersimpan untuk semua pengunjung.</p><div id="dshFlyerOrderList">';
+  _flyerOrderDraft.forEach(function(slide,i){html+='<div class="dsh-flyer-order-row" draggable="true" data-index="'+i+'" style="display:flex;align-items:center;gap:10px;padding:8px;margin:6px 0;background:#202a3c;border:1px solid #334155;border-radius:12px;cursor:grab"><span style="font-size:20px;color:#a5b4fc">☰</span><img src="'+slide.img.replace(/"/g,'&quot;')+'" style="width:52px;height:58px;object-fit:cover;border-radius:7px;background:#0b1220"><div style="min-width:0;flex:1"><div style="font-size:12px;font-weight:700;overflow-wrap:anywhere">'+escapeFlyerOrderText(slide.title||'Promo')+'</div><div style="font-size:10px;color:#94a3b8">Posisi '+(i+1)+'</div></div></div>';});
+  html+='</div><div style="display:flex;gap:8px;margin-top:14px"><button id="dshFlyerOrderCancel" style="flex:1;padding:11px;border-radius:10px;background:#334155;font-weight:700">Batal</button><button id="dshFlyerOrderSave" style="flex:1;padding:11px;border-radius:10px;background:#4f46e5;color:white;font-weight:800">Simpan Urutan</button></div><div id="dshFlyerOrderStatus" style="font-size:11px;color:#94a3b8;text-align:center;margin-top:10px"></div>';
+  box.innerHTML=html;overlay.appendChild(box);document.body.appendChild(overlay);
+  document.getElementById('dshFlyerOrderClose').onclick=closeFlyerOrderDialog;
+  document.getElementById('dshFlyerOrderCancel').onclick=closeFlyerOrderDialog;
+  var list=document.getElementById('dshFlyerOrderList'),dragged=null;
+  list.querySelectorAll('.dsh-flyer-order-row').forEach(function(row){
+    row.addEventListener('dragstart',function(e){dragged=row;e.dataTransfer.effectAllowed='move';row.style.opacity='.45';});
+    row.addEventListener('dragend',function(){row.style.opacity='1';dragged=null;refreshFlyerOrderLabels();});
+    row.addEventListener('dragover',function(e){e.preventDefault();if(!dragged||dragged===row)return;var r=row.getBoundingClientRect();if(e.clientY<r.top+r.height/2)list.insertBefore(dragged,row);else list.insertBefore(dragged,row.nextSibling);});
+  });
+  document.getElementById('dshFlyerOrderSave').onclick=saveFlyerOrder;
+}
+function escapeFlyerOrderText(v){return String(v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function refreshFlyerOrderLabels(){var rows=document.querySelectorAll('#dshFlyerOrderList .dsh-flyer-order-row');rows.forEach(function(row,i){var t=row.querySelector('div div:last-child');if(t)t.textContent='Posisi '+(i+1);});}
+function closeFlyerOrderDialog(){var el=document.getElementById('dshFlyerOrderOverlay');if(el)el.remove();}
+function saveFlyerOrder(){
+  var token=prompt('Masukkan shared token receiver DSH untuk mengesahkan perubahan urutan:');
+  if(token===null)return;
+  if(!token.trim()){alert('Token tidak boleh kosong.');return;}
+  var rows=Array.prototype.slice.call(document.querySelectorAll('#dshFlyerOrderList .dsh-flyer-order-row'));
+  var ordered=rows.map(function(row){return _flyerOrderDraft[Number(row.getAttribute('data-index'))];}).filter(Boolean);
+  var status=document.getElementById('dshFlyerOrderStatus'),btn=document.getElementById('dshFlyerOrderSave');
+  btn.disabled=true;btn.style.opacity='.55';status.textContent='Menyimpan urutan ke Google Spreadsheet…';
+  fetch(DSH_FLYER_WEBAPP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:token.trim(),action:'reorder',collection:_flyerOrderCollection,order:ordered.map(function(x){return x.sourceUrl;})})})
+  .then(function(){status.textContent='Permintaan dikirim. Memuat ulang data untuk memastikan urutan…';setTimeout(function(){loadBingkai(_flyerOrderCollection,BINGKAI_URLS[_flyerOrderCollection-1],BINGKAI_TITLES[_flyerOrderCollection-1]);status.textContent='Jika Apps Script menerima permintaan, urutan baru akan tampil setelah data CSV diperbarui.';btn.disabled=false;btn.style.opacity='1';},1800);})
+  .catch(function(){status.textContent='Gagal mengirim permintaan. Periksa koneksi dan deployment Apps Script.';btn.disabled=false;btn.style.opacity='1';});
 }
 
 function openBingkaiSlideshow(id){
