@@ -1591,7 +1591,7 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
       </div>
     </div>
   </div>
-  <div id="flyerManageEntry" style="display:flex;justify-content:center;margin:10px 0 2px;">
+  <div id="flyerManageEntry" style="display:none;justify-content:center;margin:10px 0 2px;">
     <button type="button" onclick="openFlyerOrderManager()" style="border:1px solid rgba(129,140,248,.35);background:rgba(99,102,241,.10);color:#a5b4fc;border-radius:999px;padding:8px 14px;font-size:11px;font-weight:700;">☷ Kelola Urutan Flyer</button>
   </div>
 
@@ -3676,6 +3676,7 @@ function completeAdminLogin(pass,offerSetup){
   currentUserNameInv="Admin";currentUsernameRaw="admin";isAdmin=true;
   kirimLog("admin");kirimAktivitas("login","Admin login");
   $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
+  if(typeof syncFlyerOrderAdminAccess==="function")syncFlyerOrderAdminAccess();
   renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();updateBBLMSyncDisplay();
   fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();loadPwResetRequests();
   if(typeof checkMorningReset==="function")checkMorningReset();
@@ -3956,6 +3957,7 @@ function doUserLogin(namaLengkap,user){
   currentUserNameInv=namaLengkap;currentUsernameRaw=user;isAdmin=false;kirimLog(user);kirimAktivitas("login","User login: "+namaLengkap);
   sessionSave(namaLengkap,user,false);
   $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
+  if(typeof syncFlyerOrderAdminAccess==="function")syncFlyerOrderAdminAccess();
   renderUserNav();updateUserInfo(namaLengkap);tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
   // Cek lokasi user setelah login berhasil (silent — tidak blokir akses)
   (function kirimLokasiUser(username){
@@ -5036,7 +5038,7 @@ function deleteBarcodeLog(barcode){
       else showToast('Gagal: '+(d.message||'error'),'error');
     }).catch(function(){showToast('Error koneksi','error');});
 }
-function logout(){sessionClear();showHomePage()}
+function logout(){sessionClear();var fb=document.getElementById("dshFlyerOrderAdminButton");if(fb)fb.remove();showHomePage()}
 function setMarquee(show){var m=$("marqueeBar");if(m)m.style.display=show?"flex":"none";}
 
 function toggleAstSubmenu(){
@@ -6675,7 +6677,20 @@ function loadBingkai(id,url,title){
 /* ===== MANAJEMEN URUTAN FLYER (TERSIMPAN DI GOOGLE SHEET) ===== */
 var DSH_FLYER_WEBAPP_URL="https://script.google.com/macros/s/AKfycbw7hJ2ik5FwMlMFMhJJ-WvzOEoZu0WvnGlwBSU57vmoTLvCFC0CWGMlUKn3WHPar9jU7Q/exec";
 var _flyerOrderCollection=1,_flyerOrderDraft=[];
+function syncFlyerOrderAdminAccess(){
+  var entry=document.getElementById('flyerManageEntry');
+  if(entry)entry.style.display='none'; // Jangan tampilkan kontrol pengurutan pada halaman publik.
+  var old=document.getElementById('dshFlyerOrderAdminButton');
+  if(!isAdmin){if(old)old.remove();return;}
+  if(!old){
+    old=document.createElement('button');old.id='dshFlyerOrderAdminButton';
+    old.type='button';old.textContent='☷ Kelola Urutan Flyer';
+    old.style.cssText='position:fixed;right:18px;bottom:22px;z-index:9997;padding:11px 15px;border-radius:999px;border:1px solid rgba(129,140,248,.5);background:#312e81;color:#fff;font-size:12px;font-weight:800;box-shadow:0 8px 24px rgba(49,46,129,.35);';
+    old.onclick=openFlyerOrderManager;document.body.appendChild(old);
+  }
+}
 function openFlyerOrderManager(){
+  if(!isAdmin){alert('Fitur ini hanya dapat digunakan oleh admin.');return;}
   var collection=prompt('Pilih koleksi flyer (1 sampai 5):','1');
   if(collection===null)return;
   collection=Number(collection);
