@@ -1484,7 +1484,7 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
   @media(max-width:767px){#navContainer .dsh-brand-header{min-height:94px!important;margin-bottom:8px!important;padding:4px 7px 12px!important;gap:10px!important;}#navContainer .dsh-brand-mark{width:52px!important;height:52px!important;flex-basis:52px!important;}#navContainer .dsh-brand-mark svg{width:49px!important;height:49px!important;flex-basis:49px!important;}#navContainer .dsh-brand-name{font-size:23px!important;}#navContainer .dsh-brand-full{max-width:150px!important;font-size:7.5px!important;letter-spacing:.45px!important;white-space:normal!important;overflow-wrap:anywhere!important;}#navContainer .dsh-brand-tagline{font-size:8px!important;}}
 </style>
 
-<link rel="stylesheet" href="/pop.css">
+<link rel="stylesheet" href="/pop.css?v=20261115exact3">
 </head>
 
 <body class="pb-24 pt-4" style="padding-top:52px;">
@@ -5049,14 +5049,15 @@ function openAstSubmenu(){
 
 // DSH POP STUDIO: inventory lookup and Mailer 24 editor
 var popCurrentImage="",popCurrentProduct=null;
-var popSelectedIcon="none", popSelectedIcon2="none", popIconGalleryMode="main";
-var popIconCatalog={"none":{label:"NO ICON",file:"pop-icon-no-icon.png"},"hot-deals":{label:"HOT DEALS",file:"pop-icon-hot-deals.png"},"bblm":{label:"BBLM",file:"pop-icon-bblm.png"},"ambil-sepuasnya":{label:"AMBIL SEPUASNYA",file:"pop-icon-ambil-sepuasnya.png"},"promo-kjsm":{label:"PROMO KJSM",file:"pop-icon-promo-kjsm.png"},"promo-member-hijau":{label:"PROMO MEMBER HIJAU",file:"pop-icon-promo-member-hijau.png"},"promo-member-cokelat":{label:"PROMO MEMBER COKELAT",file:"pop-icon-promo-member-cokelat.png"},"buy-1-get-1":{label:"BUY 1 GET 1",file:"pop-icon-buy-1-get-1.png"},"best-seller":{label:"BEST SELLER",file:""}};
-function popOpenIconGallery(mode){popIconGalleryMode=mode||"main";var g=$("popIconGallery");if(!g)return;g.style.display="grid";popMarkSelectedIcon();}
+var popSelectedIcon="hot-deals";
+var popSelectedIcon2="none";
+var popIconCatalog={"none":{label:"NO ICON",file:"pop-icon-no-icon.png"},"hot-deals":{label:"HOT DEALS",file:"pop-icon-hot-deals.png"},"bblm":{label:"BBLM",file:"pop-icon-bblm.png"},"ambil-sepuasnya":{label:"AMBIL SEPUASNYA",file:"pop-icon-ambil-sepuasnya.png"},"promo-kjsm":{label:"PROMO KJSM",file:"pop-icon-promo-kjsm.png"},"promo-member-hijau":{label:"PROMO MEMBER HIJAU",file:"pop-icon-promo-member-hijau.png"},"promo-member-cokelat":{label:"PROMO MEMBER COKELAT",file:"pop-icon-promo-member-cokelat.png"},"buy-1-get-1":{label:"BUY 1 GET 1",file:"pop-icon-buy-1-get-1.png"},"best-seller":{label:"BEST SELLER",file:"pop-icon-best-seller.png"}};
+function popOpenIconGallery(mode){var g=$("popIconGallery");if(!g)return;var secondary=mode==="secondary";g.dataset.mode=secondary?"secondary":"primary";g.classList.toggle("secondary-mode",secondary);g.style.display="grid";popMarkSelectedIcon();}
 function popCloseIconGallery(){var g=$("popIconGallery");if(g)g.style.display="none";}
-function popMarkSelectedIcon(){var grid=$("popIconGallery");if(!grid)return;var active=popIconGalleryMode==="secondary"?popSelectedIcon2:popSelectedIcon;grid.querySelectorAll(".pop-icon-option").forEach(function(b){b.classList.toggle("selected",b.getAttribute("data-icon")===active);});}
-function popApplyIconToPreview(){var item=popIconCatalog[popSelectedIcon]||popIconCatalog["none"];var img=$("popPreviewIcon"),thumb=$("popIconSelectedThumb"),label=$("popIconSelectedLabel");if(label)label.textContent=item.label;if(thumb)thumb.innerHTML=item.file?'<img src="/assets/'+item.file+'" alt="'+item.label+'">':'<span class="pop-best-seller-mini">BEST<br>SELLER</span>';if(img){if(popSelectedIcon==="none"||popSelectedIcon==="best-seller"){img.style.display="none";}else{img.style.display="block";img.src="/assets/"+item.file;img.alt=item.label;}}var item2=popIconCatalog[popSelectedIcon2]||popIconCatalog["none"],thumb2=$("popIcon2SelectedThumb"),label2=$("popIcon2SelectedLabel"),preview2=$("popPreviewIcon2");if(label2)label2.textContent=item2.label;if(thumb2)thumb2.innerHTML=popSelectedIcon2==="best-seller"?'<span class="pop-best-seller-mini">BEST<br>SELLER</span>':(item2.file?'<img src="/assets/'+item2.file+'" alt="'+item2.label+'">':'<span style="font-size:10px;color:#94a3b8">NO ICON</span>');if(preview2){preview2.style.display=popSelectedIcon2==="none"?"none":"flex";preview2.innerHTML=popSelectedIcon2==="best-seller"?'<span class="pop-best-seller-mini">BEST<br>SELLER</span>':(item2.file?'<img src="/assets/'+item2.file+'" style="width:100%;height:100%;object-fit:contain" alt="'+item2.label+'">':'');}popMarkSelectedIcon();}
-function popSelectIcon(key){if(!popIconCatalog[key])return;if(popIconGalleryMode==="secondary")popSelectedIcon2=key;else popSelectedIcon=key;popApplyIconToPreview();popCloseIconGallery();}
-
+function popMarkSelectedIcon(){var g=$("popIconGallery");if(!g)return;var secondary=g.dataset.mode==="secondary";var selected=secondary?popSelectedIcon2:popSelectedIcon;g.querySelectorAll(".pop-icon-option").forEach(function(b){b.classList.toggle("selected",b.getAttribute("data-icon")===selected);});}
+function popApplyIconToPreview(){var item=popIconCatalog[popSelectedIcon]||popIconCatalog["none"];var img=$("popPreviewIcon"),thumb=$("popIconSelectedThumb"),label=$("popIconSelectedLabel");if(label)label.textContent=item.label;if(thumb)thumb.innerHTML=popSelectedIcon==="none"?"<span>NO ICON</span>":'<img src="/assets/'+item.file+'" alt="'+item.label+'">';if(img){if(popSelectedIcon==="none"){img.style.display="none";}else{img.style.display="block";img.src="/assets/"+item.file;img.alt=item.label;}}popMarkSelectedIcon();}
+function popApplyIcon2ToPreview(){var item=popIconCatalog[popSelectedIcon2]||popIconCatalog["none"];var wrap=$("popPreviewIcon2"),thumb=$("popIcon2SelectedThumb"),label=$("popIcon2SelectedLabel");if(label)label.textContent=item.label;if(thumb)thumb.innerHTML=popSelectedIcon2==="none"?"<span>NO ICON</span>":'<img src="/assets/'+item.file+'" alt="'+item.label+'">';if(wrap){if(popSelectedIcon2==="none"){wrap.style.display="none";wrap.innerHTML="";}else{wrap.style.display="flex";wrap.innerHTML='<img src="/assets/'+item.file+'" alt="'+item.label+'">';}}popMarkSelectedIcon();}
+function popSelectIcon(key){var g=$("popIconGallery");var secondary=g&&g.dataset.mode==="secondary";if(secondary){if(key!=="none"&&key!=="best-seller")return;popSelectedIcon2=key;popApplyIcon2ToPreview();}else{if(!popIconCatalog[key]||key==="best-seller")return;popSelectedIcon=key;popApplyIconToPreview();}popCloseIconGallery();}
 
 var _dshPopLoaded=false, _dshPopLoading=false;
 async function ensurePopLoaded(){
@@ -5070,7 +5071,7 @@ async function ensurePopLoaded(){
   // Do not set inline display:block: it would keep POP visible after switching tabs.
   host.classList.add("active");
   host.style.removeProperty("display");
-  var response=await fetch("/pop.html?v=20261115fix2",{cache:"no-store"});
+  var response=await fetch("/pop.html?v=20261115exact3",{cache:"no-store"});
   if(!response.ok)throw new Error("POP module HTTP "+response.status);
   var markup=await response.text();
   // pop.html may contain a standalone #popPanel wrapper. Remove that wrapper
@@ -5092,15 +5093,15 @@ async function ensurePopLoaded(){
 
 function popNorm(v){return String(v==null?"":v).trim().toLowerCase().replace(/[\\s._-]+/g,"")}
 function popHeaderIndex(headers,patterns,fallback){for(var i=0;i<headers.length;i++){var h=popNorm(headers[i]);for(var j=0;j<patterns.length;j++)if(h===popNorm(patterns[j])||h.indexOf(popNorm(patterns[j]))!==-1)return i;}return fallback;}
-function popInit(){var ids=["popCode","popName","popDescription","popProdCode","popBarcode","popOldPrice","popNewPrice","popSpec","popPeriod","popImageUrl","popHeader","popSize"];ids.forEach(function(id){var el=$(id);if(el&&!el.dataset.popBound){el.addEventListener("input",popUpdatePreview);el.dataset.popBound="1";}});var chk=$("popShowStrike");if(chk&&!chk.dataset.popBound){chk.addEventListener("change",popUpdatePreview);chk.dataset.popBound="1";}popUpdatePreview();popApplyIconToPreview();}
+function popInit(){var ids=["popCode","popName","popDescription","popProdCode","popBarcode","popOldPrice","popNewPrice","popSpec","popPeriod","popImageUrl","popHeader","popSize"];ids.forEach(function(id){var el=$(id);if(el&&!el.dataset.popBound){el.addEventListener("input",popUpdatePreview);el.dataset.popBound="1";}});var chk=$("popShowStrike");if(chk&&!chk.dataset.popBound){chk.addEventListener("change",popUpdatePreview);chk.dataset.popBound="1";}popUpdatePreview();popApplyIconToPreview();popApplyIcon2ToPreview();}
 function popFindProduct(){var q=String($("popCode").value||"").trim();if(!q){$("popLookupStatus").textContent="Masukkan barcode atau PROD CODE terlebih dahulu.";return;}$("popLookupStatus").textContent="Mencari di Master Inventory DSH...";getBarang().then(function(rows){if(!rows||rows.length<2)throw new Error("Data Inventory kosong");var headers=rows[0]||[];var pc=popHeaderIndex(headers,["PRODCODE","PROD CODE","PRODUCT CODE","ARTICLE CODE","ITEM CODE"],0);var bc=popHeaderIndex(headers,["BARCODE","EAN","UPC"],1);var nm=popHeaderIndex(headers,["DESCRIPTION","PRODUCT NAME","ITEM DESCRIPTION","NAMA PRODUK","DESC"],2);var pr=popHeaderIndex(headers,["SELLING PRICE","CURRENT PRICE","HARGA JUAL","PRICE","HARGA"],3);var spec=popHeaderIndex(headers,["UOM","UNIT","SPEC","SATUAN"],6);var target=popNorm(q),found=null,foundBy="";for(var i=1;i<rows.length;i++){var r=rows[i]||[];if(pc>=0&&popNorm(r[pc])===target){found=r;foundBy="PROD CODE";break;}if(bc>=0&&popNorm(r[bc])===target){found=r;foundBy="BARCODE";break;}}if(!found){for(var k=1;k<rows.length;k++){var rr=rows[k]||[];if(rr.some(function(v){return popNorm(v)===target})){found=rr;foundBy="kode";break;}}}if(!found){$("popLookupStatus").textContent="Produk tidak ditemukan. Periksa kembali kode.";return;}popCurrentProduct={row:found,headers:headers};var fullName=String(found[nm]||"").trim();var parts=fullName.split(/\s+/);$("popName").value=parts.shift()||fullName;$("popDescription").value=parts.join(" ");$("popProdCode").value=pc>=0?(found[pc]||""):"";$("popBarcode").value=bc>=0?(found[bc]||""):"";$("popOldPrice").value=pr>=0?(found[pr]||""):"";$("popSpec").value=spec>=0?(found[spec]||""):"";$("popLookupStatus").textContent="Produk ditemukan melalui "+foundBy+". Data nama dan harga diambil dari Inventory.";popUpdatePreview();}).catch(function(e){console.error(e);$("popLookupStatus").textContent="Gagal memuat Inventory: "+(e.message||e);});}
 function popMoney(v){var n=String(v||"").replace(/[^0-9]/g,"");return n?"Rp "+Number(n).toLocaleString("id-ID"):"Rp 0";}
 function popUpdatePreview(){
  var name=$("popName"),descInput=$("popDescription"),period=$("popPeriod"),old=$("popOldPrice"),now=$("popNewPrice"),strike=$("popShowStrike");
  if($("popPreviewName")){var pn=$("popPreviewName");pn.childNodes[0].textContent=(name.value||"NAMA PRODUK");var desc=$("popPreviewDesc");if(desc)desc.textContent=descInput?descInput.value:"";}
  if($("popPreviewPeriod"))$("popPreviewPeriod").textContent=period.value?("Periode : "+period.value):"Periode : PERIODE PROMO";
- if($("popPreviewOld")){$("popPreviewOld").textContent=String(Number(String(old.value||"").replace(/[^0-9]/g,""))||0).toLocaleString("id-ID");$("popPreviewOld").style.display=strike.checked&&old.value?"block":"none";}
- if($("popPreviewNew"))$("popPreviewNew").textContent=String(Number(String(now.value||"").replace(/[^0-9]/g,""))||0).toLocaleString("id-ID");
+ if($("popPreviewOld")){$("popPreviewOld").textContent=(Number(String(old.value||"").replace(/[^0-9]/g,""))||0).toLocaleString("id-ID");$("popPreviewOld").style.display=strike.checked&&old.value?"block":"none";}
+ if($("popPreviewNew"))$("popPreviewNew").textContent=(Number(String(now.value||"").replace(/[^0-9]/g,""))||0).toLocaleString("id-ID");
  var size=(($("popSize")||{}).value||"A3").toUpperCase();var label=$("popPreviewSizeLabel");if(label)label.textContent="MAILER 24 • "+size+(size==="A3"?" LANDSCAPE":"");
  var footer=$("popPreviewFooter");if(footer)footer.textContent=(($("popBarcode")||{}).value||"")+" | "+new Date().toLocaleDateString("id-ID",{day:"2-digit",month:"2-digit"});
 }
@@ -5125,7 +5126,7 @@ function popRunImageSearch(){
 function popChooseSearchImage(index){var item=popImageSearchItems[index];if(!item)return;var chosen=item.thumbnail||item.original;if(!chosen){alert("Alamat gambar tidak tersedia.");return;}var proxy="/api/image-proxy?url="+encodeURIComponent(chosen);$("popImageUrl").value=proxy;popSetImage(proxy);$("popImageStatus").textContent="Foto dipilih dari "+(item.source||"hasil pencarian")+". Pastikan kemasan cocok sebelum dicetak.";popCloseImageSearch();}
 function popSetImage(url){popCurrentImage=String(url||"").trim();var box=$("popPreviewImage");if(!box)return;if(!popCurrentImage){box.innerHTML='<span style="color:#9ca3af;font-size:12px">FOTO PRODUK</span>';$("popImageStatus").textContent="Belum ada foto dipilih.";return;}var im=new Image();im.onload=function(){box.innerHTML="";im.style.maxWidth="100%";im.style.maxHeight="100%";im.style.objectFit="contain";box.appendChild(im);$("popImageStatus").textContent="Foto berhasil dimuat.";};im.onerror=function(){$("popImageStatus").textContent="URL gambar tidak dapat dimuat. Coba URL gambar langsung atau upload manual.";};im.src=popCurrentImage;}
 function popUploadImage(e){var f=e.target.files&&e.target.files[0];if(!f)return;if(!/^image\//.test(f.type)){alert("File harus berupa gambar.");return;}var reader=new FileReader();reader.onload=function(){popSetImage(reader.result);$("popImageUrl").value="";$("popImageStatus").textContent="Foto diunggah dari perangkat.";};reader.readAsDataURL(f);}
-function popReset(){["popCode","popName","popDescription","popProdCode","popBarcode","popOldPrice","popNewPrice","popSpec","popPeriod","popImageUrl"].forEach(function(id){if($(id))$(id).value="";});$("popShowStrike").checked=true;popSetImage("");$("popLookupStatus").textContent="Masukkan barcode atau PROD CODE.";popUpdatePreview();}
+function popReset(){popSelectedIcon2="none";popApplyIcon2ToPreview();["popCode","popName","popDescription","popProdCode","popBarcode","popOldPrice","popNewPrice","popSpec","popPeriod","popImageUrl"].forEach(function(id){if($(id))$(id).value="";});$("popShowStrike").checked=true;popSetImage("");$("popLookupStatus").textContent="Masukkan barcode atau PROD CODE.";popUpdatePreview();}
 var _popPdfBusy=false;
 function popLoadScript(src){return new Promise(function(resolve,reject){var found=document.querySelector('script[data-pop-lib="'+src+'"]');if(found){if(found.dataset.loaded==="1")return resolve();found.addEventListener("load",resolve,{once:true});found.addEventListener("error",reject,{once:true});return;}var sc=document.createElement("script");sc.src=src;sc.async=true;sc.dataset.popLib=src;sc.onload=function(){sc.dataset.loaded="1";resolve();};sc.onerror=function(){reject(new Error("Gagal memuat library PDF"));};document.head.appendChild(sc);});}
 function popGetPdfDimensions(){var size=(($("popSize")||{}).value||"A3").toUpperCase();var dims={"A3":[420,297],"A3 PORTRAIT":[297,420],"A4":[297,210],"A5 PORTRAIT":[148,210],"10 X 8":[254,203.2],"ENDCAP":[210,297]};return dims[size]||dims.A3;}
@@ -5139,12 +5140,18 @@ function popPrint(){
   popLoadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),
   popLoadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js")
  ]).then(function(){
+  var fontReady=(document.fonts&&document.fonts.ready)?document.fonts.ready:Promise.resolve();
+  return Promise.resolve(fontReady).then(function(){
+   var imgs=Array.from(area.querySelectorAll("img")).filter(function(im){return im.src&&im.style.display!=="none";});
+   return Promise.all(imgs.map(function(im){if(im.complete&&im.naturalWidth)return Promise.resolve();return new Promise(function(resolve){im.onload=resolve;im.onerror=resolve;});}));
+  }).then(function(){
   return html2canvas(area,{scale:3,backgroundColor:"#ffffff",useCORS:true,allowTaint:false,logging:false,scrollX:0,scrollY:0}).then(function(canvas){
    var JsPDF=window.jspdf&&window.jspdf.jsPDF;if(!JsPDF)throw new Error("Library PDF tidak tersedia");
    var pdf=new JsPDF({orientation:d[0]>=d[1]?"landscape":"portrait",unit:"mm",format:d,compress:true});
    pdf.addImage(canvas.toDataURL("image/jpeg",0.96),"JPEG",0,0,d[0],d[1],undefined,"FAST");
    var safeName=(($("popName")||{}).value||"POP").replace(/[^a-z0-9_-]+/gi,"_").replace(/^_+|_+$/g,"")||"POP";
    pdf.save("DSH_POP_"+safeName+"_"+size.replace(/[^A-Z0-9]+/g,"_")+".pdf");
+  });
   });
  }).catch(function(err){console.error("POP PDF export:",err);alert("PDF langsung belum berhasil dibuat. Periksa koneksi internet lalu coba lagi. Detail: "+(err&&err.message?err.message:"Gagal memproses PDF"));}).finally(function(){_popPdfBusy=false;if(btn){btn.disabled=false;btn.textContent=oldText||"CETAK / PDF";}});
 }
