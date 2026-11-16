@@ -1592,7 +1592,6 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
     </div>
   </div>
 
-
   <div class="home-footer">
     <div class="home-app-info">
       <div class="home-app-name">DSH (Digital System Hybrid)</div>
@@ -3157,6 +3156,76 @@ body.is-mobile-device.is-admin #navAbsensi{display:flex!important;}
   </div>
 </div>
   <div style="background:#0f0f1a;min-height:100vh;display:flex;flex-direction:column;">
+<!-- DSH DAILY QUOTE: tambahan visual saja; tidak mengubah fungsi absensi -->
+<section id="dshDailyQuoteCard" aria-label="Daily Quote" style="
+  width:calc(100% - 28px);max-width:680px;box-sizing:border-box;
+  margin:14px auto 10px;padding:16px 20px;border-radius:18px;
+  border:1px solid rgba(117,160,255,.24);
+  background:linear-gradient(120deg,#142b4d 0%,#17233f 55%,#102f36 100%);
+  box-shadow:0 10px 28px rgba(0,0,0,.22);position:relative;overflow:hidden;
+  color:#fff;text-align:left;">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px;">
+    <div style="font-size:11px;font-weight:900;letter-spacing:2px;color:#a9c8ff;">✦ DSH DAILY QUOTE</div>
+    <div id="dshDailyQuoteDate" style="font-size:10px;font-weight:700;letter-spacing:1px;color:#c5d4e8;"></div>
+  </div>
+  <div id="dshDailyQuoteText" style="font-size:clamp(15px,2vw,20px);line-height:1.48;font-weight:800;color:#fff;">
+    "Kesuksesan dibangun dari langkah kecil yang dilakukan dengan konsisten."
+  </div>
+  <div id="dshDailyQuoteFooter" style="font-size:10px;margin-top:10px;letter-spacing:1.5px;color:#b9cbe3;font-weight:800;">
+    DAILY MOTIVATION
+  </div>
+</section>
+<script>
+(function(){
+  if(window.__dshDailyQuoteInit) return;
+  window.__dshDailyQuoteInit = true;
+  var endpoint = "https://script.google.com/macros/s/AKfycbw7HsfXrKgdP_QSDnIS4O4XiACeqQF2DmrxOvXf7v2gHL4xhOYmp3fs0G5D5j4aGxyw/exec"; // DSH Daily Quote Web App
+  var fallback = [
+    "Kesuksesan dibangun dari langkah kecil yang dilakukan dengan konsisten.",
+    "Disiplin bukan tentang diawasi, tetapi tentang tetap melakukan yang benar.",
+    "Kerja sama yang baik membuat tantangan terasa lebih ringan.",
+    "Berikan pelayanan terbaik, karena hal kecil bisa memberi kesan besar.",
+    "Jadikan setiap kesalahan sebagai kesempatan untuk belajar dan berkembang.",
+    "Sikap positif tidak mengubah semua keadaan, tetapi mengubah cara kita menghadapinya.",
+    "Keberhasilan tim dimulai dari tanggung jawab setiap anggotanya.",
+    "Mulailah dengan niat baik, lanjutkan dengan usaha terbaik.",
+    "Integritas adalah melakukan hal yang benar meskipun tidak ada yang melihat.",
+    "Hari yang produktif dimulai dari kemauan untuk memberikan yang terbaik."
+  ];
+  var themes = ["MOTIVASI KERJA","DISIPLIN","TEAMWORK","PELAYANAN","INTEGRITAS"];
+  function dateKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+  function showQuote(text, category, dateText){
+    var q=document.getElementById("dshDailyQuoteText");
+    var c=document.getElementById("dshDailyQuoteFooter");
+    var dt=document.getElementById("dshDailyQuoteDate");
+    if(q) q.textContent='“'+text+'”';
+    if(c) c.textContent=(category||"DAILY MOTIVATION").toString().toUpperCase();
+    if(dt) dt.textContent=dateText||new Intl.DateTimeFormat("id-ID",{day:"2-digit",month:"long",year:"numeric"}).format(new Date());
+  }
+  function localQuote(){
+    var d=new Date(), day=Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000);
+    var n=fallback[((day%fallback.length)+fallback.length)%fallback.length];
+    showQuote(n,themes[((day%themes.length)+themes.length)%themes.length]);
+  }
+  localQuote();
+  if(!endpoint || endpoint.indexOf("https://")!==0) return;
+  var cb="__dshDailyQuoteCb_"+Date.now();
+  window[cb]=function(data){
+    try{
+      if(data && data.ok && data.quote) showQuote(data.quote,data.category,data.dateLabel);
+    }finally{
+      try{delete window[cb];}catch(e){window[cb]=undefined;}
+      var old=document.getElementById(cb);if(old)old.remove();
+    }
+  };
+  var sc=document.createElement("script");
+  sc.id=cb;
+  sc.src=endpoint+(endpoint.indexOf("?")>=0?"&":"?")+"callback="+encodeURIComponent(cb)+"&date="+encodeURIComponent(dateKey(new Date()));
+  sc.onerror=function(){try{delete window[cb];}catch(e){};sc.remove();};
+  document.head.appendChild(sc);
+})();
+</script>
+
     <div style="background:#0a0a14;padding:16px 14px 12px;text-align:center;border-bottom:1px solid #1a2a4a;flex-shrink:0;">
       <div id="absensiDate" style="font-size:11px;font-weight:700;color:#6a8cff;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;font-family:monospace;background:#1a1a3e;display:inline-block;padding:3px 14px;border-radius:6px;border:1px solid #2a3a6a;"></div>
       <div id="hutRiBadge" style="display:none;margin-top:50px;margin-bottom:6px;"><span style="font-family:monospace;font-size:13px;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,#7f0000,#b91c1c);color:#fde8e8;padding:5px 22px;border-radius:24px;border:1.5px solid rgba(220,38,38,0.55);text-shadow:0 1px 4px rgba(0,0,0,0.7);display:inline-block;">&#127881; HUT RI KE-81 &nbsp;&bull;&nbsp; 17 AGUSTUS 2026 &nbsp;&bull;&nbsp; &#127881;</span></div>
@@ -3674,7 +3743,6 @@ function completeAdminLogin(pass,offerSetup){
   currentUserNameInv="Admin";currentUsernameRaw="admin";isAdmin=true;
   kirimLog("admin");kirimAktivitas("login","Admin login");
   $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
-  
   renderAdminNav();updateUserInfo("Admin");tampilkanUpdate();updateBBLMSyncDisplay();
   fetchDataExp();loadAdminData();fetchBBLM();getUOMData();fetchBBLMStatus();loadPwResetRequests();
   if(typeof checkMorningReset==="function")checkMorningReset();
@@ -3955,7 +4023,6 @@ function doUserLogin(namaLengkap,user){
   currentUserNameInv=namaLengkap;currentUsernameRaw=user;isAdmin=false;kirimLog(user);kirimAktivitas("login","User login: "+namaLengkap);
   sessionSave(namaLengkap,user,false);
   $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
-  
   renderUserNav();updateUserInfo(namaLengkap);tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
   // Cek lokasi user setelah login berhasil (silent — tidak blokir akses)
   (function kirimLokasiUser(username){
@@ -6646,12 +6713,8 @@ function loadBingkai(id,url,title){
         var cols=rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(function(c){return c.replace(/^"|"$/g,'').trim();});
         var img=driveImgUrl((cols[0]||'').trim());
         if(!img)continue;
-        slides.push({img:img,title:(cols[1]||'').trim(),subtitle:(cols[2]||'').trim(),startDate:(cols[3]||'').trim(),endDate:(cols[4]||'').trim(),sortOrder:Number(cols[5])||0,sourceUrl:(cols[0]||'').trim()});
+        slides.push({img:img,title:(cols[1]||'').trim()});
       }
-      slides.sort(function(a,b){
-        if(a.sortOrder&&b.sortOrder)return a.sortOrder-b.sortOrder;
-        if(a.sortOrder)return -1;if(b.sortOrder)return 1;return 0;
-      });
       if(!slides.length)return;
       bingSlidesAll[id]=slides;
       if(coverEl)coverEl.innerHTML='<img src="'+slides[0].img+'" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display=\'none\'">';
