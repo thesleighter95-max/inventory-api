@@ -3179,7 +3179,8 @@ body.is-mobile-device.is-admin #navAbsensi{display:flex!important;}
 (function(){
   if(window.__dshDailyQuoteInit) return;
   window.__dshDailyQuoteInit = true;
-  var endpoint = "https://script.google.com/macros/s/AKfycbw7HsfXrKgdP_QSDnIS4O4XiACeqQF2DmrxOvXf7v2gHL4xhOYmp3fs0G5D5j4aGxyw/exec"; // DSH Daily Quote Web App
+
+  var endpoint = "https://script.google.com/macros/s/AKfycbw7HsfXrKgdP_QSDnIS4O4XiACeqQF2DmrxOvXf7v2gHL4xhOYmp3fs0G5D5j4aGxyw/exec";
   var fallback = [
     "Kesuksesan dibangun dari langkah kecil yang dilakukan dengan konsisten.",
     "Disiplin bukan tentang diawasi, tetapi tentang tetap melakukan yang benar.",
@@ -3193,36 +3194,128 @@ body.is-mobile-device.is-admin #navAbsensi{display:flex!important;}
     "Hari yang produktif dimulai dari kemauan untuk memberikan yang terbaik."
   ];
   var themes = ["MOTIVASI KERJA","DISIPLIN","TEAMWORK","PELAYANAN","INTEGRITAS"];
-  function dateKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
-  function showQuote(text, category, dateText){
-    var q=document.getElementById("dshDailyQuoteText");
-    var c=document.getElementById("dshDailyQuoteFooter");
-    var dt=document.getElementById("dshDailyQuoteDate");
-    if(q) q.textContent='“'+text+'”';
-    if(c) c.textContent=(category||"DAILY MOTIVATION").toString().toUpperCase();
-    if(dt) dt.textContent=dateText||new Intl.DateTimeFormat("id-ID",{day:"2-digit",month:"long",year:"numeric"}).format(new Date());
+  var lastLoadedDate = "";
+  var requestInProgress = false;
+  var requestSequence = 0;
+
+  // Gunakan zona waktu WITA agar pergantian kutipan mengikuti tanggal operasional Mataram.
+  function todayKey(){
+    var parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone:"Asia/Makassar", year:"numeric", month:"2-digit", day:"2-digit"
+    }).formatToParts(new Date());
+    var p = {};
+    parts.forEach(function(x){ if(x.type !== "literal") p[x.type] = x.value; });
+    return p.year + "-" + p.month + "-" + p.day;
   }
-  function localQuote(){
-    var d=new Date(), day=Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000);
-    var n=fallback[((day%fallback.length)+fallback.length)%fallback.length];
-    showQuote(n,themes[((day%themes.length)+themes.length)%themes.length]);
+
+  function dateLabel(){
+    return new Intl.DateTimeFormat("id-ID", {
+      timeZone:"Asia/Makassar", day:"2-digit", month:"long", year:"numeric"
+    }).format(new Date()).toUpperCase();
   }
-  localQuote();
-  if(!endpoint || endpoint.indexOf("https://")!==0) return;
-  var cb="__dshDailyQuoteCb_"+Date.now();
-  window[cb]=function(data){
-    try{
-      if(data && data.ok && data.quote) showQuote(data.quote,data.category,data.dateLabel);
-    }finally{
-      try{delete window[cb];}catch(e){window[cb]=undefined;}
-      var old=document.getElementById(cb);if(old)old.remove();
+
+  function showQuote(text, category, label){
+    var q = document.getElementById("dshDailyQuoteText");
+    var c = document.getElementById("dshDailyQuoteFooter");
+    var dt = document.getElementById("dshDailyQuoteDate");
+    if(q) q.textContent = "“" + text + "”";
+    if(c) c.textContent = (category || "DAILY MOTIVATION").toString().toUpperCase();
+    if(dt) dt.textContent = label || dateLabel();
+  }
+
+  function localQuote(key){
+    var day = Math.floor(Date.parse(key + "T00:00:00Z") / 86400000);
+    var quote = fallback[((day % fallback.length) + fallback.length) % fallback.length];
+    var theme = themes[((day % themes.length) + themes.length) % themes.length];
+    showQuote(quote, theme, dateLabel());
+  }
+
+  function loadQuote(force){
+    var key = todayKey();
+    if(!force && (key === lastLoadedDate || requestInProgress)) return;
+    if(requestInProgress) return;
+
+    requestInProgress = true;
+    var requestId = ++requestSequence;
+    var callbackName = "__dshDailyQuoteCb_" + Date.now() + "_" + requestId;
+    var script = document.createElement("script");
+    var finished = false;
+    var timeoutId;
+
+    function finish(){
+      if(finished) return;
+      finished = true;
+      clearTimeout(timeoutId);
+      requestInProgress = false;
+      try { delete window[callbackName]; } catch(e) { window[callbackName] = undefined; }
+      if(script.parentNode) script.parentNode.removeChild(script);
     }
-  };
-  var sc=document.createElement("script");
-  sc.id=cb;
-  sc.src=endpoint+(endpoint.indexOf("?")>=0?"&":"?")+"callback="+encodeURIComponent(cb)+"&date="+encodeURIComponent(dateKey(new Date()));
-  sc.onerror=function(){try{delete window[cb];}catch(e){};sc.remove();};
-  document.head.appendChild(sc);
+
+    window[callbackName] = function(data){
+      try {
+        // Jangan tampilkan respons lama jika tanggal sudah berganti saat request berjalan.
+        if(data && data.ok && data.quote && data.date === todayKey()){
+          showQuote(data.quote, data.category, data.dateLabel);
+          lastLoadedDate = data.date;
+        }
+      } finally {
+        finish();
+      }
+    };
+
+    script.async = true;
+    script.src = endpoint + (endpoint.indexOf("?") >= 0 ? "&" : "?") +
+      "callback=" + encodeURIComponent(callbackName) +
+      "&date=" + encodeURIComponent(key) +
+      "&_=" + Date.now();
+    script.onerror = function(){ finish(); };
+    document.head.appendChild(script);
+
+    timeoutId = setTimeout(function(){
+      finish();
+    }, 12000);
+  }
+
+  // Tampilkan kutipan cadangan dulu, lalu ambil kutipan resmi dari Spreadsheet.
+  localQuote(todayKey());
+  loadQuote(true);
+
+  // Jadwalkan pergantian tepat pukul 01:00 WITA setiap hari.
+  // Tidak melakukan polling berkala; hanya satu timer menuju jadwal berikutnya.
+  function scheduleNextOneAM(){
+    var now = new Date();
+    var parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone:"Asia/Makassar",
+      hour:"2-digit", minute:"2-digit", second:"2-digit",
+      hourCycle:"h23"
+    }).formatToParts(now);
+    var t = {};
+    parts.forEach(function(x){ if(x.type !== "literal") t[x.type] = Number(x.value); });
+
+    var msNow = now.getMilliseconds();
+    var secondsToday = (t.hour * 3600) + (t.minute * 60) + t.second;
+    var targetSeconds = 1 * 3600; // 01:00:00 WITA
+    var secondsUntil = secondsToday < targetSeconds
+      ? targetSeconds - secondsToday
+      : (24 * 3600 - secondsToday) + targetSeconds;
+    var delay = Math.max(1000, secondsUntil * 1000 - msNow);
+
+    setTimeout(function(){
+      var key = todayKey();
+      if(key !== lastLoadedDate){
+        localQuote(key);
+        loadQuote(true);
+      }
+      scheduleNextOneAM();
+    }, delay);
+  }
+  scheduleNextOneAM();
+
+  // Jika perangkat tidur saat pukul 01:00, sinkronkan saat halaman aktif kembali.
+  document.addEventListener("visibilitychange", function(){
+    if(!document.hidden) loadQuote(false);
+  });
+  window.addEventListener("focus", function(){ loadQuote(false); });
 })();
 </script>
 
