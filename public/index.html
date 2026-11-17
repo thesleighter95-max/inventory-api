@@ -5582,99 +5582,101 @@ function submitNotFoundItem(){
 $("namaBarang").addEventListener("keydown",function(e){if(e.key==="Enter")handleScanOrSearch()});
 function cariNama(){var v=$("namaBarang").value.toLowerCase().trim();if(!v)return;kirimAktivitas("search_nama",v);var kw=v.split(/\s+/).filter(function(k){return k.length>0});showLoadingInv("Mencari...");Promise.all([getBarang(),loadPriceMap()]).then(function(r){var d=r[0];var ls=[];for(var i=1;i<d.length;i++){if(kw.every(function(k){return d[i][2].toLowerCase().includes(k)}))ls.push(d[i])}if(!ls.length)$("hasil").innerHTML='<div class="bg-red-500/10 border border-red-500/30 p-4 text-center rounded-xl text-red-400 text-sm font-medium">Tidak ditemukan</div>';else if(ls.length===1){simpanState();tampilkan(ls[0])}else tampilkanMultiple(ls)}).catch(function(e){console.error("Inventory:",e);showInventoryConnectionError()})}
 
-function renderInventoryBarcode(value){
-  var wrap=document.getElementById("productBarcodeWrap");
-  var svg=document.getElementById("productBarcodeSvg");
-  if(!wrap||!svg)return;
-  var code=String(value==null?"":value).trim();
-  if(!code){wrap.style.display="none";return;}
-  function draw(){
-    if(!window.JsBarcode)return;
-    try{
-      window.JsBarcode(svg,code,{
-        format:"CODE128",
-        displayValue:false,
-        lineColor:"#111827",
-        background:"#ffffff",
-        width:1.8,
-        height:44,
-        margin:1,
-        valid:function(valid){
-          if(!valid)wrap.style.display="none";
-        }
-      });
-    }catch(e){
-      console.warn("Barcode visual gagal dibuat:",e);
-      wrap.style.display="none";
-    }
-  }
-  if(window.JsBarcode){draw();return;}
-  if(window.__dshJsBarcodeLoading){
-    var wait=0;
-    var poll=setInterval(function(){
-      wait++;
-      if(window.JsBarcode){clearInterval(poll);draw();}
-      else if(wait>=30){clearInterval(poll);wrap.style.display="none";}
-    },100);
-    return;
-  }
-  window.__dshJsBarcodeLoading=true;
-  var script=document.createElement("script");
-  script.src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js";
-  script.onload=function(){window.__dshJsBarcodeLoading=false;draw();};
-  script.onerror=function(){
-    window.__dshJsBarcodeLoading=false;
-    wrap.style.display="none";
-    console.warn("Library barcode tidak dapat dimuat.");
-  };
-  document.head.appendChild(script);
+function adjustSubmitQty(delta){
+  var el=document.getElementById("submitQty");
+  if(!el)return;
+  var n=parseInt(el.value,10)||1;
+  n=Math.max(1,Math.min(99,n+delta));
+  el.value=n;
 }
-
 function tampilkan(item){
   simpanState();lastFoundItem=item;lastBblmProduct=null;lastBblmMatchType="";
-  var sd=processStock(item);var sc=sd.value>5?"text-emerald-400":(sd.value>0?"text-amber-400":"text-red-400");
+  var sd=processStock(item);
   var bblmHtml="";var bblmUom="";
-  if(cacheUOM){bblmUom=findUOMByBarcode(item[1]).toUpperCase()}else{getUOMData().then(function(){bblmUom=findUOMByBarcode(item[1]).toUpperCase();var uomEl=document.getElementById("uomDisplay");if(uomEl)uomEl.innerText=bblmUom})}
+  if(cacheUOM){bblmUom=findUOMByBarcode(item[1]).toUpperCase();}
+  else{getUOMData().then(function(){
+    bblmUom=findUOMByBarcode(item[1]).toUpperCase();
+    var uomEl=document.getElementById("uomDisplay");if(uomEl)uomEl.innerText=bblmUom||"-";
+  });}
   if(bblmLoaded&&bblmCache&&bblmCache.products.length>0){
     var bp=findBBLMByItem(item);
-    if(bp&&bp.levels&&Object.keys(bp.levels).length>0){bblmHtml=renderBBLMSection(bp,item[1],lastBblmMatchType)}
-    else{bblmHtml='<div class="bblm-notfound fade-in"><div class="flex items-center gap-2 mb-1"><svg class="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="text-xs font-bold text-amber-400 uppercase tracking-wider">BBLM</span></div><p class="text-[11px] text-gray-500">Produk ini tidak tersedia dalam data Beli Banyak Lebih Murah</p><p class="text-[10px] text-gray-600 mt-1">Total '+bblmTotalProducts+' produk terdaftar di BBLM</p></div>'}
+    if(bp&&bp.levels&&Object.keys(bp.levels).length>0){
+      bblmHtml=renderBBLMSection(bp,item[1],lastBblmMatchType);
+    }else{
+      bblmHtml='<div class="rounded-xl p-3 text-xs text-amber-300" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2)">'
+        +'<b>BBLM</b><p class="mt-1 text-gray-400">Produk ini tidak tersedia dalam data Beli Banyak Lebih Murah</p>'
+        +'<p class="text-gray-500 mt-1">Total '+bblmTotalProducts+' produk terdaftar di BBLM</p></div>';
+    }
   }else if(bblmFailed){
-    bblmHtml='<div class="bblm-failed fade-in"><div class="flex items-center gap-2 mb-1"><svg class="w-4 h-4 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="text-xs font-bold text-red-400 uppercase tracking-wider">BBLM</span></div><p class="text-[11px] text-gray-500">Gagal memuat data BBLM. Periksa koneksi internet.</p><button onclick="bblmFailed=false;bblmLoading=false;fetchBBLM()" class="mt-2 text-[10px] text-red-400 font-bold underline">Coba Lagi</button></div>';
+    bblmHtml='<div class="rounded-xl p-3 text-xs text-red-300" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2)">'
+      +'<b>BBLM</b><p class="mt-1 text-gray-400">Gagal memuat data BBLM. Periksa koneksi internet.</p>'
+      +'<button onclick="bblmFailed=false;bblmLoading=false;fetchBBLM()" class="mt-2 underline font-bold">Coba Lagi</button></div>';
   }else{
     if(!bblmLoading&&!bblmFailed)fetchBBLM();
-    bblmHtml='<div class="bblm-skeleton"><div class="flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg><span class="text-xs text-emerald-400 font-semibold">Memuat data BBLM...</span></div></div>';
+    bblmHtml='<div class="rounded-xl p-3 text-xs text-emerald-300" style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.16)">Memuat data BBLM...</div>';
   }
   var productStatus=String(item[6]||"").trim()||"-";
   var category=String(item[7]||"").trim()||"-";
-  var safeText=function(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]})};
-  $("hasil").innerHTML='<div class="gradient-border p-4 sm:p-5 shadow-pro fade-in relative overflow-hidden rounded-2xl">'
-    +'<div class="relative z-10">'
-    +'<div class="mb-3"><p class="text-[10px] text-pro-text font-semibold uppercase tracking-widest mb-1">Product Name</p>'
-    +'<h2 class="text-xl sm:text-2xl font-bold text-white leading-tight">'+safeText(item[2])+'</h2>'
-    +'<p class="text-xs text-gray-500 font-mono mt-1">'+safeText(item[1])+'</p>'
-    +'<div id="productBarcodeWrap" style="display:flex;justify-content:center;align-items:center;background:#fff;border-radius:10px;padding:6px 10px;margin-top:8px;max-width:100%;overflow:hidden;">'
-    +'<svg id="productBarcodeSvg" style="width:100%;max-width:320px;height:58px;"></svg></div></div>'
-    +'<div id="priceBox" class="bg-pro-bg rounded-2xl p-5 sm:p-6 text-center mb-4 border border-pro-border">'
-    +'<p class="text-xs text-pro-text uppercase tracking-widest font-bold mb-2">Price</p>'
-    +'<p class="text-5xl sm:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 tracking-tight">Rp '+formatRupiah(item[3])+'</p></div>'
-    +'<div class="grid grid-cols-2 gap-2 mb-2">'
-    +'<div class="bg-white/5 rounded-xl px-3 py-3"><div class="flex items-center justify-between"><span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Stock</span><span class="w-2 h-2 rounded-full '+(sd.value>5?'bg-emerald-400':(sd.value>0?'bg-amber-400':'bg-red-400'))+'"></span></div><div class="text-xl font-extrabold '+sc+' mt-1">'+sd.display+'</div><div class="h-1 rounded-full bg-white/10 mt-2 overflow-hidden"><div class="h-full rounded-full '+(sd.value>5?'bg-emerald-400':(sd.value>0?'bg-amber-400':'bg-red-400'))+'" style="width:'+(sd.value>5?'100%':(sd.value>0?'35%':'4%'))+'"></div></div></div>'
-    +'<div class="bg-white/5 rounded-xl px-3 py-3"><span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">UOM</span><div id="uomDisplay" class="text-xl font-bold text-gray-100 mt-1">'+safeText(bblmUom||"-")+'</div></div></div>'
-    +'<div class="grid grid-cols-2 gap-2 mb-3">'
-    +'<div class="bg-amber-500/10 border border-amber-400/20 rounded-lg px-3 py-2"><p class="text-[9px] text-amber-300 uppercase tracking-wider font-bold mb-1">Status Produk</p><p class="text-xs font-bold text-white leading-snug">'+safeText(productStatus)+'</p></div>'
-    +'<div class="bg-indigo-500/10 border border-indigo-400/20 rounded-lg px-3 py-2"><p class="text-[9px] text-indigo-300 uppercase tracking-wider font-bold mb-1">Category</p><p class="text-xs font-bold text-white leading-snug">'+safeText(category)+'</p></div></div>'
-    +'<div class="border-t border-pro-border pt-3 mt-2"><p class="text-[11px] text-pro-text uppercase tracking-widest font-bold mb-2 text-center">Cetak Harga Barang</p>'
-    +'<label class="text-xs text-gray-400 font-semibold uppercase tracking-wider block mb-2">Jumlah Cetak</label><input type="number" id="submitQty" value="1" min="1" max="99" class="submit-qty-input w-full" style="padding-top:9px;padding-bottom:9px;">'
-    +'<p class="text-[10px] text-gray-500 font-semibold text-center mt-1 mb-2">Maksimal cetak 99 per item</p>'
-    +'<button id="btnSubmitItem" onclick="submitItem()" class="btn-submit w-full"><span class="btn-submit-shine"></span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 00-2-2v-4H9v4a2 2 0 00-2 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>CETAK & SUBMIT</button></div>'
-    +'<div class="border-t border-pro-border pt-3 mt-3"><p class="text-[11px] text-gray-400 uppercase tracking-widest font-bold mb-2">📋 Propose Order</p>'
-    +'<div class="flex items-center gap-2"><input type="number" id="proposeQty" min="1" placeholder="Jumlah..." style="flex:1;min-width:0;background:#1a1a2e;border:1px solid #334155;border-radius:10px;padding:12px;color:#fff;font-size:14px;outline:none;"><button id="btnProposeOrder" onclick="submitProposeOrder()" style="padding:12px 16px;background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">📋 Propose</button></div></div>'
-    +'</div></div>'+bblmHtml;
-
-  renderInventoryBarcode(item[1]);
-  if(typeof showToast==="function") showToast("Produk ditemukan","success");
-  checkPriceHistory(item[1], item[3]);
+  var safeText=function(v){return String(v==null?"":v).replace(/[&<>"\']/g,function(c){if(c===String.fromCharCode(34))return "&quot;";return {"&":"&amp;","<":"&lt;",">":"&gt;","\'":"&#39;"}[c]})};
+  var stockColor=sd.value>0?"#10d89a":"#fb7185";
+  $("hasil").innerHTML=
+    '<div class="rounded-2xl p-3 sm:p-5 shadow-pro fade-in relative overflow-hidden" style="background:linear-gradient(145deg,#111d35 0%,#0c172b 55%,#101c34 100%);border:1px solid rgba(99,130,190,.34);box-shadow:0 14px 36px rgba(0,0,0,.28)">'
+    +'<div class="mb-4 px-1">'
+      +'<div class="flex items-start justify-between gap-2">'
+        +'<div class="min-w-0 flex-1">'
+          +'<h2 class="text-lg sm:text-2xl font-extrabold text-white leading-snug">'+safeText(item[2])+'</h2>'
+          +'<p class="text-xs sm:text-sm text-slate-400 font-mono mt-2">▥ Barcode: '+safeText(item[1])+'</p>'
+        +'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">'
+      +'<div id="priceBox" class="rounded-2xl p-4 sm:p-5 flex flex-col justify-center min-h-[170px]" style="background:linear-gradient(135deg,rgba(16,185,129,.19),rgba(2,44,42,.42));border:1px solid rgba(16,185,129,.38)">'
+        +'<p class="text-xs font-extrabold uppercase tracking-wider mb-3" style="color:#65bfff">◇ HARGA JUAL</p>'
+        +'<p class="text-3xl sm:text-4xl font-black tracking-tight" style="color:#21e39a">Rp '+formatRupiah(item[3])+'</p>'
+      +'</div>'
+      +'<div class="grid grid-cols-2 gap-2">'
+        +'<div class="rounded-xl p-3 flex flex-col justify-center" style="background:rgba(255,255,255,.055);border:1px solid rgba(148,163,184,.22)">'
+          +'<p class="text-xs text-slate-400 font-semibold uppercase">▣ STOCK</p>'
+          +'<p class="text-2xl sm:text-3xl font-black mt-2" style="color:'+stockColor+'">'+safeText(sd.display)+'</p>'
+        +'</div>'
+        +'<div class="rounded-xl p-3 flex flex-col justify-center" style="background:rgba(255,255,255,.055);border:1px solid rgba(148,163,184,.22)">'
+          +'<p class="text-xs text-slate-400 font-semibold uppercase">◇ UOM</p>'
+          +'<p id="uomDisplay" class="text-2xl sm:text-3xl font-black text-white mt-2">'+safeText(bblmUom||"-")+'</p>'
+        +'</div>'
+        +'<div class="col-span-2 rounded-xl px-3 py-3 flex items-center justify-between gap-2" style="background:rgba(255,255,255,.055);border:1px solid rgba(148,163,184,.22)">'
+          +'<span class="text-xs sm:text-sm text-slate-300 font-semibold">▱ STATUS PRODUK</span>'
+          +'<span class="text-xs sm:text-sm font-extrabold text-amber-300 text-right">'+safeText(productStatus)+'</span>'
+        +'</div>'
+        +'<div class="col-span-2 rounded-xl px-3 py-3 flex items-center justify-between gap-2" style="background:rgba(255,255,255,.055);border:1px solid rgba(148,163,184,.22)">'
+          +'<span class="text-xs sm:text-sm text-slate-300 font-semibold">◇ CATEGORY</span>'
+          +'<span class="text-xs sm:text-sm font-extrabold text-white text-right">'+safeText(category)+'</span>'
+        +'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div class="rounded-2xl p-3 sm:p-4 mb-3" style="background:linear-gradient(110deg,rgba(79,70,229,.22),rgba(30,41,75,.62));border:1px solid rgba(129,140,248,.35)">'
+      +bblmHtml
+    +'</div>'
+    +'<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">'
+      +'<div class="rounded-2xl p-3 sm:p-4" style="background:rgba(30,48,78,.65);border:1px solid rgba(100,130,180,.35)">'
+        +'<div class="flex items-center gap-2 mb-3"><span class="text-xl">▣</span><p class="text-sm sm:text-base font-extrabold text-white">CETAK HARGA BARANG</p></div>'
+        +'<div class="flex items-center justify-between gap-2 mb-3"><label for="submitQty" class="text-xs text-slate-300">Jumlah cetak</label>'
+          +'<div class="flex items-center rounded-xl overflow-hidden" style="border:1px solid rgba(100,130,180,.4)">'
+            +'<button type="button" onclick="adjustSubmitQty(-1)" class="px-3 py-2 text-white text-lg" style="background:rgba(255,255,255,.08)">−</button>'
+            +'<input type="number" id="submitQty" value="1" min="1" max="99" class="w-12 text-center font-bold text-white" style="background:transparent;border:0;outline:none">'
+            +'<button type="button" onclick="adjustSubmitQty(1)" class="px-3 py-2 text-white text-lg" style="background:rgba(255,255,255,.08)">+</button>'
+          +'</div>'
+        +'</div>'
+        +'<button id="btnSubmitItem" onclick="submitItem()" class="btn-submit w-full" style="background:linear-gradient(110deg,#08c98b,#009e75);border:1px solid rgba(16,255,190,.35);border-radius:12px;padding:13px 8px;font-size:13px;font-weight:800;color:white"><span class="btn-submit-shine"></span>▣ CETAK & SUBMIT</button>'
+      +'</div>'
+      +'<div class="rounded-2xl p-3 sm:p-4" style="background:rgba(30,48,78,.65);border:1px solid rgba(100,130,180,.35)">'
+        +'<div class="flex items-center gap-2 mb-3"><span class="text-xl">▤</span><p class="text-sm sm:text-base font-extrabold text-white">PROPOSE ORDER</p></div>'
+        +'<input type="number" id="proposeQty" min="1" placeholder="Jumlah..." class="w-full mb-3" style="box-sizing:border-box;background:#111c31;border:1px solid #405274;border-radius:10px;padding:13px;color:#fff;font-size:14px;outline:none">'
+        +'<button id="btnProposeOrder" onclick="submitProposeOrder()" class="w-full" style="background:linear-gradient(110deg,#168dff,#0756d8);border:1px solid rgba(96,165,250,.4);border-radius:12px;padding:13px 8px;font-size:13px;font-weight:800;color:white">➤ Propose</button>'
+      +'</div>'
+    +'</div>'
+    +'</div>';
+  if(typeof showToast==="function")showToast("Produk ditemukan","success");
+  checkPriceHistory(item[1],item[3]);
 }
 function checkPriceHistory(barcode, currentPriceRaw){
   var currentPrice=parseFloat(String(currentPriceRaw).replace(/[^0-9.]/g,""))||0;
