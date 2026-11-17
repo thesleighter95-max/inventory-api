@@ -1830,7 +1830,7 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
       </div>
       <button onclick="handleScanOrSearch()" class="w-full bg-pro-main hover:bg-indigo-600 text-white font-semibold py-3 rounded-lg transition active:scale-[0.98] shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 mb-3">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h2M4 12h2m14 0h2M6 20h2M6 4h2m10 0h2"></path></svg>Scan / Cari</button>
-      <div class="grid grid-cols-2 gap-2">
+      <div class="grid grid-cols-2 gap-2 content-stretch">
         <button onclick="goBack()" class="bg-pro-card border border-pro-border text-gray-300 font-medium py-2.5 rounded-lg hover:bg-pro-border transition text-sm">Kembali</button>
         <button onclick="resetCari()" class="bg-transparent border border-red-500/30 text-red-400 font-medium py-2.5 rounded-lg hover:bg-red-500/10 transition text-sm">Reset</button>
       </div>
@@ -5629,31 +5629,31 @@ function tampilkan(item){
         +'</div>'
       +'</div>'
     +'</div>'
-    +'<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">'
-      +'<div id="priceBox" class="rounded-2xl p-4 sm:p-5 flex flex-col justify-center min-h-[170px]" style="background:linear-gradient(135deg,rgba(16,185,129,.19),rgba(2,44,42,.42));border:1px solid rgba(16,185,129,.38)">'
-        +'<p class="text-xs font-extrabold uppercase tracking-wider mb-3" style="color:#65bfff">◇ HARGA JUAL</p>'
-        +'<p class="text-3xl sm:text-4xl font-black tracking-tight" style="color:#21e39a">Rp '+formatRupiah(item[3])+'</p>'
+    +'<div class="grid gap-3 mb-3" style="grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);align-items:stretch">'
+      +'<div id="priceBox" class="rounded-2xl p-3 sm:p-5 flex flex-col justify-center min-h-[170px]" style="background:linear-gradient(135deg,#073a3b 0%,#062b30 58%,#05252d 100%);border:1px solid rgba(16,185,129,.48);box-shadow:inset 0 0 28px rgba(16,185,129,.06)">'
+        +'<p class="text-xs sm:text-sm font-extrabold uppercase tracking-wider mb-3" style="color:#65bfff">◇ HARGA JUAL</p>'
+        +'<p class="text-2xl sm:text-4xl font-black tracking-tight leading-tight break-words" style="color:#21e39a">Rp '+formatRupiah(item[3])+'</p>'
       +'</div>'
-      +'<div class="grid grid-cols-2 gap-2">'
-        +'<div class="rounded-xl p-3 flex flex-col justify-center" style="background:rgba(255,255,255,.055);border:1px solid rgba(148,163,184,.22)">'
+      +'<div class="grid grid-cols-2 gap-2 content-stretch">'
+        +'<div class="rounded-xl p-3 flex flex-col justify-center" style="background:linear-gradient(145deg,#1b2940,#172338);border:1px solid rgba(100,125,165,.34)">'
           +'<p class="text-xs text-slate-400 font-semibold uppercase">▣ STOCK</p>'
           +'<p class="text-2xl sm:text-3xl font-black mt-2" style="color:'+stockColor+'">'+safeText(sd.display)+'</p>'
         +'</div>'
-        +'<div class="rounded-xl p-3 flex flex-col justify-center" style="background:rgba(255,255,255,.055);border:1px solid rgba(148,163,184,.22)">'
+        +'<div class="rounded-xl p-3 flex flex-col justify-center" style="background:linear-gradient(145deg,#1b2940,#172338);border:1px solid rgba(100,125,165,.34)">'
           +'<p class="text-xs text-slate-400 font-semibold uppercase">◇ UOM</p>'
           +'<p id="uomDisplay" class="text-2xl sm:text-3xl font-black text-white mt-2">'+safeText(bblmUom||"-")+'</p>'
         +'</div>'
-        +'<div class="col-span-2 rounded-xl px-3 py-3 flex items-center justify-between gap-2" style="background:rgba(255,255,255,.055);border:1px solid rgba(148,163,184,.22)">'
+        +'<div class="col-span-2 rounded-xl px-3 py-3 flex items-center justify-between gap-2" style="background:linear-gradient(145deg,#1b2940,#172338);border:1px solid rgba(100,125,165,.34)">'
           +'<span class="text-xs sm:text-sm text-slate-300 font-semibold">▱ STATUS PRODUK</span>'
           +'<span class="text-xs sm:text-sm font-extrabold text-amber-300 text-right">'+safeText(productStatus)+'</span>'
         +'</div>'
-        +'<div class="col-span-2 rounded-xl px-3 py-3 flex items-center justify-between gap-2" style="background:rgba(255,255,255,.055);border:1px solid rgba(148,163,184,.22)">'
+        +'<div class="col-span-2 rounded-xl px-3 py-3 flex items-center justify-between gap-2" style="background:linear-gradient(145deg,#1b2940,#172338);border:1px solid rgba(100,125,165,.34)">'
           +'<span class="text-xs sm:text-sm text-slate-300 font-semibold">◇ CATEGORY</span>'
           +'<span class="text-xs sm:text-sm font-extrabold text-white text-right">'+safeText(category)+'</span>'
         +'</div>'
       +'</div>'
     +'</div>'
-    +'<div class="rounded-2xl p-3 sm:p-4 mb-3" style="background:linear-gradient(110deg,rgba(79,70,229,.22),rgba(30,41,75,.62));border:1px solid rgba(129,140,248,.35)">'
+    +'<div class="rounded-2xl p-3 sm:p-4 mb-3" style="background:linear-gradient(110deg,#211d58 0%,#171d49 100%);border:1px solid rgba(111,98,230,.55)">'
       +bblmHtml
     +'</div>'
     +'<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">'
@@ -5690,10 +5690,10 @@ function checkPriceHistory(barcode, currentPriceRaw){
       // Prioritaskan harga live dari spreadsheet; fallback ke snapshot jika tidak tersedia
       var cp=currentPrice>0?currentPrice:res.promo.currentPrice;
       if(sp>cp){
-        box.innerHTML='<p class="text-[10px] text-pro-text uppercase tracking-widest font-bold mb-1">Price</p>'
-          +'<div class="flex items-center justify-center gap-2 mb-1"><p class="text-xs font-bold text-gray-500 line-through">Rp '+formatRupiah(sp)+'</p><span class="rounded-full px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-emerald-300 bg-emerald-500/10 border border-emerald-400/20">PROMO</span></div>'
-          +'<p class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-400 tracking-tight">Rp '+formatRupiah(cp)+'</p>'
-          +'<p class="text-[10px] text-emerald-400 font-bold mt-1">&#9660; Harga Turun</p>';
+        box.innerHTML='<p class="text-xs font-extrabold uppercase tracking-wider mb-3" style="color:#65bfff">◇ HARGA JUAL</p>'
+          +'<div class="flex items-center flex-wrap gap-2 mb-2"><p class="text-sm font-bold text-slate-400 line-through">Rp '+formatRupiah(sp)+'</p><span class="rounded-full px-3 py-1 text-xs font-extrabold tracking-wider text-white" style="background:linear-gradient(90deg,#ff555d,#dc172c)">PROMO</span></div>'
+          +'<p class="text-3xl sm:text-4xl font-black tracking-tight leading-tight break-words" style="color:#21e39a">Rp '+formatRupiah(cp)+'</p>'
+          +'<p class="text-xs text-emerald-400 font-bold mt-2">&#9660; Harga turun &nbsp; -Rp '+formatRupiah(sp-cp)+'</p>';
         return;
       }
     }
@@ -5701,10 +5701,10 @@ function checkPriceHistory(barcode, currentPriceRaw){
     var saved=res&&res.data;
     var savedPrice=saved?parseFloat(saved.price)||0:0;
     if(savedPrice>0&&savedPrice>currentPrice){
-      box.innerHTML='<p class="text-[10px] text-pro-text uppercase tracking-widest font-bold mb-1">Price</p>'
-        +'<div class="flex items-center justify-center gap-2 mb-1"><p class="text-xs font-bold text-gray-500 line-through">Rp '+formatRupiah(savedPrice)+'</p><span class="rounded-full px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-emerald-300 bg-emerald-500/10 border border-emerald-400/20">PROMO</span></div>'
-        +'<p class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-400 tracking-tight">Rp '+formatRupiah(currentPrice)+'</p>'
-        +'<p class="text-[10px] text-emerald-400 font-bold mt-1">&#9660; Harga Turun</p>';
+      box.innerHTML='<p class="text-xs font-extrabold uppercase tracking-wider mb-3" style="color:#65bfff">◇ HARGA JUAL</p>'
+        +'<div class="flex items-center flex-wrap gap-2 mb-2"><p class="text-sm font-bold text-slate-400 line-through">Rp '+formatRupiah(savedPrice)+'</p><span class="rounded-full px-3 py-1 text-xs font-extrabold tracking-wider text-white" style="background:linear-gradient(90deg,#ff555d,#dc172c)">PROMO</span></div>'
+        +'<p class="text-3xl sm:text-4xl font-black tracking-tight leading-tight break-words" style="color:#21e39a">Rp '+formatRupiah(currentPrice)+'</p>'
+        +'<p class="text-xs text-emerald-400 font-bold mt-2">&#9660; Harga turun &nbsp; -Rp '+formatRupiah(savedPrice-currentPrice)+'</p>';
     }
   }).catch(function(){});
   fetch(API_BASE_URL+"/price-history",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({barcode:barcode,price:currentPrice})}).catch(function(){});
@@ -5977,7 +5977,7 @@ function buildLevelCards(product,grade){
     var pctRaw=gradeData.pct||"",isUp=pctRaw.indexOf("\u25B2")!==-1||pctRaw.indexOf("▲")!==-1;
     var pctClass=isUp?"up":"normal",pctDisplay=pctRaw.replace(/\u25B2/g,"").replace(/▲/g,"").replace(/%/g,"").trim();
     h+='<span class="bblm-pct-tag '+pctClass+'">'+(isUp?"▲ ":"")+pctDisplay+'%</span></div></div>';
-    h+='<div class="grid grid-cols-2 gap-2"><div class="bblm-stat-box"><div class="bblm-stat-label">Total BBLM</div><div class="bblm-stat-value">Rp '+fmtRp(gradeData.bblmTotal)+'</div></div><div class="bblm-stat-box"><div class="bblm-stat-label">Harga/PCS</div><div class="bblm-stat-value'+(isBest?' text-amber-400':' text-emerald-400')+'">Rp '+fmtRp(gradeData.price)+'</div></div><div class="bblm-stat-box"><div class="bblm-stat-label">Min. Beli</div><div class="bblm-stat-value">'+fmtRp(gradeData.minSls)+' pcs</div></div><div class="bblm-stat-box"><div class="bblm-stat-label">Diskon/PCS</div><div class="bblm-stat-value">Rp '+fmtRp(gradeData.disc)+'</div></div></div>';
+    h+='<div class="grid grid-cols-2 gap-2 content-stretch"><div class="bblm-stat-box"><div class="bblm-stat-label">Total BBLM</div><div class="bblm-stat-value">Rp '+fmtRp(gradeData.bblmTotal)+'</div></div><div class="bblm-stat-box"><div class="bblm-stat-label">Harga/PCS</div><div class="bblm-stat-value'+(isBest?' text-amber-400':' text-emerald-400')+'">Rp '+fmtRp(gradeData.price)+'</div></div><div class="bblm-stat-box"><div class="bblm-stat-label">Min. Beli</div><div class="bblm-stat-value">'+fmtRp(gradeData.minSls)+' pcs</div></div><div class="bblm-stat-box"><div class="bblm-stat-label">Diskon/PCS</div><div class="bblm-stat-value">Rp '+fmtRp(gradeData.disc)+'</div></div></div>';
     h+='</div>';
   }return h;
 }
@@ -5988,7 +5988,7 @@ function renderBBLMSection(product,barcode,matchType){
   var lvPreview="";for(var i=0;i<Math.min(lvKeys.length,4);i++){lvPreview+='<span class="bblm-level-badge" style="margin-right:4px;margin-bottom:4px">'+lvKeys[i]+'</span>'}if(lvKeys.length>4)lvPreview+='<span class="text-[10px] text-gray-500">+'+(lvKeys.length-4)+'</span>';
   var matchTag="";if(matchType==="barcode")matchTag='<span class="bblm-match-tag barcode"><svg style="width:10px;height:10px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h2M4 12h2m14 0h2M6 20h2M6 4h2m10 0h2"></path></svg>BBLM</span>';
   else if(matchType==="nama")matchTag='<span class="bblm-match-tag nama"><svg style="width:10px;height:10px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"></path></svg>BBLM</span>';
-  var html='<div class="bblm-wrapper fade-in"><div class="bblm-header" onclick="toggleBBLM()"><div class="flex items-center gap-3 flex-1 min-w-0"><svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg><div class="min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">'+product.desc+'</span>'+matchTag+'</div><div class="mt-1 flex flex-wrap">'+lvPreview+'</div></div></div></div><svg id="bblmChevron" class="bblm-chevron w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></div><div class="bblm-body"><div id="bblmContent" class="bblm-content">';
+  var html='<div class="bblm-wrapper fade-in" style="margin:0"><div class="bblm-header" onclick="toggleBBLM()" style="display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:14px;background:linear-gradient(110deg,#24205e,#171d4a);border:1px solid rgba(126,112,255,.5);min-height:86px"><div class="flex items-center gap-3 flex-1 min-w-0"><svg style="width:34px;height:34px;color:#91a9ff;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="8" rx="1" stroke-width="2"/><rect x="2" y="14" width="8" height="8" rx="1" stroke-width="2"/><rect x="14" y="14" width="8" height="8" rx="1" stroke-width="2"/><path d="M12 10v2M7 14v-2h10v2" stroke-width="2"/></svg><div class="min-w-0"><div class="text-base sm:text-lg font-extrabold text-white">BBLM</div><div class="text-xs text-indigo-200">Informasi kemasan &amp; satuan</div></div><div class="ml-auto flex items-center gap-2 flex-shrink-0">'+lvPreview+'</div></div><svg id="bblmChevron" class="bblm-chevron w-5 h-5 flex-shrink-0" style="color:#a5a4ff" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></div><div class="bblm-body"><div id="bblmContent" class="bblm-content">';
   if(hasGrades){var gradeOpts='<option value="">Pilih Customer Grade</option>';for(var g=0;g<grades.length;g++)gradeOpts+='<option value="'+grades[g]+'">'+grades[g]+'</option>';html+='<div class="p-3 border-b border-emerald-500/10"><label class="text-[10px] text-gray-500 font-semibold uppercase tracking-wider block mb-1.5">Customer Grade</label><select id="bblmGradeSelect" class="bblm-grade-select" onchange="onBBLMGradeChange()">'+gradeOpts+'</select></div><div id="bblmLevelsContainer" class="p-3"><div class="bblm-loading"><svg class="animate-spin h-4 w-4 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg><span>Pilih grade terlebih dahulu</span></div></div>'}
   else{html+='<div id="bblmLevelsContainer" class="p-3">'+buildLevelComparison(product,"DEFAULT")+buildLevelCards(product,"DEFAULT")+'</div>'}
   html+='</div></div></div>';return html;
