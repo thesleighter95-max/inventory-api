@@ -5631,9 +5631,9 @@ function tampilkan(item){
     +'</div>'
     +'<style>@media(max-width:640px){.inventory-detail-grid{grid-template-columns:minmax(0,1fr)!important}.inventory-detail-grid #priceBox{grid-column:1/-1;min-height:190px}.inventory-detail-grid .inventory-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}.inventory-detail-grid .inventory-stats>div{min-width:0}.inventory-detail-grid .inventory-stats>div:nth-child(n+3){grid-column:1/-1}}</style>'
     +'<div class="inventory-detail-grid grid gap-3 mb-3" style="grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);align-items:stretch">'
-      +'<div id="priceBox" class="rounded-2xl p-3 sm:p-5 flex flex-col justify-center min-h-[170px]" style="background:linear-gradient(135deg,#073a3b 0%,#062b30 58%,#05252d 100%);border:1px solid rgba(16,185,129,.48);box-shadow:inset 0 0 28px rgba(16,185,129,.06)">'
+      +'<div id="priceBox" class="rounded-2xl p-4 sm:p-5 flex flex-col justify-center min-h-[190px]" style="background:linear-gradient(135deg,#073a3b 0%,#062b30 58%,#05252d 100%);border:1px solid rgba(16,185,129,.48);box-shadow:inset 0 0 28px rgba(16,185,129,.06)">'
         +'<p class="text-xs sm:text-sm font-extrabold uppercase tracking-wider mb-3" style="color:#65bfff">◇ HARGA JUAL</p>'
-        +'<p class="text-2xl sm:text-4xl font-black tracking-tight leading-tight break-words" style="color:#21e39a">Rp '+formatRupiah(item[3])+'</p>'
+        +'<p class="font-black tracking-tight leading-tight break-words" style="color:#21e39a;font-size:clamp(2.35rem,9vw,3.4rem)">Rp '+formatRupiah(item[3])+'</p>'
       +'</div>'
       +'<div class="inventory-stats grid grid-cols-2 gap-2 content-stretch">'
         +'<div class="rounded-xl p-3 flex flex-col justify-center" style="background:linear-gradient(145deg,#1b2940,#172338);border:1px solid rgba(100,125,165,.34)">'
@@ -5676,6 +5676,17 @@ function tampilkan(item){
       +'</div>'
     +'</div>'
     +'</div>';
+  var hasilFocus=document.getElementById("hasil");
+  if(hasilFocus){
+    hasilFocus.style.scrollMarginTop="105px";
+    setTimeout(function(){
+      var target=document.getElementById("hasil");
+      if(target){
+        var top=target.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop)-105;
+        window.scrollTo({top:Math.max(0,top),behavior:"smooth"});
+      }
+    },80);
+  }
   if(typeof showToast==="function")showToast("Produk ditemukan","success");
   checkPriceHistory(item[1],item[3]);
 }
@@ -5693,7 +5704,7 @@ function checkPriceHistory(barcode, currentPriceRaw){
       if(sp>cp){
         box.innerHTML='<p class="text-xs font-extrabold uppercase tracking-wider mb-3" style="color:#65bfff">◇ HARGA JUAL</p>'
           +'<div class="flex items-center flex-wrap gap-2 mb-2"><p class="text-sm font-bold text-slate-400 line-through">Rp '+formatRupiah(sp)+'</p><span class="rounded-full px-3 py-1 text-xs font-extrabold tracking-wider text-white" style="background:linear-gradient(90deg,#ff555d,#dc172c)">PROMO</span></div>'
-          +'<p class="text-3xl sm:text-4xl font-black tracking-tight leading-tight break-words" style="color:#21e39a">Rp '+formatRupiah(cp)+'</p>'
+          +'<p class="font-black tracking-tight leading-tight break-words" style="color:#21e39a;font-size:clamp(2.35rem,9vw,3.4rem)">Rp '+formatRupiah(cp)+'</p>'
           +'<p class="text-xs text-emerald-400 font-bold mt-2">&#9660; Harga turun &nbsp; -Rp '+formatRupiah(sp-cp)+'</p>';
         return;
       }
@@ -5704,7 +5715,7 @@ function checkPriceHistory(barcode, currentPriceRaw){
     if(savedPrice>0&&savedPrice>currentPrice){
       box.innerHTML='<p class="text-xs font-extrabold uppercase tracking-wider mb-3" style="color:#65bfff">◇ HARGA JUAL</p>'
         +'<div class="flex items-center flex-wrap gap-2 mb-2"><p class="text-sm font-bold text-slate-400 line-through">Rp '+formatRupiah(savedPrice)+'</p><span class="rounded-full px-3 py-1 text-xs font-extrabold tracking-wider text-white" style="background:linear-gradient(90deg,#ff555d,#dc172c)">PROMO</span></div>'
-        +'<p class="text-3xl sm:text-4xl font-black tracking-tight leading-tight break-words" style="color:#21e39a">Rp '+formatRupiah(currentPrice)+'</p>'
+        +'<p class="font-black tracking-tight leading-tight break-words" style="color:#21e39a;font-size:clamp(2.35rem,9vw,3.4rem)">Rp '+formatRupiah(currentPrice)+'</p>'
         +'<p class="text-xs text-emerald-400 font-bold mt-2">&#9660; Harga turun &nbsp; -Rp '+formatRupiah(savedPrice-currentPrice)+'</p>';
     }
   }).catch(function(){});
