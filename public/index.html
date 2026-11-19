@@ -3783,9 +3783,10 @@ var lastFoundItem=null;window._multiItems=[];submitCount=0;submitSessionLog=[];i
 var SESSION_KEY="inv_sess_v1";
 var SESSION_TTL=8*60*60*1000; // 8 jam
 
-function sessionSave(nama,user,admin){
+function sessionSave(nama,user,admin,accessToken){
   try{
     var d={n:nama,u:user,a:!!admin,exp:Date.now()+SESSION_TTL};
+    if(accessToken)d.t=accessToken;
     localStorage.setItem(SESSION_KEY,btoa(unescape(encodeURIComponent(JSON.stringify(d)))));
   }catch(e){}
 }
@@ -4120,9 +4121,9 @@ function parseNum(s){
   return parseFloat(String(s).replace(/[\.,]/g,""))||0;
 }
 
-function doUserLogin(namaLengkap,user){
+function doUserLogin(namaLengkap,user,accessToken){
   currentUserNameInv=namaLengkap;currentUsernameRaw=user;isAdmin=false;kirimLog(user);kirimAktivitas("login","User login: "+namaLengkap);
-  sessionSave(namaLengkap,user,false);
+  sessionSave(namaLengkap,user,false,accessToken);
   $("loginPage").classList.add("hidden");$("mainApp").classList.remove("hidden");setMarquee(true);
   renderUserNav();updateUserInfo(namaLengkap);tampilkanUpdate();updateBBLMSyncDisplay();fetchDataExp();fetchBBLM();getUOMData();fetchBBLMStatus();
   // Cek lokasi user setelah login berhasil (silent — tidak blokir akses)
@@ -4166,7 +4167,7 @@ function login(){
   fetch(API_BASE_URL+"/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:user,password:pass})})
     .then(function(r){return r.json().then(function(d){return{status:r.status,data:d}})})
     .then(function(res){
-      if(res.data.success){doUserLogin(res.data.namaLengkap||user,user);return}
+      if(res.data.success){doUserLogin(res.data.namaLengkap||user,user,res.data.accessToken||"");return}
       if(res.data.suspended){errorEl.innerText="Akun Anda ditangguhkan oleh admin.";return}
       if(res.data.notFound){
         getCSVFresh(LOGIN_URL).then(function(data){
