@@ -169,28 +169,23 @@ async function fetchSheetUsers() {
   if (cached && cached.exp > Date.now()) return cached.val;
   try {
     const r = await fetch(SHEET_URL_USERS, { cache: "no-store" });
-    if (!r.ok) throw new Error("HTTP " + r.status);
+    if (!r.ok) return [];
     const text = await r.text();
     const rows = parseCSV(text);
     if (!rows.length) return [];
-    const normalize = value => String(value || "").toLowerCase().replace(/[\s_\-]/g, "").trim();
-    const headers = Object.keys(rows[0] || {});
-    const pick = names => headers.find(h => names.includes(normalize(h)));
-    const uKey = pick(["username", "user", "userid", "iduser", "nik", "kodeuser"]);
-    const pKey = pick(["password", "pass", "pwd", "kata sandi"] .map(normalize));
-    const nKey = pick(["name", "nama", "namalengkap", "fullname", "namauser"] .map(normalize));
-    const sKey = pick(["status", "aktif", "active"] .map(normalize));
-    if (!uKey || !pKey) throw new Error("Header username/password tidak ditemukan pada Spreadsheet login.");
-    const users = rows.map(row => {
-      const status = String(sKey ? row[sKey] : "").toLowerCase().trim();
-      return { username: String(row[uKey] || "").trim(), password: String(row[pKey] || "").trim(),
-        namaLengkap: String((nKey && row[nKey]) || row[uKey] || "").trim(),
-        suspended: ["suspended", "nonaktif", "non active", "inactive"].includes(status) };
-    }).filter(u => u.username && u.password);
-    _memCache.set(cacheKey, { val: users, exp: Date.now() + _CACHE_TTL });
+    const header = rows[0].map(c => String(c || "").trim().toLowerCase());
+    const uIdx = header.indexOf("username"), pIdx = header.indexOf("password"),
+          nIdx = header.indexOf("name"), sIdx = header.indexOf("status");
+    if (uIdx < 0 || pIdx < 0) return [];
+    const users = rows.slice(1).filter(row => String(row[uIdx] || "").trim()).map(row => ({
+      username: String(row[uIdx] || "").trim(),
+      password: String(row[pIdx] || "").trim(),
+      namaLengkap: String((nIdx >= 0 && row[nIdx]) || row[uIdx] || "").trim(),
+      suspended: ["suspended", "nonaktif", "non-aktif"].includes(String((sIdx >= 0 && row[sIdx]) || "").trim().toLowerCase())
+    }));
+    _memCache.set(cacheKey, { val: users, exp: Date.now() + 60 * 1000 });
     return users;
-  } catch (e) {
-    _memCache.set(cacheKey, { val: [], exp: Date.now() + 30 * 1000 });
+  } catch {
     return [];
   }
 }
@@ -274,7 +269,8 @@ export default async function handler(req, res) {
       if (session.role === "admin") return send({ success: true, allowed: true, namaLengkap: "Admin" });
       try {
         const data = await callDshAttendance("pdaCheckReportPermission", { username: session.sub });
-        return send({ success: true, allowed: data.allowed === true, namaLengkap: data.namaLengkap || session.name });
+        const allowed = data.allowed === true || data.reportAbsensi === true || data.REPORT_ABSEN === true || String(data.reportAbsensi || data.REPORT_ABSEN || "").toUpperCase() === "TRUE";
+        return send({ success: true, allowed, namaLengkap: data.namaLengkap || data.namaLengka || session.name });
       } catch (e) { return send({ success: false, allowed: false, message: e.message }, 502); }
     }
 
@@ -286,11 +282,8 @@ export default async function handler(req, res) {
       const username = String(body.username || "").trim();
       if (!username || typeof body.allowed !== "boolean") return send({ success: false, message: "Username dan status izin wajib diisi." }, 400);
       try {
-        await callDshAttendance("pdaSetReportPermission", { username, reportAbsensi: body.allowed === true, allowed: body.allowed === true });
-        // Jangan menganggap berhasil hanya dari respons aksi tulis; baca ulang status yang tersimpan.
-        const check = await callDshAttendance("pdaCheckReportPermission", { username });
-        const saved = check.allowed === true || check.reportAbsensi === true;
-        if (saved !== body.allowed) return send({ success: false, username, allowed: saved, message: "Status izin belum tersimpan sesuai permintaan. Periksa aksi pdaSetReportPermission di Apps Script." }, 409);
+        const data = await callDshAttendance("pdaSetReportPermission", { username, reportAbsensi: body.allowed === true, allowed: body.allowed === true });
+        const saved = data.reportAbsensi === true || data.allowed === true;
         return send({ success: true, username, allowed: saved });
       } catch (e) { return send({ success: false, message: e.message }, 502); }
     }
@@ -305,8 +298,9 @@ export default async function handler(req, res) {
         let namaLengkap = session.name;
         if (session.role !== "admin") {
           const permission = await callDshAttendance("pdaCheckReportPermission", { username: session.sub });
-          if (!permission.allowed) return send({ success: false, message: "Akses Report Absensi belum diberikan oleh Admin." }, 403);
-          namaLengkap = permission.namaLengkap || namaLengkap;
+          const allowed = permission.allowed === true || permission.reportAbsensi === true || permission.REPORT_ABSEN === true || String(permission.reportAbsensi || permission.REPORT_ABSEN || "").toUpperCase() === "TRUE";
+          if (!allowed) return send({ success: false, message: "Akses Report Absensi belum diberikan oleh Admin." }, 403);
+          namaLengkap = permission.namaLengkap || permission.namaLengka || namaLengkap;
         }
         const report = await callDshAttendance("pdaReport", { from, to });
         return send({ success: true, username: session.sub, namaLengkap, records: report.records || [] });
@@ -392,25 +386,19 @@ export default async function handler(req, res) {
       const username = String(body.username || "").trim();
       const password = String(body.password || "").trim();
       if (!username || !password) return send({ success: false, message: "username dan password wajib diisi" }, 400);
-      // Sumber login PDA Mini adalah Spreadsheet yang sama dengan LOGIN_URL.
-      // Coba bridge DSH Attendance terlebih dahulu, lalu fallback server-side ke CSV login agar token sesi tetap diterbitkan.
       try {
-        const result = await callDshAttendance("pdaLogin", { username, password });
-        const user = result.user || {};
+        // Gunakan sumber autentikasi yang sama dengan login PDA Mini (published User login sheet).
+        // Token hanya diterbitkan setelah username + password cocok di server.
+        const users = await fetchSheetUsers();
+        if (!users.length) return send({ success: false, message: "Spreadsheet User login tidak dapat dibaca oleh server." }, 502);
+        const user = users.find(u => String(u.username).trim() === username && String(u.password).trim() === password);
+        if (!user) return send({ success: false, message: "Username atau password salah." }, 401);
+        if (user.suspended) return send({ success: false, suspended: true, message: "Akun Anda ditangguhkan oleh admin." }, 403);
         const namaLengkap = user.namaLengkap || username;
         const accessToken = issuePdaSession(username, namaLengkap, "user");
         return send({ success: true, namaLengkap, accessToken, expiresIn: 8 * 60 * 60 });
-      } catch (bridgeError) {
-        const sheetUsers = await fetchSheetUsers();
-        const matched = sheetUsers.find(u => String(u.username).trim() === username && String(u.password) === password);
-        if (matched && !matched.suspended) {
-          const namaLengkap = matched.namaLengkap || username;
-          const accessToken = issuePdaSession(username, namaLengkap, "user");
-          return send({ success: true, namaLengkap, accessToken, expiresIn: 8 * 60 * 60, authSource: "login-sheet" });
-        }
-        const msg = String(bridgeError && bridgeError.message || bridgeError);
-        const badLogin = /username atau password salah|ditangguhkan|nonaktif/i.test(msg) || (sheetUsers.length > 0 && !matched);
-        return send({ success: false, suspended: !!(matched && matched.suspended), message: badLogin ? (matched && matched.suspended ? "Akun ditangguhkan atau nonaktif." : "Username atau password salah.") : "Login melalui Spreadsheet gagal: " + msg }, badLogin ? 401 : 502);
+      } catch (e) {
+        return send({ success: false, message: String(e.message || e) }, 503);
       }
     }
 
@@ -418,18 +406,12 @@ export default async function handler(req, res) {
       if (query.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
       const users = await getJson("users", []);
       let permissionMap = {}, permissionSync = true, permissionMessage = "";
-      try {
-        const d = await callDshAttendance("pdaUsers");
-        permissionMap = Object.fromEntries((d.users || []).map(u => [String(u.username || "").trim(), u]));
-      } catch (e) { permissionSync = false; permissionMessage = String(e.message || e); }
+      try { const d = await callDshAttendance("pdaUsers"); permissionMap = Object.fromEntries((d.users || []).map(u => [String(u.username).trim(), u])); }
+      catch (e) { permissionSync = false; permissionMessage = String(e.message || e); }
       return send({ success: true, permissionSync, permissionMessage, users: users.map(u => {
-        const pu = permissionMap[String(u.username || "").trim()];
-        const hasPermissionRow = !!pu;
-        const reportAllowed = hasPermissionRow
-          ? (pu.reportAbsensi === true || pu.allowed === true || pu.enabled === true || pu.access === true)
-          : u.reportAbsensi === true;
-        return { username: u.username, namaLengkap: u.namaLengkap || (pu && pu.namaLengkap) || u.username,
-          suspended: u.suspended ?? (pu && pu.suspended) ?? false, reportAbsensi: reportAllowed, createdAt: u.createdAt ?? null };
+        const p = permissionMap[String(u.username).trim()] || {};
+        const reportValue = p.reportAbsensi ?? p.REPORT_ABSEN ?? p.allowed ?? u.reportAbsensi;
+        return { username: u.username, namaLengkap: u.namaLengkap || p.namaLengkap || p.namaLengka || u.username, suspended: u.suspended ?? p.suspended ?? false, reportAbsensi: reportValue === true || String(reportValue || "").toUpperCase() === "TRUE", createdAt: u.createdAt ?? null };
       }) });
     }
 
