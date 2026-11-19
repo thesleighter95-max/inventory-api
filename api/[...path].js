@@ -1,9 +1,34 @@
-// @vercel/blob tidak digunakan (store suspended), diganti Netlify Blobs
-// import { put, list as vbList, del } from "@vercel/blob";
+// PDA Mini API — signed short-lived session bridge for Report Absensi
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "00000";
 const SNAP_PASSWORD = process.env.SNAP_PASSWORD || "00000";
 const SHEET_URL_USERS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUOmxLN_--OjkRvb543vpKK5wyL-zcNl67dfDlCPzN28tuBXD2IDEhyJxR8yKqC7CvcHGVj5tSPAD2/pub?gid=0&single=true&output=csv";
+
+// Token sesi PDA Mini untuk integrasi laporan. Rahasia hanya dibaca dari Vercel env.
+const PDA_SESSION_SECRET = process.env.SESSION_SECRET || "";
+function issuePdaSession(username, namaLengkap) {
+  if (!PDA_SESSION_SECRET || PDA_SESSION_SECRET.length < 32) throw new Error("SESSION_SECRET belum dikonfigurasi dengan benar di Vercel");
+  const payload = Buffer.from(JSON.stringify({
+    sub: String(username), name: String(namaLengkap || username),
+    iss: "pda-mini", iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000)+8*60*60
+  })).toString("base64url");
+  const sig = createHmac("sha256", PDA_SESSION_SECRET).update(payload).digest("base64url");
+  return payload + "." + sig;
+}
+export function verifyPdaSession(token) {
+  try {
+    if (!PDA_SESSION_SECRET || typeof token !== "string") return null;
+    const parts = token.split("."); if (parts.length !== 2) return null;
+    const expected = createHmac("sha256", PDA_SESSION_SECRET).update(parts[0]).digest();
+    const actual = Buffer.from(parts[1], "base64url");
+    if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) return null;
+    const p = JSON.parse(Buffer.from(parts[0], "base64url").toString("utf8"));
+    const now = Math.floor(Date.now()/1000);
+    if (p.iss !== "pda-mini" || !p.sub || !p.exp || p.exp <= now || p.iat > now+60) return null;
+    return p;
+  } catch { return null; }
+}
 
 // ============================================================
 // IN-MEMORY CACHE (module-level, survives warm Vercel instances)
@@ -312,7 +337,11 @@ export default async function handler(req, res) {
       if (!user) return send({ success: false, notFound: true, message: "User tidak ditemukan" }, 404);
       if (user.password.trim() !== password.trim()) return send({ success: false, notFound: true, message: "Username atau password salah" }, 401);
       if (user.suspended) return send({ success: false, suspended: true, message: "Akun ditangguhkan oleh admin" }, 403);
-      return send({ success: true, namaLengkap: user.namaLengkap || user.username });
+      const namaLengkap = user.namaLengkap || user.username;
+      let accessToken;
+      try { accessToken = issuePdaSession(user.username, namaLengkap); }
+      catch (e) { return send({ success: false, message: e.message }, 503); }
+      return send({ success: true, namaLengkap, accessToken, expiresIn: 8 * 60 * 60 });
     }
 
     if (path === "/users" && method === "GET") {
