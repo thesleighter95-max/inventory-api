@@ -14,7 +14,7 @@ button{border:0;background:var(--blue);color:white;border-radius:10px;padding:11
 .msg{font-size:13px;color:#5c6b80;padding:8px 0}.error{color:#b42336}
 @media(max-width:600px){.stats{grid-template-columns:1fr 1fr}}
 </style></head><body>
-<header><h1>DSH Attendance · Laporan Admin</h1><p>LOTTE Mart Wholesale Mataram</p></header>
+<header><h1>Report Absensi SPG / SPM / MD</h1><p>PDA Mini · LOTTE Mart Wholesale Mataram</p></header>
 <main>
 <div class="card"><div class="filters">
 <label>Dari tanggal<input id="from" type="date"></label><label>Sampai tanggal<input id="to" type="date"></label>
@@ -28,18 +28,15 @@ button{border:0;background:var(--blue);color:white;border-radius:10px;padding:11
 <div class="card" style="margin-top:14px"><h3>Rekap karyawan</h3><div class="tablewrap"><table><thead><tr><th>Tanggal</th><th>Jam</th><th>Nama</th><th>Departemen</th><th>Jenis</th><th>Jarak</th><th>Bukti</th></tr></thead><tbody id="rows"><tr><td colspan="7">Belum ada data.</td></tr></tbody></table></div></div>
 </main>
 <script>
-const API_URL='https://script.google.com/macros/s/AKfycbxPYz6Wq4KSyo4ABoydjMdRE-ZFrOrp43EpElCJEz1OBP9MJ3psrlwefuNu--GpGCbO/exec';
 const $=id=>document.getElementById(id);
-async function api(action,data={}){
- const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...data}),redirect:'follow'});
- const obj=await res.json();if(!obj.ok)throw new Error(obj.message||'Permintaan gagal');return obj;
-}
-$('back').onclick=()=>location.href='/absen/';
+function getPdaToken(){try{const raw=localStorage.getItem('inv_sess_v1');if(!raw)return '';const d=JSON.parse(decodeURIComponent(escape(atob(raw))));return d&&d.t&&Date.now()<d.exp?d.t:'';}catch(e){return '';}}
+async function api(from,to){const token=getPdaToken();if(!token)throw new Error('Sesi PDA Mini tidak ditemukan. Silakan login kembali.');const q=new URLSearchParams();if(from)q.set('from',from);if(to)q.set('to',to);const res=await fetch('/api/report-absensi?'+q.toString(),{headers:{Authorization:'Bearer '+token}});const obj=await res.json();if(!res.ok||!obj.success)throw new Error(obj.message||'Permintaan gagal');return obj;}
+
+$('back').onclick=()=>location.href='/';
 $('load').onclick=async()=>{
  $('msg').textContent='Memuat laporan…';$('msg').className='msg';
  try{
-  const token=sessionStorage.getItem('dsh_token');if(!token)throw new Error('Sesi login tidak ditemukan. Silakan login kembali sebagai admin.');
-  const r=await api('adminReport',{token,from:$('from').value,to:$('to').value});
+  const r=await api($('from').value,$('to').value);
   const records=r.records||[];
   $('total').textContent=records.length;$('masuk').textContent=records.filter(x=>x.type==='MASUK').length;$('pulang').textContent=records.filter(x=>x.type==='PULANG').length;
   $('rows').innerHTML=records.length?records.slice().reverse().map(x=>{
