@@ -123,10 +123,9 @@
         <div class="dash-muted">Sistem memeriksa GPS terhadap radius toko yang ditetapkan admin. Izinkan akses lokasi dan kamera saat diminta.</div>
         <button class="dash-btn secondary" id="locateBtn">PERIKSA LOKASI GPS</button>
         <div class="dash-muted" id="gpsInfo">Lokasi belum diperiksa.</div>
-        <label class="field"><span class="dash-muted">Foto selfie *</span><input class="dash-input" id="selfieFile" type="file" accept="image/*" capture="user"></label>
-        <img class="photo-preview" id="selfiePreview" alt="Preview selfie">
-        <label class="field"><span class="dash-muted">Foto area toko *</span><input class="dash-input" id="areaFile" type="file" accept="image/*" capture="environment"></label>
-        <img class="photo-preview" id="areaPreview" alt="Preview foto area">
+        <label class="field"><span class="dash-muted">Foto bukti absensi (kamera) *</span><input class="dash-input" id="photoFile" type="file" accept="image/*" capture="environment" required></label>
+        <div class="dash-muted">Ambil satu foto kamera yang memperlihatkan petugas sekaligus area tempat bertugas. Timestamp WITA dan koordinat GPS akan ditambahkan otomatis pada foto.</div>
+        <img class="photo-preview" id="photoPreview" alt="Preview foto bukti absensi">
         <div class="dash-actions">
           <button class="dash-btn" id="checkinBtn">CHECK-IN</button>
           <button class="dash-btn" id="checkoutBtn">CHECK-OUT</button>
@@ -259,13 +258,33 @@
       {enableHighAccuracy:true,timeout:20000,maximumAge:0});
     });
   }
-  async function compressImage(file) {
+  async function compressImage(file, attendanceType, gps) {
     if(!file || !file.type.startsWith('image/')) throw new Error('Pilih file foto yang valid.');
     const image = await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('Foto tidak bisa dibaca.'));img.src=URL.createObjectURL(file);});
     const scale=Math.min(1,1600/Math.max(image.width,image.height));
     const canvas=document.createElement('canvas');canvas.width=Math.round(image.width*scale);canvas.height=Math.round(image.height*scale);
-    canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
-    return canvas.toDataURL('image/jpeg',0.78);
+    const ctx=canvas.getContext('2d');
+    ctx.drawImage(image,0,0,canvas.width,canvas.height);
+
+    // Watermark dibakar ke dalam file foto: waktu WITA, jenis absensi, dan GPS.
+    const now=new Date();
+    const dateText=new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',day:'2-digit',month:'2-digit',year:'numeric'}).format(now);
+    const timeText=new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(now);
+    const gpsText=`GPS ${Number(gps.latitude).toFixed(6)}, ${Number(gps.longitude).toFixed(6)} | Akurasi ±${Math.round(gps.accuracy)} m`;
+    const lines=[`DSH ATTENDANCE • ${attendanceType}`,`${dateText} ${timeText} WITA`,gpsText];
+    const fontSize=Math.max(16,Math.round(canvas.width*0.022));
+    const lineHeight=Math.round(fontSize*1.35);
+    const pad=Math.round(fontSize*0.75);
+    const bandHeight=pad*2+lineHeight*lines.length;
+    ctx.save();
+    ctx.fillStyle='rgba(0,0,0,0.68)';
+    ctx.fillRect(0,canvas.height-bandHeight,canvas.width,bandHeight);
+    ctx.font=`600 ${fontSize}px Arial, sans-serif`;
+    ctx.textBaseline='top';
+    ctx.fillStyle='#ffffff';
+    lines.forEach((line,i)=>ctx.fillText(line,pad,canvas.height-bandHeight+pad+i*lineHeight,canvas.width-pad*2));
+    ctx.restore();
+    return canvas.toDataURL('image/jpeg',0.82);
   }
   function previewFile(inputId,previewId) {
     $(inputId).addEventListener('change',()=>{
@@ -278,14 +297,29 @@
     $('historyList').textContent='Memuat riwayat…';
     try {
       const r=await api('myHistory',{token:sessionStorage.getItem('dsh_token')});
-      const today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Makassar'});
-      const todayRows=(r.history||[]).filter(x=>String(x.date)===today);
-      const masuk=todayRows.find(x=>x.type==='MASUK'),pulang=todayRows.find(x=>x.type==='PULANG');
+      const localDate = value => {
+        if (!value) return '';
+        const d = new Date(value);
+        return isNaN(d) ? String(value).slice(0,10) : new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Makassar',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+      };
+      const localDateTime = value => {
+        if (!value) return {date:'',time:''};
+        const d = new Date(value);
+        if (isNaN(d)) return {date:String(value),time:''};
+        return {
+          date:new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',day:'2-digit',month:'long',year:'numeric'}).format(d),
+          time:new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(d)
+        };
+      };
+      const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Makassar',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+      const todayRows=(r.history||[]).filter(x=>localDate(x.date)===today || localDate(x.timestamp)===today);
+      const masuk=todayRows.find(x=>String(x.type).toUpperCase()==='MASUK' || String(x.type).toUpperCase()==='CHECK-IN');
+      const pulang=todayRows.find(x=>String(x.type).toUpperCase()==='PULANG' || String(x.type).toUpperCase()==='CHECK-OUT');
       $('checkinStatus').textContent=masuk?'Tercatat':'Belum';
       $('checkoutStatus').textContent=pulang?'Tercatat':'Belum';
-      $('checkinTime').textContent=masuk?new Date(masuk.timestamp).toLocaleTimeString('id-ID'):'Belum ada catatan masuk';
-      $('checkoutTime').textContent=pulang?new Date(pulang.timestamp).toLocaleTimeString('id-ID'):'Belum ada catatan pulang';
-      $('historyList').innerHTML=(r.history||[]).length?(r.history||[]).map(x=>`<div class="history-row"><div><b>${x.type==='MASUK'?'Check-in':'Check-out'}</b><div class="dash-muted">${x.date||''}</div></div><div style="text-align:right">${x.timestamp?new Date(x.timestamp).toLocaleTimeString('id-ID'):''}<div class="dash-muted">${Math.round(Number(x.distanceMeters)||0)} m dari toko</div></div></div>`).join(''):'Belum ada riwayat absensi.';
+      $('checkinTime').textContent=masuk?'Tercatat pukul '+localDateTime(masuk.timestamp).time:'Belum ada catatan masuk';
+      $('checkoutTime').textContent=pulang?'Tercatat pukul '+localDateTime(pulang.timestamp).time:'Belum ada catatan pulang';
+      $('historyList').innerHTML=(r.history||[]).length?(r.history||[]).map(x=>{const dt=localDateTime(x.timestamp || x.date);return `<div class="history-row"><div><b>${String(x.type).toUpperCase()==='MASUK'?'Check-in':'Check-out'}</b><div class="dash-muted">${dt.date || localDate(x.date)}</div></div><div style="text-align:right">${dt.time}<div class="dash-muted">${Math.round(Number(x.distanceMeters)||0)} m dari toko</div></div></div>`;}).join(''):'Belum ada riwayat absensi.';
     } catch(err){$('historyList').textContent=err.message;}
   }
   async function submitAttendance(type) {
@@ -294,16 +328,17 @@
     try {
       const gps=currentGps || await getGps();
       if(gps.accuracy>100) throw new Error('Akurasi GPS '+gps.accuracy+' m. Tunggu sampai lebih akurat (maksimal 100 m).');
-      const selfieFile=$('selfieFile').files[0],areaFile=$('areaFile').files[0];
-      if(!selfieFile || !areaFile) throw new Error('Selfie dan foto area toko wajib diambil.');
-      const [selfieDataUrl,areaPhotoDataUrl]=await Promise.all([compressImage(selfieFile),compressImage(areaFile)]);
-      const r=await api('attendance',{token:sessionStorage.getItem('dsh_token'),type,...gps,selfieDataUrl,areaPhotoDataUrl});
+      const photoFile=$('photoFile').files[0];
+      if(!photoFile) throw new Error('Foto bukti absensi wajib diambil dari kamera.');
+      const stampType=type==='MASUK'?'CHECK-IN':'CHECK-OUT';
+      const photoDataUrl=await compressImage(photoFile,stampType,gps);
+      const r=await api('attendance',{token:sessionStorage.getItem('dsh_token'),type,...gps,photoDataUrl});
       $('attendanceMessage').textContent=r.message+' Jarak dari toko: '+r.distanceMeters+' m.';
       currentGps=null;await loadHistory();
     } catch(err){$('attendanceMessage').textContent=err.message;}
     finally{btn.disabled=false;btn.textContent=type==='MASUK'?'CHECK-IN':'CHECK-OUT';}
   }
-  previewFile('selfieFile','selfiePreview');previewFile('areaFile','areaPreview');
+  previewFile('photoFile','photoPreview');
   $('locateBtn').addEventListener('click',async()=>{
     $('gpsInfo').textContent='Mencari lokasi GPS…';
     try{currentGps=await getGps();$('gpsInfo').textContent=`GPS terbaca. Akurasi ±${currentGps.accuracy} meter. Koordinat akan diverifikasi server.`;}
