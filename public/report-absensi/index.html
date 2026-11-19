@@ -13,6 +13,16 @@ button{border:0;background:var(--blue);color:white;border-radius:10px;padding:11
 .tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:760px;font-size:12px}th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left}th{background:#f6f8fc;color:#42536b}a{color:#1765d4}
 .msg{font-size:13px;color:#5c6b80;padding:8px 0}.error{color:#b42336}
 @media(max-width:600px){.stats{grid-template-columns:1fr 1fr}}
+.proof-link{cursor:pointer;text-decoration:underline;color:#1765d4;font-weight:650}
+#proofViewer{display:none;position:fixed;inset:0;z-index:99999;background:rgba(3,8,20,.94);align-items:center;justify-content:center;padding:16px}
+#proofViewer.open{display:flex}
+#proofViewer .pv-panel{width:min(100%,1100px);height:min(94dvh,900px);display:flex;flex-direction:column;gap:10px}
+#proofViewer .pv-toolbar{display:flex;align-items:center;gap:8px;color:white;flex-wrap:wrap}
+#proofViewer .pv-toolbar strong{margin-right:auto}
+#proofViewer .pv-toolbar button{background:#26364f;padding:9px 13px}
+#proofViewer .pv-stage{flex:1;min-height:0;overflow:auto;display:flex;align-items:center;justify-content:center;border:1px solid #53627a;border-radius:12px;background:#090f1d;touch-action:pan-x pan-y}
+#proofViewer img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;transition:transform .12s ease;cursor:zoom-in}
+#proofViewer img.zoomed{max-width:none;max-height:none;cursor:grab}
 </style></head><body>
 <header><h1>Report Absensi SPG / SPM / MD</h1><p>PDA Mini · LOTTE Mart Wholesale Mataram</p></header>
 <main>
@@ -27,6 +37,10 @@ button{border:0;background:var(--blue);color:white;border-radius:10px;padding:11
 </div>
 <div class="card" style="margin-top:14px"><h3>Rekap karyawan</h3><div class="tablewrap"><table><thead><tr><th>Tanggal</th><th>Jam</th><th>Nama</th><th>Departemen</th><th>Jenis</th><th>Jarak</th><th>Bukti</th></tr></thead><tbody id="rows"><tr><td colspan="7">Belum ada data.</td></tr></tbody></table></div></div>
 </main>
+<div id="proofViewer" aria-modal="true" role="dialog" aria-label="Pratinjau bukti foto">
+ <div class="pv-panel"><div class="pv-toolbar"><strong id="pvTitle">Bukti foto</strong><button type="button" onclick="proofZoom(-0.25)">−</button><button type="button" onclick="proofZoom(0.25)">+</button><button type="button" onclick="proofFit()">Pas layar</button><button type="button" onclick="closeProofPreview()">Tutup ✕</button></div>
+ <div class="pv-stage" id="pvStage"><img id="pvImage" alt="Bukti absensi"></div></div>
+</div>
 <script>
 const $=id=>document.getElementById(id);
 function getPdaToken(){try{const raw=localStorage.getItem('inv_sess_v1');if(!raw)return '';const d=JSON.parse(decodeURIComponent(escape(atob(raw))));return d&&d.t&&Date.now()<d.exp?d.t:'';}catch(e){return '';}}
@@ -41,12 +55,20 @@ $('load').onclick=async()=>{
   $('total').textContent=records.length;$('masuk').textContent=records.filter(x=>x.type==='MASUK').length;$('pulang').textContent=records.filter(x=>x.type==='PULANG').length;
   $('rows').innerHTML=records.length?records.slice().reverse().map(x=>{
     const dt=x.timestamp?new Date(x.timestamp):null;
-    const proof=[x.selfieUrl?`<a target="_blank" rel="noopener" href="${x.selfieUrl}">Selfie</a>`:'',x.areaPhotoUrl?`<a target="_blank" rel="noopener" href="${x.areaPhotoUrl}">Area</a>`:''].filter(Boolean).join(' · ');
+    const proof=[x.selfieUrl?`<a class="proof-link" href="#" data-proof="${encodeURIComponent(x.selfieUrl)}" data-title="Selfie" onclick="event.preventDefault();openProofPreview(decodeURIComponent(this.dataset.proof),this.dataset.title)">Selfie</a>`:'',x.areaPhotoUrl?`<a class="proof-link" href="#" data-proof="${encodeURIComponent(x.areaPhotoUrl)}" data-title="Foto Area" onclick="event.preventDefault();openProofPreview(decodeURIComponent(this.dataset.proof),this.dataset.title)">Area</a>`:''].filter(Boolean).join(' · ');
     return `<tr><td>${x.date||''}</td><td>${dt?dt.toLocaleTimeString('id-ID'):''}</td><td>${esc(x.name)}</td><td>${esc(x.department)}</td><td>${x.type==='MASUK'?'Check-in':'Check-out'}</td><td>${Math.round(Number(x.distanceMeters)||0)} m</td><td>${proof||'-'}</td></tr>`;
   }).join(''):'<tr><td colspan="7">Tidak ada catatan pada rentang tanggal ini.</td></tr>';
   $('msg').textContent='Laporan berhasil dimuat. Total '+records.length+' catatan.';
  }catch(e){$('msg').textContent=e.message;$('msg').className='msg error';}
 };
+let proofScale=1;
+function openProofPreview(url,title){const box=$('proofViewer'),img=$('pvImage');proofScale=1;$('pvTitle').textContent=title||'Bukti foto';img.classList.remove('zoomed');img.style.transform='scale(1)';img.src=url;box.classList.add('open');document.body.style.overflow='hidden';$('pvStage').scrollTop=0;$('pvStage').scrollLeft=0;}
+function closeProofPreview(){$('proofViewer').classList.remove('open');$('pvImage').src='';document.body.style.overflow='';}
+function proofZoom(delta){proofScale=Math.max(.5,Math.min(4,proofScale+delta));const img=$('pvImage');img.classList.toggle('zoomed',proofScale>1);img.style.transform='scale('+proofScale+')';}
+function proofFit(){proofScale=1;const img=$('pvImage');img.classList.remove('zoomed');img.style.transform='scale(1)';$('pvStage').scrollTop=0;$('pvStage').scrollLeft=0;}
+$('proofViewer').addEventListener('click',e=>{if(e.target===$('proofViewer'))closeProofPreview();});
+$('pvStage').addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey){e.preventDefault();proofZoom(e.deltaY<0?.15:-.15);}},{passive:false});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProofPreview();});
 function esc(v){return String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 const today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Makassar'});$('from').value=today;$('to').value=today;
 </script></body></html>
