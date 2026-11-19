@@ -21,6 +21,30 @@
 .btn{width:100%;border:0;border-radius:12px;padding:14px 16px;background:linear-gradient(100deg,#1765d4,#2788f2);color:white;font-weight:800;font-size:14px;cursor:pointer;margin-top:12px;box-shadow:0 8px 18px #2675e82b}.btn:disabled{opacity:.55;cursor:wait}.linkrow{display:flex;justify-content:space-between;gap:10px;margin-top:17px;font-size:12px}.link{border:0;background:none;color:#216bd0;font-weight:750;cursor:pointer;padding:0}.status{display:none;padding:11px 13px;border-radius:10px;font-size:12px;line-height:1.5;margin:0 0 16px}.status.show{display:block}.status.error{background:#fff0f1;color:var(--danger)}.status.success{background:#eaf8f1;color:var(--ok)}.form{display:none}.form.active{display:block}.hidden{display:none!important}
 @media(max-width:760px){.shell{display:block;padding:0;max-width:520px}.brand{display:none}.panel{min-height:100vh;border:0;border-radius:0;padding:26px 22px;align-items:flex-start}.panelinner{margin:auto}.mobilebrand{display:flex;align-items:center;gap:10px;margin-bottom:36px}.mobilebrand .mark{width:42px;height:42px}.mobilebrand b{color:var(--navy);letter-spacing:1.5px}.mobilebrand small{display:block;font-size:9px;color:var(--muted);letter-spacing:1.4px;margin-top:3px}.heading h2{font-size:25px}}
 .required-mark{color:#dc2626;font-weight:700}
+
+.dashboard{display:none;max-width:980px;margin:0 auto;padding:22px 16px 90px}
+.dashboard.active{display:block}
+.dash-top{background:linear-gradient(120deg,#071a35,#174b83);color:#fff;border-radius:20px;padding:22px;margin-bottom:16px}
+.dash-top h2{margin:0 0 6px;font-size:22px}.dash-top p{margin:0;color:#c7dbf2;font-size:13px}
+.dash-user{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px}
+.dash-chip{background:#ffffff1c;border:1px solid #ffffff25;border-radius:999px;padding:7px 11px;font-size:11px}
+.dash-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.dash-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 8px 24px #18365a08}
+.dash-card h3{font-size:14px;margin:0 0 12px;color:var(--navy)}
+.dash-stat{font-size:22px;font-weight:850;color:var(--navy)}
+.dash-muted{font-size:11px;color:var(--muted);line-height:1.5}
+.dash-btn{border:0;border-radius:11px;padding:12px 14px;color:white;background:linear-gradient(100deg,#1765d4,#2788f2);font-weight:800;width:100%;margin-top:10px}
+.dash-btn.secondary{background:#eaf1fb;color:#174b83}
+.dash-btn:disabled{opacity:.5}
+.dash-input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;margin:7px 0;font:inherit}
+.photo-preview{width:100%;max-height:180px;object-fit:cover;border-radius:12px;margin-top:8px;display:none}
+.history-row{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:12px}
+.history-row:last-child{border:0}
+.dash-wide{grid-column:1/-1}
+.dash-actions{display:flex;gap:8px;flex-wrap:wrap}
+.dash-actions .dash-btn{flex:1}
+@media(max-width:640px){.dashboard{padding:14px 12px 80px}.dash-grid{grid-template-columns:1fr}.dash-wide{grid-column:auto}.dash-top{padding:18px}}
+
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -81,8 +105,44 @@
       <button class="btn" id="resetBtn">SIMPAN PASSWORD BARU</button>
       <div class="linkrow"><button class="link" data-go="login">Kembali login</button></div>
     </section>
+
     <div class="foot" style="text-align:center;margin-top:28px;color:#9aa7b8">DSH Attendance · Secure workforce access</div>
-  </div></main>
+  </div>
+  <section id="employeeDashboard" class="dashboard" style="width:min(100%,980px);margin:0 auto">
+    <div class="dash-top">
+      <div class="eyebrow">DSH WORKFORCE</div>
+      <h2>Dashboard Absensi</h2>
+      <p>LOTTE Mart Wholesale Mataram</p>
+      <div class="dash-user"><div><strong id="dashName">Karyawan</strong><div class="dash-muted" style="color:#c7dbf2" id="dashMeta">-</div></div><span class="dash-chip" id="dashDate">Hari ini</span></div>
+    </div>
+    <div class="dash-grid">
+      <div class="dash-card"><div class="dash-muted">STATUS MASUK</div><div class="dash-stat" id="checkinStatus">Belum</div><div class="dash-muted" id="checkinTime">Belum ada catatan masuk</div></div>
+      <div class="dash-card"><div class="dash-muted">STATUS PULANG</div><div class="dash-stat" id="checkoutStatus">Belum</div><div class="dash-muted" id="checkoutTime">Belum ada catatan pulang</div></div>
+      <div class="dash-card dash-wide">
+        <h3>Lokasi & dokumentasi absensi</h3>
+        <div class="dash-muted">Sistem memeriksa GPS terhadap radius toko yang ditetapkan admin. Izinkan akses lokasi dan kamera saat diminta.</div>
+        <button class="dash-btn secondary" id="locateBtn">PERIKSA LOKASI GPS</button>
+        <div class="dash-muted" id="gpsInfo">Lokasi belum diperiksa.</div>
+        <label class="field"><span class="dash-muted">Foto selfie *</span><input class="dash-input" id="selfieFile" type="file" accept="image/*" capture="user"></label>
+        <img class="photo-preview" id="selfiePreview" alt="Preview selfie">
+        <label class="field"><span class="dash-muted">Foto area toko *</span><input class="dash-input" id="areaFile" type="file" accept="image/*" capture="environment"></label>
+        <img class="photo-preview" id="areaPreview" alt="Preview foto area">
+        <div class="dash-actions">
+          <button class="dash-btn" id="checkinBtn">CHECK-IN</button>
+          <button class="dash-btn" id="checkoutBtn">CHECK-OUT</button>
+        </div>
+        <div class="dash-muted" id="attendanceMessage" aria-live="polite"></div>
+      </div>
+      <div class="dash-card dash-wide">
+        <div style="display:flex;justify-content:space-between;align-items:center"><h3>Riwayat absensi</h3><button class="link" id="refreshHistoryBtn">Muat ulang</button></div>
+        <div id="historyList" class="dash-muted">Memuat riwayat…</div>
+      </div>
+      <div class="dash-card dash-wide">
+        <div class="dash-actions"><button class="dash-btn secondary" id="adminReportLink">BUKA LAPORAN ADMIN</button><button class="dash-btn secondary" id="logoutBtn">KELUAR</button></div>
+      </div>
+    </div>
+  </section>
+  </main>
 </div>
 <script>
 (() => {
@@ -137,7 +197,7 @@
         if (result.registered) {
           sessionStorage.setItem('dsh_token', result.token);
           sessionStorage.setItem('dsh_user', JSON.stringify(result.user || {}));
-          message('Login Google berhasil. Selamat datang, ' + (result.user?.name || 'karyawan') + '. Dashboard absensi akan dibuka setelah modul dashboard dipasang.','success');
+          showDashboard(result.user || {});
         } else {
           $('regEmail').value = result.email || '';
           view('register');
@@ -168,6 +228,95 @@
     if (initGoogleButtons() || googleInitAttempts > 30) clearInterval(googleInitTimer);
   }, 300);
 
+
+  let currentGps = null;
+  function showDashboard(user) {
+    document.querySelector('.shell').style.display='block';
+    document.querySelector('.brand').style.display='none';
+    document.querySelector('.panel').style.display='block';
+    document.querySelector('.panelinner').style.display='none';
+    $('employeeDashboard').classList.add('active');
+    $('dashName').textContent=user?.name || 'Karyawan';
+    $('dashMeta').textContent=[user?.department,user?.brand,user?.email].filter(Boolean).join(' · ');
+    $('dashDate').textContent=new Intl.DateTimeFormat('id-ID',{dateStyle:'full'}).format(new Date());
+    loadHistory();
+  }
+  function showAuth() {
+    $('employeeDashboard').classList.remove('active');
+    document.querySelector('.shell').style.display='';
+    document.querySelector('.brand').style.display='';
+    document.querySelector('.panel').style.display='flex';
+    document.querySelector('.panelinner').style.display='';
+    sessionStorage.removeItem('dsh_token');sessionStorage.removeItem('dsh_user');
+    view('login');
+  }
+  function getGps() {
+    return new Promise((resolve,reject)=>{
+      if(!navigator.geolocation) return reject(new Error('Browser tidak mendukung GPS.'));
+      navigator.geolocation.getCurrentPosition(pos=>resolve({
+        latitude:pos.coords.latitude,longitude:pos.coords.longitude,accuracy:Math.round(pos.coords.accuracy)
+      }),err=>reject(new Error(err.code===1?'Izin lokasi ditolak. Aktifkan izin lokasi Chrome.':'GPS gagal dibaca. Coba di area terbuka.')),
+      {enableHighAccuracy:true,timeout:20000,maximumAge:0});
+    });
+  }
+  async function compressImage(file) {
+    if(!file || !file.type.startsWith('image/')) throw new Error('Pilih file foto yang valid.');
+    const image = await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('Foto tidak bisa dibaca.'));img.src=URL.createObjectURL(file);});
+    const scale=Math.min(1,1600/Math.max(image.width,image.height));
+    const canvas=document.createElement('canvas');canvas.width=Math.round(image.width*scale);canvas.height=Math.round(image.height*scale);
+    canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
+    return canvas.toDataURL('image/jpeg',0.78);
+  }
+  function previewFile(inputId,previewId) {
+    $(inputId).addEventListener('change',()=>{
+      const file=$(inputId).files[0],img=$(previewId);
+      if(!file){img.style.display='none';return;}
+      img.src=URL.createObjectURL(file);img.style.display='block';
+    });
+  }
+  async function loadHistory() {
+    $('historyList').textContent='Memuat riwayat…';
+    try {
+      const r=await api('myHistory',{token:sessionStorage.getItem('dsh_token')});
+      const today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Makassar'});
+      const todayRows=(r.history||[]).filter(x=>String(x.date)===today);
+      const masuk=todayRows.find(x=>x.type==='MASUK'),pulang=todayRows.find(x=>x.type==='PULANG');
+      $('checkinStatus').textContent=masuk?'Tercatat':'Belum';
+      $('checkoutStatus').textContent=pulang?'Tercatat':'Belum';
+      $('checkinTime').textContent=masuk?new Date(masuk.timestamp).toLocaleTimeString('id-ID'):'Belum ada catatan masuk';
+      $('checkoutTime').textContent=pulang?new Date(pulang.timestamp).toLocaleTimeString('id-ID'):'Belum ada catatan pulang';
+      $('historyList').innerHTML=(r.history||[]).length?(r.history||[]).map(x=>`<div class="history-row"><div><b>${x.type==='MASUK'?'Check-in':'Check-out'}</b><div class="dash-muted">${x.date||''}</div></div><div style="text-align:right">${x.timestamp?new Date(x.timestamp).toLocaleTimeString('id-ID'):''}<div class="dash-muted">${Math.round(Number(x.distanceMeters)||0)} m dari toko</div></div></div>`).join(''):'Belum ada riwayat absensi.';
+    } catch(err){$('historyList').textContent=err.message;}
+  }
+  async function submitAttendance(type) {
+    const btn=type==='MASUK'?$('checkinBtn'):$('checkoutBtn');
+    btn.disabled=true;btn.textContent='MENGIRIM…';
+    try {
+      const gps=currentGps || await getGps();
+      if(gps.accuracy>100) throw new Error('Akurasi GPS '+gps.accuracy+' m. Tunggu sampai lebih akurat (maksimal 100 m).');
+      const selfieFile=$('selfieFile').files[0],areaFile=$('areaFile').files[0];
+      if(!selfieFile || !areaFile) throw new Error('Selfie dan foto area toko wajib diambil.');
+      const [selfieDataUrl,areaPhotoDataUrl]=await Promise.all([compressImage(selfieFile),compressImage(areaFile)]);
+      const r=await api('attendance',{token:sessionStorage.getItem('dsh_token'),type,...gps,selfieDataUrl,areaPhotoDataUrl});
+      $('attendanceMessage').textContent=r.message+' Jarak dari toko: '+r.distanceMeters+' m.';
+      currentGps=null;await loadHistory();
+    } catch(err){$('attendanceMessage').textContent=err.message;}
+    finally{btn.disabled=false;btn.textContent=type==='MASUK'?'CHECK-IN':'CHECK-OUT';}
+  }
+  previewFile('selfieFile','selfiePreview');previewFile('areaFile','areaPreview');
+  $('locateBtn').addEventListener('click',async()=>{
+    $('gpsInfo').textContent='Mencari lokasi GPS…';
+    try{currentGps=await getGps();$('gpsInfo').textContent=`GPS terbaca. Akurasi ±${currentGps.accuracy} meter. Koordinat akan diverifikasi server.`;}
+    catch(err){currentGps=null;$('gpsInfo').textContent=err.message;}
+  });
+  $('checkinBtn').addEventListener('click',()=>submitAttendance('MASUK'));
+  $('checkoutBtn').addEventListener('click',()=>submitAttendance('PULANG'));
+  $('refreshHistoryBtn').addEventListener('click',loadHistory);
+  $('logoutBtn').addEventListener('click',async()=>{try{await api('logout',{token:sessionStorage.getItem('dsh_token')});}catch(e){}showAuth();});
+  $('adminReportLink').addEventListener('click',()=>location.href='/report-absensi/');
+  const savedToken=sessionStorage.getItem('dsh_token');
+  if(savedToken){try{showDashboard(JSON.parse(sessionStorage.getItem('dsh_user')||'{}'));}catch(e){showAuth();}}
+
   document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>view(b.dataset.view)));
   document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{
     const target=b.dataset.go;
@@ -182,7 +331,7 @@
       // Token hanya disimpan di sessionStorage tab ini.
       sessionStorage.setItem('dsh_token',r.token);
       sessionStorage.setItem('dsh_user',JSON.stringify(r.user||{}));
-      message('Login berhasil. Akun terverifikasi: '+(r.user?.name||'karyawan')+'. Namun halaman dashboard absensi belum dipasang.','success');
+      showDashboard(r.user || {});
     } catch(err){ message(err.message,'error'); }
     finally{busy(b,false,'LOGIN');}
   });
