@@ -13,7 +13,10 @@ button{border:0;background:var(--blue);color:white;border-radius:10px;padding:11
 .tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:760px;font-size:12px}th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left}th{background:#f6f8fc;color:#42536b}a{color:#1765d4}
 .msg{font-size:13px;color:#5c6b80;padding:8px 0}.error{color:#b42336}
 @media(max-width:600px){.stats{grid-template-columns:1fr 1fr}}
-.proof-link{cursor:pointer;text-decoration:underline;color:#1765d4;font-weight:650}
+.proof-link{cursor:pointer;text-decoration:none;color:#1765d4;font-weight:650;display:inline-flex;align-items:center;gap:6px;margin:2px 8px 2px 0}
+.proof-thumb{width:58px;height:58px;object-fit:cover;border-radius:9px;border:1px solid #d6deea;background:#eef2f8;display:block;cursor:zoom-in}
+.proof-thumb-wrap{display:inline-flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:#52627a;vertical-align:top}
+.proof-thumb-wrap img{width:58px;height:58px}
 #proofViewer{display:none;position:fixed;inset:0;z-index:99999;background:rgba(3,8,20,.94);align-items:center;justify-content:center;padding:16px}
 #proofViewer.open{display:flex}
 #proofViewer .pv-panel{width:min(100%,1100px);height:min(94dvh,900px);display:flex;flex-direction:column;gap:10px}
@@ -55,14 +58,16 @@ $('load').onclick=async()=>{
   $('total').textContent=records.length;$('masuk').textContent=records.filter(x=>x.type==='MASUK').length;$('pulang').textContent=records.filter(x=>x.type==='PULANG').length;
   $('rows').innerHTML=records.length?records.slice().reverse().map(x=>{
     const dt=x.timestamp?new Date(x.timestamp):null;
-    const proof=[x.selfieUrl?`<a class="proof-link" href="#" data-proof="${encodeURIComponent(x.selfieUrl)}" data-title="Selfie" onclick="event.preventDefault();openProofPreview(decodeURIComponent(this.dataset.proof),this.dataset.title)">Selfie</a>`:'',x.areaPhotoUrl?`<a class="proof-link" href="#" data-proof="${encodeURIComponent(x.areaPhotoUrl)}" data-title="Foto Area" onclick="event.preventDefault();openProofPreview(decodeURIComponent(this.dataset.proof),this.dataset.title)">Area</a>`:''].filter(Boolean).join(' · ');
+    const token=getPdaToken();
+    const thumb=(url,title)=>url?`<a class="proof-link" href="#" data-proof="${encodeURIComponent(url)}" data-title="${title}" onclick="event.preventDefault();openProofPreview(decodeURIComponent(this.dataset.proof),this.dataset.title)"><span class="proof-thumb-wrap"><img class="proof-thumb" loading="lazy" decoding="async" src="/api/report-absensi/photo?url=${encodeURIComponent(url)}&token=${encodeURIComponent(token)}" alt="${title}" onerror="this.style.opacity='.25';this.title='Foto gagal dimuat'"><span>${title}</span></span></a>`:'';
+    const proof=[thumb(x.selfieUrl,'Selfie'),thumb(x.areaPhotoUrl,'Area')].filter(Boolean).join('');
     return `<tr><td>${x.date||''}</td><td>${dt?dt.toLocaleTimeString('id-ID'):''}</td><td>${esc(x.name)}</td><td>${esc(x.department)}</td><td>${x.type==='MASUK'?'Check-in':'Check-out'}</td><td>${Math.round(Number(x.distanceMeters)||0)} m</td><td>${proof||'-'}</td></tr>`;
   }).join(''):'<tr><td colspan="7">Tidak ada catatan pada rentang tanggal ini.</td></tr>';
   $('msg').textContent='Laporan berhasil dimuat. Total '+records.length+' catatan.';
  }catch(e){$('msg').textContent=e.message;$('msg').className='msg error';}
 };
 let proofScale=1;
-function openProofPreview(url,title){const box=$('proofViewer'),img=$('pvImage');const token=getPdaToken();proofScale=1;$('pvTitle').textContent=title||'Bukti foto';img.classList.remove('zoomed');img.style.transform='scale(1)';img.onerror=function(){img.alt='Foto tidak dapat dimuat. Periksa izin berbagi file Google Drive.';};img.src='/api/report-absensi/photo?url='+encodeURIComponent(url)+'&token='+encodeURIComponent(token)+'&_='+Date.now();box.classList.add('open');document.body.style.overflow='hidden';$('pvStage').scrollTop=0;$('pvStage').scrollLeft=0;}
+function openProofPreview(url,title){const box=$('proofViewer'),img=$('pvImage');const token=getPdaToken();proofScale=1;$('pvTitle').textContent=title||'Bukti foto';img.classList.remove('zoomed');img.style.transform='scale(1)';img.onerror=function(){img.alt='Foto tidak dapat dimuat. Periksa izin berbagi file Google Drive.';};img.src='/api/report-absensi/photo?url='+encodeURIComponent(url)+'&token='+encodeURIComponent(token);box.classList.add('open');document.body.style.overflow='hidden';$('pvStage').scrollTop=0;$('pvStage').scrollLeft=0;}
 function closeProofPreview(){$('proofViewer').classList.remove('open');$('pvImage').src='';document.body.style.overflow='';}
 function proofZoom(delta){proofScale=Math.max(.5,Math.min(4,proofScale+delta));const img=$('pvImage');img.classList.toggle('zoomed',proofScale>1);img.style.transform='scale('+proofScale+')';}
 function proofFit(){proofScale=1;const img=$('pvImage');img.classList.remove('zoomed');img.style.transform='scale(1)';$('pvStage').scrollTop=0;$('pvStage').scrollLeft=0;}
