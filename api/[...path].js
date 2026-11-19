@@ -246,6 +246,30 @@ export default async function handler(req, res) {
   try {
     if (path === "/healthz" && method === "GET") return send({ status: "ok" });
 
+    if (path === "/report-absensi/permission" && method === "GET") {
+      const auth = String(req.headers.authorization || "");
+      const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+      const session = verifyPdaSession(token);
+      if (!session) return send({ success: false, allowed: false, message: "Sesi PDA Mini tidak valid atau sudah berakhir." }, 401);
+      const gasUrl = process.env.DSH_ATTENDANCE_GAS_URL || "";
+      const bridgeSecret = process.env.PDA_REPORT_SECRET || "";
+      if (!gasUrl || !bridgeSecret) return send({ success: false, allowed: false, message: "Konfigurasi DSH Attendance belum lengkap." }, 503);
+      try {
+        const upstream = await fetch(gasUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "pdaCheckReportPermission", bridgeSecret, username: session.sub }),
+          redirect: "follow"
+        });
+        if (!upstream.ok) throw new Error("DSH Attendance API HTTP " + upstream.status);
+        const data = await upstream.json();
+        if (!data || data.ok !== true) throw new Error(data && data.message ? data.message : "Gagal memeriksa izin.");
+        return send({ success: true, allowed: data.allowed === true, namaLengkap: data.namaLengkap || session.name });
+      } catch (e) {
+        return send({ success: false, allowed: false, message: e.message || "Gagal memeriksa izin Report Absensi." }, 502);
+      }
+    }
+
     if (path === "/report-absensi" && method === "GET") {
       const auth = String(req.headers.authorization || "");
       const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
