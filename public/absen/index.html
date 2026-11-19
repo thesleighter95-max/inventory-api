@@ -275,6 +275,7 @@
     $('dashName').textContent=user?.name || 'Karyawan';
     $('dashMeta').textContent=[user?.department,user?.brand,user?.email].filter(Boolean).join(' · ');
     $('dashDate').textContent=new Intl.DateTimeFormat('id-ID',{dateStyle:'full'}).format(new Date());
+    loadProfile();
     loadHistory();
   }
   function showAuth() {
@@ -363,7 +364,7 @@
   async function loadProfile(){
     try{const r=await api('getProfile',{token:sessionStorage.getItem('dsh_token')}),u=r.user||{};
       $('profileName').value=u.name||'';$('profileEmail').value=u.email||'';$('profilePhone').value=u.phone||'';$('profileBrand').value=u.brand||'';
-      const avatar=u.profilePhotoUrl||'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#eaf1fb"/><text x="50%" y="55%" text-anchor="middle" font-size="28" fill="#174b83">DSH</text></svg>');$('profileAvatar').src=avatar;$('profileModalAvatar').src=avatar;
+      const avatar=u.profilePhotoDataUrl||u.profilePhotoUrl||'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#eaf1fb"/><text x="50%" y="55%" text-anchor="middle" font-size="28" fill="#174b83">DSH</text></svg>');$('profileAvatar').src=avatar;$('profileModalAvatar').src=avatar;
     }catch(e){$('profileMessage').textContent=e.message;}
   }
 
