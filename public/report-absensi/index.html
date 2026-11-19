@@ -1,38 +1,55 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#071a35">
-<title>DSH Attendance Report</title>
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#071a35"><title>Laporan Absensi – DSH</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#f2f5fa;font-family:Arial;color:#14233b}
-header{background:#071a35;color:white;padding:28px 20px}
-h1{font-size:23px;margin:0 0 8px}
-main{max-width:600px;margin:20px auto;padding:0 15px}
-.card{background:white;padding:22px;border-radius:16px}
-label{display:block;font-size:12px;font-weight:bold;margin:15px 0 7px}
-input{width:100%;padding:13px;border:1px solid #ddd;border-radius:9px}
-button{width:100%;padding:14px;margin-top:18px;border:0;border-radius:10px;background:#1677ff;color:white;font-weight:bold}
-.note{font-size:12px;color:#718096;margin-top:15px}
-</style>
-</head>
-<body>
-<header>
-<h1>DSH Attendance Report</h1>
-Laporan Kehadiran SPG / SPM
-</header>
+:root{--navy:#071a35;--blue:#2675e8;--bg:#f3f6fb;--line:#e4eaf2;--muted:#718096}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,Arial;color:#17263d}
+header{background:linear-gradient(120deg,#071a35,#174b83);color:white;padding:22px 18px}header h1{margin:0 0 6px;font-size:22px}header p{margin:0;color:#c7dbf2;font-size:13px}
+main{max-width:1100px;margin:20px auto;padding:0 14px 50px}
+.card{background:white;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:end}label{font-size:12px;font-weight:700;color:#44536a}input{display:block;margin-top:6px;border:1px solid var(--line);border-radius:9px;padding:10px;font:inherit}
+button{border:0;background:var(--blue);color:white;border-radius:10px;padding:11px 15px;font-weight:800}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#f7f9fd;border-radius:12px;padding:14px}.stat b{display:block;font-size:24px;color:var(--navy)}.stat span{font-size:11px;color:var(--muted)}
+.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:760px;font-size:12px}th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left}th{background:#f6f8fc;color:#42536b}a{color:#1765d4}
+.msg{font-size:13px;color:#5c6b80;padding:8px 0}.error{color:#b42336}
+@media(max-width:600px){.stats{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<header><h1>DSH Attendance · Laporan Admin</h1><p>LOTTE Mart Wholesale Mataram</p></header>
 <main>
-<div class="card">
-<h3>Admin Login</h3>
-<label>USERNAME ADMIN</label>
-<input type="text" placeholder="Username admin">
-<label>PASSWORD</label>
-<input type="password" placeholder="Password admin">
-<button disabled>LOGIN ADMIN</button>
-<div class="note">Halaman laporan sedang dalam tahap pemasangan.</div>
+<div class="card"><div class="filters">
+<label>Dari tanggal<input id="from" type="date"></label><label>Sampai tanggal<input id="to" type="date"></label>
+<button id="load">TAMPILKAN LAPORAN</button><button id="back" style="background:#eaf1fb;color:#174b83">KEMBALI</button>
+</div><div id="msg" class="msg">Pilih rentang tanggal, lalu tampilkan laporan.</div></div>
+<div class="stats">
+<div class="stat"><b id="total">0</b><span>Total catatan absensi</span></div>
+<div class="stat"><b id="masuk">0</b><span>Check-in</span></div>
+<div class="stat"><b id="pulang">0</b><span>Check-out</span></div>
 </div>
+<div class="card" style="margin-top:14px"><h3>Rekap karyawan</h3><div class="tablewrap"><table><thead><tr><th>Tanggal</th><th>Jam</th><th>Nama</th><th>Departemen</th><th>Jenis</th><th>Jarak</th><th>Bukti</th></tr></thead><tbody id="rows"><tr><td colspan="7">Belum ada data.</td></tr></tbody></table></div></div>
 </main>
-</body>
-</html>
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbxPYz6Wq4KSyo4ABoydjMdRE-ZFrOrp43EpElCJEz1OBP9MJ3psrlwefuNu--GpGCbO/exec';
+const $=id=>document.getElementById(id);
+async function api(action,data={}){
+ const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...data}),redirect:'follow'});
+ const obj=await res.json();if(!obj.ok)throw new Error(obj.message||'Permintaan gagal');return obj;
+}
+$('back').onclick=()=>location.href='/absen/';
+$('load').onclick=async()=>{
+ $('msg').textContent='Memuat laporan…';$('msg').className='msg';
+ try{
+  const token=sessionStorage.getItem('dsh_token');if(!token)throw new Error('Sesi login tidak ditemukan. Silakan login kembali sebagai admin.');
+  const r=await api('adminReport',{token,from:$('from').value,to:$('to').value});
+  const records=r.records||[];
+  $('total').textContent=records.length;$('masuk').textContent=records.filter(x=>x.type==='MASUK').length;$('pulang').textContent=records.filter(x=>x.type==='PULANG').length;
+  $('rows').innerHTML=records.length?records.slice().reverse().map(x=>{
+    const dt=x.timestamp?new Date(x.timestamp):null;
+    const proof=[x.selfieUrl?`<a target="_blank" rel="noopener" href="${x.selfieUrl}">Selfie</a>`:'',x.areaPhotoUrl?`<a target="_blank" rel="noopener" href="${x.areaPhotoUrl}">Area</a>`:''].filter(Boolean).join(' · ');
+    return `<tr><td>${x.date||''}</td><td>${dt?dt.toLocaleTimeString('id-ID'):''}</td><td>${esc(x.name)}</td><td>${esc(x.department)}</td><td>${x.type==='MASUK'?'Check-in':'Check-out'}</td><td>${Math.round(Number(x.distanceMeters)||0)} m</td><td>${proof||'-'}</td></tr>`;
+  }).join(''):'<tr><td colspan="7">Tidak ada catatan pada rentang tanggal ini.</td></tr>';
+  $('msg').textContent='Laporan berhasil dimuat. Total '+records.length+' catatan.';
+ }catch(e){$('msg').textContent=e.message;$('msg').className='msg error';}
+};
+function esc(v){return String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+const today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Makassar'});$('from').value=today;$('to').value=today;
+</script></body></html>
