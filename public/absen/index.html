@@ -46,6 +46,8 @@
 @media(max-width:640px){.dashboard{padding:14px 12px 80px}.dash-grid{grid-template-columns:1fr}.dash-wide{grid-column:auto}.dash-top{padding:18px}}
 
 .profile-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#eaf1fb;border:2px solid #dbe7f6}.history-photo{width:76px;height:76px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block;margin-top:8px}.history-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.history-actions button{border:0;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:750;background:#eaf1fb;color:#174b83}.history-actions button.delete{background:#fff0f1;color:#b42336}.profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.profile-grid .dash-input{min-width:0}@media(max-width:360px){.profile-grid{grid-template-columns:1fr}}
+
+.profile-modal{position:fixed;inset:0;z-index:1000;background:rgba(5,18,38,.62);display:flex;align-items:center;justify-content:center;padding:16px}.profile-modal.hidden{display:none}.profile-modal-panel{background:#fff;width:min(100%,620px);max-height:90vh;overflow:auto;border-radius:20px;padding:20px;box-shadow:0 24px 80px #0003}.profile-modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}.profile-modal-head h3{margin:0 0 4px;color:var(--navy)}.profile-close{border:0;background:#edf2f8;border-radius:10px;width:36px;height:36px;font-size:18px;color:var(--navy)}.profile-photo-section{display:flex;align-items:center;gap:14px;padding:14px;background:#f5f8fc;border:1px solid var(--line);border-radius:14px}.profile-photo-controls{flex:1;min-width:0}.profile-photo-controls .dash-input{background:#fff}.profile-divider{height:1px;background:var(--line);margin:18px 0}.profile-password{border-top:1px solid var(--line);margin-top:18px;padding-top:14px}.profile-password summary{cursor:pointer;font-weight:800;color:var(--navy)}@media(max-width:480px){.profile-modal{padding:8px;align-items:flex-end}.profile-modal-panel{max-height:92vh;border-radius:18px 18px 10px 10px;padding:16px}.profile-photo-section{align-items:flex-start}.profile-photo-section .profile-avatar{flex:0 0 56px;width:56px;height:56px}.profile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -118,14 +120,13 @@
     </div>
     <div class="dash-grid">
       <div class="dash-card dash-wide" id="profileCard">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px"><img id="profileAvatar" class="profile-avatar" alt="Foto profil"><div><h3 style="margin-bottom:4px">Profil karyawan</h3><div class="dash-muted">Nama dan email mengikuti data akun. Nama hanya dapat diubah admin.</div></div></div>
-        <div class="profile-grid"><div><label class="dash-muted">Nama lengkap (khusus admin)</label><input class="dash-input" id="profileName" readonly></div><div><label class="dash-muted">Email akun</label><input class="dash-input" id="profileEmail" readonly></div><div><label class="dash-muted">Nomor HP</label><input class="dash-input" id="profilePhone" type="tel"></div><div><label class="dash-muted">Brand</label><input class="dash-input" id="profileBrand" maxlength="100"></div></div>
-        <label class="dash-muted" for="profilePhotoFile">Ganti foto profil</label><input class="dash-input" id="profilePhotoFile" type="file" accept="image/*" capture="user">
-        <button class="dash-btn" id="saveProfileBtn">SIMPAN PROFIL</button><div class="dash-muted" id="profileMessage" aria-live="polite"></div>
-        <details style="border-top:1px solid var(--line);margin-top:16px;padding-top:14px"><summary style="cursor:pointer;font-weight:800;color:var(--navy);font-size:14px;padding:4px 0">Reset password</summary><div class="dash-muted" style="margin-top:8px">OTP akan dikirim ke email akun yang terdaftar.</div>
-        <button class="dash-btn secondary" id="profileRequestOtpBtn">KIRIM OTP RESET PASSWORD</button>
-        <div class="profile-grid"><div><label class="dash-muted">Kode OTP</label><input class="dash-input" id="profileResetOtp" inputmode="numeric" maxlength="6" placeholder="6 digit OTP"></div><div><label class="dash-muted">Password baru</label><input class="dash-input" id="profileNewPassword" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter"></div></div>
-        <button class="dash-btn" id="profileResetBtn">SIMPAN PASSWORD BARU</button><div class="dash-muted" id="profilePasswordMessage" aria-live="polite"></div></details>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="display:flex;align-items:center;gap:12px;min-width:0">
+            <img id="profileAvatar" class="profile-avatar" alt="Foto profil">
+            <div style="min-width:0"><h3 style="margin:0 0 4px">Pengaturan akun</h3><div class="dash-muted">Kelola informasi dan keamanan akun kamu</div></div>
+          </div>
+          <button class="dash-btn secondary" id="openProfileBtn" style="width:auto;white-space:nowrap;margin:0">KELOLA PROFIL</button>
+        </div>
       </div>
       <div class="dash-card"><div class="dash-muted">STATUS MASUK</div><div class="dash-stat" id="checkinStatus">Belum</div><div class="dash-muted" id="checkinTime">Belum ada catatan masuk</div></div>
       <div class="dash-card"><div class="dash-muted">STATUS PULANG</div><div class="dash-stat" id="checkoutStatus">Belum</div><div class="dash-muted" id="checkoutTime">Belum ada catatan pulang</div></div>
@@ -150,7 +151,25 @@
       <div class="dash-card dash-wide">
         <div class="dash-actions"><button class="dash-btn secondary" id="logoutBtn">KELUAR</button></div>
       </div>
+    </    <div id="profileModal" class="profile-modal hidden" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+      <div class="profile-modal-panel">
+        <div class="profile-modal-head"><div><h3 id="profileModalTitle">Kelola Profil</h3><div class="dash-muted">Perbarui data akun secara terpisah</div></div><button type="button" class="profile-close" id="closeProfileBtn" aria-label="Tutup">✕</button></div>
+        <section class="profile-photo-section">
+          <img id="profileModalAvatar" class="profile-avatar" alt="Foto profil">
+          <div class="profile-photo-controls"><strong>Foto profil</strong><div class="dash-muted">Ganti foto tidak akan mengubah data profil lainnya.</div><input class="dash-input" id="profilePhotoFile" type="file" accept="image/*" capture="user"><button class="dash-btn secondary" id="saveProfilePhotoBtn">SIMPAN FOTO PROFIL</button><div class="dash-muted" id="profilePhotoMessage" aria-live="polite"></div></div>
+        </section>
+        <div class="profile-divider"></div>
+        <h3>Informasi akun</h3>
+        <div class="profile-grid"><div><label class="dash-muted">Nama lengkap (hanya admin dapat mengubah)</label><input class="dash-input" id="profileName" readonly></div><div><label class="dash-muted">Email akun</label><input class="dash-input" id="profileEmail" readonly></div><div><label class="dash-muted">Nomor HP</label><input class="dash-input" id="profilePhone" type="tel"></div><div><label class="dash-muted">Brand</label><input class="dash-input" id="profileBrand" maxlength="100"></div></div>
+        <button class="dash-btn" id="saveProfileBtn">SIMPAN DATA PROFIL</button><div class="dash-muted" id="profileMessage" aria-live="polite"></div>
+        <details class="profile-password"><summary>Reset password</summary><div class="dash-muted" style="margin-top:8px">OTP akan dikirim ke email akun yang terdaftar.</div>
+          <button class="dash-btn secondary" id="profileRequestOtpBtn">KIRIM OTP RESET PASSWORD</button>
+          <div class="profile-grid"><div><label class="dash-muted">Kode OTP</label><input class="dash-input" id="profileResetOtp" inputmode="numeric" maxlength="6" placeholder="6 digit OTP"></div><div><label class="dash-muted">Password baru</label><input class="dash-input" id="profileNewPassword" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter"></div></div>
+          <button class="dash-btn" id="profileResetBtn">SIMPAN PASSWORD BARU</button><div class="dash-muted" id="profilePasswordMessage" aria-live="polite"></div>
+        </details>
+      </div>
     </div>
+div>
   </section>
   </main>
 </div>
@@ -336,7 +355,7 @@
   async function loadProfile(){
     try{const r=await api('getProfile',{token:sessionStorage.getItem('dsh_token')}),u=r.user||{};
       $('profileName').value=u.name||'';$('profileEmail').value=u.email||'';$('profilePhone').value=u.phone||'';$('profileBrand').value=u.brand||'';
-      $('profileAvatar').src=u.profilePhotoUrl||'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#eaf1fb"/><text x="50%" y="55%" text-anchor="middle" font-size="28" fill="#174b83">DSH</text></svg>');
+      const avatar=u.profilePhotoUrl||'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#eaf1fb"/><text x="50%" y="55%" text-anchor="middle" font-size="28" fill="#174b83">DSH</text></svg>');$('profileAvatar').src=avatar;$('profileModalAvatar').src=avatar;
     }catch(e){$('profileMessage').textContent=e.message;}
   }
 
@@ -380,9 +399,18 @@
       const r=await api('updateAttendancePhoto',{token:sessionStorage.getItem('dsh_token'),attendanceId:id,photoDataUrl});$('attendanceMessage').textContent=r.message;await loadHistory();
     }catch(err){$('attendanceMessage').textContent=err.message;}finally{input.value='';}
   });
+  $('openProfileBtn').addEventListener('click',async()=>{$('profileModal').classList.remove('hidden');await loadProfile();});
+  $('closeProfileBtn').addEventListener('click',()=>$('profileModal').classList.add('hidden'));
+  $('profileModal').addEventListener('click',e=>{if(e.target===$('profileModal'))$('profileModal').classList.add('hidden');});
+  $('saveProfilePhotoBtn').addEventListener('click',async()=>{const b=$('saveProfilePhotoBtn');b.disabled=true;try{
+    const file=$('profilePhotoFile').files[0];if(!file)throw new Error('Pilih foto profil terlebih dahulu.');
+    const profilePhotoDataUrl=await compressProfilePhoto(file);
+    const r=await api('updateProfile',{token:sessionStorage.getItem('dsh_token'),profilePhotoDataUrl});
+    $('profilePhotoMessage').textContent=r.message||'Foto profil berhasil diperbarui.';await loadProfile();
+    $('profilePhotoFile').value='';
+  }catch(err){$('profilePhotoMessage').textContent=err.message;}finally{b.disabled=false;}});
   $('saveProfileBtn').addEventListener('click',async()=>{const b=$('saveProfileBtn');b.disabled=true;try{
-    const payload={token:sessionStorage.getItem('dsh_token'),phone:val('profilePhone'),brand:val('profileBrand')},file=$('profilePhotoFile').files[0];
-    if(file)payload.profilePhotoDataUrl=await compressProfilePhoto(file);
+    const payload={token:sessionStorage.getItem('dsh_token'),phone:val('profilePhone'),brand:val('profileBrand')};
     const r=await api('updateProfile',payload);$('profileMessage').textContent=r.message;sessionStorage.setItem('dsh_user',JSON.stringify(r.user||{}));
     $('dashMeta').textContent=[r.user.department,r.user.brand,r.user.email].filter(Boolean).join(' · ');await loadProfile();
   }catch(err){$('profileMessage').textContent=err.message;}finally{b.disabled=false;}});
