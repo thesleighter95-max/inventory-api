@@ -397,9 +397,10 @@ export default async function handler(req, res) {
     if (path === "/users" && method === "GET") {
       if (query.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
       const users = await getJson("users", []);
-      let permissionMap = {};
-      try { const d = await callDshAttendance("pdaUsers"); permissionMap = Object.fromEntries((d.users || []).map(u => [u.username, u])); } catch (e) { return send({ success: false, message: "Gagal membaca daftar izin dari Spreadsheet: " + e.message }, 502); }
-      return send({ success: true, users: users.map(u => ({ username: u.username, namaLengkap: u.namaLengkap || permissionMap[u.username]?.namaLengkap || u.username, suspended: u.suspended ?? permissionMap[u.username]?.suspended ?? false, reportAbsensi: permissionMap[u.username]?.reportAbsensi === true, createdAt: u.createdAt ?? null })) });
+      let permissionMap = {}, permissionSync = true, permissionMessage = "";
+      try { const d = await callDshAttendance("pdaUsers"); permissionMap = Object.fromEntries((d.users || []).map(u => [String(u.username), u])); }
+      catch (e) { permissionSync = false; permissionMessage = String(e.message || e); }
+      return send({ success: true, permissionSync, permissionMessage, users: users.map(u => ({ username: u.username, namaLengkap: u.namaLengkap || permissionMap[u.username]?.namaLengkap || u.username, suspended: u.suspended ?? permissionMap[u.username]?.suspended ?? false, reportAbsensi: permissionMap[u.username]?.reportAbsensi === true || u.reportAbsensi === true, createdAt: u.createdAt ?? null })) });
     }
 
     if (path === "/users" && method === "POST") {
@@ -442,7 +443,13 @@ export default async function handler(req, res) {
       if (idx === -1) return send({ success: false, message: "User tidak ditemukan" }, 404);
       if (namaLengkap !== undefined) users[idx].namaLengkap = namaLengkap.trim();
       if (suspended !== undefined) users[idx].suspended = suspended;
-      if (reportAbsensi !== undefined) users[idx].reportAbsensi = reportAbsensi === true;
+      if (reportAbsensi !== undefined) {
+        try { await callDshAttendance("pdaSetReportPermission", { username, reportAbsensi: reportAbsensi === true, namaLengkap: users[idx].namaLengkap || username }); }
+        catch (e) { return send({ success: false, message: "Gagal menyimpan izin ke Spreadsheet DSH Attendance: " + String(e.message || e) }, 502); }
+        users[idx].reportAbsensi = reportAbsensi === true;
+      }
+      if (namaLengkap !== undefined) users[idx].namaLengkap = namaLengkap.trim();
+      if (suspended !== undefined) users[idx].suspended = suspended;
       if (password !== undefined && password !== "") users[idx].password = password.trim();
       await setJson("users", users);
       return send({ success: true });
