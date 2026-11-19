@@ -48,6 +48,8 @@
 .profile-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#eaf1fb;border:2px solid #dbe7f6}.history-photo{width:76px;height:76px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block;margin-top:8px}.history-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.history-actions button{border:0;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:750;background:#eaf1fb;color:#174b83}.history-actions button.delete{background:#fff0f1;color:#b42336}.profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.profile-grid .dash-input{min-width:0}@media(max-width:360px){.profile-grid{grid-template-columns:1fr}}
 
 .profile-modal{position:fixed;inset:0;z-index:1000;background:rgba(5,18,38,.62);display:flex;align-items:center;justify-content:center;padding:16px}.profile-modal.hidden{display:none}.profile-modal-panel{background:#fff;width:min(100%,620px);max-height:90vh;overflow:auto;border-radius:20px;padding:20px;box-shadow:0 24px 80px #0003}.profile-modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}.profile-modal-head h3{margin:0 0 4px;color:var(--navy)}.profile-close{border:0;background:#edf2f8;border-radius:10px;width:36px;height:36px;font-size:18px;color:var(--navy)}.profile-photo-section{display:flex;align-items:center;gap:14px;padding:14px;background:#f5f8fc;border:1px solid var(--line);border-radius:14px}.profile-photo-controls{flex:1;min-width:0}.profile-photo-controls .dash-input{background:#fff}.profile-divider{height:1px;background:var(--line);margin:18px 0}.profile-password{border-top:1px solid var(--line);margin-top:18px;padding-top:14px}.profile-password summary{cursor:pointer;font-weight:800;color:var(--navy)}@media(max-width:480px){.profile-modal{padding:8px;align-items:flex-end}.profile-modal-panel{max-height:92vh;border-radius:18px 18px 10px 10px;padding:16px}.profile-photo-section{align-items:flex-start}.profile-photo-section .profile-avatar{flex:0 0 56px;width:56px;height:56px}.profile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.history-photo-button{display:block;padding:0;border:0;background:transparent;cursor:zoom-in;margin-top:8px}.history-photo-button .history-photo{margin:0}.photo-lightbox{position:fixed;inset:0;z-index:1200;background:rgba(4,13,27,.88);display:flex;align-items:center;justify-content:center;padding:16px}.photo-lightbox.hidden{display:none}.photo-lightbox img{max-width:min(100%,900px);max-height:85vh;object-fit:contain;border-radius:12px}.photo-lightbox-close{position:absolute;top:16px;right:16px;border:0;border-radius:50%;width:42px;height:42px;background:#fff;color:#14243a;font-size:22px;font-weight:800}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -151,6 +153,10 @@
       <div class="dash-card dash-wide">
         <div class="dash-actions"><button class="dash-btn secondary" id="logoutBtn">KELUAR</button></div>
       </div>
+    </div>
+    <div id="photoLightbox" class="photo-lightbox hidden" role="dialog" aria-modal="true" aria-label="Foto bukti absensi">
+      <button type="button" id="closePhotoLightbox" class="photo-lightbox-close" aria-label="Tutup">✕</button>
+      <img id="photoLightboxImage" alt="Foto bukti absensi ukuran besar">
     </div>
     <div id="profileModal" class="profile-modal hidden" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
       <div class="profile-modal-panel">
@@ -340,8 +346,9 @@
       $('checkoutTime').textContent=pulang?'Tercatat pukul '+localDateTime(pulang.timestamp).time:'Belum ada catatan pulang';
       $('historyList').innerHTML=window.__dshHistory.length?window.__dshHistory.map(x=>{
         const dt=localDateTime(x.timestamp||x.date),id=escapeHtml(x.attendanceId||'');
-        const photo=x.photoUrl?'<a href="'+escapeHtml(x.photoUrl)+'" target="_blank" rel="noopener"><img class="history-photo" src="'+escapeHtml(x.photoUrl)+'" alt="Foto bukti absensi"></a>':'';
-        const actions=x.canEdit?'<div class="history-actions"><button data-edit-photo="'+id+'">GANTI FOTO</button><button class="delete" data-delete-attendance="'+id+'">HAPUS</button></div><input class="hidden" type="file" accept="image/*" capture="environment" data-photo-input="'+id+'">':'<div class="dash-muted">Riwayat terkunci (batas 24 jam / tanggal sama)</div>';
+        const photo=x.photoUrl?'<button type="button" class="history-photo-button" data-preview-photo="'+escapeHtml(x.photoUrl)+'" aria-label="Perbesar foto absensi"><img class="history-photo" src="'+escapeHtml(x.photoUrl)+'" alt="Thumbnail foto absensi"></button>':'';
+        const stampMs=new Date(x.timestamp||x.date).getTime();const canEdit=x.canEdit===true||(localDate(x.date||x.timestamp)===today&&Number.isFinite(stampMs)&&Date.now()>=stampMs&&Date.now()-stampMs<=86400000);
+        const actions=canEdit?'<div class="history-actions"><button data-edit-photo="'+id+'">GANTI FOTO</button><button class="delete" data-delete-attendance="'+id+'">HAPUS</button></div><input class="hidden" type="file" accept="image/*" capture="environment" data-photo-input="'+id+'">':'<div class="dash-muted">Riwayat terkunci (batas 24 jam / tanggal sama)</div>';
         return '<div class="history-row" style="align-items:flex-start"><div style="flex:1"><b>'+(String(x.type).toUpperCase()==='MASUK'?'Check-in':'Check-out')+'</b><div class="dash-muted">'+escapeHtml(dt.date||localDate(x.date))+'</div>'+photo+actions+'</div><div style="text-align:right;white-space:nowrap">'+escapeHtml(dt.time)+'<div class="dash-muted">'+Math.round(Number(x.distanceMeters)||0)+' m dari toko</div></div></div>';
       }).join(''):'Belum ada riwayat absensi.';
     }catch(err){$('historyList').textContent=err.message;}
@@ -385,6 +392,12 @@
   $('checkinBtn').addEventListener('click',()=>submitAttendance('MASUK'));
   $('checkoutBtn').addEventListener('click',()=>submitAttendance('PULANG'));
   $('refreshHistoryBtn').addEventListener('click',loadHistory);
+  $('historyList').addEventListener('click',e=>{
+    const thumb=e.target.closest('[data-preview-photo]');
+    if(thumb){$('photoLightboxImage').src=thumb.getAttribute('data-preview-photo');$('photoLightbox').classList.remove('hidden');}
+  });
+  $('closePhotoLightbox').addEventListener('click',()=>$('photoLightbox').classList.add('hidden'));
+  $('photoLightbox').addEventListener('click',e=>{if(e.target===$('photoLightbox'))$('photoLightbox').classList.add('hidden');});
   $('historyList').addEventListener('click',async e=>{
     const edit=e.target.closest('[data-edit-photo]'),del=e.target.closest('[data-delete-attendance]');
     if(edit){const id=edit.getAttribute('data-edit-photo');const input=Array.from(document.querySelectorAll('[data-photo-input]')).find(el=>el.getAttribute('data-photo-input')===id);if(input)input.click();}
