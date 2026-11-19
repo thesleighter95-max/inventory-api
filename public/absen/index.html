@@ -138,7 +138,7 @@
         <div id="historyList" class="dash-muted">Memuat riwayat…</div>
       </div>
       <div class="dash-card dash-wide">
-        <div class="dash-actions"><button class="dash-btn secondary" id="adminReportLink">BUKA LAPORAN ADMIN</button><button class="dash-btn secondary" id="logoutBtn">KELUAR</button></div>
+        <div class="dash-actions"><button class="dash-btn secondary" id="logoutBtn">KELUAR</button></div>
       </div>
     </div>
   </section>
@@ -313,7 +313,6 @@
   $('checkoutBtn').addEventListener('click',()=>submitAttendance('PULANG'));
   $('refreshHistoryBtn').addEventListener('click',loadHistory);
   $('logoutBtn').addEventListener('click',async()=>{try{await api('logout',{token:sessionStorage.getItem('dsh_token')});}catch(e){}showAuth();});
-  $('adminReportLink').addEventListener('click',()=>location.href='/report-absensi/');
   const savedToken=sessionStorage.getItem('dsh_token');
   if(savedToken){try{showDashboard(JSON.parse(sessionStorage.getItem('dsh_user')||'{}'));}catch(e){showAuth();}}
 
