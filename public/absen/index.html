@@ -20,6 +20,7 @@
 .field{margin:14px 0}.field label{display:block;font-size:12px;font-weight:750;color:#33445c;margin:0 0 7px}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:11px;padding:13px 14px;font:inherit;font-size:14px;color:var(--ink);outline:none;background:white}.field input:focus,.field select:focus{border-color:#6aa6f5;box-shadow:0 0 0 3px #2675e817}.hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.45}
 .btn{width:100%;border:0;border-radius:12px;padding:14px 16px;background:linear-gradient(100deg,#1765d4,#2788f2);color:white;font-weight:800;font-size:14px;cursor:pointer;margin-top:12px;box-shadow:0 8px 18px #2675e82b}.btn:disabled{opacity:.55;cursor:wait}.linkrow{display:flex;justify-content:space-between;gap:10px;margin-top:17px;font-size:12px}.link{border:0;background:none;color:#216bd0;font-weight:750;cursor:pointer;padding:0}.status{display:none;padding:11px 13px;border-radius:10px;font-size:12px;line-height:1.5;margin:0 0 16px}.status.show{display:block}.status.error{background:#fff0f1;color:var(--danger)}.status.success{background:#eaf8f1;color:var(--ok)}.form{display:none}.form.active{display:block}.hidden{display:none!important}
 @media(max-width:760px){.shell{display:block;padding:0;max-width:520px}.brand{display:none}.panel{min-height:100vh;border:0;border-radius:0;padding:26px 22px;align-items:flex-start}.panelinner{margin:auto}.mobilebrand{display:flex;align-items:center;gap:10px;margin-bottom:36px}.mobilebrand .mark{width:42px;height:42px}.mobilebrand b{color:var(--navy);letter-spacing:1.5px}.mobilebrand small{display:block;font-size:9px;color:var(--muted);letter-spacing:1.4px;margin-top:3px}.heading h2{font-size:25px}}
+.required-mark{color:#dc2626;font-weight:700}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -51,11 +52,12 @@
     <section class="form" id="register">
       <div id="googleRegisterButton" style="display:flex;justify-content:center;margin:0 0 16px"></div>
       <div class="hint" style="text-align:center;margin-bottom:12px">Pilih Google untuk mengisi email secara otomatis, atau isi email manual.</div>
-      <div class="field"><label>Nama lengkap</label><input id="fullName" autocomplete="name" placeholder="Nama sesuai identitas"></div>
-      <div class="field"><label>Departemen</label><select id="department"><option value="">Pilih departemen</option><option>SPG</option><option>SPM</option><option>MD</option></select></div>
-      <div class="field"><label>Nomor HP</label><input id="phone" type="tel" autocomplete="tel" placeholder="08xxxxxxxxxx"></div>
-      <div class="field"><label>Email aktif</label><input id="regEmail" type="email" autocomplete="email" placeholder="nama@email.com"></div>
-      <div class="field"><label>Buat password</label><input id="regPassword" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter"></div>
+      <div class="field"><label>Nama lengkap <span class="required-mark">*</span></label><input id="fullName" autocomplete="name" placeholder="Ketik nama lengkap" required></div>
+      <div class="field"><label>Departemen <span class="required-mark">*</span></label><select id="department" required><option value="">Pilih departemen</option><option>SPG</option><option>SPM</option><option>MD</option></select></div>
+      <div class="field"><label>Brand <span class="required-mark">*</span></label><input id="brand" type="text" autocomplete="organization" placeholder="Ketik nama brand" maxlength="100" required></div>
+      <div class="field"><label>Nomor HP <span class="required-mark">*</span></label><input id="phone" type="tel" autocomplete="tel" placeholder="08xxxxxxxxxx" required></div>
+      <div class="field"><label>Email aktif <span class="required-mark">*</span></label><input id="regEmail" type="email" autocomplete="email" placeholder="nama@email.com" required></div>
+      <div class="field"><label>Buat password <span class="required-mark">*</span></label><input id="regPassword" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter" minlength="8" required></div>
       <button class="btn" id="sendRegOtpBtn">KIRIM OTP EMAIL</button>
       <div class="hint">Kode OTP berlaku 5 menit. Akun aktif setelah email berhasil diverifikasi.</div>
       <div class="linkrow"><span>Sudah punya akun?</span><button class="link" data-go="login">Kembali login</button></div>
@@ -138,7 +140,6 @@
           message('Login Google berhasil. Selamat datang, ' + (result.user?.name || 'karyawan') + '. Dashboard absensi akan dibuka setelah modul dashboard dipasang.','success');
         } else {
           $('regEmail').value = result.email || '';
-          if (result.name && !$('fullName').value) $('fullName').value = result.name;
           view('register');
           message(result.message || 'Email Google belum terdaftar. Lengkapi data dan verifikasi OTP.','success');
         }
@@ -187,9 +188,30 @@
   });
 
   $('sendRegOtpBtn').addEventListener('click',async e=>{
+    const requiredFields = ['fullName','department','brand','phone','regEmail','regPassword'];
+    for (const id of requiredFields) {
+      const field = $(id);
+      if (!field.value.trim()) {
+        field.setCustomValidity('Kolom ini wajib diisi.');
+        field.reportValidity();
+        field.setCustomValidity('');
+        field.focus();
+        return;
+      }
+    }
+    if (!$('regEmail').checkValidity()) {
+      $('regEmail').reportValidity();
+      return;
+    }
+    if ($('regPassword').value.length < 8) {
+      $('regPassword').setCustomValidity('Password minimal 8 karakter.');
+      $('regPassword').reportValidity();
+      $('regPassword').setCustomValidity('');
+      return;
+    }
     const b=e.currentTarget; busy(b,true,'KIRIM OTP EMAIL');
     try {
-      const data={fullName:val('fullName'),department:val('department'),phone:val('phone'),email:val('regEmail'),password:$('regPassword').value};
+      const data={fullName:val('fullName'),department:val('department'),brand:val('brand'),phone:val('phone'),email:val('regEmail'),password:$('regPassword').value};
       const r=await api('requestRegistrationOtp',data);
       pendingRegistrationEmail=data.email; $('regOtp').value=''; view('verifyRegister'); message(r.message||'OTP terkirim.','success');
     } catch(err){message(err.message,'error');}
