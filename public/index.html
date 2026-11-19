@@ -6813,75 +6813,61 @@ async function handlePINComplete() {
 /* ===== PROCEED QUICK LOGIN (setelah biometric/PIN berhasil) ===== */
 function proceedQuickLogin(data) {
   var creds = qlDecode(data.cred);
-  if (!creds) { showToast("Data login rusak, gunakan login manual","error"); return; }
+  if (!creds) { showToast("Data login rusak, gunakan login manual", "error"); return; }
   var errorEl = $("loginError");
-  if (errorEl) errorEl.innerText = "Masuk sebagai " + (data.nama || creds.n) + "...";
-  // Admin quick login
+  if (errorEl) errorEl.innerText = "Memverifikasi sesi...";
   if (creds.a) {
     verifyAdminPassword(creds.p).then(function(valid){
-      if(valid){completeAdminLogin(creds.p,false);return}
+      if(valid){completeAdminLogin(creds.p,false);return;}
       qlClear();
       if(errorEl)errorEl.innerText="Login admin tersimpan sudah tidak valid.";
     }).catch(function(){if(errorEl)errorEl.innerText="Gagal menghubungi server login.";});
     return;
   }
-  // Regular user quick login — tetap verifikasi via Google Sheets untuk keamanan
-  getCSVFresh(LOGIN_URL).then(function(rows) {
-    for (var i = 1; i < rows.length; i++) {
-      if (rows[i][0] == creds.u && rows[i][1] == creds.p) {
-        var namaLengkap = (rows[i][2] && rows[i][2].length > 0) ? rows[i][2] : creds.u;
-        currentUserNameInv = namaLengkap; currentUsernameRaw = creds.u; isAdmin = false;
-        kirimLog(creds.u); kirimAktivitas("login", "Quick-login: " + namaLengkap);
-        $("loginPage").classList.add("hidden");
-        $("mainApp").classList.remove("hidden"); setMarquee(true);
-        renderUserNav(); updateUserInfo(namaLengkap); tampilkanUpdate();
-        updateBBLMSyncDisplay(); fetchDataExp(); fetchBBLM(); getUOMData(); fetchBBLMStatus();
+  fetch(API_BASE_URL+"/login", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({username:creds.u,password:creds.p})
+  }).then(function(r){return r.json().then(function(d){return {status:r.status,data:d};});})
+    .then(function(res){
+      if(res.data && res.data.success && res.data.accessToken){
+        doUserLogin(res.data.namaLengkap||data.nama||creds.n||creds.u,creds.u,res.data.accessToken);
         return;
       }
-    }
-    // Credential tidak valid lagi di sheet
-    showToast("Session kadaluarsa, gunakan login manual","error");
-    qlClear();
-    var sec = $("qlSection"); if (sec) sec.style.display = "none";
-    var errEl = $("loginError"); if (errEl) errEl.innerText = "";
-  }).catch(function() {
-    showToast("Gagal koneksi, coba lagi","error");
-    var errEl = $("loginError"); if (errEl) errEl.innerText = "";
-  });
+      qlClear();
+      var sec=$("qlSection");if(sec)sec.style.display="none";
+      if(errorEl)errorEl.innerText=(res.data&&res.data.message)||"Sesi login cepat tidak valid. Silakan login manual.";
+      showToast("Sesi login cepat perlu diperbarui", "error");
+    }).catch(function(){if(errorEl)errorEl.innerText="Gagal koneksi ke server login.";});
 }
 
-/* ---- Login final: autentikasi server-side agar sesi bertoken tersedia untuk Report Absensi ---- */
+/* ---- Login final: gunakan autentikasi server PDA Mini dan simpan token sesi ---- */
 (function() {
   window.login = function() {
-    var user = (($("username") || {}).value || "").trim();
-    var pass = (($("password") || {}).value || "").trim();
+    var user = String(($("username") || {}).value || "").trim();
+    var pass = String(($("password") || {}).value || "").trim();
     var errorEl = $("loginError");
     if (!user || !pass) { if (errorEl) errorEl.innerText = "Username/Password tidak boleh kosong!"; return; }
     if (errorEl) errorEl.innerText = "Memproses...";
-    if (user === "admin") {
-      verifyAdminPassword(pass).then(function(valid) {
-        if (valid) { completeAdminLogin(pass, true); return; }
-        if (errorEl) errorEl.innerText = "Password admin salah!";
-      }).catch(function() { if (errorEl) errorEl.innerText = "Gagal menghubungi server login."; });
+    if (user.toLowerCase() === "admin") {
+      verifyAdminPassword(pass).then(function(valid){
+        if(valid){completeAdminLogin(pass,true);return;}
+        if(errorEl)errorEl.innerText="Password admin salah!";
+      }).catch(function(){if(errorEl)errorEl.innerText="Gagal menghubungi server login.";});
       return;
     }
-    if (_maintenanceActive) { if (errorEl) errorEl.innerText = "Sistem sedang dalam pemeliharaan. Hubungi admin."; return; }
-    fetch(API_BASE_URL + "/login", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: user, password: pass }), cache: "no-store"
-    }).then(function(r) {
-      return r.json().then(function(d) { return { ok: r.ok, data: d }; });
-    }).then(function(result) {
-      var d = result.data || {};
-      if (result.ok && d.success && d.accessToken) {
-        doUserLogin(d.namaLengkap || user, user, d.accessToken);
-        if (typeof offerQuickLoginSetup === "function") offerQuickLoginSetup(user, pass, d.namaLengkap || user, false);
-        return;
-      }
-      if (errorEl) errorEl.innerText = d.suspended ? "Akun Anda ditangguhkan oleh admin." : (d.message || "Login gagal. Periksa username dan password.");
-    }).catch(function() {
-      if (errorEl) errorEl.innerText = "Gagal menghubungi server login. Periksa koneksi lalu coba lagi.";
-    });
+    fetch(API_BASE_URL+"/login", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({username:user,password:pass})
+    }).then(function(r){return r.json().then(function(d){return {status:r.status,data:d};});})
+      .then(function(res){
+        var d=res.data||{};
+        if(d.success && d.accessToken){
+          doUserLogin(d.namaLengkap||user,user,d.accessToken);
+          offerQuickLoginSetup(user,pass,d.namaLengkap||user,false);
+          return;
+        }
+        if(errorEl)errorEl.innerText=d.suspended?"Akun Anda ditangguhkan oleh admin.":(d.message||"Login gagal. Periksa username dan password.");
+      }).catch(function(){if(errorEl)errorEl.innerText="Gagal menghubungi server login. Periksa koneksi internet.";});
   };
 })();
 
