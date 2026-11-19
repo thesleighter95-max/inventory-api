@@ -3835,10 +3835,11 @@ var LOG_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRI1O8jYI_Q1fpueN0e
 var LOG_POST_URL="https://script.google.com/macros/s/AKfycbxwad12DdJMvOMXny6u9h1l2-e-5gu7t48O7UASVeu7M73DaCF-BUROOjsIEyQ9nmFQkw/exec";
 var ABSENSI_GAS_URL="https://script.google.com/macros/s/AKfycbyhaxiRF0HmmVgLOqW4CBGCq6l5pTK4ZP566eq9gjOMAzpDBOQBglan0lKEIXKiZD5X/exec";
 var ADMIN_PASSWORD="";
+var _adminSessionToken="";
 function verifyAdminPassword(pass){
   return fetch(API_BASE_URL+"/admin-auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pass})})
     .then(function(r){return r.json().then(function(d){return{ok:r.ok,data:d}})})
-    .then(function(res){return !!(res.ok&&res.data&&res.data.success)});
+    .then(function(res){_adminSessionToken=(res.ok&&res.data&&res.data.success)?(res.data.accessToken||""):"";return !!(res.ok&&res.data&&res.data.success)});
 }
 function completeAdminLogin(pass,offerSetup){
   ADMIN_PASSWORD=pass;
@@ -3850,7 +3851,7 @@ function completeAdminLogin(pass,offerSetup){
   if(typeof checkMorningReset==="function")checkMorningReset();
   if($("absensiAdminSection"))$("absensiAdminSection").style.display="block";
   if(typeof loadMaintenanceStatus==="function")loadMaintenanceStatus();
-  sessionSave("Admin","admin",true);
+  sessionSave("Admin","admin",true,_adminSessionToken);
   if(offerSetup&&typeof offerQuickLoginSetup==="function")offerQuickLoginSetup("admin",pass,"Admin",true);
 }
 var BBLM_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRr3Tp-zY_Iui55tIjNpjU1VTMRpV5FHdweDlojt2LbXT-Vc4k5URE8GuSPm16fiuWnCU7MEedZwOLM/pub?output=csv";
@@ -4990,8 +4991,9 @@ function toggleReportAbsensi(username,enabled){
   if(!isAdmin)return;
   var next=!enabled;
   if(!confirm((next?"Berikan":"Cabut")+" izin Report Absensi SPG / SPM / MD untuk akun '"+username+"'?"))return;
-  fetch(BBLM_STATUS_API_URL+"/users/"+encodeURIComponent(username),{method:"PATCH",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,reportAbsensi:next})
+  var adminSess=sessionLoad();var adminToken=adminSess&&adminSess.t?adminSess.t:_adminSessionToken;
+  fetch(API_BASE_URL+"/report-absensi/permission",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+adminToken},
+    body:JSON.stringify({username:username,allowed:next})
   }).then(function(r){return r.json()}).then(function(d){
     if(d.success){showToast("Izin Report Absensi "+(next?"diaktifkan":"dicabut")+" untuk "+username,"success");loadUserList();}
     else{alert("Gagal: "+(d.message||"Unknown error"));}
