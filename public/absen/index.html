@@ -45,7 +45,7 @@
 .dash-actions .dash-btn{flex:1}
 @media(max-width:640px){.dashboard{padding:14px 12px 80px}.dash-grid{grid-template-columns:1fr}.dash-wide{grid-column:auto}.dash-top{padding:18px}}
 
-.profile-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#eaf1fb;border:2px solid #dbe7f6}.history-photo{width:76px;height:76px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block;margin-top:8px}.history-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.history-actions button{border:0;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:750;background:#eaf1fb;color:#174b83}.history-actions button.delete{background:#fff0f1;color:#b42336}.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.profile-grid{grid-template-columns:1fr}}
+.profile-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#eaf1fb;border:2px solid #dbe7f6}.history-photo{width:76px;height:76px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block;margin-top:8px}.history-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.history-actions button{border:0;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:750;background:#eaf1fb;color:#174b83}.history-actions button.delete{background:#fff0f1;color:#b42336}.profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.profile-grid .dash-input{min-width:0}@media(max-width:360px){.profile-grid{grid-template-columns:1fr}}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -117,6 +117,16 @@
       <div class="dash-user"><div><strong id="dashName">Karyawan</strong><div class="dash-muted" style="color:#c7dbf2" id="dashMeta">-</div></div><span class="dash-chip" id="dashDate">Hari ini</span></div>
     </div>
     <div class="dash-grid">
+      <div class="dash-card dash-wide" id="profileCard">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px"><img id="profileAvatar" class="profile-avatar" alt="Foto profil"><div><h3 style="margin-bottom:4px">Profil karyawan</h3><div class="dash-muted">Nama dan email mengikuti data akun. Nama hanya dapat diubah admin.</div></div></div>
+        <div class="profile-grid"><div><label class="dash-muted">Nama lengkap (khusus admin)</label><input class="dash-input" id="profileName" readonly></div><div><label class="dash-muted">Email akun</label><input class="dash-input" id="profileEmail" readonly></div><div><label class="dash-muted">Nomor HP</label><input class="dash-input" id="profilePhone" type="tel"></div><div><label class="dash-muted">Brand</label><input class="dash-input" id="profileBrand" maxlength="100"></div></div>
+        <label class="dash-muted" for="profilePhotoFile">Ganti foto profil</label><input class="dash-input" id="profilePhotoFile" type="file" accept="image/*" capture="user">
+        <button class="dash-btn" id="saveProfileBtn">SIMPAN PROFIL</button><div class="dash-muted" id="profileMessage" aria-live="polite"></div>
+        <details style="border-top:1px solid var(--line);margin-top:16px;padding-top:14px"><summary style="cursor:pointer;font-weight:800;color:var(--navy);font-size:14px;padding:4px 0">Reset password</summary><div class="dash-muted" style="margin-top:8px">OTP akan dikirim ke email akun yang terdaftar.</div>
+        <button class="dash-btn secondary" id="profileRequestOtpBtn">KIRIM OTP RESET PASSWORD</button>
+        <div class="profile-grid"><div><label class="dash-muted">Kode OTP</label><input class="dash-input" id="profileResetOtp" inputmode="numeric" maxlength="6" placeholder="6 digit OTP"></div><div><label class="dash-muted">Password baru</label><input class="dash-input" id="profileNewPassword" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter"></div></div>
+        <button class="dash-btn" id="profileResetBtn">SIMPAN PASSWORD BARU</button><div class="dash-muted" id="profilePasswordMessage" aria-live="polite"></div></details>
+      </div>
       <div class="dash-card"><div class="dash-muted">STATUS MASUK</div><div class="dash-stat" id="checkinStatus">Belum</div><div class="dash-muted" id="checkinTime">Belum ada catatan masuk</div></div>
       <div class="dash-card"><div class="dash-muted">STATUS PULANG</div><div class="dash-stat" id="checkoutStatus">Belum</div><div class="dash-muted" id="checkoutTime">Belum ada catatan pulang</div></div>
       <div class="dash-card dash-wide">
@@ -136,16 +146,6 @@
       <div class="dash-card dash-wide">
         <div style="display:flex;justify-content:space-between;align-items:center"><h3>Riwayat absensi</h3><button class="link" id="refreshHistoryBtn">Muat ulang</button></div>
         <div id="historyList" class="dash-muted">Memuat riwayat…</div>
-      </div>
-      <div class="dash-card dash-wide" id="profileCard">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px"><img id="profileAvatar" class="profile-avatar" alt="Foto profil"><div><h3 style="margin-bottom:4px">Profil karyawan</h3><div class="dash-muted">Nama dan email mengikuti data akun. Nama hanya dapat diubah admin.</div></div></div>
-        <div class="profile-grid"><div><label class="dash-muted">Nama lengkap (khusus admin)</label><input class="dash-input" id="profileName" readonly></div><div><label class="dash-muted">Email akun</label><input class="dash-input" id="profileEmail" readonly></div><div><label class="dash-muted">Nomor HP</label><input class="dash-input" id="profilePhone" type="tel"></div><div><label class="dash-muted">Brand</label><input class="dash-input" id="profileBrand" maxlength="100"></div></div>
-        <label class="dash-muted" for="profilePhotoFile">Ganti foto profil</label><input class="dash-input" id="profilePhotoFile" type="file" accept="image/*" capture="user">
-        <button class="dash-btn" id="saveProfileBtn">SIMPAN PROFIL</button><div class="dash-muted" id="profileMessage" aria-live="polite"></div>
-        <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:14px"><h3>Reset password</h3><div class="dash-muted">OTP akan dikirim ke email akun yang terdaftar.</div>
-        <button class="dash-btn secondary" id="profileRequestOtpBtn">KIRIM OTP RESET PASSWORD</button>
-        <div class="profile-grid"><div><label class="dash-muted">Kode OTP</label><input class="dash-input" id="profileResetOtp" inputmode="numeric" maxlength="6" placeholder="6 digit OTP"></div><div><label class="dash-muted">Password baru</label><input class="dash-input" id="profileNewPassword" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter"></div></div>
-        <button class="dash-btn" id="profileResetBtn">SIMPAN PASSWORD BARU</button><div class="dash-muted" id="profilePasswordMessage" aria-live="polite"></div></div>
       </div>
       <div class="dash-card dash-wide">
         <div class="dash-actions"><button class="dash-btn secondary" id="logoutBtn">KELUAR</button></div>
