@@ -4220,8 +4220,10 @@ function renderUserNav(){
     '<div id="navCst" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="window.location.href=\'https://digital-inventory-lottemart.netlify.app/cst\'"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#10b981;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v16H4z M8 8h8v8H8z"/></svg><span class="text-[9px] font-semibold" style="color:#34d399;">CST</span></div>'+
     '<div id="navImplementasi" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="window.location.href=\'https://notsold-mataram.netlify.app/\'"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg><span class="text-[9px] font-semibold" style="color:#fbbf24;">Implementasi</span></div>'+
 '<div id="navAbsensi" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'absensi\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#3b82f6;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[9px] font-semibold">Absensi</span></div>'+
+    '<div id="navReportAbsensi" style="display:none" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="openReportAbsensi()"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#22c55e;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19V5m0 14h16M8 15V9m4 6V5m4 10v-4m4 4V7"/></svg><span class="text-[9px] font-semibold" style="color:#86efac;">Report Absensi</span></div>' +
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
+  refreshReportAbsensiNav();
 }
 function renderAdminNav(){
   document.body.classList.add('is-admin');
@@ -4244,6 +4246,7 @@ function renderAdminNav(){
     '<div id="navCst" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="window.location.href=\'https://digital-inventory-lottemart.netlify.app/cst\'"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#10b981;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v16H4z M8 8h8v8H8z"/></svg><span class="text-[9px] font-semibold" style="color:#34d399;">CST</span></div>'+
     '<div id="navFotoBblm" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'fotobblm\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#f59e0b;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span class="text-[9px] font-semibold" style="color:#fbbf24;">Foto BBLM</span></div>'+
 '<div id="navAbsensi" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="switchMainTab(\'absensi\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#3b82f6;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[9px] font-semibold">Absensi</span></div>'+
+    '<div id="navReportAbsensi" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="openReportAbsensi()"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#22c55e;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19V5m0 14h16M8 15V9m4 6V5m4 10v-4m4 4V7"/></svg><span class="text-[9px] font-semibold" style="color:#86efac;">Report Absensi</span></div>' +
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-2" onclick="logout()"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span class="text-[10px] font-medium">Logout</span></div>';
   lucide.createIcons();
 }
@@ -4943,6 +4946,8 @@ function loadUserList(){
         h+='</div>';
         h+='<div style="display:flex;gap:3px;flex-shrink:0;">';
         h+='<button onclick="editNamaUser(\''+escHtml(u.username)+'\',\''+escHtml(u.namaLengkap)+'\')" title="Edit nama" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.25);color:#a5b4fc;border-radius:6px;padding:5px 7px;cursor:pointer;font-size:11px;">✏️</button>';
+        var reportOn=u.reportAbsensi===true;
+        h+="<button onclick=\"toggleReportAbsensi('"+escHtml(u.username)+"',"+reportOn+")\" title=\""+(reportOn?"Cabut izin Report Absensi":"Beri izin Report Absensi")+"\" style=\"background:"+(reportOn?"rgba(16,185,129,0.14)":"rgba(100,116,139,0.14)")+";border:1px solid "+(reportOn?"rgba(16,185,129,0.3)":"rgba(100,116,139,0.25)")+";color:"+(reportOn?"#34d399":"#94a3b8")+";border-radius:6px;padding:5px 7px;cursor:pointer;font-size:11px;\">"+(reportOn?"📊✓":"📊—")+"</button>";
         h+='<button onclick="toggleSuspendUser(\''+escHtml(u.username)+'\','+suspended+')" title="'+(suspended?'Aktifkan':'Suspend')+'" style="background:'+(suspended?'rgba(16,185,129,0.12)':'rgba(245,158,11,0.12)')+';border:1px solid '+(suspended?'rgba(16,185,129,0.25)':'rgba(245,158,11,0.25)')+';color:'+(suspended?'#34d399':'#fbbf24')+';border-radius:6px;padding:5px 7px;cursor:pointer;font-size:11px;">'+(suspended?'✅':'🔒')+'</button>';
         h+='<button onclick="hapusUser(\''+escHtml(u.username)+'\')" title="Hapus user" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:6px;padding:5px 7px;cursor:pointer;font-size:11px;">🗑</button>';
         h+='</div></div>';
@@ -4978,6 +4983,17 @@ function editNamaUser(username,namaSaat){
     body:JSON.stringify({adminPassword:ADMIN_PASSWORD,namaLengkap:namaBaru.trim()})
   }).then(function(r){return r.json()}).then(function(d){
     if(d.success){showToast("Nama '"+username+"' berhasil diubah","success");loadUserList();}
+    else{alert("Gagal: "+(d.message||"Unknown error"));}
+  }).catch(function(){alert("Gagal terhubung ke server.");});
+}
+function toggleReportAbsensi(username,enabled){
+  if(!isAdmin)return;
+  var next=!enabled;
+  if(!confirm((next?"Berikan":"Cabut")+" izin Report Absensi SPG / SPM / MD untuk akun '"+username+"'?"))return;
+  fetch(BBLM_STATUS_API_URL+"/users/"+encodeURIComponent(username),{method:"PATCH",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({adminPassword:ADMIN_PASSWORD,reportAbsensi:next})
+  }).then(function(r){return r.json()}).then(function(d){
+    if(d.success){showToast("Izin Report Absensi "+(next?"diaktifkan":"dicabut")+" untuk "+username,"success");loadUserList();}
     else{alert("Gagal: "+(d.message||"Unknown error"));}
   }).catch(function(){alert("Gagal terhubung ke server.");});
 }
@@ -5330,6 +5346,29 @@ function popPrint(){
  }).catch(function(err){console.error("POP PDF export:",err);alert("PDF langsung belum berhasil dibuat. Periksa koneksi internet lalu coba lagi. Detail: "+(err&&err.message?err.message:"Gagal memproses PDF"));}).finally(function(){_popPdfBusy=false;if(btn){btn.disabled=false;btn.textContent=oldText||"CETAK / PDF";}});
 }
 
+
+function getPdaSessionTokenForReport(){
+  try{var s=sessionLoad();return s&&s.t?s.t:"";}catch(e){return "";}
+}
+function openReportAbsensi(){
+  if(!isAdmin){
+    var n=document.getElementById("navReportAbsensi");
+    if(!n||n.style.display==="none"){showToast("Akses Report Absensi belum diberikan oleh Admin","error");return;}
+  }
+  window.location.href="/report-absensi/";
+}
+function refreshReportAbsensiNav(){
+  var nav=document.getElementById("navReportAbsensi");
+  if(!nav)return;
+  if(isAdmin){nav.style.display="";return;}
+  nav.style.display="none";
+  var token=getPdaSessionTokenForReport();
+  if(!token)return;
+  fetch(API_BASE_URL+"/report-absensi/permission",{method:"GET",headers:{Authorization:"Bearer "+token},cache:"no-store"})
+    .then(function(r){return r.json();})
+    .then(function(d){if(d&&d.success&&d.allowed===true&& !isAdmin){var el=document.getElementById("navReportAbsensi");if(el)el.style.display="";}})
+    .catch(function(e){console.warn("Cek izin Report Absensi gagal",e);});
+}
 
 function switchMainTab(tab){
   closeDshSideMenuAfterNav();
