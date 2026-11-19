@@ -43,24 +43,6 @@ async function callDshAttendance(action, extra = {}) {
   return data;
 }
 
-
-const LEGACY_LOGIN_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUOmxLN_--OjkRvb543vpKK5wyL-zcNl67dfDlCPzN28tuBXD2IDEhyJxR8yKqC7CvcHGVj5tSPAD2/pub?gid=0&single=true&output=csv";
-function parseCsvRows(text) {
-  const rows=[]; let row=[], cell="", quoted=false;
-  for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){cell+='"';i++;}else quoted=!quoted;}else if(c===','&&!quoted){row.push(cell.trim());cell="";}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell.trim());if(row.some(x=>x!==''))rows.push(row);row=[];cell="";}else cell+=c;}
-  row.push(cell.trim());if(row.some(x=>x!==''))rows.push(row);return rows;
-}
-async function legacyCsvLogin(username,password) {
-  const r=await fetch(LEGACY_LOGIN_CSV_URL,{cache:"no-store"});
-  if(!r.ok)throw new Error("Tidak dapat membaca Spreadsheet login.");
-  const rows=parseCsvRows(await r.text());
-  for(let i=1;i<rows.length;i++){
-    if(String(rows[i][0]||"").trim()===username && String(rows[i][1]||"").trim()===password)
-      return {namaLengkap:String(rows[i][2]||username).trim()||username};
-  }
-  return null;
-}
-
 // ============================================================
 // IN-MEMORY CACHE (module-level, survives warm Vercel instances)
 // ============================================================
@@ -185,25 +167,27 @@ async function fetchSheetUsers() {
   const cacheKey = "__sheet_users";
   const cached = _memCache.get(cacheKey);
   if (cached && cached.exp > Date.now()) return cached.val;
-  try {
-    const r = await fetch(SHEET_URL_USERS);
-    const text = await r.text();
-    const rows = text.trim().split("\n").map(l => l.split(",").map(c => c.trim().replace(/^"|"$/g,"")));
-    if (!rows.length) return [];
-    const header = rows[0].map(c => c.toLowerCase());
-    const uIdx = header.indexOf("username"), pIdx = header.indexOf("password"),
-          nIdx = header.indexOf("name"), sIdx = header.indexOf("status");
-    const users = rows.slice(1).filter(r => r[uIdx]).map(r => ({
-      username: r[uIdx] || "",
-      password: r[pIdx] || "",
-      namaLengkap: r[nIdx] || r[uIdx] || "",
-      suspended: (r[sIdx]||"").toLowerCase() === "suspended" || (r[sIdx]||"").toLowerCase() === "nonaktif"
-    }));
-    _memCache.set(cacheKey, { val: users, exp: Date.now() + _CACHE_TTL });
-    return users;
-  } catch {
-    return [];
-  }
+  const r = await fetch(SHEET_URL_USERS, { redirect: "follow" });
+  if (!r.ok) throw new Error("Spreadsheet User login tidak dapat dibaca oleh server (HTTP " + r.status + ").");
+  const text = await r.text();
+  const parsed = parseCSV(text);
+  if (!parsed.length) throw new Error("Spreadsheet User login kosong atau format CSV tidak valid.");
+  const users = parsed.map(row => {
+    const normalized = {};
+    for (const [k, v] of Object.entries(row || {})) normalized[String(k).trim().toLowerCase()] = String(v == null ? "" : v).trim();
+    const username = normalized.username || normalized.user || "";
+    if (!username) return null;
+    const status = String(normalized.status || "").trim().toLowerCase();
+    return {
+      username,
+      password: normalized.password || "",
+      namaLengkap: normalized.name || normalized.namalengkap || normalized.nama || username,
+      suspended: ["suspended", "nonaktif", "non-aktif", "disabled", "blokir"].includes(status)
+    };
+  }).filter(Boolean);
+  if (!users.length) throw new Error("Kolom username tidak ditemukan pada Spreadsheet User login.");
+  _memCache.set(cacheKey, { val: users, exp: Date.now() + _CACHE_TTL });
+  return users;
 }
 
 async function parseBody(req) {
@@ -312,21 +296,17 @@ export default async function handler(req, res) {
         const raw = String(query.url || "");
         let source;
         try { source = new URL(raw); } catch { return send({ success: false, message: "URL foto tidak valid." }, 400); }
-        const allowedHosts = ["drive.google.com","docs.google.com","lh3.googleusercontent.com","drive.usercontent.google.com","googleusercontent.com"];
+        const allowedHosts = ["drive.google.com", "docs.google.com", "lh3.googleusercontent.com", "drive.usercontent.google.com", "googleusercontent.com"];
         if (!allowedHosts.some(h => source.hostname === h || source.hostname.endsWith("." + h))) return send({ success: false, message: "Sumber foto tidak diizinkan." }, 400);
         const idMatch = raw.match(/(?:\/d\/|[?&]id=)([a-zA-Z0-9_-]{10,})/);
         const fileId = idMatch ? idMatch[1] : "";
-        // Google Drive share/view links are HTML pages, not direct image URLs.
-        // Try the thumbnail endpoint first, then direct-view/download variants.
-        const candidates = fileId
-          ? [
-              "https://drive.google.com/thumbnail?id="+encodeURIComponent(fileId)+"&sz=w2000",
-              "https://lh3.googleusercontent.com/d/"+encodeURIComponent(fileId)+"=w2000",
-              "https://drive.google.com/uc?export=view&id="+encodeURIComponent(fileId),
-              "https://drive.google.com/uc?export=download&id="+encodeURIComponent(fileId),
-              "https://drive.usercontent.google.com/download?id="+encodeURIComponent(fileId)+"&export=download"
-            ]
-          : [raw];
+        const candidates = fileId ? [
+          "https://drive.google.com/thumbnail?id=" + encodeURIComponent(fileId) + "&sz=w2000",
+          "https://lh3.googleusercontent.com/d/" + encodeURIComponent(fileId) + "=w2000",
+          "https://drive.google.com/uc?export=view&id=" + encodeURIComponent(fileId),
+          "https://drive.google.com/uc?export=download&id=" + encodeURIComponent(fileId),
+          "https://drive.usercontent.google.com/download?id=" + encodeURIComponent(fileId) + "&export=download"
+        ] : [raw];
         let imageRes = null;
         for (const candidate of candidates) {
           try {
@@ -441,27 +421,43 @@ export default async function handler(req, res) {
       const username = String(body.username || "").trim();
       const password = String(body.password || "").trim();
       if (!username || !password) return send({ success: false, message: "username dan password wajib diisi" }, 400);
+
+      // AUTH ASLI PDA MINI: database user override, lalu fallback ke Spreadsheet User login.
+      // Login tidak bergantung pada aksi pdaLogin di Apps Script DSH Attendance.
+      let sheetUsers = [];
+      let dbUsers = [];
+      let sheetError = null;
+      const [sheetResult, dbResult] = await Promise.allSettled([
+        fetchSheetUsers(),
+        getJson("users", [])
+      ]);
+      if (sheetResult.status === "fulfilled") sheetUsers = Array.isArray(sheetResult.value) ? sheetResult.value : [];
+      else sheetError = sheetResult.reason;
+      if (dbResult.status === "fulfilled") dbUsers = Array.isArray(dbResult.value) ? dbResult.value : [];
+
+      const dbMap = Object.create(null);
+      dbUsers.forEach(u => { if (u && u.username != null) dbMap[String(u.username).trim()] = u; });
+      let user = dbMap[username] || sheetUsers.find(u => String(u.username).trim() === username);
+
+      if (!user) {
+        if (sheetError && !dbUsers.length) {
+          return send({ success: false, message: "Spreadsheet User login tidak dapat dibaca oleh server: " + String(sheetError.message || sheetError) }, 502);
+        }
+        return send({ success: false, notFound: true, message: "Username atau password salah" }, 401);
+      }
+      if (String(user.password == null ? "" : user.password).trim() !== password) {
+        return send({ success: false, notFound: true, message: "Username atau password salah" }, 401);
+      }
+      if (user.suspended) return send({ success: false, suspended: true, message: "Akun ditangguhkan oleh admin" }, 403);
+
+      const namaLengkap = String(user.namaLengkap || user.name || username);
       try {
-        const result = await callDshAttendance("pdaLogin", { username, password });
-        const user = result.user || {};
-        const namaLengkap = user.namaLengkap || username;
         const accessToken = issuePdaSession(username, namaLengkap, "user");
         return send({ success: true, namaLengkap, accessToken, expiresIn: 8 * 60 * 60 });
       } catch (e) {
-        const msg = String(e.message || e);
-        if (/username atau password salah|user tidak ditemukan|not found|akun tidak ditemukan/i.test(msg)) {
-          try {
-            const legacy = await legacyCsvLogin(username, password);
-            if (legacy) {
-              const accessToken = issuePdaSession(username, legacy.namaLengkap, "user");
-              return send({ success: true, namaLengkap: legacy.namaLengkap, accessToken, expiresIn: 8 * 60 * 60, authSource: "legacy-sheet" });
-            }
-          } catch (csvError) {
-            return send({ success: false, message: "Login Spreadsheet gagal: " + String(csvError.message || csvError) }, 502);
-          }
-        }
-        const badLogin = /username atau password salah|ditangguhkan|nonaktif/i.test(msg);
-        return send({ success: false, suspended: /ditangguhkan|nonaktif/i.test(msg), message: badLogin ? msg : "Login melalui Spreadsheet gagal: " + msg }, badLogin ? 401 : 502);
+        // Jangan gagalkan login utama jika SESSION_SECRET belum tersedia; laporkan konfigurasi
+        // dengan jelas karena tanpa token fitur Report Absensi tidak dapat memakai sesi PDA Mini.
+        return send({ success: false, message: String(e.message || e) }, 503);
       }
     }
 
