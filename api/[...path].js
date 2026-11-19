@@ -7,10 +7,10 @@ const SHEET_URL_USERS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUOmxL
 
 // Token sesi PDA Mini untuk integrasi laporan. Rahasia hanya dibaca dari Vercel env.
 const PDA_SESSION_SECRET = process.env.SESSION_SECRET || "";
-function issuePdaSession(username, namaLengkap) {
+function issuePdaSession(username, namaLengkap, role = "user") {
   if (!PDA_SESSION_SECRET || PDA_SESSION_SECRET.length < 32) throw new Error("SESSION_SECRET belum dikonfigurasi dengan benar di Vercel");
   const payload = Buffer.from(JSON.stringify({
-    sub: String(username), name: String(namaLengkap || username),
+    sub: String(username), name: String(namaLengkap || username), role: role,
     iss: "pda-mini", iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000)+8*60*60
   })).toString("base64url");
   const sig = createHmac("sha256", PDA_SESSION_SECRET).update(payload).digest("base64url");
@@ -28,6 +28,19 @@ export function verifyPdaSession(token) {
     if (p.iss !== "pda-mini" || !p.sub || !p.exp || p.exp <= now || p.iat > now+60) return null;
     return p;
   } catch { return null; }
+}
+
+async function callDshAttendance(action, extra = {}) {
+  const gasUrl = process.env.DSH_ATTENDANCE_GAS_URL || "";
+  const bridgeSecret = process.env.PDA_REPORT_SECRET || "";
+  if (!gasUrl || !bridgeSecret) throw new Error("DSH_ATTENDANCE_GAS_URL atau PDA_REPORT_SECRET belum dikonfigurasi di Vercel.");
+  const upstream = await fetch(gasUrl, {
+    method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action, bridgeSecret, ...extra }), redirect: "follow"
+  });
+  const data = await upstream.json();
+  if (!upstream.ok || !data || data.ok !== true) throw new Error(data && data.message ? data.message : "Gagal menghubungi DSH Attendance.");
+  return data;
 }
 
 // ============================================================
@@ -251,23 +264,24 @@ export default async function handler(req, res) {
       const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
       const session = verifyPdaSession(token);
       if (!session) return send({ success: false, allowed: false, message: "Sesi PDA Mini tidak valid atau sudah berakhir." }, 401);
-      const gasUrl = process.env.DSH_ATTENDANCE_GAS_URL || "";
-      const bridgeSecret = process.env.PDA_REPORT_SECRET || "";
-      if (!gasUrl || !bridgeSecret) return send({ success: false, allowed: false, message: "Konfigurasi DSH Attendance belum lengkap." }, 503);
+      if (session.role === "admin") return send({ success: true, allowed: true, namaLengkap: "Admin" });
       try {
-        const upstream = await fetch(gasUrl, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "pdaCheckReportPermission", bridgeSecret, username: session.sub }),
-          redirect: "follow"
-        });
-        if (!upstream.ok) throw new Error("DSH Attendance API HTTP " + upstream.status);
-        const data = await upstream.json();
-        if (!data || data.ok !== true) throw new Error(data && data.message ? data.message : "Gagal memeriksa izin.");
+        const data = await callDshAttendance("pdaCheckReportPermission", { username: session.sub });
         return send({ success: true, allowed: data.allowed === true, namaLengkap: data.namaLengkap || session.name });
-      } catch (e) {
-        return send({ success: false, allowed: false, message: e.message || "Gagal memeriksa izin Report Absensi." }, 502);
-      }
+      } catch (e) { return send({ success: false, allowed: false, message: e.message }, 502); }
+    }
+
+    if (path === "/report-absensi/permission" && method === "POST") {
+      const auth = String(req.headers.authorization || "");
+      const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+      const session = verifyPdaSession(token);
+      if (!session || session.role !== "admin") return send({ success: false, message: "Akses hanya untuk Admin." }, 403);
+      const username = String(body.username || "").trim();
+      if (!username || typeof body.allowed !== "boolean") return send({ success: false, message: "Username dan status izin wajib diisi." }, 400);
+      try {
+        const data = await callDshAttendance("pdaSetReportPermission", { username, allowed: body.allowed });
+        return send({ success: true, username, allowed: data.allowed === true });
+      } catch (e) { return send({ success: false, message: e.message }, 502); }
     }
 
     if (path === "/report-absensi" && method === "GET") {
@@ -275,33 +289,18 @@ export default async function handler(req, res) {
       const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
       const session = verifyPdaSession(token);
       if (!session) return send({ success: false, message: "Sesi PDA Mini tidak valid atau sudah berakhir. Silakan login kembali." }, 401);
-      const gasUrl = process.env.DSH_ATTENDANCE_GAS_URL || "";
-      const bridgeSecret = process.env.PDA_REPORT_SECRET || "";
-      if (!gasUrl || !bridgeSecret) return send({ success: false, message: "Konfigurasi DSH Attendance belum lengkap di Vercel." }, 503);
-      const from = String(query.from || "");
-      const to = String(query.to || "");
-      const callGas = async (action, extra = {}) => {
-        const upstream = await fetch(gasUrl, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action, bridgeSecret, ...extra }),
-          redirect: "follow"
-        });
-        if (!upstream.ok) throw new Error("DSH Attendance API HTTP " + upstream.status);
-        const data = await upstream.json();
-        if (!data || data.ok !== true) throw new Error(data && data.message ? data.message : "Gagal menghubungi DSH Attendance.");
-        return data;
-      };
+      const from = String(query.from || ""), to = String(query.to || "");
       try {
-        const permission = await callGas("pdaCheckReportPermission", { username: session.sub });
-        if (!permission.allowed) return send({ success: false, message: "Akses Report Absensi belum diberikan oleh Admin." }, 403);
-        const report = await callGas("pdaReport", { from, to });
-        return send({ success: true, username: session.sub, namaLengkap: permission.namaLengkap || session.name, records: report.records || [] });
-      } catch (e) {
-        return send({ success: false, message: String(e.message || e) }, 502);
-      }
+        let namaLengkap = session.name;
+        if (session.role !== "admin") {
+          const permission = await callDshAttendance("pdaCheckReportPermission", { username: session.sub });
+          if (!permission.allowed) return send({ success: false, message: "Akses Report Absensi belum diberikan oleh Admin." }, 403);
+          namaLengkap = permission.namaLengkap || namaLengkap;
+        }
+        const report = await callDshAttendance("pdaReport", { from, to });
+        return send({ success: true, username: session.sub, namaLengkap, records: report.records || [] });
+      } catch (e) { return send({ success: false, message: String(e.message || e) }, 502); }
     }
-
 
     if (path === "/bblm" && method === "GET") {
       const bblmData = await getJson("bblm", { hasData: false, gradeNames: [], products: [], totalProducts: 0, updatedAt: null, updatedBy: "", sourceLabel: "" });
@@ -374,37 +373,33 @@ export default async function handler(req, res) {
       const password = typeof body.password === "string" ? body.password : "";
       if (!password) return send({ success: false, message: "Password admin wajib diisi" }, 400);
       if (password !== ADMIN_PASSWORD) return send({ success: false, message: "Password admin salah" }, 401);
-      return send({ success: true });
+      try { return send({ success: true, accessToken: issuePdaSession("admin", "Admin", "admin"), expiresIn: 8 * 60 * 60 }); }
+      catch (e) { return send({ success: false, message: e.message }, 503); }
     }
 
     if (path === "/login" && method === "POST") {
-      const { username, password } = body;
+      const username = String(body.username || "").trim();
+      const password = String(body.password || "").trim();
       if (!username || !password) return send({ success: false, message: "username dan password wajib diisi" }, 400);
-      const uname = username.trim();
-      // Gabung sheet + DB: DB override sheet (untuk password yang di-reset admin)
-      const [sheetUsers, dbUsers] = await Promise.all([fetchSheetUsers(), getJson("users", [])]);
-      const dbMap = {};
-      dbUsers.forEach(u => { dbMap[u.username] = u; });
-      // Cari di DB dulu (override), lalu fallback ke sheet
-      let user = dbMap[uname];
-      if (!user) {
-        const su = sheetUsers.find(u => u.username === uname);
-        if (su) user = su;
+      try {
+        const result = await callDshAttendance("pdaLogin", { username, password });
+        const user = result.user || {};
+        const namaLengkap = user.namaLengkap || username;
+        const accessToken = issuePdaSession(username, namaLengkap, "user");
+        return send({ success: true, namaLengkap, accessToken, expiresIn: 8 * 60 * 60 });
+      } catch (e) {
+        const msg = String(e.message || e);
+        const badLogin = /username atau password salah|ditangguhkan|nonaktif/i.test(msg);
+        return send({ success: false, suspended: /ditangguhkan|nonaktif/i.test(msg), message: badLogin ? msg : "Login melalui Spreadsheet gagal: " + msg }, badLogin ? 401 : 502);
       }
-      if (!user) return send({ success: false, notFound: true, message: "User tidak ditemukan" }, 404);
-      if (user.password.trim() !== password.trim()) return send({ success: false, notFound: true, message: "Username atau password salah" }, 401);
-      if (user.suspended) return send({ success: false, suspended: true, message: "Akun ditangguhkan oleh admin" }, 403);
-      const namaLengkap = user.namaLengkap || user.username;
-      let accessToken;
-      try { accessToken = issuePdaSession(user.username, namaLengkap); }
-      catch (e) { return send({ success: false, message: e.message }, 503); }
-      return send({ success: true, namaLengkap, accessToken, expiresIn: 8 * 60 * 60 });
     }
 
     if (path === "/users" && method === "GET") {
       if (query.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
       const users = await getJson("users", []);
-      return send({ success: true, users: users.map(u => ({ username: u.username, namaLengkap: u.namaLengkap || u.username, suspended: u.suspended ?? false, reportAbsensi: u.reportAbsensi === true, createdAt: u.createdAt ?? null })) });
+      let permissionMap = {};
+      try { const d = await callDshAttendance("pdaUsers"); permissionMap = Object.fromEntries((d.users || []).map(u => [u.username, u])); } catch (e) { return send({ success: false, message: "Gagal membaca daftar izin dari Spreadsheet: " + e.message }, 502); }
+      return send({ success: true, users: users.map(u => ({ username: u.username, namaLengkap: u.namaLengkap || permissionMap[u.username]?.namaLengkap || u.username, suspended: u.suspended ?? permissionMap[u.username]?.suspended ?? false, reportAbsensi: permissionMap[u.username]?.reportAbsensi === true, createdAt: u.createdAt ?? null })) });
     }
 
     if (path === "/users" && method === "POST") {
