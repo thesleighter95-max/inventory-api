@@ -1,79 +1,127 @@
 <!doctype html>
-<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#071a35"><title>Laporan Absensi – DSH</title>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#071a35">
+<title>Report Absensi | DSH</title>
 <style>
-:root{--navy:#071a35;--blue:#2675e8;--bg:#f3f6fb;--line:#e4eaf2;--muted:#718096}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,Arial;color:#17263d}
-header{background:linear-gradient(120deg,#071a35,#174b83);color:white;padding:22px 18px}header h1{margin:0 0 6px;font-size:22px}header p{margin:0;color:#c7dbf2;font-size:13px}
-main{max-width:1100px;margin:20px auto;padding:0 14px 50px}
-.card{background:white;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
-.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:end}label{font-size:12px;font-weight:700;color:#44536a}input{display:block;margin-top:6px;border:1px solid var(--line);border-radius:9px;padding:10px;font:inherit}
-button{border:0;background:var(--blue);color:white;border-radius:10px;padding:11px 15px;font-weight:800}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#f7f9fd;border-radius:12px;padding:14px}.stat b{display:block;font-size:24px;color:var(--navy)}.stat span{font-size:11px;color:var(--muted)}
-.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:760px;font-size:12px}th,td{padding:11px;border-bottom:1px solid var(--line);text-align:left}th{background:#f6f8fc;color:#42536b}a{color:#1765d4}
-.msg{font-size:13px;color:#5c6b80;padding:8px 0}.error{color:#b42336}
-@media(max-width:600px){.stats{grid-template-columns:1fr 1fr}}
-.proof-link{cursor:pointer;text-decoration:none;color:#1765d4;font-weight:650;display:inline-flex;align-items:center;gap:6px;margin:2px 8px 2px 0}
-.proof-thumb{width:58px;height:58px;object-fit:cover;border-radius:9px;border:1px solid #d6deea;background:#eef2f8;display:block;cursor:zoom-in}
-.proof-thumb-wrap{display:inline-flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:#52627a;vertical-align:top}
-.proof-thumb-wrap img{width:58px;height:58px}
-#proofViewer{display:none;position:fixed;inset:0;z-index:99999;background:rgba(3,8,20,.94);align-items:center;justify-content:center;padding:16px}
-#proofViewer.open{display:flex}
-#proofViewer .pv-panel{width:min(100%,1100px);height:min(94dvh,900px);display:flex;flex-direction:column;gap:10px}
-#proofViewer .pv-toolbar{display:flex;align-items:center;gap:8px;color:white;flex-wrap:wrap}
-#proofViewer .pv-toolbar strong{margin-right:auto}
-#proofViewer .pv-toolbar button{background:#26364f;padding:9px 13px}
-#proofViewer .pv-stage{flex:1;min-height:0;overflow:auto;display:flex;align-items:center;justify-content:center;border:1px solid #53627a;border-radius:12px;background:#090f1d;touch-action:pan-x pan-y}
-#proofViewer img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;transition:transform .12s ease;cursor:zoom-in}
-#proofViewer img.zoomed{max-width:none;max-height:none;cursor:grab}
-</style></head><body>
-<header><h1>Report Absensi SPG / SPM / MD</h1><p>PDA Mini · LOTTE Mart Wholesale Mataram</p></header>
-<main>
-<div class="card"><div class="filters">
-<label>Dari tanggal<input id="from" type="date"></label><label>Sampai tanggal<input id="to" type="date"></label>
-<button id="load">TAMPILKAN LAPORAN</button><button id="back" style="background:#eaf1fb;color:#174b83">KEMBALI</button>
-</div><div id="msg" class="msg">Pilih rentang tanggal, lalu tampilkan laporan.</div></div>
-<div class="stats">
-<div class="stat"><b id="total">0</b><span>Total catatan absensi</span></div>
-<div class="stat"><b id="masuk">0</b><span>Check-in</span></div>
-<div class="stat"><b id="pulang">0</b><span>Check-out</span></div>
+:root{--navy:#0b1d36;--navy2:#132d50;--blue:#2878e5;--blue2:#eaf2ff;--bg:#f3f6fb;--line:#e5eaf2;--muted:#718096;--ink:#1d2b42;--green:#16845b;--amber:#b7791f;--red:#c2414b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:var(--ink)}
+button,input,select{font:inherit}button{cursor:pointer}
+.layout{min-height:100vh;display:flex}.sidebar{width:245px;flex:0 0 245px;background:linear-gradient(180deg,var(--navy),#102846);color:#d8e4f4;padding:22px 15px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:11px;padding:3px 9px 25px;border-bottom:1px solid #ffffff1c}.brand-mark{width:39px;height:39px;border-radius:12px;background:linear-gradient(135deg,#4b9bff,#1c5fba);display:grid;place-items:center;color:white;font-weight:900;font-size:17px;box-shadow:0 7px 18px #0003}.brand strong{display:block;color:white;font-size:15px;letter-spacing:.3px}.brand small{color:#9db4d1;font-size:10px;letter-spacing:1.4px}
+.nav-label{font-size:10px;letter-spacing:1.5px;color:#8299b8;font-weight:800;padding:25px 11px 9px}.nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;color:#c1d0e3;font-size:13px;margin:2px 0}.nav-item .ico{width:19px;text-align:center;font-size:15px}.nav-item.active{background:#2878e5;color:white;box-shadow:0 6px 16px #06162e55;font-weight:750}.nav-item.dim{opacity:.78}.sidebar-foot{margin-top:auto;padding:15px 10px 0;border-top:1px solid #ffffff1c;font-size:11px;color:#91a7c3;line-height:1.6}
+.main{min-width:0;flex:1}.topbar{height:72px;background:white;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;gap:16px}.crumb{font-size:12px;color:var(--muted)}.crumb b{color:var(--ink)}.top-right{display:flex;align-items:center;gap:17px}.clock{text-align:right;font-size:12px;font-weight:750;color:#34445d}.clock small{display:block;color:var(--muted);font-weight:500;margin-top:2px}.admin{display:flex;align-items:center;gap:9px;border-left:1px solid var(--line);padding-left:17px}.avatar{width:36px;height:36px;border-radius:50%;background:#e7effb;color:#1b5cae;display:grid;place-items:center;font-weight:850}.admin strong{display:block;font-size:12px}.admin small{font-size:10px;color:var(--muted)}
+.content{max-width:1500px;margin:auto;padding:27px 30px 45px}.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;margin-bottom:20px}.eyebrow{font-size:10px;color:var(--blue);font-weight:850;letter-spacing:1.6px;text-transform:uppercase}.page-head h1{font-size:25px;letter-spacing:-.6px;margin:5px 0 5px;color:#14243b}.page-head p{margin:0;color:var(--muted);font-size:13px}.date-chip{background:white;border:1px solid var(--line);border-radius:11px;padding:10px 13px;font-size:12px;color:#52627a;white-space:nowrap}
+.tabs{display:flex;gap:5px;border-bottom:1px solid var(--line);margin-bottom:17px;overflow:auto}.tab{border:0;background:transparent;color:#748197;padding:12px 15px;font-size:12px;font-weight:750;white-space:nowrap;border-bottom:2px solid transparent}.tab.active{color:var(--blue);border-color:var(--blue)}
+.panel{background:white;border:1px solid var(--line);border-radius:15px;box-shadow:0 4px 16px #18365a08}.filters{padding:17px;display:flex;align-items:end;gap:11px;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:6px}.field label{font-size:10px;color:#627189;font-weight:800}.field input,.field select{height:39px;min-width:135px;border:1px solid #dce4ef;border-radius:9px;background:#fff;padding:0 11px;color:#24354e;font-size:12px;outline:none}.field input:focus,.field select:focus{border-color:#7eaff4;box-shadow:0 0 0 3px #2878e51a}.field.search{flex:1;min-width:180px}.field.search input{width:100%}.btn{height:39px;border:0;border-radius:9px;padding:0 15px;font-size:11px;font-weight:850;display:inline-flex;align-items:center;justify-content:center;gap:7px}.btn-primary{background:var(--blue);color:white;box-shadow:0 5px 12px #2878e52b}.btn-light{background:#edf3fb;color:#31577f}.btn-export{background:#e9f7f0;color:#13734e}
+.message{padding:0 17px 13px;color:var(--muted);font-size:11px}.message.error{color:var(--red)}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:17px 0}.stat{padding:16px 17px;position:relative;overflow:hidden}.stat-top{display:flex;align-items:center;justify-content:space-between}.stat-label{font-size:11px;color:#718096;font-weight:700}.stat-icon{width:31px;height:31px;border-radius:10px;background:#edf4ff;color:#2878e5;display:grid;place-items:center;font-size:15px}.stat b{display:block;font-size:25px;letter-spacing:-.6px;margin-top:10px;color:#172941}.stat small{font-size:10px;color:#8a97a9}.stat.green .stat-icon{background:#e8f7ef;color:var(--green)}.stat.amber .stat-icon{background:#fff5e4;color:var(--amber)}.stat.red .stat-icon{background:#fff0f0;color:var(--red)}
+.table-panel{margin-top:17px;overflow:hidden}.table-head{padding:17px 19px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line)}.table-head h2{font-size:15px;margin:0 0 4px}.table-head p{font-size:10px;color:var(--muted);margin:0}.table-meta{font-size:11px;color:#748197;white-space:nowrap}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1040px;font-size:11px}th{background:#f7f9fc;color:#68788f;text-transform:uppercase;letter-spacing:.55px;font-size:9px;font-weight:850;padding:13px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line)}td{padding:12px;border-bottom:1px solid #edf1f6;vertical-align:middle}tbody tr:hover{background:#fbfdff}.person{display:flex;align-items:center;gap:9px;min-width:155px}.person-avatar{width:34px;height:34px;border-radius:11px;background:#eaf1fb;color:#315f9a;display:grid;place-items:center;font-size:11px;font-weight:850;flex:0 0 auto}.person strong{display:block;font-size:11px;color:#263750}.person small{display:block;font-size:9px;color:#8794a6;margin-top:3px}.time{font-weight:800;color:#263750;font-variant-numeric:tabular-nums}.subtime{display:block;color:#8a97a9;font-size:9px;margin-top:3px}.photo-btn{border:0;background:transparent;padding:0;display:inline-flex;align-items:center;gap:6px;color:#276bc3;font-size:10px;font-weight:750}.photo-btn img{width:39px;height:39px;object-fit:cover;border-radius:8px;border:1px solid #dce4ef;background:#f0f3f8}.photo-empty{color:#a0aaba;font-size:10px}.duration{font-weight:850;color:#1f3857;font-variant-numeric:tabular-nums}.pill{display:inline-flex;padding:5px 8px;border-radius:20px;font-size:9px;font-weight:850;white-space:nowrap}.pill.complete{background:#e8f7ef;color:#14764f}.pill.pending{background:#fff4df;color:#9a6718}.pill.missing{background:#fff0f0;color:#b33a45}.actions{color:#8b98aa}.table-foot{display:flex;justify-content:space-between;align-items:center;padding:13px 18px;color:#8491a3;font-size:10px}.empty{text-align:center;padding:35px!important;color:#8a97a9}
+#proofViewer{display:none;position:fixed;inset:0;z-index:99999;background:#030914ed;align-items:center;justify-content:center;padding:16px}#proofViewer.open{display:flex}.pv-panel{width:min(100%,1050px);height:min(94dvh,850px);display:flex;flex-direction:column;gap:10px}.pv-toolbar{display:flex;align-items:center;gap:8px;color:white;flex-wrap:wrap}.pv-toolbar strong{margin-right:auto}.pv-toolbar button{border:0;border-radius:8px;background:#26364f;color:white;padding:9px 13px;font-weight:800}.pv-stage{flex:1;min-height:0;overflow:auto;display:flex;align-items:center;justify-content:center;border:1px solid #53627a;border-radius:12px;background:#090f1d;touch-action:pan-x pan-y}.pv-stage img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;transition:transform .12s ease}.pv-stage img.zoomed{max-width:none;max-height:none}
+@media(max-width:1050px){.sidebar{width:205px;flex-basis:205px}.content{padding:23px 20px}.topbar{padding:0 20px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){.layout{display:block}.sidebar{width:auto;padding:11px 13px;display:block}.brand{padding:2px 5px 10px;border:0}.brand-mark{width:33px;height:33px}.nav-label,.sidebar-foot{display:none}.nav-scroll{display:flex;gap:5px;overflow:auto;padding-top:9px}.nav-item{white-space:nowrap;padding:8px 10px;font-size:10px;margin:0}.nav-item .ico{font-size:12px}.topbar{height:55px;padding:0 14px}.clock{display:none}.admin{padding-left:10px}.content{padding:19px 12px 35px}.page-head{align-items:flex-start}.page-head h1{font-size:21px}.date-chip{font-size:10px;padding:8px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.stat{padding:13px}.stat b{font-size:22px}.filters{padding:13px;gap:9px}.field{flex:1;min-width:calc(50% - 8px)}.field input,.field select{min-width:0;width:100%}.field.search{min-width:100%}.filters .btn{flex:1}.table-head{padding:14px}.table-foot{gap:10px;flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+ <div class="brand"><div class="brand-mark">DSH</div><div><strong>DSH ATTENDANCE</strong><small>PEOPLE & OPERATIONS</small></div></div>
+ <div class="nav-label">MENU UTAMA</div>
+ <nav class="nav-scroll">
+  <a class="nav-item" href="/"><span class="ico">⌂</span>Dashboard</a>
+  <span class="nav-item dim"><span class="ico">▤</span>Rekap Karyawan</span>
+  <span class="nav-item dim"><span class="ico">◷</span>Data Absensi</span>
+  <span class="nav-item dim"><span class="ico">▦</span>Rekap Divisi</span>
+  <span class="nav-item dim"><span class="ico">⌖</span>Rekap Lokasi</span>
+  <span class="nav-item active"><span class="ico">▧</span>Laporan & Ekspor</span>
+  <span class="nav-item dim"><span class="ico">♙</span>Master Data</span>
+  <span class="nav-item dim"><span class="ico">⚙</span>Pengaturan</span>
+ </nav>
+ <div class="sidebar-foot">DSH Attendance System<br>LOTTE Mart Wholesale Mataram</div>
+</aside>
+<section class="main">
+ <header class="topbar">
+  <div class="crumb">DSH Attendance <span style="color:#b5bfcc"> / </span> <b>Laporan Absensi</b></div>
+  <div class="top-right"><div class="clock" id="clock">--:--<small id="clockDate">Memuat tanggal…</small></div><div class="admin"><div class="avatar">AD</div><div><strong>Administrator</strong><small>Admin PDA Mini</small></div></div></div>
+ </header>
+ <main class="content">
+  <div class="page-head"><div><div class="eyebrow">Attendance management</div><h1>Report Absensi SPG / SPM / MD</h1><p>Pantau kehadiran, waktu kerja, dan bukti absensi karyawan dalam satu laporan.</p></div><div class="date-chip" id="todayLabel">📅 Hari ini</div></div>
+  <div class="tabs"><button class="tab active" type="button">Rekap Periode</button><button class="tab" type="button" title="Ringkasan dihitung dari data pada rentang tanggal terpilih">Analisis Kehadiran</button><button class="tab" type="button" title="Tabel menampilkan ringkasan aktivitas karyawan">Riwayat Karyawan</button></div>
+  <section class="panel">
+   <div class="filters">
+    <div class="field"><label for="from">DARI TANGGAL</label><input id="from" type="date"></div>
+    <div class="field"><label for="to">SAMPAI TANGGAL</label><input id="to" type="date"></div>
+    <div class="field"><label for="division">DIVISI</label><select id="division"><option value="">Semua divisi</option></select></div>
+    <div class="field"><label for="status">STATUS</label><select id="status"><option value="">Semua status</option><option value="complete">Hadir lengkap</option><option value="pending">Belum check-out</option><option value="missing">Belum check-in</option></select></div>
+    <div class="field search"><label for="search">CARI KARYAWAN</label><input id="search" type="search" placeholder="Nama atau departemen…"></div>
+    <button class="btn btn-primary" id="load">⌕ Tampilkan</button>
+    <button class="btn btn-export" id="export">⇩ Ekspor Excel</button>
+   </div>
+   <div id="msg" class="message">Pilih rentang tanggal, lalu tampilkan laporan.</div>
+  </section>
+  <section class="stats">
+   <div class="panel stat"><div class="stat-top"><span class="stat-label">Total karyawan tercatat</span><span class="stat-icon">♙</span></div><b id="total">0</b><small>Karyawan unik pada periode ini</small></div>
+   <div class="panel stat green"><div class="stat-top"><span class="stat-label">Hadir lengkap</span><span class="stat-icon">✓</span></div><b id="complete">0</b><small>Sudah check-in & check-out</small></div>
+   <div class="panel stat amber"><div class="stat-top"><span class="stat-label">Belum check-out</span><span class="stat-icon">◷</span></div><b id="pending">0</b><small>Masih ada sesi terbuka</small></div>
+   <div class="panel stat red"><div class="stat-top"><span class="stat-label">Belum check-in</span><span class="stat-icon">!</span></div><b id="missing">0</b><small>Tidak ada check-in pada data</small></div>
+   <div class="panel stat"><div class="stat-top"><span class="stat-label">Rata-rata jam kerja</span><span class="stat-icon">⌚</span></div><b id="average">—</b><small>Durasi terhitung per karyawan</small></div>
+  </section>
+  <section class="panel table-panel">
+   <div class="table-head"><div><h2>Rekap karyawan</h2><p>Ringkasan check-in, check-out, bukti foto, dan total durasi kerja</p></div><div class="table-meta" id="tableMeta">0 karyawan</div></div>
+   <div class="tablewrap"><table><thead><tr><th>No.</th><th>Karyawan</th><th>Divisi</th><th>Check-in</th><th>Foto masuk</th><th>Check-out</th><th>Foto pulang</th><th>Total jam kerja</th><th>Status</th></tr></thead><tbody id="rows"><tr><td class="empty" colspan="9">Belum ada data. Pilih tanggal lalu tampilkan laporan.</td></tr></tbody></table></div>
+   <div class="table-foot"><span id="countLabel">Menampilkan 0 karyawan</span><span>Durasi dihitung dari pasangan check-in dan check-out yang tersedia.</span></div>
+  </section>
+ </main>
+</section>
 </div>
-<div class="card" style="margin-top:14px"><h3>Rekap karyawan</h3><div class="tablewrap"><table><thead><tr><th>Tanggal</th><th>Jam</th><th>Nama</th><th>Departemen</th><th>Jenis</th><th>Jarak</th><th>Bukti</th></tr></thead><tbody id="rows"><tr><td colspan="7">Belum ada data.</td></tr></tbody></table></div></div>
-</main>
-<div id="proofViewer" aria-modal="true" role="dialog" aria-label="Pratinjau bukti foto">
- <div class="pv-panel"><div class="pv-toolbar"><strong id="pvTitle">Bukti foto</strong><button type="button" onclick="proofZoom(-0.25)">−</button><button type="button" onclick="proofZoom(0.25)">+</button><button type="button" onclick="proofFit()">Pas layar</button><button type="button" onclick="closeProofPreview()">Tutup ✕</button></div>
- <div class="pv-stage" id="pvStage"><img id="pvImage" alt="Bukti absensi"></div></div>
-</div>
+<div id="proofViewer" aria-modal="true" role="dialog" aria-label="Pratinjau bukti foto"><div class="pv-panel"><div class="pv-toolbar"><strong id="pvTitle">Bukti foto</strong><button type="button" onclick="proofZoom(-.25)">−</button><button type="button" onclick="proofZoom(.25)">+</button><button type="button" onclick="proofFit()">Pas layar</button><button type="button" onclick="closeProofPreview()">Tutup ✕</button></div><div class="pv-stage" id="pvStage"><img id="pvImage" alt="Bukti absensi"></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
 function getPdaToken(){try{const raw=localStorage.getItem('inv_sess_v1');if(!raw)return '';const d=JSON.parse(decodeURIComponent(escape(atob(raw))));return d&&d.t&&Date.now()<d.exp?d.t:'';}catch(e){return '';}}
 async function api(from,to){const token=getPdaToken();if(!token)throw new Error('Sesi PDA Mini tidak ditemukan. Silakan login kembali.');const q=new URLSearchParams();if(from)q.set('from',from);if(to)q.set('to',to);const res=await fetch('/api/report-absensi?'+q.toString(),{headers:{Authorization:'Bearer '+token}});const obj=await res.json();if(!res.ok||!obj.success)throw new Error(obj.message||'Permintaan gagal');return obj;}
-
-$('back').onclick=()=>location.href='/';
-$('load').onclick=async()=>{
- $('msg').textContent='Memuat laporan…';$('msg').className='msg';
- try{
-  const r=await api($('from').value,$('to').value);
-  const records=r.records||[];
-  $('total').textContent=records.length;$('masuk').textContent=records.filter(x=>x.type==='MASUK').length;$('pulang').textContent=records.filter(x=>x.type==='PULANG').length;
-  $('rows').innerHTML=records.length?records.slice().reverse().map(x=>{
-    const dt=x.timestamp?new Date(x.timestamp):null;
-    const token=getPdaToken();
-    const thumb=(url,title)=>url?`<a class="proof-link" href="#" data-proof="${encodeURIComponent(url)}" data-title="${title}" onclick="event.preventDefault();openProofPreview(decodeURIComponent(this.dataset.proof),this.dataset.title)"><span class="proof-thumb-wrap"><img class="proof-thumb" loading="lazy" decoding="async" src="/api/report-absensi/photo?url=${encodeURIComponent(url)}&token=${encodeURIComponent(token)}" alt="${title}" onerror="this.style.opacity='.25';this.title='Foto gagal dimuat'"><span>${title}</span></span></a>`:'';
-    const proof=thumb(x.photoUrl||x.selfieUrl||x.areaPhotoUrl,'Foto Absensi');
-    return `<tr><td>${x.date||''}</td><td>${dt?dt.toLocaleTimeString('id-ID'):''}</td><td>${esc(x.name)}</td><td>${esc(x.department)}</td><td>${x.type==='MASUK'?'Check-in':'Check-out'}</td><td>${Math.round(Number(x.distanceMeters)||0)} m</td><td>${proof||'-'}</td></tr>`;
-  }).join(''):'<tr><td colspan="7">Tidak ada catatan pada rentang tanggal ini.</td></tr>';
-  $('msg').textContent='Laporan berhasil dimuat. Total '+records.length+' catatan.';
- }catch(e){$('msg').textContent=e.message;$('msg').className='msg error';}
-};
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function initials(n){return String(n||'?').trim().split(/\s+/).slice(0,2).map(s=>s[0]||'').join('').toUpperCase();}
+function recordTime(x){const d=x.timestamp?new Date(x.timestamp):null;return d&&!isNaN(d)?d:null;}
+function fmtTime(d){return d?d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',hour12:false}):'—';}
+function fmtDuration(ms){if(!(ms>0))return '—';const mins=Math.floor(ms/60000);return Math.floor(mins/60)+'j '+String(mins%60).padStart(2,'0')+'m';}
+function groupRecords(records){
+ const map=new Map();
+ records.forEach(x=>{const name=x.name||'Tanpa nama',dept=x.department||'—',key=(name+'|'+dept).toLowerCase();if(!map.has(key))map.set(key,{name,department:dept,events:[]});const dt=recordTime(x);map.get(key).events.push({...x,_dt:dt});});
+ return [...map.values()].map(p=>{
+  p.events.sort((a,b)=>(a._dt?.getTime()||0)-(b._dt?.getTime()||0));
+  const ins=p.events.filter(x=>x.type==='MASUK'),outs=p.events.filter(x=>x.type==='PULANG');
+  let totalMs=0,open=false,usedOut=new Set();
+  ins.forEach(m=>{const next=outs.find(o=>!usedOut.has(o)&&o._dt&&m._dt&&o._dt>m._dt);if(next){usedOut.add(next);totalMs+=next._dt-m._dt;}else open=true;});
+  const first=ins[0]||null,last=outs.filter(o=>!usedOut.has(o)||ins.some(m=>m._dt&&o._dt&&m._dt<o._dt)).slice(-1)[0]||outs.slice(-1)[0]||null;
+  return {...p,first,last,totalMs,hasIn:ins.length>0,hasOut:outs.length>0,status:ins.length===0?'missing':open?'pending':'complete'};
+ });
+}
+let allRows=[],lastRecords=[];
+function photoButton(url,title){if(!url)return '<span class="photo-empty">Tidak ada foto</span>';const token=getPdaToken();const src='/api/report-absensi/photo?url='+encodeURIComponent(url)+'&token='+encodeURIComponent(token);return '<button class="photo-btn" type="button" data-url="'+esc(url)+'" data-title="'+esc(title)+'" onclick="openProofPreview(this.dataset.url,this.dataset.title)"><img loading="lazy" src="'+src+'" alt="'+esc(title)+'" onerror="this.style.opacity=.25"><span>Lihat</span></button>';}
+function render(){
+ const term=$('search').value.trim().toLowerCase(),div=$('division').value,st=$('status').value;
+ const rows=allRows.filter(p=>(!div||p.department===div)&&(!st||p.status===st)&&(!term||(p.name+' '+p.department).toLowerCase().includes(term)));
+ $('rows').innerHTML=rows.length?rows.map((p,i)=>'<tr><td>'+(i+1)+'</td><td><div class="person"><div class="person-avatar">'+esc(initials(p.name))+'</div><div><strong>'+esc(p.name)+'</strong><small>'+p.events.length+' catatan absensi</small></div></div></td><td>'+esc(p.department)+'</td><td><span class="time">'+fmtTime(p.first? p.first._dt:null)+'</span><span class="subtime">'+esc(p.first?.date||'')+'</span></td><td>'+photoButton(p.first?.photoUrl||p.first?.selfieUrl||p.first?.areaPhotoUrl,'Foto Check-in · '+p.name)+'</td><td><span class="time">'+fmtTime(p.last?.type==='PULANG'?p.last._dt:null)+'</span><span class="subtime">'+esc(p.last?.date||'')+'</span></td><td>'+photoButton(p.last?.type==='PULANG'?(p.last.photoUrl||p.last.selfieUrl||p.last.areaPhotoUrl):null,'Foto Check-out · '+p.name)+'</td><td><span class="duration">'+fmtDuration(p.totalMs)+'</span></td><td><span class="pill '+p.status+'">'+(p.status==='complete'?'Hadir lengkap':p.status==='pending'?'Belum check-out':'Belum check-in')+'</span></td></tr>').join(''):'<tr><td class="empty" colspan="9">Tidak ada karyawan yang cocok dengan filter ini.</td></tr>';
+ $('tableMeta').textContent=rows.length+' karyawan';$('countLabel').textContent='Menampilkan '+rows.length+' dari '+allRows.length+' karyawan';
+}
+function fillStats(){
+ const complete=allRows.filter(x=>x.status==='complete').length,pending=allRows.filter(x=>x.status==='pending').length,missing=allRows.filter(x=>x.status==='missing').length;
+ $('total').textContent=allRows.length;$('complete').textContent=complete;$('pending').textContent=pending;$('missing').textContent=missing;
+ const valid=allRows.filter(x=>x.totalMs>0);$('average').textContent=valid.length?fmtDuration(valid.reduce((a,x)=>a+x.totalMs,0)/valid.length):'—';
+}
+function fillDivisions(){const cur=$('division').value,ds=[...new Set(allRows.map(x=>x.department).filter(x=>x&&x!=='—'))].sort();$('division').innerHTML='<option value="">Semua divisi</option>'+ds.map(d=>'<option value="'+esc(d)+'">'+esc(d)+'</option>').join('');if(ds.includes(cur))$('division').value=cur;}
+$('load').onclick=async()=>{ $('msg').textContent='Memuat laporan…';$('msg').className='message';$('load').disabled=true;try{const r=await api($('from').value,$('to').value);lastRecords=r.records||[];allRows=groupRecords(lastRecords);fillDivisions();fillStats();render();$('msg').textContent='Laporan berhasil dimuat · '+lastRecords.length+' catatan absensi dari '+allRows.length+' karyawan.';}catch(e){$('msg').textContent=e.message;$('msg').className='message error';}finally{$('load').disabled=false;}};
+$('search').addEventListener('input',render);$('division').addEventListener('change',render);$('status').addEventListener('change',render);
+$('export').onclick=()=>{if(!allRows.length){$('msg').textContent='Tidak ada data untuk diekspor.';return;}const rows=[['Nama','Departemen','Check-in','Tanggal masuk','Check-out','Tanggal pulang','Total jam kerja','Status','Jumlah catatan'],...allRows.map(p=>[p.name,p.department,fmtTime(p.first? p.first._dt:null),p.first?.date||'',fmtTime(p.last?.type==='PULANG'?p.last._dt:null),p.last?.date||'',fmtDuration(p.totalMs),p.status==='complete'?'Hadir lengkap':p.status==='pending'?'Belum check-out':'Belum check-in',p.events.length])];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download='Rekap_Absensi_'+$('from').value+'_'+$('to').value+'.csv';a.click();URL.revokeObjectURL(url);};
 let proofScale=1;
-function openProofPreview(url,title){const box=$('proofViewer'),img=$('pvImage');const token=getPdaToken();proofScale=1;$('pvTitle').textContent=title||'Bukti foto';img.classList.remove('zoomed');img.style.transform='scale(1)';img.onerror=function(){img.alt='Foto tidak dapat dimuat. Periksa izin berbagi file Google Drive.';};img.src='/api/report-absensi/photo?url='+encodeURIComponent(url)+'&token='+encodeURIComponent(token);box.classList.add('open');document.body.style.overflow='hidden';$('pvStage').scrollTop=0;$('pvStage').scrollLeft=0;}
+function openProofPreview(url,title){const box=$('proofViewer'),img=$('pvImage'),token=getPdaToken();proofScale=1;$('pvTitle').textContent=title||'Bukti foto';img.classList.remove('zoomed');img.style.transform='scale(1)';img.onerror=()=>{img.alt='Foto tidak dapat dimuat. Periksa izin berbagi file Google Drive.';};img.src='/api/report-absensi/photo?url='+encodeURIComponent(url)+'&token='+encodeURIComponent(token);box.classList.add('open');document.body.style.overflow='hidden';$('pvStage').scrollTop=0;$('pvStage').scrollLeft=0;}
 function closeProofPreview(){$('proofViewer').classList.remove('open');$('pvImage').src='';document.body.style.overflow='';}
 function proofZoom(delta){proofScale=Math.max(.5,Math.min(4,proofScale+delta));const img=$('pvImage');img.classList.toggle('zoomed',proofScale>1);img.style.transform='scale('+proofScale+')';}
 function proofFit(){proofScale=1;const img=$('pvImage');img.classList.remove('zoomed');img.style.transform='scale(1)';$('pvStage').scrollTop=0;$('pvStage').scrollLeft=0;}
-$('proofViewer').addEventListener('click',e=>{if(e.target===$('proofViewer'))closeProofPreview();});
-$('pvStage').addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey){e.preventDefault();proofZoom(e.deltaY<0?.15:-.15);}},{passive:false});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProofPreview();});
-function esc(v){return String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-const today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Makassar'});$('from').value=today;$('to').value=today;
-</script></body></html>
+$('proofViewer').addEventListener('click',e=>{if(e.target===$('proofViewer'))closeProofPreview();});$('pvStage').addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey){e.preventDefault();proofZoom(e.deltaY<0?.15:-.15);}},{passive:false});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProofPreview();});
+function tick(){const d=new Date();$('clock').firstChild.textContent=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});$('clockDate').textContent=d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+const today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Makassar'});$('from').value=today;$('to').value=today;$('todayLabel').textContent='📅 '+new Date().toLocaleDateString('id-ID',{timeZone:'Asia/Makassar',day:'numeric',month:'long',year:'numeric'});tick();setInterval(tick,1000);
+$('back').onclick=()=>location.href='/';
+</script>
+</body></html>
