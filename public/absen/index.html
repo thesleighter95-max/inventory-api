@@ -45,6 +45,7 @@
 .dash-actions .dash-btn{flex:1}
 @media(max-width:640px){.dashboard{padding:14px 12px 80px}.dash-grid{grid-template-columns:1fr}.dash-wide{grid-column:auto}.dash-top{padding:18px}}
 
+.profile-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#eaf1fb;border:2px solid #dbe7f6}.history-photo{width:76px;height:76px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block;margin-top:8px}.history-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.history-actions button{border:0;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:750;background:#eaf1fb;color:#174b83}.history-actions button.delete{background:#fff0f1;color:#b42336}.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.profile-grid{grid-template-columns:1fr}}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -258,7 +259,7 @@
       {enableHighAccuracy:true,timeout:20000,maximumAge:0});
     });
   }
-  async function compressImage(file, attendanceType, gps) {
+  async function compressImage(file, attendanceType, gps, stampDate = new Date()) {
     if(!file || !file.type.startsWith('image/')) throw new Error('Pilih file foto yang valid.');
     const image = await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('Foto tidak bisa dibaca.'));img.src=URL.createObjectURL(file);});
     const scale=Math.min(1,1600/Math.max(image.width,image.height));
@@ -293,36 +294,42 @@
       img.src=URL.createObjectURL(file);img.style.display='block';
     });
   }
-  async function loadHistory() {
+  function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  async function loadHistory(){
     $('historyList').textContent='Memuat riwayat…';
-    try {
+    try{
       const r=await api('myHistory',{token:sessionStorage.getItem('dsh_token')});
-      const localDate = value => {
-        if (!value) return '';
-        const d = new Date(value);
-        return isNaN(d) ? String(value).slice(0,10) : new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Makassar',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
-      };
-      const localDateTime = value => {
-        if (!value) return {date:'',time:''};
-        const d = new Date(value);
-        if (isNaN(d)) return {date:String(value),time:''};
-        return {
-          date:new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',day:'2-digit',month:'long',year:'numeric'}).format(d),
-          time:new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(d)
-        };
-      };
+      window.__dshHistory=r.history||[];
+      const localDate=value=>{if(!value)return '';const d=new Date(value);return isNaN(d)?String(value).slice(0,10):new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Makassar',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);};
+      const localDateTime=value=>{if(!value)return {date:'',time:''};const d=new Date(value);if(isNaN(d))return {date:String(value),time:''};return {date:new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',day:'2-digit',month:'long',year:'numeric'}).format(d),time:new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(d)};};
       const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Makassar',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-      const todayRows=(r.history||[]).filter(x=>localDate(x.date)===today || localDate(x.timestamp)===today);
-      const masuk=todayRows.find(x=>String(x.type).toUpperCase()==='MASUK' || String(x.type).toUpperCase()==='CHECK-IN');
-      const pulang=todayRows.find(x=>String(x.type).toUpperCase()==='PULANG' || String(x.type).toUpperCase()==='CHECK-OUT');
-      $('checkinStatus').textContent=masuk?'Tercatat':'Belum';
-      $('checkoutStatus').textContent=pulang?'Tercatat':'Belum';
+      const todayRows=window.__dshHistory.filter(x=>localDate(x.date)===today||localDate(x.timestamp)===today);
+      const masuk=todayRows.find(x=>String(x.type).toUpperCase()==='MASUK'),pulang=todayRows.find(x=>String(x.type).toUpperCase()==='PULANG');
+      $('checkinStatus').textContent=masuk?'Tercatat':'Belum';$('checkoutStatus').textContent=pulang?'Tercatat':'Belum';
       $('checkinTime').textContent=masuk?'Tercatat pukul '+localDateTime(masuk.timestamp).time:'Belum ada catatan masuk';
       $('checkoutTime').textContent=pulang?'Tercatat pukul '+localDateTime(pulang.timestamp).time:'Belum ada catatan pulang';
-      $('historyList').innerHTML=(r.history||[]).length?(r.history||[]).map(x=>{const dt=localDateTime(x.timestamp || x.date);return `<div class="history-row"><div><b>${String(x.type).toUpperCase()==='MASUK'?'Check-in':'Check-out'}</b><div class="dash-muted">${dt.date || localDate(x.date)}</div></div><div style="text-align:right">${dt.time}<div class="dash-muted">${Math.round(Number(x.distanceMeters)||0)} m dari toko</div></div></div>`;}).join(''):'Belum ada riwayat absensi.';
-    } catch(err){$('historyList').textContent=err.message;}
+      $('historyList').innerHTML=window.__dshHistory.length?window.__dshHistory.map(x=>{
+        const dt=localDateTime(x.timestamp||x.date),id=escapeHtml(x.attendanceId||'');
+        const photo=x.photoUrl?'<a href="'+escapeHtml(x.photoUrl)+'" target="_blank" rel="noopener"><img class="history-photo" src="'+escapeHtml(x.photoUrl)+'" alt="Foto bukti absensi"></a>':'';
+        const actions=x.canEdit?'<div class="history-actions"><button data-edit-photo="'+id+'">GANTI FOTO</button><button class="delete" data-delete-attendance="'+id+'">HAPUS</button></div><input class="hidden" type="file" accept="image/*" capture="environment" data-photo-input="'+id+'">':'<div class="dash-muted">Riwayat terkunci (batas 24 jam / tanggal sama)</div>';
+        return '<div class="history-row" style="align-items:flex-start"><div style="flex:1"><b>'+(String(x.type).toUpperCase()==='MASUK'?'Check-in':'Check-out')+'</b><div class="dash-muted">'+escapeHtml(dt.date||localDate(x.date))+'</div>'+photo+actions+'</div><div style="text-align:right;white-space:nowrap">'+escapeHtml(dt.time)+'<div class="dash-muted">'+Math.round(Number(x.distanceMeters)||0)+' m dari toko</div></div></div>';
+      }).join(''):'Belum ada riwayat absensi.';
+    }catch(err){$('historyList').textContent=err.message;}
   }
-  async function submitAttendance(type) {
+  async function compressProfilePhoto(file){
+    if(!file||!file.type.startsWith('image/'))throw new Error('Pilih foto profil yang valid.');
+    const img=await new Promise((resolve,reject)=>{const el=new Image();el.onload=()=>resolve(el);el.onerror=()=>reject(new Error('Foto tidak bisa dibaca.'));el.src=URL.createObjectURL(file);});
+    const scale=Math.min(1,1000/Math.max(img.width,img.height)),canvas=document.createElement('canvas');
+    canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+    return canvas.toDataURL('image/jpeg',0.82);
+  }
+  async function loadProfile(){
+    try{const r=await api('getProfile',{token:sessionStorage.getItem('dsh_token')}),u=r.user||{};
+      $('profileName').value=u.name||'';$('profileEmail').value=u.email||'';$('profilePhone').value=u.phone||'';$('profileBrand').value=u.brand||'';
+      $('profileAvatar').src=u.profilePhotoUrl||'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#eaf1fb"/><text x="50%" y="55%" text-anchor="middle" font-size="28" fill="#174b83">DSH</text></svg>');
+    }catch(e){$('profileMessage').textContent=e.message;}
+  }
+\n  async function submitAttendance(type) {
     const btn=type==='MASUK'?$('checkinBtn'):$('checkoutBtn');
     btn.disabled=true;btn.textContent='MENGIRIM…';
     try {
@@ -346,7 +353,35 @@
   });
   $('checkinBtn').addEventListener('click',()=>submitAttendance('MASUK'));
   $('checkoutBtn').addEventListener('click',()=>submitAttendance('PULANG'));
-  $('refreshHistoryBtn').addEventListener('click',loadHistory);
+  $('refreshHistoryBtn').addEventListener('click',loadHistory);\n  $('historyList').addEventListener('click',async e=>{
+    const edit=e.target.closest('[data-edit-photo]'),del=e.target.closest('[data-delete-attendance]');
+    if(edit){const id=edit.getAttribute('data-edit-photo');const input=Array.from(document.querySelectorAll('[data-photo-input]')).find(el=>el.getAttribute('data-photo-input')===id);if(input)input.click();}
+    if(del){const id=del.getAttribute('data-delete-attendance');if(!confirm('Hapus catatan absensi ini beserta foto buktinya? Tindakan tidak dapat dibatalkan.'))return;del.disabled=true;
+      try{const r=await api('deleteAttendance',{token:sessionStorage.getItem('dsh_token'),attendanceId:id});$('attendanceMessage').textContent=r.message;await loadHistory();}
+      catch(err){$('attendanceMessage').textContent=err.message;del.disabled=false;}}
+  });
+  $('historyList').addEventListener('change',async e=>{
+    const input=e.target.closest('[data-photo-input]');if(!input||!input.files||!input.files[0])return;
+    const id=input.getAttribute('data-photo-input'),row=(window.__dshHistory||[]).find(x=>String(x.attendanceId)===id);
+    try{const gps=row?{latitude:Number(row.latitude)||0,longitude:Number(row.longitude)||0,accuracy:Number(row.accuracy)||0}:{latitude:0,longitude:0,accuracy:0};
+      const stamp=row&&row.timestamp?new Date(row.timestamp):new Date(),photoDataUrl=await compressImage(input.files[0],'EDIT FOTO ABSENSI',gps,stamp);
+      const r=await api('updateAttendancePhoto',{token:sessionStorage.getItem('dsh_token'),attendanceId:id,photoDataUrl});$('attendanceMessage').textContent=r.message;await loadHistory();
+    }catch(err){$('attendanceMessage').textContent=err.message;}finally{input.value='';}
+  });
+  $('saveProfileBtn').addEventListener('click',async()=>{const b=$('saveProfileBtn');b.disabled=true;try{
+    const payload={token:sessionStorage.getItem('dsh_token'),phone:val('profilePhone'),brand:val('profileBrand')},file=$('profilePhotoFile').files[0];
+    if(file)payload.profilePhotoDataUrl=await compressProfilePhoto(file);
+    const r=await api('updateProfile',payload);$('profileMessage').textContent=r.message;sessionStorage.setItem('dsh_user',JSON.stringify(r.user||{}));
+    $('dashMeta').textContent=[r.user.department,r.user.brand,r.user.email].filter(Boolean).join(' · ');await loadProfile();
+  }catch(err){$('profileMessage').textContent=err.message;}finally{b.disabled=false;}});
+  $('profileRequestOtpBtn').addEventListener('click',async()=>{const b=$('profileRequestOtpBtn');b.disabled=true;try{
+    const r=await api('requestResetOtp',{email:val('profileEmail')});$('profilePasswordMessage').textContent=r.message||'Jika email aktif, OTP dikirim.';
+  }catch(err){$('profilePasswordMessage').textContent=err.message;}finally{b.disabled=false;}});
+  $('profileResetBtn').addEventListener('click',async()=>{const b=$('profileResetBtn');b.disabled=true;try{
+    const r=await api('resetPassword',{email:val('profileEmail'),otp:val('profileResetOtp'),newPassword:$('profileNewPassword').value});
+    $('profilePasswordMessage').textContent=r.message;$('profileResetOtp').value='';$('profileNewPassword').value='';
+  }catch(err){$('profilePasswordMessage').textContent=err.message;}finally{b.disabled=false;}});
+
   $('logoutBtn').addEventListener('click',async()=>{try{await api('logout',{token:sessionStorage.getItem('dsh_token')});}catch(e){}showAuth();});
   const savedToken=sessionStorage.getItem('dsh_token');
   if(savedToken){try{showDashboard(JSON.parse(sessionStorage.getItem('dsh_user')||'{}'));}catch(e){showAuth();}}
