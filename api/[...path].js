@@ -43,6 +43,24 @@ async function callDshAttendance(action, extra = {}) {
   return data;
 }
 
+
+const LEGACY_LOGIN_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUOmxLN_--OjkRvb543vpKK5wyL-zcNl67dfDlCPzN28tuBXD2IDEhyJxR8yKqC7CvcHGVj5tSPAD2/pub?gid=0&single=true&output=csv";
+function parseCsvRows(text) {
+  const rows=[]; let row=[], cell="", quoted=false;
+  for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){cell+='"';i++;}else quoted=!quoted;}else if(c===','&&!quoted){row.push(cell.trim());cell="";}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell.trim());if(row.some(x=>x!==''))rows.push(row);row=[];cell="";}else cell+=c;}
+  row.push(cell.trim());if(row.some(x=>x!==''))rows.push(row);return rows;
+}
+async function legacyCsvLogin(username,password) {
+  const r=await fetch(LEGACY_LOGIN_CSV_URL,{cache:"no-store"});
+  if(!r.ok)throw new Error("Tidak dapat membaca Spreadsheet login.");
+  const rows=parseCsvRows(await r.text());
+  for(let i=1;i<rows.length;i++){
+    if(String(rows[i][0]||"").trim()===username && String(rows[i][1]||"").trim()===password)
+      return {namaLengkap:String(rows[i][2]||username).trim()||username};
+  }
+  return null;
+}
+
 // ============================================================
 // IN-MEMORY CACHE (module-level, survives warm Vercel instances)
 // ============================================================
@@ -285,6 +303,36 @@ export default async function handler(req, res) {
       } catch (e) { return send({ success: false, message: e.message }, 502); }
     }
 
+    if (path === "/report-absensi/photo" && method === "GET") {
+      try {
+        const auth = String(req.headers.authorization || "");
+        const token = auth.startsWith("Bearer ") ? auth.slice(7) : String(query.token || "");
+        const session = verifyPdaSession(token);
+        if (!session) return send({ success: false, message: "Sesi tidak valid." }, 401);
+        const raw = String(query.url || "");
+        let source;
+        try { source = new URL(raw); } catch { return send({ success: false, message: "URL foto tidak valid." }, 400); }
+        const allowedHosts = ["drive.google.com","docs.google.com","lh3.googleusercontent.com","drive.usercontent.google.com","googleusercontent.com"];
+        if (!allowedHosts.some(h => source.hostname === h || source.hostname.endsWith("." + h))) return send({ success: false, message: "Sumber foto tidak diizinkan." }, 400);
+        const idMatch = raw.match(/(?:\/d\/|[?&]id=)([a-zA-Z0-9_-]{10,})/);
+        const candidates = idMatch
+          ? ["https://drive.google.com/uc?export=download&id="+encodeURIComponent(idMatch[1]), "https://drive.usercontent.google.com/download?id="+encodeURIComponent(idMatch[1])+"&export=download"]
+          : [raw];
+        let imageRes = null;
+        for (const candidate of candidates) {
+          const rr = await fetch(candidate, { redirect: "follow", headers: { "User-Agent": "Mozilla/5.0" } });
+          const ct = String(rr.headers.get("content-type") || "").toLowerCase();
+          if (rr.ok && ct.startsWith("image/")) { imageRes = rr; break; }
+        }
+        if (!imageRes) return send({ success: false, message: "Foto tidak dapat diakses. Pastikan file Drive dapat dilihat oleh siapa pun yang memiliki link." }, 404);
+        const bytes = Buffer.from(await imageRes.arrayBuffer());
+        res.setHeader("Content-Type", imageRes.headers.get("content-type") || "image/jpeg");
+        res.setHeader("Cache-Control", "private, max-age=300");
+        res.setHeader("Content-Length", String(bytes.length));
+        return res.status(200).send(bytes);
+      } catch (e) { return send({ success: false, message: String(e.message || e) }, 502); }
+    }
+
     if (path === "/report-absensi" && method === "GET") {
       const auth = String(req.headers.authorization || "");
       const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
@@ -390,6 +438,17 @@ export default async function handler(req, res) {
         return send({ success: true, namaLengkap, accessToken, expiresIn: 8 * 60 * 60 });
       } catch (e) {
         const msg = String(e.message || e);
+        if (/username atau password salah|user tidak ditemukan|not found|akun tidak ditemukan/i.test(msg)) {
+          try {
+            const legacy = await legacyCsvLogin(username, password);
+            if (legacy) {
+              const accessToken = issuePdaSession(username, legacy.namaLengkap, "user");
+              return send({ success: true, namaLengkap: legacy.namaLengkap, accessToken, expiresIn: 8 * 60 * 60, authSource: "legacy-sheet" });
+            }
+          } catch (csvError) {
+            return send({ success: false, message: "Login Spreadsheet gagal: " + String(csvError.message || csvError) }, 502);
+          }
+        }
         const badLogin = /username atau password salah|ditangguhkan|nonaktif/i.test(msg);
         return send({ success: false, suspended: /ditangguhkan|nonaktif/i.test(msg), message: badLogin ? msg : "Login melalui Spreadsheet gagal: " + msg }, badLogin ? 401 : 502);
       }
