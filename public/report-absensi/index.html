@@ -69,7 +69,7 @@ button,input,select{font:inherit}button{cursor:pointer}
   </section>
   <section class="panel table-panel">
    <div class="table-head"><div><h2>Rekap karyawan</h2><p>Ringkasan check-in, check-out, bukti foto, dan total durasi kerja</p></div><div class="table-meta" id="tableMeta">0 karyawan</div></div>
-   <div class="tablewrap"><table><thead><tr><th>No.</th><th>Karyawan</th><th>Divisi</th><th>Check-in</th><th>Foto masuk</th><th>Check-out</th><th>Foto pulang</th><th>Total jam kerja</th><th>Status</th></tr></thead><tbody id="rows"><tr><td class="empty" colspan="9">Belum ada data. Pilih tanggal lalu tampilkan laporan.</td></tr></tbody></table></div>
+   <div class="tablewrap"><table><thead><tr><th>No.</th><th>Tanggal</th><th>Karyawan</th><th>Divisi</th><th>Check-in</th><th>Foto masuk</th><th>Check-out</th><th>Foto pulang</th><th>Total jam kerja</th><th>Status</th></tr></thead><tbody id="rows"><tr><td class="empty" colspan="10">Belum ada data. Pilih tanggal lalu tampilkan laporan.</td></tr></tbody></table></div>
    <div class="table-foot"><span id="countLabel">Menampilkan 0 karyawan</span><span>Durasi dihitung dari pasangan check-in dan check-out yang tersedia.</span></div>
   </section>
  </main>
@@ -89,33 +89,41 @@ function fmtTime(d){return d?d.toLocaleTimeString('id-ID',{hour:'2-digit',minute
 function fmtDuration(ms){if(!(ms>0))return '—';const mins=Math.floor(ms/60000);return Math.floor(mins/60)+'j '+String(mins%60).padStart(2,'0')+'m';}
 function groupRecords(records){
  const map=new Map();
- records.forEach(x=>{const name=x.name||'Tanpa nama',dept=x.department||'—',key=(name+'|'+dept).toLowerCase();if(!map.has(key))map.set(key,{name,department:dept,events:[]});const dt=recordTime(x);map.get(key).events.push({...x,_dt:dt});});
+ records.forEach(x=>{
+  const name=x.name||'Tanpa nama',dept=x.department||'—',date=recordLocalDate(x);
+  const key=(name+'|'+dept+'|'+date).toLowerCase();
+  if(!map.has(key))map.set(key,{name,department:dept,date,events:[]});
+  const dt=recordTime(x);map.get(key).events.push({...x,_dt:dt});
+ });
  return [...map.values()].map(p=>{
   p.events.sort((a,b)=>(a._dt?.getTime()||0)-(b._dt?.getTime()||0));
   const ins=p.events.filter(x=>x.type==='MASUK'),outs=p.events.filter(x=>x.type==='PULANG');
   let totalMs=0,open=false,usedOut=new Set();
-  ins.forEach(m=>{const next=outs.find(o=>!usedOut.has(o)&&o._dt&&m._dt&&o._dt>m._dt);if(next){usedOut.add(next);totalMs+=next._dt-m._dt;}else open=true;});
-  const first=ins[0]||null,last=outs.filter(o=>!usedOut.has(o)||ins.some(m=>m._dt&&o._dt&&m._dt<o._dt)).slice(-1)[0]||outs.slice(-1)[0]||null;
+  ins.forEach(m=>{
+   const next=outs.find(o=>!usedOut.has(o)&&o._dt&&m._dt&&o._dt>m._dt);
+   if(next){usedOut.add(next);totalMs+=next._dt-m._dt;}else open=true;
+  });
+  const first=ins[0]||null,last=outs[outs.length-1]||null;
   return {...p,first,last,totalMs,hasIn:ins.length>0,hasOut:outs.length>0,status:ins.length===0?'missing':open?'pending':'complete'};
- });
+ }).sort((a,b)=>b.date.localeCompare(a.date)||a.name.localeCompare(b.name));
 }
 let allRows=[],lastRecords=[];
 function photoButton(url,title){if(!url)return '<span class="photo-empty">Tidak ada foto</span>';const token=getPdaToken();const src='/api/report-absensi/photo?url='+encodeURIComponent(url)+'&token='+encodeURIComponent(token);return '<button class="photo-btn" type="button" data-url="'+esc(url)+'" data-title="'+esc(title)+'" onclick="openProofPreview(this.dataset.url,this.dataset.title)"><img loading="lazy" src="'+src+'" alt="'+esc(title)+'" onerror="this.style.opacity=.25"><span>Lihat</span></button>';}
 function render(){
  const term=$('search').value.trim().toLowerCase(),div=$('division').value,st=$('status').value;
  const rows=allRows.filter(p=>(!div||p.department===div)&&(!st||p.status===st)&&(!term||(p.name+' '+p.department).toLowerCase().includes(term)));
- $('rows').innerHTML=rows.length?rows.map((p,i)=>'<tr><td>'+(i+1)+'</td><td><div class="person"><div class="person-avatar">'+esc(initials(p.name))+'</div><div><strong>'+esc(p.name)+'</strong><small>'+p.events.length+' catatan absensi</small></div></div></td><td>'+esc(p.department)+'</td><td><span class="time">'+fmtTime(p.first? p.first._dt:null)+'</span><span class="subtime">'+esc(p.first?.date||'')+'</span></td><td>'+photoButton(p.first?.photoUrl||p.first?.selfieUrl||p.first?.areaPhotoUrl,'Foto Check-in · '+p.name)+'</td><td><span class="time">'+fmtTime(p.last?.type==='PULANG'?p.last._dt:null)+'</span><span class="subtime">'+esc(p.last?.date||'')+'</span></td><td>'+photoButton(p.last?.type==='PULANG'?(p.last.photoUrl||p.last.selfieUrl||p.last.areaPhotoUrl):null,'Foto Check-out · '+p.name)+'</td><td><span class="duration">'+fmtDuration(p.totalMs)+'</span></td><td><span class="pill '+p.status+'">'+(p.status==='complete'?'Hadir lengkap':p.status==='pending'?'Belum check-out':'Belum check-in')+'</span></td></tr>').join(''):'<tr><td class="empty" colspan="9">Tidak ada karyawan yang cocok dengan filter ini.</td></tr>';
- $('tableMeta').textContent=rows.length+' karyawan';$('countLabel').textContent='Menampilkan '+rows.length+' dari '+allRows.length+' karyawan';
+ $('rows').innerHTML=rows.length?rows.map((p,i)=>'<tr><td>'+(i+1)+'</td><td><strong>'+esc(p.date||'—')+'</strong></td><td><div class="person"><div class="person-avatar">'+esc(initials(p.name))+'</div><div><strong>'+esc(p.name)+'</strong><small>'+p.events.length+' catatan pada tanggal ini</small></div></div></td><td>'+esc(p.department)+'</td><td><span class="time">'+fmtTime(p.first? p.first._dt:null)+'</span></td><td>'+photoButton(p.first?.photoUrl||p.first?.selfieUrl||p.first?.areaPhotoUrl,'Foto Check-in · '+p.name+' · '+p.date)+'</td><td><span class="time">'+fmtTime(p.last? p.last._dt:null)+'</span></td><td>'+photoButton(p.last?.photoUrl||p.last?.selfieUrl||p.last?.areaPhotoUrl,'Foto Check-out · '+p.name+' · '+p.date)+'</td><td><span class="duration">'+fmtDuration(p.totalMs)+'</span></td><td><span class="pill '+p.status+'">'+(p.status==='complete'?'Hadir lengkap':p.status==='pending'?'Belum check-out':'Belum check-in')+'</span></td></tr>').join(''):'<tr><td class="empty" colspan="10">Tidak ada karyawan yang cocok dengan filter ini.</td></tr>';
+ $('tableMeta').textContent=rows.length+' baris harian';$('countLabel').textContent='Menampilkan '+rows.length+' baris harian dari '+allRows.length+' total baris';
 }
 function fillStats(){
  const complete=allRows.filter(x=>x.status==='complete').length,pending=allRows.filter(x=>x.status==='pending').length,missing=allRows.filter(x=>x.status==='missing').length;
- $('total').textContent=allRows.length;$('complete').textContent=complete;$('pending').textContent=pending;$('missing').textContent=missing;
+ $('total').textContent=new Set(allRows.map(x=>(x.name+'|'+x.department).toLowerCase())).size;$('complete').textContent=complete;$('pending').textContent=pending;$('missing').textContent=missing;
  const valid=allRows.filter(x=>x.totalMs>0);$('average').textContent=valid.length?fmtDuration(valid.reduce((a,x)=>a+x.totalMs,0)/valid.length):'—';
 }
 function fillDivisions(){const cur=$('division').value,ds=[...new Set(allRows.map(x=>x.department).filter(x=>x&&x!=='—'))].sort();$('division').innerHTML='<option value="">Semua divisi</option>'+ds.map(d=>'<option value="'+esc(d)+'">'+esc(d)+'</option>').join('');if(ds.includes(cur))$('division').value=cur;}
 $('load').onclick=async()=>{ $('msg').textContent='Memuat laporan…';$('msg').className='message';$('load').disabled=true;try{const r=await api($('from').value,$('to').value);lastRecords=filterRecordsByRange(r.records||[],$('from').value,$('to').value);allRows=groupRecords(lastRecords);fillDivisions();fillStats();render();$('msg').textContent='Laporan berhasil dimuat · '+lastRecords.length+' catatan absensi dari '+allRows.length+' karyawan.';}catch(e){$('msg').textContent=e.message;$('msg').className='message error';}finally{$('load').disabled=false;}};
 $('search').addEventListener('input',render);$('division').addEventListener('change',render);$('status').addEventListener('change',render);
-$('export').onclick=()=>{if(!allRows.length){$('msg').textContent='Tidak ada data untuk diekspor.';return;}const rows=[['Nama','Departemen','Check-in','Tanggal masuk','Check-out','Tanggal pulang','Total jam kerja','Status','Jumlah catatan'],...allRows.map(p=>[p.name,p.department,fmtTime(p.first? p.first._dt:null),p.first?.date||'',fmtTime(p.last?.type==='PULANG'?p.last._dt:null),p.last?.date||'',fmtDuration(p.totalMs),p.status==='complete'?'Hadir lengkap':p.status==='pending'?'Belum check-out':'Belum check-in',p.events.length])];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download='Rekap_Absensi_'+$('from').value+'_'+$('to').value+'.csv';a.click();URL.revokeObjectURL(url);};
+$('export').onclick=()=>{if(!allRows.length){$('msg').textContent='Tidak ada data untuk diekspor.';return;}const rows=[['Tanggal','Nama','Departemen','Check-in','Check-out','Total jam kerja','Status','Jumlah catatan'],...allRows.map(p=>[p.date,p.name,p.department,fmtTime(p.first? p.first._dt:null),fmtTime(p.last? p.last._dt:null),fmtDuration(p.totalMs),p.status==='complete'?'Hadir lengkap':p.status==='pending'?'Belum check-out':'Belum check-in',p.events.length])];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download='Rekap_Absensi_'+$('from').value+'_'+$('to').value+'.csv';a.click();URL.revokeObjectURL(url);};
 let proofScale=1;
 function openProofPreview(url,title){const box=$('proofViewer'),img=$('pvImage'),token=getPdaToken();proofScale=1;$('pvTitle').textContent=title||'Bukti foto';img.classList.remove('zoomed');img.style.transform='scale(1)';img.onerror=()=>{img.alt='Foto tidak dapat dimuat. Periksa izin berbagi file Google Drive.';};img.src='/api/report-absensi/photo?url='+encodeURIComponent(url)+'&token='+encodeURIComponent(token);box.classList.add('open');document.body.style.overflow='hidden';$('pvStage').scrollTop=0;$('pvStage').scrollLeft=0;}
 function closeProofPreview(){$('proofViewer').classList.remove('open');$('pvImage').src='';document.body.style.overflow='';}
