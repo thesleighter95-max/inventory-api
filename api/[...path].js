@@ -167,27 +167,27 @@ async function fetchSheetUsers() {
   const cacheKey = "__sheet_users";
   const cached = _memCache.get(cacheKey);
   if (cached && cached.exp > Date.now()) return cached.val;
-  try {
-    const r = await fetch(SHEET_URL_USERS, { cache: "no-store" });
-    if (!r.ok) return [];
-    const text = await r.text();
-    const rows = parseCSV(text);
-    if (!rows.length) return [];
-    const header = rows[0].map(c => String(c || "").trim().toLowerCase());
-    const uIdx = header.indexOf("username"), pIdx = header.indexOf("password"),
-          nIdx = header.indexOf("name"), sIdx = header.indexOf("status");
-    if (uIdx < 0 || pIdx < 0) return [];
-    const users = rows.slice(1).filter(row => String(row[uIdx] || "").trim()).map(row => ({
-      username: String(row[uIdx] || "").trim(),
-      password: String(row[pIdx] || "").trim(),
-      namaLengkap: String((nIdx >= 0 && row[nIdx]) || row[uIdx] || "").trim(),
-      suspended: ["suspended", "nonaktif", "non-aktif"].includes(String((sIdx >= 0 && row[sIdx]) || "").trim().toLowerCase())
-    }));
-    _memCache.set(cacheKey, { val: users, exp: Date.now() + 60 * 1000 });
-    return users;
-  } catch {
-    return [];
-  }
+  const r = await fetch(SHEET_URL_USERS, { redirect: "follow" });
+  if (!r.ok) throw new Error("Spreadsheet User login tidak dapat dibaca oleh server (HTTP " + r.status + ").");
+  const text = await r.text();
+  const parsed = parseCSV(text);
+  if (!parsed.length) throw new Error("Spreadsheet User login kosong atau format CSV tidak valid.");
+  const users = parsed.map(row => {
+    const normalized = {};
+    for (const [k, v] of Object.entries(row || {})) normalized[String(k).trim().toLowerCase()] = String(v == null ? "" : v).trim();
+    const username = normalized.username || normalized.user || "";
+    if (!username) return null;
+    const status = String(normalized.status || "").trim().toLowerCase();
+    return {
+      username,
+      password: normalized.password || "",
+      namaLengkap: normalized.name || normalized.namalengkap || normalized.nama || username,
+      suspended: ["suspended", "nonaktif", "non-aktif", "disabled", "blokir"].includes(status)
+    };
+  }).filter(Boolean);
+  if (!users.length) throw new Error("Kolom username tidak ditemukan pada Spreadsheet User login.");
+  _memCache.set(cacheKey, { val: users, exp: Date.now() + _CACHE_TTL });
+  return users;
 }
 
 async function parseBody(req) {
@@ -269,8 +269,7 @@ export default async function handler(req, res) {
       if (session.role === "admin") return send({ success: true, allowed: true, namaLengkap: "Admin" });
       try {
         const data = await callDshAttendance("pdaCheckReportPermission", { username: session.sub });
-        const allowed = data.allowed === true || data.reportAbsensi === true || data.REPORT_ABSEN === true || String(data.reportAbsensi || data.REPORT_ABSEN || "").toUpperCase() === "TRUE";
-        return send({ success: true, allowed, namaLengkap: data.namaLengkap || data.namaLengka || session.name });
+        return send({ success: true, allowed: data.allowed === true, namaLengkap: data.namaLengkap || session.name });
       } catch (e) { return send({ success: false, allowed: false, message: e.message }, 502); }
     }
 
@@ -298,9 +297,8 @@ export default async function handler(req, res) {
         let namaLengkap = session.name;
         if (session.role !== "admin") {
           const permission = await callDshAttendance("pdaCheckReportPermission", { username: session.sub });
-          const allowed = permission.allowed === true || permission.reportAbsensi === true || permission.REPORT_ABSEN === true || String(permission.reportAbsensi || permission.REPORT_ABSEN || "").toUpperCase() === "TRUE";
-          if (!allowed) return send({ success: false, message: "Akses Report Absensi belum diberikan oleh Admin." }, 403);
-          namaLengkap = permission.namaLengkap || permission.namaLengka || namaLengkap;
+          if (!permission.allowed) return send({ success: false, message: "Akses Report Absensi belum diberikan oleh Admin." }, 403);
+          namaLengkap = permission.namaLengkap || namaLengkap;
         }
         const report = await callDshAttendance("pdaReport", { from, to });
         return send({ success: true, username: session.sub, namaLengkap, records: report.records || [] });
@@ -386,18 +384,43 @@ export default async function handler(req, res) {
       const username = String(body.username || "").trim();
       const password = String(body.password || "").trim();
       if (!username || !password) return send({ success: false, message: "username dan password wajib diisi" }, 400);
+
+      // AUTH ASLI PDA MINI: database user override, lalu fallback ke Spreadsheet User login.
+      // Login tidak bergantung pada aksi pdaLogin di Apps Script DSH Attendance.
+      let sheetUsers = [];
+      let dbUsers = [];
+      let sheetError = null;
+      const [sheetResult, dbResult] = await Promise.allSettled([
+        fetchSheetUsers(),
+        getJson("users", [])
+      ]);
+      if (sheetResult.status === "fulfilled") sheetUsers = Array.isArray(sheetResult.value) ? sheetResult.value : [];
+      else sheetError = sheetResult.reason;
+      if (dbResult.status === "fulfilled") dbUsers = Array.isArray(dbResult.value) ? dbResult.value : [];
+
+      const dbMap = Object.create(null);
+      dbUsers.forEach(u => { if (u && u.username != null) dbMap[String(u.username).trim()] = u; });
+      let user = dbMap[username] || sheetUsers.find(u => String(u.username).trim() === username);
+
+      if (!user) {
+        if (sheetError && !dbUsers.length) {
+          return send({ success: false, message: "Spreadsheet User login tidak dapat dibaca oleh server: " + String(sheetError.message || sheetError) }, 502);
+        }
+        return send({ success: false, notFound: true, message: "Username atau password salah" }, 401);
+      }
+      if (String(user.password == null ? "" : user.password).trim() !== password) {
+        return send({ success: false, notFound: true, message: "Username atau password salah" }, 401);
+      }
+      if (user.suspended) return send({ success: false, suspended: true, message: "Akun ditangguhkan oleh admin" }, 403);
+
+      const namaLengkap = String(user.namaLengkap || user.name || username);
       try {
-        // Autentikasi melalui Apps Script bridge yang membaca Spreadsheet User login.
-        // Jangan membaca published CSV di Vercel karena URL publik dapat berbeda/tidak tersedia.
-        const result = await callDshAttendance("pdaLogin", { username, password });
-        const user = result.user || {};
-        const namaLengkap = user.namaLengkap || username;
         const accessToken = issuePdaSession(username, namaLengkap, "user");
         return send({ success: true, namaLengkap, accessToken, expiresIn: 8 * 60 * 60 });
       } catch (e) {
-        const msg = String(e.message || e);
-        const badLogin = /username atau password salah|ditangguhkan|nonaktif/i.test(msg);
-        return send({ success: false, suspended: /ditangguhkan|nonaktif/i.test(msg), message: badLogin ? msg : "Login melalui Spreadsheet gagal: " + msg }, badLogin ? 401 : 502);
+        // Jangan gagalkan login utama jika SESSION_SECRET belum tersedia; laporkan konfigurasi
+        // dengan jelas karena tanpa token fitur Report Absensi tidak dapat memakai sesi PDA Mini.
+        return send({ success: false, message: String(e.message || e) }, 503);
       }
     }
 
@@ -405,13 +428,9 @@ export default async function handler(req, res) {
       if (query.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
       const users = await getJson("users", []);
       let permissionMap = {}, permissionSync = true, permissionMessage = "";
-      try { const d = await callDshAttendance("pdaUsers"); permissionMap = Object.fromEntries((d.users || []).map(u => [String(u.username).trim(), u])); }
+      try { const d = await callDshAttendance("pdaUsers"); permissionMap = Object.fromEntries((d.users || []).map(u => [String(u.username), u])); }
       catch (e) { permissionSync = false; permissionMessage = String(e.message || e); }
-      return send({ success: true, permissionSync, permissionMessage, users: users.map(u => {
-        const p = permissionMap[String(u.username).trim()] || {};
-        const reportValue = p.reportAbsensi ?? p.REPORT_ABSEN ?? p.allowed ?? u.reportAbsensi;
-        return { username: u.username, namaLengkap: u.namaLengkap || p.namaLengkap || p.namaLengka || u.username, suspended: u.suspended ?? p.suspended ?? false, reportAbsensi: reportValue === true || String(reportValue || "").toUpperCase() === "TRUE", createdAt: u.createdAt ?? null };
-      }) });
+      return send({ success: true, permissionSync, permissionMessage, users: users.map(u => ({ username: u.username, namaLengkap: u.namaLengkap || permissionMap[u.username]?.namaLengkap || u.username, suspended: u.suspended ?? permissionMap[u.username]?.suspended ?? false, reportAbsensi: permissionMap[u.username] ? permissionMap[u.username].reportAbsensi === true : u.reportAbsensi === true, createdAt: u.createdAt ?? null })) });
     }
 
     if (path === "/users" && method === "POST") {
