@@ -62,7 +62,7 @@ $('load').onclick=async()=>{
  }catch(e){$('msg').textContent=e.message;$('msg').className='msg error';}
 };
 let proofScale=1;
-function openProofPreview(url,title){const box=$('proofViewer'),img=$('pvImage');proofScale=1;$('pvTitle').textContent=title||'Bukti foto';img.classList.remove('zoomed');img.style.transform='scale(1)';img.src=url;box.classList.add('open');document.body.style.overflow='hidden';$('pvStage').scrollTop=0;$('pvStage').scrollLeft=0;}
+function openProofPreview(url,title){const box=$('proofViewer'),img=$('pvImage');const token=getPdaToken();proofScale=1;$('pvTitle').textContent=title||'Bukti foto';img.classList.remove('zoomed');img.style.transform='scale(1)';img.onerror=function(){img.alt='Foto tidak dapat dimuat. Periksa izin berbagi file Google Drive.';};img.src='/api/report-absensi/photo?url='+encodeURIComponent(url)+'&token='+encodeURIComponent(token)+'&_='+Date.now();box.classList.add('open');document.body.style.overflow='hidden';$('pvStage').scrollTop=0;$('pvStage').scrollLeft=0;}
 function closeProofPreview(){$('proofViewer').classList.remove('open');$('pvImage').src='';document.body.style.overflow='';}
 function proofZoom(delta){proofScale=Math.max(.5,Math.min(4,proofScale+delta));const img=$('pvImage');img.classList.toggle('zoomed',proofScale>1);img.style.transform='scale('+proofScale+')';}
 function proofFit(){proofScale=1;const img=$('pvImage');img.classList.remove('zoomed');img.style.transform='scale(1)';$('pvStage').scrollTop=0;$('pvStage').scrollLeft=0;}
