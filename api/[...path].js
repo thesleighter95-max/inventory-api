@@ -279,8 +279,9 @@ export default async function handler(req, res) {
       const username = String(body.username || "").trim();
       if (!username || typeof body.allowed !== "boolean") return send({ success: false, message: "Username dan status izin wajib diisi." }, 400);
       try {
-        const data = await callDshAttendance("pdaSetReportPermission", { username, allowed: body.allowed });
-        return send({ success: true, username, allowed: data.allowed === true });
+        const data = await callDshAttendance("pdaSetReportPermission", { username, reportAbsensi: body.allowed === true, allowed: body.allowed === true });
+        const saved = data.reportAbsensi === true || data.allowed === true;
+        return send({ success: true, username, allowed: saved });
       } catch (e) { return send({ success: false, message: e.message }, 502); }
     }
 
@@ -400,7 +401,7 @@ export default async function handler(req, res) {
       let permissionMap = {}, permissionSync = true, permissionMessage = "";
       try { const d = await callDshAttendance("pdaUsers"); permissionMap = Object.fromEntries((d.users || []).map(u => [String(u.username), u])); }
       catch (e) { permissionSync = false; permissionMessage = String(e.message || e); }
-      return send({ success: true, permissionSync, permissionMessage, users: users.map(u => ({ username: u.username, namaLengkap: u.namaLengkap || permissionMap[u.username]?.namaLengkap || u.username, suspended: u.suspended ?? permissionMap[u.username]?.suspended ?? false, reportAbsensi: permissionMap[u.username]?.reportAbsensi === true || u.reportAbsensi === true, createdAt: u.createdAt ?? null })) });
+      return send({ success: true, permissionSync, permissionMessage, users: users.map(u => ({ username: u.username, namaLengkap: u.namaLengkap || permissionMap[u.username]?.namaLengkap || u.username, suspended: u.suspended ?? permissionMap[u.username]?.suspended ?? false, reportAbsensi: permissionMap[u.username] ? permissionMap[u.username].reportAbsensi === true : u.reportAbsensi === true, createdAt: u.createdAt ?? null })) });
     }
 
     if (path === "/users" && method === "POST") {
