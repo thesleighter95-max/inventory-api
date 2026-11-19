@@ -21,6 +21,10 @@ button,input,select{font:inherit}button{cursor:pointer}
 #proofViewer{display:none;position:fixed;inset:0;z-index:99999;background:#030914ed;align-items:center;justify-content:center;padding:16px}#proofViewer.open{display:flex}.pv-panel{width:min(100%,1050px);height:min(94dvh,850px);display:flex;flex-direction:column;gap:10px}.pv-toolbar{display:flex;align-items:center;gap:8px;color:white;flex-wrap:wrap}.pv-toolbar strong{margin-right:auto}.pv-toolbar button{border:0;border-radius:8px;background:#26364f;color:white;padding:9px 13px;font-weight:800}.pv-stage{flex:1;min-height:0;overflow:auto;display:flex;align-items:center;justify-content:center;border:1px solid #53627a;border-radius:12px;background:#090f1d;touch-action:pan-x pan-y}.pv-stage img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;transition:transform .12s ease}.pv-stage img.zoomed{max-width:none;max-height:none}
 @media(max-width:1050px){.sidebar{width:205px;flex-basis:205px}.content{padding:23px 20px}.topbar{padding:0 20px}.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:720px){.layout{display:block}.sidebar{width:auto;padding:11px 13px;display:block}.brand{padding:2px 5px 10px;border:0}.brand-mark{width:33px;height:33px}.nav-label,.sidebar-foot{display:none}.nav-scroll{display:flex;gap:5px;overflow:auto;padding-top:9px}.nav-item{white-space:nowrap;padding:8px 10px;font-size:10px;margin:0}.nav-item .ico{font-size:12px}.topbar{height:55px;padding:0 14px}.clock{display:none}.admin{padding-left:10px}.content{padding:19px 12px 35px}.page-head{align-items:flex-start}.page-head h1{font-size:21px}.date-chip{font-size:10px;padding:8px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.stat{padding:13px}.stat b{font-size:22px}.filters{padding:13px;gap:9px}.field{flex:1;min-width:calc(50% - 8px)}.field input,.field select{min-width:0;width:100%}.field.search{min-width:100%}.filters .btn{flex:1}.table-head{padding:14px}.table-foot{gap:10px;flex-wrap:wrap}}
+
+.tab-view[hidden]{display:none!important}.analysis-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:14px;margin-top:14px}.analysis-stats{grid-template-columns:repeat(4,minmax(0,1fr))}.insight-panel{overflow:hidden;min-width:0}.chart-area{padding:18px;min-height:220px;display:flex;align-items:flex-end;gap:10px;overflow-x:auto}.chart-col{min-width:36px;flex:1;text-align:center;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:7px;height:180px}.chart-bars{height:145px;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:4px;border-bottom:1px solid var(--line)}.chart-bar{width:12px;min-height:2px;border-radius:5px 5px 0 0}.chart-bar.in{background:#2878e5}.chart-bar.out{background:#18a36d}.chart-label{font-size:9px;color:#7d8ba0;white-space:nowrap}.chart-legend{padding:0 18px 15px;display:flex;gap:15px;font-size:10px;color:#718096}.legend-dot{display:inline-block;width:8px;height:8px;border-radius:3px;margin-right:5px}.compact-table{min-width:430px}.compact-table td,.compact-table th{padding:12px 10px}.history-type{display:inline-flex;padding:5px 8px;border-radius:20px;font-size:9px;font-weight:850}.history-type.in{background:#e8f7ef;color:#14764f}.history-type.out{background:#eaf2ff;color:#276bc3}
+@media(max-width:950px){.analysis-grid{grid-template-columns:1fr}.analysis-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.analysis-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.chart-area{gap:7px;padding:14px}.chart-col{min-width:30px}}
 </style>
 </head>
 <body>
@@ -47,7 +51,7 @@ button,input,select{font:inherit}button{cursor:pointer}
  </header>
  <main class="content">
   <div class="page-head"><div><div class="eyebrow">Attendance management</div><h1>Report Absensi SPG / SPM / MD</h1><p>Pantau kehadiran, waktu kerja, dan bukti absensi karyawan dalam satu laporan.</p></div><div class="date-chip" id="todayLabel">📅 Hari ini</div></div>
-  <div class="tabs"><button class="tab active" type="button">Rekap Periode</button><button class="tab" type="button" title="Ringkasan dihitung dari data pada rentang tanggal terpilih">Analisis Kehadiran</button><button class="tab" type="button" title="Tabel menampilkan ringkasan aktivitas karyawan">Riwayat Karyawan</button></div>
+  <div class="tabs" role="tablist" aria-label="Tampilan laporan"><button class="tab active" id="tabRekap" type="button" role="tab" aria-selected="true">▤ Rekap Periode</button><button class="tab" id="tabAnalisis" type="button" role="tab" aria-selected="false">◫ Analisis Kehadiran</button><button class="tab" id="tabRiwayat" type="button" role="tab" aria-selected="false">◷ Riwayat Karyawan</button></div>
   <section class="panel">
    <div class="filters">
     <div class="field"><label for="from">DARI TANGGAL</label><input id="from" type="date"></div>
@@ -60,7 +64,7 @@ button,input,select{font:inherit}button{cursor:pointer}
    </div>
    <div id="msg" class="message">Pilih rentang tanggal, lalu tampilkan laporan.</div>
   </section>
-  <section class="stats">
+  <div id="rekapView" class="tab-view">  <section class="stats">
    <button class="panel stat selected" id="statAll" type="button" aria-pressed="true"><div class="stat-top"><span class="stat-label">Total baris harian</span><span class="stat-icon">♙</span></div><b id="total">0</b><small>Klik untuk semua data</small></button>
    <button class="panel stat green" id="statIn" type="button" aria-pressed="false"><div class="stat-top"><span class="stat-label">Sudah check-in</span><span class="stat-icon">↘</span></div><b id="checkin">0</b><small>Klik untuk detail check-in</small></button>
    <button class="panel stat" id="statOut" type="button" aria-pressed="false"><div class="stat-top"><span class="stat-label">Sudah check-out</span><span class="stat-icon">↗</span></div><b id="checkout">0</b><small>Klik untuk detail check-out</small></button>
@@ -72,6 +76,27 @@ button,input,select{font:inherit}button{cursor:pointer}
    <div class="table-head"><div><h2>Rekap karyawan</h2><p>Ringkasan check-in, check-out, bukti foto, dan total durasi kerja</p></div><div class="table-meta" id="tableMeta">0 karyawan</div></div>
    <div class="tablewrap"><table><thead><tr><th>No.</th><th>Tanggal</th><th>Karyawan</th><th>Divisi</th><th>Check-in</th><th>Foto masuk</th><th>Check-out</th><th>Foto pulang</th><th>Total jam kerja</th><th>Status</th></tr></thead><tbody id="rows"><tr><td class="empty" colspan="10">Belum ada data. Pilih tanggal lalu tampilkan laporan.</td></tr></tbody></table></div>
    <div class="table-foot"><span id="countLabel">Menampilkan 0 karyawan</span><span>Durasi dihitung dari pasangan check-in dan check-out yang tersedia.</span></div>
+  </section></div>
+  <section id="analisisView" class="tab-view" hidden>
+   <div class="page-head"><div><div class="eyebrow">Insight & performance</div><h1>Analisis Kehadiran</h1><p>Ringkasan tren absensi dan performa kehadiran pada periode terpilih.</p></div><div class="date-chip" id="analysisRange">Periode belum dimuat</div></div>
+   <div class="stats analysis-stats">
+    <div class="panel stat"><div class="stat-label">Total catatan absensi</div><b id="aRecords">0</b><small>Semua aktivitas masuk dan pulang</small></div>
+    <div class="panel stat green"><div class="stat-label">Persentase hadir lengkap</div><b id="aCompleteRate">0%</b><small>Baris harian dengan dua aktivitas</small></div>
+    <div class="panel stat"><div class="stat-label">Divisi tercatat</div><b id="aDivisions">0</b><small>Divisi aktif pada periode</small></div>
+    <div class="panel stat amber"><div class="stat-label">Rata-rata catatan / hari</div><b id="aDailyAvg">0</b><small>Aktivitas absensi harian</small></div>
+   </div>
+   <div class="analysis-grid">
+    <section class="panel insight-panel"><div class="table-head"><div><h2>Tren absensi harian</h2><p>Jumlah aktivitas masuk dan pulang per tanggal</p></div></div><div id="dailyChart" class="chart-area"><div class="empty">Muat laporan untuk melihat tren.</div></div></section>
+    <section class="panel insight-panel"><div class="table-head"><div><h2>Ringkasan per divisi</h2><p>Jumlah karyawan-hari dan kehadiran lengkap</p></div></div><div class="tablewrap"><table class="compact-table"><thead><tr><th>Divisi</th><th>Baris</th><th>Lengkap</th><th>Belum lengkap</th></tr></thead><tbody id="divisionAnalysis"><tr><td class="empty" colspan="4">Belum ada data.</td></tr></tbody></table></div></section>
+   </div>
+  </section>
+  <section id="riwayatView" class="tab-view" hidden>
+   <div class="page-head"><div><div class="eyebrow">Employee activity log</div><h1>Riwayat Karyawan</h1><p>Telusuri setiap catatan check-in dan check-out secara kronologis.</p></div><div class="date-chip" id="historyCount">0 catatan</div></div>
+   <section class="panel">
+    <div class="filters"><div class="field search"><label for="historySearch">CARI NAMA KARYAWAN</label><input id="historySearch" type="search" placeholder="Ketik nama karyawan…"></div><div class="field"><label for="historyType">JENIS AKTIVITAS</label><select id="historyType"><option value="">Semua aktivitas</option><option value="MASUK">Check-in</option><option value="PULANG">Check-out</option></select></div><button class="btn btn-light" id="historyReset" type="button">Reset filter</button></div>
+    <div class="tablewrap"><table><thead><tr><th>No.</th><th>Tanggal & waktu</th><th>Nama karyawan</th><th>Divisi</th><th>Aktivitas</th><th>Bukti foto</th></tr></thead><tbody id="historyRows"><tr><td class="empty" colspan="6">Muat laporan untuk melihat riwayat.</td></tr></tbody></table></div>
+    <div class="table-foot"><span id="historyFoot">Menampilkan 0 catatan</span><span>Urutan terbaru ke terlama.</span></div>
+   </section>
   </section>
  </main>
 </section>
@@ -123,8 +148,38 @@ function fillStats(){
 }
 function setStatFilter(value){statFilter=value;['all','in','out','complete','pending'].forEach(k=>{const el=$('stat'+({all:'All',in:'In',out:'Out',complete:'Complete',pending:'Pending'}[k]));el.classList.toggle('selected',k===value);el.setAttribute('aria-pressed',k===value?'true':'false');});render();}
 ['All','In','Out','Complete','Pending'].forEach(k=>{$('stat'+k).addEventListener('click',()=>setStatFilter(k.toLowerCase()));});
+
+function switchTab(name){
+ const names=['rekap','analisis','riwayat'];
+ names.forEach(n=>{const active=n===name;$(n+'View').hidden=!active;const b=$('tab'+(n==='rekap'?'Rekap':n==='analisis'?'Analisis':'Riwayat'));b.classList.toggle('active',active);b.setAttribute('aria-selected',active?'true':'false');});
+ if(name==='analisis')renderAnalysis();
+ if(name==='riwayat')renderHistory();
+}
+$('tabRekap').onclick=()=>switchTab('rekap');$('tabAnalisis').onclick=()=>switchTab('analisis');$('tabRiwayat').onclick=()=>switchTab('riwayat');
+function renderAnalysis(){
+ const dates=[...new Set(allRows.map(x=>x.date).filter(Boolean))].sort();
+ const divisions=[...new Set(allRows.map(x=>x.department).filter(x=>x&&x!=='—'))].sort();
+ $('analysisRange').textContent=$('from').value+' — '+$('to').value;
+ $('aRecords').textContent=lastRecords.length;
+ $('aCompleteRate').textContent=(allRows.length?Math.round(allRows.filter(x=>x.status==='complete').length/allRows.length*100):0)+'%';
+ $('aDivisions').textContent=divisions.length;
+ $('aDailyAvg').textContent=dates.length?(lastRecords.length/dates.length).toFixed(1):'0';
+ const daily=dates.map(date=>({date,ins:lastRecords.filter(x=>recordLocalDate(x)===date&&x.type==='MASUK').length,outs:lastRecords.filter(x=>recordLocalDate(x)===date&&x.type==='PULANG').length}));
+ const max=Math.max(1,...daily.flatMap(x=>[x.ins,x.outs]));
+ $('dailyChart').innerHTML=daily.length?daily.map(d=>'<div class="chart-col"><div class="chart-bars"><div class="chart-bar in" title="Check-in: '+d.ins+'" style="height:'+Math.max(2,d.ins/max*100)+'%"></div><div class="chart-bar out" title="Check-out: '+d.outs+'" style="height:'+Math.max(2,d.outs/max*100)+'%"></div></div><div class="chart-label">'+esc(d.date.slice(5))+'</div></div>').join(''):'<div class="empty">Tidak ada data pada periode ini.</div>';
+ $('divisionAnalysis').innerHTML=divisions.length?divisions.map(d=>{const rr=allRows.filter(x=>x.department===d),ok=rr.filter(x=>x.status==='complete').length;return '<tr><td><strong>'+esc(d)+'</strong></td><td>'+rr.length+'</td><td>'+ok+'</td><td>'+(rr.length-ok)+'</td></tr>';}).join(''):'<tr><td class="empty" colspan="4">Tidak ada data divisi.</td></tr>';
+}
+function renderHistory(){
+ const term=$('historySearch').value.trim().toLowerCase(),type=$('historyType').value;
+ const data=lastRecords.filter(x=>(!term||String(x.name||'').toLowerCase().includes(term))&&(!type||x.type===type)).sort((a,b)=>(recordTime(b)?.getTime()||0)-(recordTime(a)?.getTime()||0));
+ $('historyCount').textContent=data.length+' catatan';
+ $('historyFoot').textContent='Menampilkan '+data.length+' dari '+lastRecords.length+' catatan absensi';
+ $('historyRows').innerHTML=data.length?data.map((x,i)=>{const dt=recordTime(x),kind=x.type==='MASUK'?'in':'out',label=x.type==='MASUK'?'CHECK-IN':x.type==='PULANG'?'CHECK-OUT':esc(x.type||'LAINNYA'),photo=x.photoUrl||x.selfieUrl||x.areaPhotoUrl;return '<tr><td>'+(i+1)+'</td><td><strong>'+esc(recordLocalDate(x)||'—')+'</strong><small class="subtime">'+fmtTime(dt)+'</small></td><td><strong>'+esc(x.name||'Tanpa nama')+'</strong></td><td>'+esc(x.department||'—')+'</td><td><span class="history-type '+kind+'">'+label+'</span></td><td>'+photoButton(photo,'Bukti '+label+' · '+(x.name||'Karyawan'))+'</td></tr>';}).join(''):'<tr><td class="empty" colspan="6">Tidak ada riwayat yang cocok.</td></tr>';
+}
+$('historySearch').addEventListener('input',renderHistory);$('historyType').addEventListener('change',renderHistory);$('historyReset').onclick=()=>{$('historySearch').value='';$('historyType').value='';renderHistory();};
+
 function fillDivisions(){const cur=$('division').value,ds=[...new Set(allRows.map(x=>x.department).filter(x=>x&&x!=='—'))].sort();$('division').innerHTML='<option value="">Semua divisi</option>'+ds.map(d=>'<option value="'+esc(d)+'">'+esc(d)+'</option>').join('');if(ds.includes(cur))$('division').value=cur;}
-$('load').onclick=async()=>{ $('msg').textContent='Memuat laporan…';$('msg').className='message';$('load').disabled=true;try{const r=await api($('from').value,$('to').value);lastRecords=filterRecordsByRange(r.records||[],$('from').value,$('to').value);allRows=groupRecords(lastRecords);statFilter='all';setStatFilter('all');fillDivisions();fillStats();render();$('msg').textContent='Laporan berhasil dimuat · '+lastRecords.length+' catatan absensi dari '+allRows.length+' karyawan.';}catch(e){$('msg').textContent=e.message;$('msg').className='message error';}finally{$('load').disabled=false;}};
+$('load').onclick=async()=>{ $('msg').textContent='Memuat laporan…';$('msg').className='message';$('load').disabled=true;try{const r=await api($('from').value,$('to').value);lastRecords=filterRecordsByRange(r.records||[],$('from').value,$('to').value);allRows=groupRecords(lastRecords);statFilter='all';setStatFilter('all');fillDivisions();fillStats();render();renderAnalysis();renderHistory();$('msg').textContent='Laporan berhasil dimuat · '+lastRecords.length+' catatan absensi dari '+allRows.length+' karyawan.';}catch(e){$('msg').textContent=e.message;$('msg').className='message error';}finally{$('load').disabled=false;}};
 $('search').addEventListener('input',render);$('division').addEventListener('change',render);$('status').addEventListener('change',render);
 $('export').onclick=()=>{if(!allRows.length){$('msg').textContent='Tidak ada data untuk diekspor.';return;}const rows=[['Tanggal','Nama','Departemen','Check-in','Check-out','Total jam kerja','Status','Jumlah catatan'],...allRows.map(p=>[p.date,p.name,p.department,fmtTime(p.first? p.first._dt:null),fmtTime(p.last? p.last._dt:null),fmtDuration(p.totalMs),p.status==='complete'?'Hadir lengkap':p.status==='pending'?'Belum check-out':'Belum check-in',p.events.length])];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download='Rekap_Absensi_'+$('from').value+'_'+$('to').value+'.csv';a.click();URL.revokeObjectURL(url);};
 let proofScale=1;
@@ -135,6 +190,6 @@ function proofFit(){proofScale=1;const img=$('pvImage');img.classList.remove('zo
 $('proofViewer').addEventListener('click',e=>{if(e.target===$('proofViewer'))closeProofPreview();});$('pvStage').addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey){e.preventDefault();proofZoom(e.deltaY<0?.15:-.15);}},{passive:false});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProofPreview();});
 function tick(){const d=new Date();$('clock').firstChild.textContent=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});$('clockDate').textContent=d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
 const today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Makassar'});$('from').value=today;$('to').value=today;$('todayLabel').textContent='📅 '+new Date().toLocaleDateString('id-ID',{timeZone:'Asia/Makassar',day:'numeric',month:'long',year:'numeric'});tick();setInterval(tick,1000);
-$('back').onclick=()=>location.href='/';
+
 </script>
 </body></html>
