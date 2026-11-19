@@ -387,18 +387,17 @@ export default async function handler(req, res) {
       const password = String(body.password || "").trim();
       if (!username || !password) return send({ success: false, message: "username dan password wajib diisi" }, 400);
       try {
-        // Gunakan sumber autentikasi yang sama dengan login PDA Mini (published User login sheet).
-        // Token hanya diterbitkan setelah username + password cocok di server.
-        const users = await fetchSheetUsers();
-        if (!users.length) return send({ success: false, message: "Spreadsheet User login tidak dapat dibaca oleh server." }, 502);
-        const user = users.find(u => String(u.username).trim() === username && String(u.password).trim() === password);
-        if (!user) return send({ success: false, message: "Username atau password salah." }, 401);
-        if (user.suspended) return send({ success: false, suspended: true, message: "Akun Anda ditangguhkan oleh admin." }, 403);
+        // Autentikasi melalui Apps Script bridge yang membaca Spreadsheet User login.
+        // Jangan membaca published CSV di Vercel karena URL publik dapat berbeda/tidak tersedia.
+        const result = await callDshAttendance("pdaLogin", { username, password });
+        const user = result.user || {};
         const namaLengkap = user.namaLengkap || username;
         const accessToken = issuePdaSession(username, namaLengkap, "user");
         return send({ success: true, namaLengkap, accessToken, expiresIn: 8 * 60 * 60 });
       } catch (e) {
-        return send({ success: false, message: String(e.message || e) }, 503);
+        const msg = String(e.message || e);
+        const badLogin = /username atau password salah|ditangguhkan|nonaktif/i.test(msg);
+        return send({ success: false, suspended: /ditangguhkan|nonaktif/i.test(msg), message: badLogin ? msg : "Login melalui Spreadsheet gagal: " + msg }, badLogin ? 401 : 502);
       }
     }
 
