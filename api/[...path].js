@@ -246,6 +246,39 @@ export default async function handler(req, res) {
   try {
     if (path === "/healthz" && method === "GET") return send({ status: "ok" });
 
+    if (path === "/report-absensi" && method === "GET") {
+      const auth = String(req.headers.authorization || "");
+      const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+      const session = verifyPdaSession(token);
+      if (!session) return send({ success: false, message: "Sesi PDA Mini tidak valid atau sudah berakhir. Silakan login kembali." }, 401);
+      const gasUrl = process.env.DSH_ATTENDANCE_GAS_URL || "";
+      const bridgeSecret = process.env.PDA_REPORT_SECRET || "";
+      if (!gasUrl || !bridgeSecret) return send({ success: false, message: "Konfigurasi DSH Attendance belum lengkap di Vercel." }, 503);
+      const from = String(query.from || "");
+      const to = String(query.to || "");
+      const callGas = async (action, extra = {}) => {
+        const upstream = await fetch(gasUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action, bridgeSecret, ...extra }),
+          redirect: "follow"
+        });
+        if (!upstream.ok) throw new Error("DSH Attendance API HTTP " + upstream.status);
+        const data = await upstream.json();
+        if (!data || data.ok !== true) throw new Error(data && data.message ? data.message : "Gagal menghubungi DSH Attendance.");
+        return data;
+      };
+      try {
+        const permission = await callGas("pdaCheckReportPermission", { username: session.sub });
+        if (!permission.allowed) return send({ success: false, message: "Akses Report Absensi belum diberikan oleh Admin." }, 403);
+        const report = await callGas("pdaReport", { from, to });
+        return send({ success: true, username: session.sub, namaLengkap: permission.namaLengkap || session.name, records: report.records || [] });
+      } catch (e) {
+        return send({ success: false, message: String(e.message || e) }, 502);
+      }
+    }
+
+
     if (path === "/bblm" && method === "GET") {
       const bblmData = await getJson("bblm", { hasData: false, gradeNames: [], products: [], totalProducts: 0, updatedAt: null, updatedBy: "", sourceLabel: "" });
       if (bblmData.updatedAt) {
@@ -347,7 +380,7 @@ export default async function handler(req, res) {
     if (path === "/users" && method === "GET") {
       if (query.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
       const users = await getJson("users", []);
-      return send({ success: true, users: users.map(u => ({ username: u.username, namaLengkap: u.namaLengkap || u.username, suspended: u.suspended ?? false, createdAt: u.createdAt ?? null })) });
+      return send({ success: true, users: users.map(u => ({ username: u.username, namaLengkap: u.namaLengkap || u.username, suspended: u.suspended ?? false, reportAbsensi: u.reportAbsensi === true, createdAt: u.createdAt ?? null })) });
     }
 
     if (path === "/users" && method === "POST") {
@@ -382,7 +415,7 @@ export default async function handler(req, res) {
 
     const userPatchMatch = path.match(/^\/users\/([^/]+)$/);
     if (userPatchMatch && method === "PATCH") {
-      const { adminPassword, namaLengkap, suspended, password } = body;
+      const { adminPassword, namaLengkap, suspended, password, reportAbsensi } = body;
       if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
       const username = decodeURIComponent(userPatchMatch[1]);
       const users = await getJson("users", []);
@@ -390,6 +423,7 @@ export default async function handler(req, res) {
       if (idx === -1) return send({ success: false, message: "User tidak ditemukan" }, 404);
       if (namaLengkap !== undefined) users[idx].namaLengkap = namaLengkap.trim();
       if (suspended !== undefined) users[idx].suspended = suspended;
+      if (reportAbsensi !== undefined) users[idx].reportAbsensi = reportAbsensi === true;
       if (password !== undefined && password !== "") users[idx].password = password.trim();
       await setJson("users", users);
       return send({ success: true });
