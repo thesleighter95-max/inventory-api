@@ -21,6 +21,7 @@
 .btn{width:100%;border:0;border-radius:12px;padding:14px 16px;background:linear-gradient(100deg,#1765d4,#2788f2);color:white;font-weight:800;font-size:14px;cursor:pointer;margin-top:12px;box-shadow:0 8px 18px #2675e82b}.btn:disabled{opacity:.55;cursor:wait}.linkrow{display:flex;justify-content:space-between;gap:10px;margin-top:17px;font-size:12px}.link{border:0;background:none;color:#216bd0;font-weight:750;cursor:pointer;padding:0}.status{display:none;padding:11px 13px;border-radius:10px;font-size:12px;line-height:1.5;margin:0 0 16px}.status.show{display:block}.status.error{background:#fff0f1;color:var(--danger)}.status.success{background:#eaf8f1;color:var(--ok)}.form{display:none}.form.active{display:block}.hidden{display:none!important}
 @media(max-width:760px){.shell{display:block;padding:0;max-width:520px}.brand{display:none}.panel{min-height:100vh;border:0;border-radius:0;padding:26px 22px;align-items:flex-start}.panelinner{margin:auto}.mobilebrand{display:flex;align-items:center;gap:10px;margin-bottom:36px}.mobilebrand .mark{width:42px;height:42px}.mobilebrand b{color:var(--navy);letter-spacing:1.5px}.mobilebrand small{display:block;font-size:9px;color:var(--muted);letter-spacing:1.4px;margin-top:3px}.heading h2{font-size:25px}}
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <div class="shell">
@@ -38,6 +39,8 @@
     <div class="tabs" id="tabs"><button class="tab active" data-view="login">LOGIN</button><button class="tab" data-view="register">DAFTAR AKUN</button></div>
 
     <section class="form active" id="login">
+      <div id="googleLoginButton" style="display:flex;justify-content:center;margin:0 0 18px"></div>
+      <div class="hint" style="text-align:center;margin-bottom:14px">Pilih akun Google atau gunakan email dan password.</div>
       <div class="field"><label for="loginEmail">Username / Email</label><input id="loginEmail" type="email" autocomplete="username" placeholder="nama@email.com"></div>
       <div class="field"><label for="loginPassword">Password</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Masukkan password"></div>
       <button class="btn" id="loginBtn">LOGIN</button>
@@ -46,6 +49,8 @@
     </section>
 
     <section class="form" id="register">
+      <div id="googleRegisterButton" style="display:flex;justify-content:center;margin:0 0 16px"></div>
+      <div class="hint" style="text-align:center;margin-bottom:12px">Pilih Google untuk mengisi email secara otomatis, atau isi email manual.</div>
       <div class="field"><label>Nama lengkap</label><input id="fullName" autocomplete="name" placeholder="Nama sesuai identitas"></div>
       <div class="field"><label>Departemen</label><select id="department"><option value="">Pilih departemen</option><option>SPG</option><option>SPM</option><option>MD</option></select></div>
       <div class="field"><label>Nomor HP</label><input id="phone" type="tel" autocomplete="tel" placeholder="08xxxxxxxxxx"></div>
@@ -120,6 +125,47 @@
   }
   function busy(button, yes, label) { button.disabled=yes; if(label) button.textContent=yes?'Memproses…':label; }
   function val(id){return $(id).value.trim();}
+
+
+  function googleCredentialCallback(response) {
+    (async () => {
+      try {
+        message('Memverifikasi akun Google…','success');
+        const result = await api('googleLogin', {credential: response.credential});
+        if (result.registered) {
+          sessionStorage.setItem('dsh_token', result.token);
+          sessionStorage.setItem('dsh_user', JSON.stringify(result.user || {}));
+          message('Login Google berhasil. Selamat datang, ' + (result.user?.name || 'karyawan') + '. Dashboard absensi akan dibuka setelah modul dashboard dipasang.','success');
+        } else {
+          $('regEmail').value = result.email || '';
+          if (result.name && !$('fullName').value) $('fullName').value = result.name;
+          view('register');
+          message(result.message || 'Email Google belum terdaftar. Lengkapi data dan verifikasi OTP.','success');
+        }
+      } catch (err) {
+        message(err.message || 'Login Google gagal.','error');
+      }
+    })();
+  }
+
+  function initGoogleButtons() {
+    if (!window.google || !google.accounts || !google.accounts.id) return false;
+    google.accounts.id.initialize({
+      client_id: '1077813317882-8ug276d1dka0mqbgmv6u7lmail7duhr1.apps.googleusercontent.com',
+      callback: googleCredentialCallback,
+      auto_select: false,
+      cancel_on_tap_outside: true
+    });
+    const opts = {theme:'outline',size:'large',shape:'rectangular',text:'continue_with',width:320,logo_alignment:'left'};
+    if ($('googleLoginButton')) google.accounts.id.renderButton($('googleLoginButton'), opts);
+    if ($('googleRegisterButton')) google.accounts.id.renderButton($('googleRegisterButton'), opts);
+    return true;
+  }
+  let googleInitAttempts = 0;
+  const googleInitTimer = setInterval(() => {
+    googleInitAttempts++;
+    if (initGoogleButtons() || googleInitAttempts > 30) clearInterval(googleInitTimer);
+  }, 300);
 
   document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>view(b.dataset.view)));
   document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{
