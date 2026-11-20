@@ -2473,7 +2473,7 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
       </aside>
       <main class="cc-main">
         <div class="cc-mobile-nav"><span>OVERVIEW</span><span>OBSERVABILITY</span><span>SECURITY</span><span>INCIDENTS</span></div>
-        <div class="cc-top"><div><div class="cc-kicker">DSH / COMMAND CENTER</div><h2 class="cc-heading">System Overview</h2><div class="cc-sub">Monitoring aplikasi, API, database, dan infrastruktur DSH</div></div><button id="healthRefreshBtn" class="cc-btn" onclick="runHealthCheck()">⟳ Refresh</button></div>
+        <div class="cc-top"><div><div class="cc-kicker">DSH / COMMAND CENTER</div><h2 class="cc-heading">System Overview</h2><div class="cc-sub">Monitoring aplikasi, API, database, dan infrastruktur DSH</div></div><div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><span id="ccAutoState" class="cc-status">AUTO 60s</span><button id="ccAutoBtn" class="cc-btn" style="background:#25334b" onclick="toggleCCAutoRefresh()">Pause Auto</button><button id="healthRefreshBtn" class="cc-btn" onclick="runHealthCheck()">⟳ Refresh</button></div></div>
         <div class="cc-grid">
           <div class="cc-card"><div class="cc-label">Services Online</div><div class="cc-value" id="ccOnline">—</div><div class="cc-note" id="ccOnlineNote">Menunggu pemeriksaan</div></div>
           <div class="cc-card"><div class="cc-label">Services Offline</div><div class="cc-value" id="ccOffline">—</div><div class="cc-note">Endpoint gagal diakses</div></div>
@@ -2490,6 +2490,8 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
           <section class="cc-section"><h3>◷ LAST SYSTEM CHECK</h3><div id="healthOverallBadge" class="cc-status warn">BELUM DIPERIKSA</div><div id="healthSummary" class="cc-foot" style="margin-top:9px">Tekan Refresh untuk memulai pemeriksaan.</div><div id="healthCheckedAt" class="cc-foot" style="margin-top:9px">Pemeriksaan terakhir: —</div></section>
         </div>
         <details class="cc-section" style="margin-bottom:16px"><summary style="font-size:10px;font-weight:800;color:#a5b4fc;cursor:pointer">DETAIL PEMERIKSAAN ENDPOINT</summary><div id="healthChecks" style="display:grid;gap:8px;margin-top:12px"><div class="cc-foot">Menunggu pemeriksaan...</div></div></details>
+        <section class="cc-section" style="margin-bottom:13px"><h3>⚡ QUICK ACTIONS / OPERATIONS</h3><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"><button class="cc-btn" onclick="switchMainTab('logs')">Buka Log Activity ↗</button><button class="cc-btn" onclick="switchMainTab('kpi')">Dashboard KPI ↗</button><button class="cc-btn" onclick="switchMainTab('absensi')">DSH Attendance ↗</button><button class="cc-btn" onclick="switchMainTab('astSummary')">AST Summary ↗</button><button class="cc-btn" style="background:#25334b" onclick="switchMainTab('neo')">Server Neo ↗</button><button class="cc-btn" style="background:#25334b" onclick="switchMainTab('inventory')">Inventory ↗</button></div></section>
+        <section class="cc-section" style="margin-bottom:13px"><h3>◷ RECENT CHECK HISTORY</h3><div class="cc-foot" style="margin-bottom:8px">Riwayat pemeriksaan pada sesi browser ini saja.</div><div id="ccHistory" class="cc-foot">Belum ada riwayat.</div></section>
         <div class="cc-foot" style="text-align:center;padding:5px">DSH COMMAND CENTER · READ-ONLY · DATA BERDASARKAN ENDPOINT YANG TERSEDIA</div>
       </main>
     </div>
@@ -5435,6 +5437,7 @@ function refreshReportAbsensiNav(){
 }
 
 function switchMainTab(tab){
+  if(tab!=='health')stopCCAutoRefresh();
   closeDshSideMenuAfterNav();
   /* Sidebar hanya disembunyikan selama panel Absensi aktif. */
   if(tab!=="absensi")document.body.classList.remove("dsh-absensi-focus");
@@ -5443,7 +5446,7 @@ function switchMainTab(tab){
   if(_bnfInterval){clearInterval(_bnfInterval);_bnfInterval=null;}if(tab==="inventory"){$("inventoryPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navInventory");setMarquee(true);kirimAktivitas("tab_inventory","Buka panel Inventory")}
   else if(tab==="expired"){$("expiredPanel").classList.add("active");document.body.classList.add("light-mode");activateNav("navExpired");setMarquee(false);lucide.createIcons();kirimAktivitas("tab_expired","Buka panel Expired")}
   else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();loadBarcodeNotFound();if(isAdmin)loadPwResetRequests();if(_bnfInterval)clearInterval(_bnfInterval);_bnfInterval=setInterval(loadBarcodeNotFound,180000);}
-  else if(tab==="health"){$("healthPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navHealth");setMarquee(false);runHealthCheck();loadCommandCenterDatabase();}
+  else if(tab==="health"){$("healthPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navHealth");setMarquee(false);runHealthCheck();loadCommandCenterDatabase();renderCCCheckHistory();startCCAutoRefresh();}
   else if(tab==="pop"){$("popPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navPop");setMarquee(false);ensurePopLoaded().then(function(ok){if(ok)popInit();});}
   else if(tab==="promo"){$("promoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navPromo");setMarquee(false);loadPromoList();}
   else if(tab==="neo"){$("neoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navNeo");setMarquee(false);loadNeoStatus();}
@@ -11598,6 +11601,37 @@ function healthEscape(v){return String(v==null?'':v).replace(/[&<>"']/g,function
 function healthTime(ms){return ms<1000?Math.round(ms)+' ms':(ms/1000).toFixed(2)+' detik';}
 function healthCard(title,status,detail,latency){var good=status==='ok',warn=status==='warn',color=good?'#34d399':warn?'#fbbf24':'#f87171',label=good?'ONLINE':warn?'BELUM TERVERIFIKASI':'OFFLINE';return '<div style="background:rgba(15,23,42,.72);border:1px solid rgba(148,163,184,.16);border-radius:12px;padding:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;"><div style="min-width:0;flex:1;"><div style="font-size:12px;color:#e2e8f0;font-weight:800;">'+healthEscape(title)+'</div><div style="font-size:10px;color:#94a3b8;line-height:1.5;margin-top:4px;word-break:break-word;">'+healthEscape(detail)+'</div></div><div style="text-align:right;flex-shrink:0;"><div style="font-size:9px;font-weight:900;color:'+color+';">'+label+'</div><div style="font-size:9px;color:#64748b;margin-top:4px;">'+(latency==null?'':healthEscape(latency))+'</div></div></div>';}
 function healthFetch(url,kind,title){var started=Date.now(),controller=window.AbortController?new AbortController():null,timer=controller?setTimeout(function(){controller.abort();},10000):null;return fetch(url,{cache:'no-store',signal:controller?controller.signal:undefined}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return kind==='json'?r.json():r.text();}).then(function(data){if(kind==='json'&&data&&data.success===false)throw new Error(data.message||'API mengembalikan status gagal');if(kind==='text'&&(!data||data.trim().length<5))throw new Error('Respons kosong');var detail=kind==='json'?'Endpoint merespons dan JSON valid':'Data dapat dibaca ('+data.length.toLocaleString('id-ID')+' karakter)';return {title:title,status:'ok',detail:detail,latency:healthTime(Date.now()-started)};}).catch(function(e){return {title:title,status:'error',detail:e&&e.name==='AbortError'?'Timeout: lebih dari 10 detik':(e&&e.message?e.message:'Gagal terhubung'),latency:healthTime(Date.now()-started)};}).finally(function(){if(timer)clearTimeout(timer);});}
+var _ccAutoTimer=null,_ccAutoEnabled=true;
+function startCCAutoRefresh(){
+ if(_ccAutoTimer||!_ccAutoEnabled)return;
+ _ccAutoTimer=setInterval(function(){var p=document.getElementById('healthPanel');if(p&&p.classList.contains('active')){runHealthCheck();loadCommandCenterDatabase();}else{stopCCAutoRefresh();}},60000);
+ var st=document.getElementById('ccAutoState');if(st)st.textContent='AUTO 60s';
+}
+function stopCCAutoRefresh(){
+ if(_ccAutoTimer){clearInterval(_ccAutoTimer);_ccAutoTimer=null;}
+}
+function toggleCCAutoRefresh(){
+ _ccAutoEnabled=!_ccAutoEnabled;
+ if(_ccAutoEnabled)startCCAutoRefresh();else stopCCAutoRefresh();
+ var b=document.getElementById('ccAutoBtn'),st=document.getElementById('ccAutoState');
+ if(b)b.textContent=_ccAutoEnabled?'Pause Auto':'Resume Auto';
+ if(st)st.textContent=_ccAutoEnabled?'AUTO 60s':'AUTO PAUSED';
+}
+function saveCCCheckHistory(results){
+ try{
+  var bad=results.filter(function(r){return r.status==='error'}),warn=results.filter(function(r){return r.status==='warn'});
+  var item={at:new Date().toLocaleString('id-ID',{timeZone:'Asia/Makassar'}),online:results.filter(function(r){return r.status==='ok'}).length,offline:bad.length,warn:warn.length,issues:bad.concat(warn).slice(0,5).map(function(r){return r.title;})};
+  var h=JSON.parse(sessionStorage.getItem('dsh_cc_history')||'[]');if(!Array.isArray(h))h=[];
+  h.unshift(item);h=h.slice(0,10);sessionStorage.setItem('dsh_cc_history',JSON.stringify(h));
+  renderCCCheckHistory();
+ }catch(e){}
+}
+function renderCCCheckHistory(){
+ var el=document.getElementById('ccHistory');if(!el)return;
+ try{var h=JSON.parse(sessionStorage.getItem('dsh_cc_history')||'[]');if(!h.length){el.textContent='Belum ada riwayat.';return;}
+ el.innerHTML=h.map(function(x){var c=x.offline?'#fb7185':x.warn?'#fbbf24':'#34d399';return '<div style="padding:8px 0;border-bottom:1px solid #243149;display:flex;justify-content:space-between;gap:8px"><div><strong style="color:#dbe5f5">'+healthEscape(x.at)+'</strong><div style="margin-top:3px">Online '+x.online+' · Offline '+x.offline+' · Verifikasi '+x.warn+(x.issues&&x.issues.length?'<div style="margin-top:3px;color:#fbbf24">'+healthEscape(x.issues.join(', '))+'</div>':'')+'</div></div><span style="color:'+c+';font-weight:900;white-space:nowrap">'+(x.offline?'ISSUE':x.warn?'CHECK':'OK')+'</span></div>';}).join('');
+ }catch(e){el.textContent='Riwayat sesi belum tersedia.';}
+}
 function renderCommandCenter(results){
  var ok=results.filter(function(r){return r.status==='ok'}),bad=results.filter(function(r){return r.status==='error'}),warn=results.filter(function(r){return r.status==='warn'});
  var times=results.map(function(r){return parseFloat(r.latency)}).filter(function(n){return isFinite(n)&&n>=0});
@@ -11640,6 +11674,7 @@ function runHealthCheck(){if(!isAdmin)return;var btn=document.getElementById('he
   return storagePromise.then(function(){results.push({title:'Penyimpanan browser',status:storageStatus,detail:storageInfo+' · bukan kapasitas disk server',latency:''});return results;});
  }).then(function(results){
   renderCommandCenter(results);
+  saveCCCheckHistory(results);
   if(box)box.innerHTML=results.map(function(r){return healthCard(r.title,r.status,r.detail,r.latency);}).join('');
   var errors=results.filter(function(r){return r.status==='error'}).length,warns=results.filter(function(r){return r.status==='warn'}).length;
   if(badge){badge.textContent=errors?'ADA GANGGUAN':warns?'PERLU VERIFIKASI':'SEMUA NORMAL';badge.style.color=errors?'#f87171':warns?'#fbbf24':'#34d399';}
