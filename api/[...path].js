@@ -422,41 +422,27 @@ export default async function handler(req, res) {
       const password = String(body.password || "").trim();
       if (!username || !password) return send({ success: false, message: "username dan password wajib diisi" }, 400);
 
-      // AUTH ASLI PDA MINI: database user override, lalu fallback ke Spreadsheet User login.
-      // Login tidak bergantung pada aksi pdaLogin di Apps Script DSH Attendance.
+      // AUTH LOGIN: Spreadsheet User login adalah satu-satunya sumber username/password.
+      // Database users tidak dipakai untuk autentikasi agar password lama tidak menimpa Spreadsheet.
       let sheetUsers = [];
-      let dbUsers = [];
-      let sheetError = null;
-      const [sheetResult, dbResult] = await Promise.allSettled([
-        fetchSheetUsers(),
-        getJson("users", [])
-      ]);
-      if (sheetResult.status === "fulfilled") sheetUsers = Array.isArray(sheetResult.value) ? sheetResult.value : [];
-      else sheetError = sheetResult.reason;
-      if (dbResult.status === "fulfilled") dbUsers = Array.isArray(dbResult.value) ? dbResult.value : [];
-
-      const dbMap = Object.create(null);
-      dbUsers.forEach(u => { if (u && u.username != null) dbMap[String(u.username).trim()] = u; });
-      let user = dbMap[username] || sheetUsers.find(u => String(u.username).trim() === username);
-
-      if (!user) {
-        if (sheetError && !dbUsers.length) {
-          return send({ success: false, message: "Spreadsheet User login tidak dapat dibaca oleh server: " + String(sheetError.message || sheetError) }, 502);
-        }
-        return send({ success: false, notFound: true, message: "Username atau password salah" }, 401);
+      try {
+        sheetUsers = await fetchSheetUsers();
+      } catch (e) {
+        return send({ success: false, message: "Spreadsheet User login tidak dapat dibaca: " + String(e.message || e) }, 502);
       }
+
+      const user = sheetUsers.find(u => String(u.username || "").trim() === username);
+      if (!user) return send({ success: false, notFound: true, message: "Username tidak ditemukan di Spreadsheet User login." }, 401);
       if (String(user.password == null ? "" : user.password).trim() !== password) {
-        return send({ success: false, notFound: true, message: "Username atau password salah" }, 401);
+        return send({ success: false, notFound: true, message: "Password tidak sesuai dengan Spreadsheet User login." }, 401);
       }
-      if (user.suspended) return send({ success: false, suspended: true, message: "Akun ditangguhkan oleh admin" }, 403);
+      if (user.suspended) return send({ success: false, suspended: true, message: "Akun ditangguhkan oleh admin." }, 403);
 
       const namaLengkap = String(user.namaLengkap || user.name || username);
       try {
         const accessToken = issuePdaSession(username, namaLengkap, "user");
         return send({ success: true, namaLengkap, accessToken, expiresIn: 8 * 60 * 60 });
       } catch (e) {
-        // Jangan gagalkan login utama jika SESSION_SECRET belum tersedia; laporkan konfigurasi
-        // dengan jelas karena tanpa token fitur Report Absensi tidak dapat memakai sesi PDA Mini.
         return send({ success: false, message: String(e.message || e) }, 503);
       }
     }
