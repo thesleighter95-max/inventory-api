@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#102b50"/><stop offset=".48" stop-color="#050d1b"/><stop offset="1" stop-color="#170d16"/></linearGradient>
+ <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00d9ff"/><stop offset=".52" stop-color="#167bff"/><stop offset="1" stop-color="#ff8a26"/></linearGradient>
+ <linearGradient id="chrome" x1="0" y1="0" x2=".2" y2="1"><stop stop-color="#fff"/><stop offset=".18" stop-color="#9fb9d3"/><stop offset=".36" stop-color="#fff"/><stop offset=".58" stop-color="#647c99"/><stop offset=".76" stop-color="#f4f7fb"/><stop offset="1" stop-color="#8298b0"/></linearGradient>
+ <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#04e5ff"/><stop offset="1" stop-color="#1460ff"/></linearGradient>
+ <linearGradient id="amber" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#ff8a20"/><stop offset="1" stop-color="#ffd27b"/></linearGradient>
+ <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="7" result="b"/><feOffset dy="8" result="o"/><feComponentTransfer><feFuncA type="linear" slope=".8"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect x="12" y="12" width="488" height="488" rx="94" fill="url(#bg)"/>
+<rect x="17" y="17" width="478" height="478" rx="88" fill="none" stroke="url(#rim)" stroke-width="7" filter="url(#glow)"/>
+<path d="M32 170 L170 32 H305 L32 305Z" fill="#4c86bb" opacity=".12"/>
+<path d="M480 340 L340 480 H210 L480 210Z" fill="#ff9b39" opacity=".08"/>
+<path d="M90 210 C180 95 360 70 432 150 C466 190 431 250 382 276" fill="none" stroke="url(#blue)" stroke-width="13" stroke-linecap="round" filter="url(#glow)"/>
+<path d="M87 318 C120 420 325 427 428 302" fill="none" stroke="url(#amber)" stroke-width="11" stroke-linecap="round" filter="url(#glow)"/>
+<text x="256" y="291" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="158" font-weight="900" letter-spacing="-10" fill="#06101f" stroke="#06101f" stroke-width="18" paint-order="stroke" filter="url(#shadow)">DSH</text>
+<text x="256" y="281" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="158" font-weight="900" letter-spacing="-10" fill="url(#chrome)" stroke="#d8eaff" stroke-width="2" paint-order="stroke">DSH</text>
+<path d="M80 337 H432" stroke="url(#amber)" stroke-width="4" opacity=".85" filter="url(#glow)"/>
+<path d="M105 353 H300" stroke="url(#blue)" stroke-width="3" opacity=".9"/>
+<circle cx="410" cy="112" r="5" fill="#fff" filter="url(#glow)"/>
+<path d="M410 91 V133 M389 112 H431" stroke="#9deaff" stroke-width="2" filter="url(#glow)"/>
+<path d="M50 430 L120 460 M462 65 L430 50" stroke="#ff9d45" stroke-width="3" opacity=".7"/>
+</svg>
