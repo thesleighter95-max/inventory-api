@@ -359,7 +359,7 @@
  </section>
  <section id="warehouseView" class="view-panel" style="display:none">
   <section class="panel summary-panel">
-   <div class="panel-head"><div><h3>Warehouse Only</h3><small id="warehouseHint" style="display:none"></small></div><button class="btn" id="refreshWarehouse" type="button">↻ Refresh AST</button></div>
+   <div class="panel-head"><div><h3>Warehouse Only</h3><small id="warehouseHint" style="display:none"></small></div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="btn export-excel" id="exportWarehouseExcel" type="button" disabled>⬇ Export Excel</button><button class="btn" id="refreshWarehouse" type="button">↻ Refresh AST</button></div></div>
    <div class="sector-kpis">
     <div class="sector-kpi"><span>ARTIKEL HANYA DI GUDANG</span><strong id="warehouseSkuCount">0</strong></div>
     <div class="sector-kpi"><span>TOTAL QTY GUDANG</span><strong id="warehouseQty">0</strong></div>
@@ -650,16 +650,41 @@ async function renderWarehouseOnly(){
  $('warehouseTableWrap').style.display='block';$('warehousePager').style.display='flex';
  renderWarehouseRows();
 }
+function getWarehouseFilteredRows(){
+ const q=$('warehouseSearch').value.trim().toLocaleLowerCase('id-ID');
+ const cat=$('warehouseCategory').value;
+ return warehouseProducts.filter(p=>(!cat||p.cat===cat)&&[p.code,p.name,p.barcode,p.cat,p.category,...p.addresses].join(' ').toLocaleLowerCase('id-ID').includes(q));
+}
+function exportWarehouseExcel(){
+ if(!warehouseDataRequested||!warehouseProducts.length){alert('Tampilkan data Warehouse Only terlebih dahulu.');return;}
+ if(typeof XLSX==='undefined'){alert('Modul Excel belum berhasil dimuat. Periksa koneksi internet lalu coba lagi.');return;}
+ const rows=getWarehouseFilteredRows();
+ const headers=['NO','CAT','NAMA CATEGORY','PROD CODE','NAMA ARTIKEL','BARCODE','ALAMAT GUDANG','FINAL QTY','STATUS DISPLAY','TERAKHIR DIUBAH OLEH','WAKTU UPDATE'];
+ const data=[headers,...rows.map((p,i)=>{
+  const status=warehouseStatuses[p.code]||{};
+  return [i+1,String(p.cat||''),String(p.category||''),String(p.code||''),String(p.name||''),String(p.barcode||''),p.addresses.join(' | '),Number(p.qty)||0,status.displayed?'TER-DISPLAY':'BELUM',String(status.updatedBy||''),status.updatedAt?new Date(status.updatedAt).toLocaleString('id-ID'): ''];
+ })];
+ const sheet=XLSX.utils.aoa_to_sheet(data);
+ sheet['!cols']=[{wch:7},{wch:12},{wch:26},{wch:18},{wch:42},{wch:20},{wch:42},{wch:14},{wch:20},{wch:24},{wch:23}];
+ sheet['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(0,data.length-1),c:headers.length-1}})};
+ sheet['!freeze']={xSplit:0,ySplit:1};
+ const book=XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(book,sheet,'Warehouse Only');
+ const now=new Date();
+ const stamp=now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0');
+ XLSX.writeFile(book,'AST_Warehouse_Only_'+stamp+'.xlsx');
+}
 function renderWarehouseRows(){
  const q=$('warehouseSearch').value.trim().toLocaleLowerCase('id-ID');
  const cat=$('warehouseCategory').value;
- const rows=warehouseProducts.filter(p=>(!cat||p.cat===cat)&&[p.code,p.name,p.barcode,p.cat,p.category,...p.addresses].join(' ').toLocaleLowerCase('id-ID').includes(q));
+ const rows=getWarehouseFilteredRows();
  const pages=Math.max(1,Math.ceil(rows.length/WAREHOUSE_PAGE_SIZE));
  warehousePage=Math.min(Math.max(1,warehousePage),pages);
  const start=(warehousePage-1)*WAREHOUSE_PAGE_SIZE;
  const pageRows=rows.slice(start,start+WAREHOUSE_PAGE_SIZE);
  $('warehouseResultCount').textContent=fmt(rows.length)+' artikel ditemukan • '+(rows.length?fmt(start+1)+'–'+fmt(Math.min(start+WAREHOUSE_PAGE_SIZE,rows.length)):'0')+' ditampilkan';
  $('warehouseBody').innerHTML=pageRows.map((p,i)=>'<tr><td>'+fmt(start+i+1)+'</td><td>'+esc(p.cat||'-')+'</td><td>'+esc(p.category||'-')+'</td><td><b>'+esc(p.code||'-')+'</b></td><td>'+esc(p.name||'-')+'</td><td>'+esc(p.barcode||'-')+'</td><td style="white-space:normal;min-width:125px;max-width:160px"><div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px">'+p.addresses.map(a=>'<span style="display:block;background:#f3f6fb;border:1px solid #e7edf5;border-radius:6px;padding:4px 7px;font-size:10px">'+esc(a)+'</span>').join('')+'</div></td><td style="text-align:right;font-weight:700">'+fmt(p.qty)+'</td><td><label style="display:inline-flex;align-items:center;gap:7px;white-space:nowrap;cursor:pointer"><input type="checkbox" class="warehouse-display-check" data-product-code="'+esc(p.code)+'" '+(warehouseStatuses[p.code]&&warehouseStatuses[p.code].displayed?'checked':'')+' style="width:18px;height:18px;accent-color:#16a36a"><span>Ter-display</span></label></td></tr>').join('')||'<tr><td class="empty" colspan="9">Tidak ada artikel yang cocok dengan filter.</td></tr>';
+ $('exportWarehouseExcel').disabled=false;
  $('warehousePageInfo').textContent='Halaman '+fmt(warehousePage)+' / '+fmt(pages);
  $('warehousePrev').disabled=warehousePage<=1;$('warehouseNext').disabled=warehousePage>=pages;
 }
@@ -682,6 +707,7 @@ function requestWarehouseData(refresh){
   });
  }
 }
+$('exportWarehouseExcel').addEventListener('click',exportWarehouseExcel);
 $('warehouseShowData').addEventListener('click',()=>requestWarehouseData(false));
 $('refreshWarehouse').addEventListener('click',()=>requestWarehouseData(true));
 $('warehouseSearch').addEventListener('input',()=>{warehousePage=1;renderWarehouseRows()});
