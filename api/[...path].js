@@ -274,15 +274,11 @@ export default async function handler(req, res) {
       if (!productCode) return send({ success: false, message: "Prod Code wajib diisi." }, 400);
       if (typeof body.displayed !== "boolean") return send({ success: false, message: "Status checklist tidak valid." }, 400);
       const statuses = await getJson(statusKey, {});
-      if (body.displayed) {
-        statuses[productCode] = {
-          displayed: true,
-          updatedAt: new Date().toISOString(),
-          updatedBy: String(session.name || session.sub || "User")
-        };
-      } else {
-        delete statuses[productCode];
-      }
+      statuses[productCode] = {
+        displayed: body.displayed === true,
+        updatedAt: new Date().toISOString(),
+        updatedBy: String(session.name || session.sub || "User")
+      };
       await setJson(statusKey, statuses);
       return send({ success: true, productCode, status: statuses[productCode] || null });
     }
