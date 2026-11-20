@@ -2492,6 +2492,26 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
         <details class="cc-section" style="margin-bottom:16px"><summary style="font-size:10px;font-weight:800;color:#a5b4fc;cursor:pointer">DETAIL PEMERIKSAAN ENDPOINT</summary><div id="healthChecks" style="display:grid;gap:8px;margin-top:12px"><div class="cc-foot">Menunggu pemeriksaan...</div></div></details>
         <section class="cc-section" style="margin-bottom:13px"><h3>⚡ QUICK ACTIONS / OPERATIONS</h3><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"><button class="cc-btn" onclick="switchMainTab('logs')">Buka Log Activity ↗</button><button class="cc-btn" onclick="switchMainTab('kpi')">Dashboard KPI ↗</button><button class="cc-btn" onclick="switchMainTab('absensi')">DSH Attendance ↗</button><button class="cc-btn" onclick="switchMainTab('astSummary')">AST Summary ↗</button><button class="cc-btn" style="background:#25334b" onclick="switchMainTab('neo')">Server Neo ↗</button><button class="cc-btn" style="background:#25334b" onclick="switchMainTab('inventory')">Inventory ↗</button></div></section>
         <section class="cc-section" style="margin-bottom:13px"><h3>◷ RECENT CHECK HISTORY</h3><div class="cc-foot" style="margin-bottom:8px">Riwayat pemeriksaan pada sesi browser ini saja.</div><div id="ccHistory" class="cc-foot">Belum ada riwayat.</div></section>
+        <section id="ccVercelUsagePanel" class="cc-section" style="margin-bottom:13px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+            <div><h3>☁ VERCEL USAGE / PLAN MONITOR</h3><div class="cc-foot">Paket Hobby · Monitoring kuota dan akses dashboard resmi</div></div>
+            <a class="cc-btn" href="https://vercel.com/pda-mini-mataram/pda-mini-mataram/usage" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center">Buka Vercel Usage ↗</a>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:14px">
+            <div class="cc-card"><div class="cc-label">Function Invocations</div><div class="cc-value" style="font-size:19px">1.000.000</div><div class="cc-note">Kuota paket Hobby</div></div>
+            <div class="cc-card"><div class="cc-label">Edge Requests</div><div class="cc-value" style="font-size:19px">1.000.000</div><div class="cc-note">Kuota paket Hobby</div></div>
+            <div class="cc-card"><div class="cc-label">Active CPU</div><div class="cc-value" style="font-size:19px">4 jam</div><div class="cc-note">Kuota bulanan Hobby</div></div>
+            <div class="cc-card"><div class="cc-label">Provisioned Memory</div><div class="cc-value" style="font-size:19px">360 GB-hrs</div><div class="cc-note">Kuota bulanan Hobby</div></div>
+            <div class="cc-card"><div class="cc-label">Edge Config Reads</div><div class="cc-value" style="font-size:19px">100.000</div><div class="cc-note">Kuota paket Hobby</div></div>
+            <div class="cc-card"><div class="cc-label">Edge Config Writes</div><div class="cc-value" style="font-size:19px">100</div><div class="cc-note">Kuota paket Hobby</div></div>
+          </div>
+          <div style="margin-top:12px;padding:12px;border:1px solid #334155;border-radius:10px;background:#111c2d">
+            <div style="font-size:11px;font-weight:800;color:#cbd5e1;margin-bottom:5px">STATUS AKSES DATA</div>
+            <div style="font-size:11px;color:#fbbf24;font-weight:800">● DASHBOARD RESMI — PEMAKAIAN AKTUAL DIBUKA DI VERCEL</div>
+            <div class="cc-foot" style="margin-top:6px">Angka di atas adalah batas kuota paket, bukan angka pemakaian saat ini. Grafik pemakaian aktual dan persentase terpakai belum tersedia lewat Billing API untuk tim Hobby. Klik tombol di atas untuk melihat angka real-time/terbaru dari Vercel.</div>
+            <div class="cc-foot" style="margin-top:7px">Catatan: data Usage Vercel dapat mengalami jeda pembaruan. Panel ini tidak melakukan polling otomatis dan tidak menambah request berkala ke Vercel.</div>
+          </div>
+        </section>
         <div class="cc-foot" style="text-align:center;padding:5px">DSH COMMAND CENTER · READ-ONLY · DATA BERDASARKAN ENDPOINT YANG TERSEDIA</div>
       </main>
     </div>
