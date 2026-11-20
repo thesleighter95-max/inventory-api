@@ -8,7 +8,7 @@
 <section class="panel"><div class="head"><div><h2>Daftar Artikel — Gudang Saja</h2><small>Hanya produk yang belum memiliki alamat display (non-4)</small></div><small id="count">0 artikel</small></div>
 <div class="filters"><input id="search" placeholder="Cari kode produk, nama artikel, barcode, atau alamat..." oninput="render()"><select id="category" onchange="render()"><option value="">Semua Category</option></select><button class="btn" onclick="resetFilters()">Reset</button></div>
 <div class="tablewrap"><table><thead><tr><th>NO</th><th>CAT</th><th>NAMA CATEGORY</th><th>PROD CODE</th><th>NAMA ARTIKEL</th><th>BARCODE</th><th>ALAMAT GUDANG</th><th class="num">FINAL QTY</th><th>STATUS</th></tr></thead><tbody id="rows"></tbody></table></div>
-<div class="note"><b>Logika final yang diuji di mockup:</b><br>1. Identifikasi artikel unik berdasarkan Prod Code (Barcode sebagai cadangan bila Prod Code kosong).<br>2. Kumpulkan semua baris/alamat AST untuk artikel tersebut.<br>3. Tampilkan artikel hanya jika minimal satu alamat valid dan <b>semua alamatnya diawali angka 4</b>.<br>4. Jika artikel punya satu saja alamat non-4, artikel dikeluarkan dari daftar gudang saja (karena sudah terdeteksi di area display).<br>5. Qty dijumlahkan dari baris alamat kepala 4 yang lolos. Alamat kosong/tidak terbaca tidak dianggap kepala 4.</div></section></main></div>
+<div class="note"><b>Logika final yang diuji di mockup:</b><br>1. Identifikasi artikel unik berdasarkan Prod Code (Barcode sebagai cadangan bila Prod Code kosong).<br>2. Kumpulkan semua baris/alamat AST untuk artikel tersebut.<br>3. Tampilkan artikel hanya jika minimal satu alamat valid dan <b>semua alamatnya diawali angka 4</b>.<br>4. Digit pertama 5, 6, 7, atau 8 menandakan area display. Jika artikel punya alamat kepala 4 sekaligus kepala 5/6/7/8, artikel dikeluarkan dari daftar gudang saja.<br>5. Qty dijumlahkan dari baris alamat kepala 4 yang lolos. Alamat kosong/tidak terbaca tidak dianggap kepala 4.</div></section></main></div>
 <script>
 const demo=[
 {cat:'101',category:'FOOD - SNACK',code:'100101',name:'KERIPIK KENTANG 68G',barcode:'8991001001010',addresses:[['4-01-01',24]]},
@@ -26,7 +26,10 @@ const demo=[
 {cat:'302',category:'FRESH - FROZEN',code:'300201',name:'NUGGET AYAM',barcode:'8993001002019',addresses:[['4-06-01',16],['3-08-01',10]]},
 {cat:'302',category:'FRESH - FROZEN',code:'300202',name:'SOSIS SAPI',barcode:'8993001002026',addresses:[['4-06-02',13]]}
 ];
-const isHead4=address=>/^4(?:\b|[-./\s])/.test(String(address??'').trim());
+// Kode alamat AST berupa angka rapat: 401101, 531101, 801101.
+const addressHead=address=>String(address??'').trim().replace(/[^0-9]/g,'').charAt(0);
+const isHead4=address=>addressHead(address)==='4';
+const isDisplayAddress=address=>['5','6','7','8'].includes(addressHead(address));
 const eligible=demo.filter(p=>p.addresses.length>0&&p.addresses.every(a=>isHead4(a[0])));
 const fmt=n=>new Intl.NumberFormat('id-ID').format(n);
 document.getElementById('total').textContent=fmt(eligible.length);
