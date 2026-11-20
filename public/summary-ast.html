@@ -573,15 +573,24 @@ function renderAstSummary(){
 
 let warehouseProducts=[];
 function warehouseHead(address){return String(address??'').trim().replace(/[^0-9]/g,'').charAt(0)}
-function renderWarehouseOnly(){
+async function renderWarehouseOnly(){
  if(!astLoaded)return;
  const codeKey=astColumn(['Prod cd']),barcodeKey=astColumn(['Barcode']),nameKey=astColumn(['Prod nm']),addressKey=astColumn(['Sector']),qtyKey=astColumn(['Final Qty']);
+ let categoryByCode=new Map();
+ try{
+  const sum=await fetchCSV(SUM_CSV_URL);
+  const h=sum.headers;
+  const codeCol=h.find(x=>['prodcd','productcode','prodcode','itemcode','articlecode','sku'].includes(norm(x)));
+  const catCol=h.find(x=>['cat','catcode','category'].includes(norm(x)));
+  const catNameCol=h.find(x=>['catname','categoryname','catdescription','categorydescription'].includes(norm(x)));
+  if(codeCol&&catCol)sum.rows.forEach(r=>{const k=String(r[codeCol]??'').trim();if(k)categoryByCode.set(k,{cat:String(r[catCol]??'').trim(),category:String(catNameCol?r[catNameCol]??'':'').trim()})});
+ }catch(e){console.warn('Kategori SUM tidak tersedia untuk Warehouse Only:',e)}
  const grouped=new Map();
  astRows.forEach(row=>{
   const code=String(row[codeKey]??'').trim(),barcode=String(row[barcodeKey]??'').trim(),name=String(row[nameKey]??'').trim();
   const key=code?'P:'+code:'B:'+barcode;
   if(key==='B:')return;
-  if(!grouped.has(key))grouped.set(key,{code,barcode,name,addresses:[],qty:0});
+  if(!grouped.has(key)){const meta=categoryByCode.get(code)||{};grouped.set(key,{code,barcode,name,cat:meta.cat||'',category:meta.category||'',addresses:[],qty:0});}
   const item=grouped.get(key),address=String(row[addressKey]??'').trim();
   item.addresses.push(address);
   if(warehouseHead(address)==='4')item.qty+=num(row[qtyKey]);
@@ -591,7 +600,7 @@ function renderWarehouseOnly(){
  $('warehouseSkuCount').textContent=fmt(warehouseProducts.length);
  $('warehouseQty').textContent=fmt(warehouseProducts.reduce((s,p)=>s+p.qty,0));
  $('warehouseCatCount').textContent=cats.size?fmt(cats.size):'-';
- $('warehouseCategory').innerHTML='<option value="">Semua Category</option>';
+ $('warehouseCategory').innerHTML='<option value="">Semua Category</option>'+[...cats].sort((a,b)=>a.localeCompare(b,'id',{numeric:true})).map(code=>{const item=warehouseProducts.find(p=>p.cat===code);return '<option value="'+esc(code)+'">'+esc(code+(item&&item.category?' • '+item.category:''))+'</option>'}).join('');
  $('warehouseHint').textContent='Data live dari sheet AST • '+fmt(astRows.length)+' baris diperiksa';
  renderWarehouseRows();
 }
