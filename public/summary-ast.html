@@ -363,7 +363,7 @@
    <div class="sector-kpis">
     <div class="sector-kpi"><span>ARTIKEL HANYA DI GUDANG</span><strong id="warehouseSkuCount">0</strong></div>
     <div class="sector-kpi"><span>TOTAL QTY GUDANG</span><strong id="warehouseQty">0</strong></div>
-    <div class="sector-kpi"><span>CATEGORY TERLIBAT</span><strong id="warehouseCatCount">-</strong></div>
+    <div class="sector-kpi"><span>STATUS TER-DISPLAY</span><strong id="warehouseDisplayCount">0</strong><small id="warehouseDisplayProgress" style="display:block;color:var(--muted);font-size:10px;margin-top:4px">0% dari artikel gudang</small></div>
    </div>
    <div class="detail-filters">
     <input id="warehouseSearch" type="search" placeholder="Cari kode produk, nama artikel, barcode, atau alamat..." disabled>
@@ -599,7 +599,14 @@ async function saveWarehouseStatus(productCode,displayed){
  const token=warehouseSessionToken();if(!token)throw new Error('Sesi login tidak ditemukan. Silakan login kembali.');
  const response=await fetch('/api/warehouse-status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({productCode,displayed})});
  const data=await response.json();if(!response.ok||!data.success)throw new Error(data.message||'Gagal menyimpan status.');
- if(displayed)warehouseStatuses[productCode]=data.status;else delete warehouseStatuses[productCode];return data;
+ if(displayed)warehouseStatuses[productCode]=data.status;else delete warehouseStatuses[productCode];updateWarehouseDisplayProgress();return data;
+}
+function updateWarehouseDisplayProgress(){
+ const total=warehouseProducts.length;
+ const displayed=warehouseProducts.filter(p=>warehouseStatuses[p.code]&&warehouseStatuses[p.code].displayed).length;
+ const percent=total?Math.round(displayed/total*100):0;
+ $('warehouseDisplayCount').textContent=fmt(displayed);
+ $('warehouseDisplayProgress').textContent=percent+'% dari '+fmt(total)+' artikel gudang';
 }
 function warehouseHead(address){return String(address??'').trim().replace(/[^0-9]/g,'').charAt(0)}
 async function renderWarehouseOnly(){
@@ -633,8 +640,8 @@ async function renderWarehouseOnly(){
  const cats=new Set(warehouseProducts.map(p=>p.cat).filter(Boolean));
  $('warehouseSkuCount').textContent=fmt(warehouseProducts.length);
  $('warehouseQty').textContent=fmt(warehouseProducts.reduce((s,p)=>s+p.qty,0));
- $('warehouseCatCount').textContent=cats.size?fmt(cats.size):'-';
  await loadWarehouseStatuses();
+ updateWarehouseDisplayProgress();
  const categoryMap=new Map();
  warehouseProducts.forEach(p=>{if(p.cat)categoryMap.set(p.cat,p.category||'')});
  $('warehouseCategory').innerHTML='<option value="">Semua Category</option>'+[...categoryMap.entries()].sort((a,b)=>a[0].localeCompare(b[0],'id',{numeric:true})).map(([code,name])=>'<option value="'+esc(code)+'">'+esc(code+(name?' • '+name:''))+'</option>').join('');
