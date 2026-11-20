@@ -259,6 +259,34 @@ export default async function handler(req, res) {
   const send = (data, status = 200) => res.status(status).json(data);
 
   try {
+    // Shared Warehouse Only display status. Visible and editable by signed-in PDA Mini users.
+    if (path === "/warehouse-status" && (method === "GET" || method === "POST")) {
+      const auth = String(req.headers.authorization || "");
+      const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+      const session = verifyPdaSession(token);
+      if (!session) return send({ success: false, message: "Sesi PDA Mini tidak valid atau sudah berakhir. Silakan login kembali." }, 401);
+      const statusKey = "ast-warehouse-display-status";
+      if (method === "GET") {
+        const statuses = await getJson(statusKey, {});
+        return send({ success: true, statuses });
+      }
+      const productCode = String(body.productCode || "").trim();
+      if (!productCode) return send({ success: false, message: "Prod Code wajib diisi." }, 400);
+      if (typeof body.displayed !== "boolean") return send({ success: false, message: "Status checklist tidak valid." }, 400);
+      const statuses = await getJson(statusKey, {});
+      if (body.displayed) {
+        statuses[productCode] = {
+          displayed: true,
+          updatedAt: new Date().toISOString(),
+          updatedBy: String(session.name || session.sub || "User")
+        };
+      } else {
+        delete statuses[productCode];
+      }
+      await setJson(statusKey, statuses);
+      return send({ success: true, productCode, status: statuses[productCode] || null });
+    }
+
     if (path === "/healthz" && method === "GET") return send({ status: "ok" });
 
     if (path === "/report-absensi/permission" && method === "GET") {
