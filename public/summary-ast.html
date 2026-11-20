@@ -359,7 +359,7 @@
  </section>
  <section id="warehouseView" class="view-panel" style="display:none">
   <section class="panel summary-panel">
-   <div class="panel-head"><div><h3>Warehouse Only</h3><small id="warehouseHint">Data belum ditampilkan. Tekan Tampilkan Data jika ingin melihat daftar artikel.</small></div><button class="btn" id="refreshWarehouse" type="button">↻ Refresh AST</button></div>
+   <div class="panel-head"><div><h3>Warehouse Only</h3><small id="warehouseHint" style="display:none"></small></div><button class="btn" id="refreshWarehouse" type="button">↻ Refresh AST</button></div>
    <div class="sector-kpis">
     <div class="sector-kpi"><span>ARTIKEL HANYA DI GUDANG</span><strong id="warehouseSkuCount">0</strong></div>
     <div class="sector-kpi"><span>TOTAL QTY GUDANG</span><strong id="warehouseQty">0</strong></div>
@@ -371,7 +371,7 @@
     <button class="btn" id="warehouseReset" type="button">Reset</button>
    </div>
    <div style="display:flex;justify-content:center;margin:12px 0"><button class="btn" id="warehouseShowData" type="button">Tampilkan Data</button></div>
-   <div class="detail-results"><span id="warehouseResultCount">Data belum dimuat</span><span>Artikel dengan alamat display tidak ditampilkan</span></div>
+   <div class="detail-results" id="warehouseMeta" style="display:none"><span id="warehouseResultCount">Data belum dimuat</span><span></span></div>
    <div class="table-wrap" id="warehouseTableWrap" style="overflow:auto;display:none">
     <table style="min-width:850px"><thead><tr><th>NO</th><th>CAT</th><th>NAMA CATEGORY</th><th>PROD CODE</th><th>NAMA ARTIKEL</th><th>BARCODE</th><th>ALAMAT GUDANG</th><th style="text-align:right">FINAL QTY</th><th>STATUS</th></tr></thead><tbody id="warehouseBody"><tr><td class="empty" colspan="9">Tekan Tampilkan Data.</td></tr></tbody></table>
    </div>
