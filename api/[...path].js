@@ -2221,6 +2221,34 @@ loadCurrentSetting();
       }
     }
 
+    // GET /vercel-usage — read-only proxy to official Vercel Billing Charges API (admin only)
+    if (path === "/vercel-usage" && method === "GET") {
+      if (query.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const vercelToken = process.env.VERCEL_ACCESS_TOKEN || "";
+      if (!vercelToken) return send({ success: false, code: "NOT_CONFIGURED", message: "VERCEL_ACCESS_TOKEN belum dipasang di Environment Variables Vercel." }, 503);
+      const now = new Date();
+      const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+      const to = now.toISOString();
+      const endpoint = new URL("https://api.vercel.com/v1/billing/charges");
+      endpoint.searchParams.set("slug", "pda-mini-mataram");
+      endpoint.searchParams.set("from", from);
+      endpoint.searchParams.set("to", to);
+      const upstream = await fetch(endpoint.toString(), {
+        headers: { Authorization: "Bearer " + vercelToken, Accept: "application/json" },
+        cache: "no-store"
+      });
+      const raw = await upstream.text();
+      if (!upstream.ok) {
+        let detail = "Vercel API HTTP " + upstream.status;
+        try { const parsed = JSON.parse(raw); detail = parsed.error && parsed.error.message || parsed.message || detail; } catch {}
+        return send({ success: false, code: "VERCEL_API_ERROR", message: detail, status: upstream.status }, upstream.status === 401 || upstream.status === 403 ? upstream.status : 502);
+      }
+      const rows = raw.split(/\r?\n/).filter(line => line.trim()).map(line => {
+        try { return JSON.parse(line); } catch { return null; }
+      }).filter(Boolean);
+      return send({ success: true, period: { from, to }, count: rows.length, charges: rows, source: "Vercel Billing Charges API", fetchedAt: new Date().toISOString() });
+    }
+
     // GET /mod-config — baca URL sheet MOD (public, semua user)
     if (path === "/mod-config" && method === "GET") {
       const cfg = await getJson("mod-config", { sheetUrl: "" });
