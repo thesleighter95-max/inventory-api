@@ -291,6 +291,7 @@
  <nav class="view-nav" style="display:none" aria-hidden="true">
   <button class="view-tab active" id="tabSummary" type="button">Category Summary</button>
   <button class="view-tab" id="tabSector" type="button">Sector & Article</button>
+  <button class="view-tab" id="tabWarehouse" type="button">Warehouse Only</button>
  </nav>
  <div id="error" class="error"></div>
  <section id="summaryView" class="view-panel">
@@ -356,6 +357,26 @@
    </div>
   </section>
  </section>
+ <section id="warehouseView" class="view-panel" style="display:none">
+  <section class="panel summary-panel">
+   <div class="panel-head"><div><h3>Warehouse Only</h3><small id="warehouseHint">Artikel yang seluruh alamat AST-nya berada di gudang (digit pertama 4)</small></div><button class="btn" id="refreshWarehouse" type="button">↻ Refresh AST</button></div>
+   <div class="sector-kpis">
+    <div class="sector-kpi"><span>ARTIKEL HANYA DI GUDANG</span><strong id="warehouseSkuCount">0</strong></div>
+    <div class="sector-kpi"><span>TOTAL QTY GUDANG</span><strong id="warehouseQty">0</strong></div>
+    <div class="sector-kpi"><span>CATEGORY TERLIBAT</span><strong id="warehouseCatCount">-</strong></div>
+   </div>
+   <div class="detail-filters">
+    <input id="warehouseSearch" type="search" placeholder="Cari kode produk, nama artikel, barcode, atau alamat...">
+    <select id="warehouseCategory"><option value="">Semua Category</option></select>
+    <button class="btn" id="warehouseReset" type="button">Reset</button>
+   </div>
+   <div class="detail-results"><span id="warehouseResultCount">0 artikel</span><span>Artikel dengan alamat display tidak ditampilkan</span></div>
+   <div class="table-wrap" style="overflow:auto">
+    <table style="min-width:850px"><thead><tr><th>NO</th><th>PROD CODE</th><th>NAMA ARTIKEL</th><th>BARCODE</th><th>ALAMAT GUDANG</th><th style="text-align:right">FINAL QTY</th><th>STATUS</th></tr></thead><tbody id="warehouseBody"><tr><td class="empty" colspan="7">Memuat data AST...</td></tr></tbody></table>
+   </div>
+   <div class="footnote">Kriteria: minimal satu alamat valid, dan seluruh alamat artikel diawali angka 4. Jika ada alamat kepala 5, 6, 7, atau 8, artikel tidak dimasukkan. Alamat kosong/tidak terbaca tidak dianggap gudang.</div>
+  </section>
+ </section>
  <div class="footnote" style="text-align:center;margin:20px 0">AST SUMMARY DASHBOARD • Sumber: Google Sheets HASIL & SUM • Auto refresh setiap 60 detik</div>
 </main></div>
 <script>
@@ -400,10 +421,13 @@ async function fetchCSV(url){
 function switchView(view){
  const summary=view==='summary';
  $('summaryView').style.display=summary?'block':'none';
- $('sectorView').style.display=summary?'none':'block';
+ $('sectorView').style.display=view==='sector'?'block':'none';
+ $('warehouseView').style.display=view==='warehouse'?'block':'none';
  $('tabSummary').classList.toggle('active',summary);
- $('tabSector').classList.toggle('active',!summary);
- if(!summary&&!astLoaded)loadAstData();
+ $('tabSector').classList.toggle('active',view==='sector');
+ $('tabWarehouse').classList.toggle('active',view==='warehouse');
+ if(view!=='summary'&&!astLoaded)loadAstData();
+ if(view==='warehouse'&&astLoaded)renderWarehouseOnly();
 }
 function astColumn(keys){
  return astHeaders.find(h=>keys.some(k=>norm(h)===norm(k)||norm(h).includes(norm(k))))||'';
@@ -546,9 +570,47 @@ function renderAstSummary(){
   }).join('')||'<div class="empty">Artikel tidak ditemukan.</div>';
  }
 }
+
+let warehouseProducts=[];
+function warehouseHead(address){return String(address??'').trim().replace(/[^0-9]/g,'').charAt(0)}
+function renderWarehouseOnly(){
+ if(!astLoaded)return;
+ const codeKey=astColumn(['Prod cd']),barcodeKey=astColumn(['Barcode']),nameKey=astColumn(['Prod nm']),addressKey=astColumn(['Sector']),qtyKey=astColumn(['Final Qty']);
+ const grouped=new Map();
+ astRows.forEach(row=>{
+  const code=String(row[codeKey]??'').trim(),barcode=String(row[barcodeKey]??'').trim(),name=String(row[nameKey]??'').trim();
+  const key=code?'P:'+code:'B:'+barcode;
+  if(key==='B:')return;
+  if(!grouped.has(key))grouped.set(key,{code,barcode,name,addresses:[],qty:0});
+  const item=grouped.get(key),address=String(row[addressKey]??'').trim();
+  item.addresses.push(address);
+  if(warehouseHead(address)==='4')item.qty+=num(row[qtyKey]);
+ });
+ warehouseProducts=[...grouped.values()].filter(p=>p.addresses.length>0&&p.addresses.every(a=>warehouseHead(a)==='4'));
+ const cats=new Set(warehouseProducts.map(p=>p.cat).filter(Boolean));
+ $('warehouseSkuCount').textContent=fmt(warehouseProducts.length);
+ $('warehouseQty').textContent=fmt(warehouseProducts.reduce((s,p)=>s+p.qty,0));
+ $('warehouseCatCount').textContent=cats.size?fmt(cats.size):'-';
+ $('warehouseCategory').innerHTML='<option value="">Semua Category</option>';
+ $('warehouseHint').textContent='Data live dari sheet AST • '+fmt(astRows.length)+' baris diperiksa';
+ renderWarehouseRows();
+}
+function renderWarehouseRows(){
+ const q=$('warehouseSearch').value.trim().toLocaleLowerCase('id-ID');
+ const cat=$('warehouseCategory').value;
+ const rows=warehouseProducts.filter(p=>(!cat||p.cat===cat)&&[p.code,p.name,p.barcode,...p.addresses].join(' ').toLocaleLowerCase('id-ID').includes(q));
+ $('warehouseResultCount').textContent=fmt(rows.length)+' dari '+fmt(warehouseProducts.length)+' artikel';
+ $('warehouseBody').innerHTML=rows.map((p,i)=>'<tr><td>'+fmt(i+1)+'</td><td><b>'+esc(p.code||'-')+'</b></td><td>'+esc(p.name||'-')+'</td><td>'+esc(p.barcode||'-')+'</td><td style="white-space:normal;min-width:125px;max-width:160px"><div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px">'+p.addresses.map(a=>'<span style="display:block;background:#f3f6fb;border:1px solid #e7edf5;border-radius:6px;padding:4px 7px;font-size:10px">'+esc(a)+'</span>').join('')+'</div></td><td style="text-align:right;font-weight:700">'+fmt(p.qty)+'</td><td><span class="pill warn">GUDANG SAJA</span></td></tr>').join('')||'<tr><td class="empty" colspan="7">Tidak ada artikel yang hanya berada di alamat gudang.</td></tr>';
+}
+
 function renderAstArticles(){renderAstSummary();}
 $('tabSummary').addEventListener('click',()=>switchView('summary'));
 $('tabSector').addEventListener('click',()=>switchView('sector'));
+$('tabWarehouse').addEventListener('click',()=>switchView('warehouse'));
+$('refreshWarehouse').addEventListener('click',()=>{astLoaded=false;loadAstData()});
+$('warehouseSearch').addEventListener('input',renderWarehouseOnly);
+$('warehouseCategory').addEventListener('change',renderWarehouseOnly);
+$('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';$('warehouseCategory').value='';renderWarehouseOnly()});
 $('refreshAst').addEventListener('click',()=>{astLoaded=false;loadAstData()});
 $('astFind').addEventListener('click',()=>renderAstSummary());
 $('astSearch').addEventListener('keydown',e=>{if(e.key==='Enter')renderAstSummary()});
@@ -738,6 +800,6 @@ $('download').onclick=()=>{
  link.download='AST_Category_Summary_HASIL.csv';link.click();URL.revokeObjectURL(link.href);
 };
 const initialView=new URLSearchParams(location.search).get('view');
-if(initialView==='sector')switchView('sector');
+if(initialView==='sector'||initialView==='warehouse')switchView(initialView);
 load();setInterval(()=>{load();if(astLoaded)loadAstData()},60000);
 </script></body></html>
