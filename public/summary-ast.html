@@ -444,6 +444,8 @@ function astColumn(keys){
 }
 function astVal(row,keys){const key=astColumn(keys);return key?String(row[key]??'').trim():''}
 function loadAstData(){
+ $('astSectorBody').innerHTML='<tr><td class="empty" colspan="4">Memuat data AST...</td></tr>';
+ $('astArticleBody').innerHTML='<tr><td class="empty">Memuat data AST...</td></tr>';
  return fetchCSV(AST_CSV_URL).then(data=>{
   astHeaders=data.headers;astRows=data.rows;astLoaded=true;
   const required=['Prod cd','Barcode','Prod nm','Sector','Count1','Count3','Final Qty'];
@@ -458,21 +460,6 @@ function loadAstData(){
   $('astSectorBody').innerHTML=`<tr><td class="empty" colspan="4">Gagal memuat sheet AST: ${esc(error.message)}</td></tr>`;
   if(warehouseDataRequested)$('warehouseBody').innerHTML='<tr><td class="empty" colspan="9">Gagal memuat AST: '+esc(error.message)+'</td></tr>';
   throw error;
- });
- /* legacy body retained below */ 
- $('astSectorBody').innerHTML='<tr><td class="empty" colspan="4">Memuat data AST...</td></tr>';
- $('astArticleBody').innerHTML='<tr><td class="empty">Memuat data AST...</td></tr>';
- fetchCSV(AST_CSV_URL).then(data=>{
-  astHeaders=data.headers;astRows=data.rows;astLoaded=true;
-  const required=['Prod cd','Barcode','Prod nm','Sector','Count1','Count3','Final Qty'];
-  const missing=required.filter(k=>!astColumn([k]));
-  if(missing.length)throw Error('Kolom tidak ditemukan: '+missing.join(', '));
-  populateAstSectorFilter();renderAstSummary();
-  $('sectorHint').textContent='Sumber: sheet AST • pilih sector untuk melihat artikel di dalamnya';
-  if(new URLSearchParams(location.search).get('view')==='warehouse')renderWarehouseOnly();
- }).catch(error=>{
-  astLoaded=false;
-  $('astSectorBody').innerHTML=`<tr><td class="empty" colspan="4">Gagal memuat sheet AST: ${esc(error.message)}</td></tr>`;
  });
 }
 function getAstGroups(){
