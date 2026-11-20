@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827"><title>AST • Gudang vs Display — Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f6fb;--panel:#fff;--ink:#172235;--muted:#718096;--line:#e7edf5;--nav:#101827;--blue:#326cf4;--cyan:#18b6c9;--green:#16a36a;--orange:#ee9b32;--red:#e05252;--shadow:0 8px 28px #1b2b4810}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif}.shell{display:grid;grid-template-columns:245px 1fr;min-height:100vh}.sidebar{background:var(--nav);color:#fff;padding:25px 17px;display:flex;flex-direction:column;gap:26px}.brand{display:flex;align-items:center;gap:11px;padding:0 8px}.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#3677ff,#18c6cf);display:grid;place-items:center;font-weight:800}.brand b{font:800 16px Manrope}.brand small{display:block;color:#93a2b8;font-size:10px;margin-top:3px}.nav-label{color:#71829b;font-size:10px;font-weight:800;letter-spacing:1.4px;padding:0 12px;margin-bottom:5px}.nav{display:grid;gap:5px}.nav button{border:0;text-align:left;background:transparent;color:#b8c4d6;border-radius:10px;padding:12px;font:600 12px 'DM Sans';cursor:pointer}.nav button.active{background:#25334b;color:#fff}.nav button span{display:inline-block;width:24px}.side-foot{margin-top:auto;color:#8290a5;font-size:10px;line-height:1.7;padding:0 9px}.main{padding:28px 32px;max-width:1500px;width:100%;margin:auto}.top{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:19px}.eyebrow{font-size:10px;color:var(--blue);font-weight:800;letter-spacing:1.4px}.top h1{font:800 25px Manrope;margin:5px 0}.sub{font-size:12px;color:var(--muted);line-height:1.6}.actions{display:flex;gap:8px;align-items:center}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:10px 13px;border-radius:9px;font:700 11px 'DM Sans';cursor:pointer}.btn.primary{background:var(--blue);border-color:var(--blue);color:white}.mock{background:#fff4df;border:1px solid #f6d9a7;color:#98621b;border-radius:10px;padding:10px 13px;font-size:11px;margin-bottom:15px}.tabs{display:flex;gap:7px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:15px}.tabs button{border:1px solid var(--line);background:#fff;color:#64748b;border-radius:9px;padding:10px 13px;font:700 11px 'DM Sans';cursor:pointer}.tabs button.active{background:#eaf1ff;border-color:#cbdcff;color:var(--blue)}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:15px}.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}.metric{padding:16px}.metric-label{font-size:11px;color:var(--muted)}.metric strong{display:block;font:800 25px Manrope;margin:10px 0 3px}.metric small{font-size:10px;color:var(--muted)}.metric.blue strong{color:var(--blue)}.metric.orange strong{color:#c27b18}.metric.green strong{color:var(--green)}.metric.cyan strong{color:#1297a8}.panel{padding:17px;margin-bottom:14px}.panel-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:13px}.panel h2{font:800 14px Manrope;margin:0}.panel-head small{font-size:10px;color:var(--muted)}.filters{display:flex;gap:8px;margin-bottom:12px}.filters input,.filters select{border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:#fff;font:11px 'DM Sans';min-width:0}.filters input{flex:1}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;white-space:nowrap;font-size:11px}th{text-align:left;background:#f7f9fc;color:#728096;font-size:9px;letter-spacing:.5px;position:sticky;top:0}td,th{padding:11px 12px;border-bottom:1px solid #edf1f6}td{color:#344256}tbody tr[data-cat]{cursor:pointer}tbody tr[data-cat]:hover td{background:#f0f6ff}.num{text-align:right;font-variant-numeric:tabular-nums}.pill{display:inline-block;padding:4px 8px;border-radius:20px;font-size:9px;font-weight:800}.pill.warehouse{background:#fff2df;color:#a8660c}.pill.display{background:#e7f8f0;color:#137a50}.pill.both{background:#eaf1ff;color:#285ac4}.detail{display:none}.detail.show{display:block}.detail-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:12px}.note{font-size:10px;color:var(--muted);line-height:1.6;background:#f8fafd;border-radius:9px;padding:11px;margin-top:10px}.empty{text-align:center;color:var(--muted);padding:25px}.bar{height:7px;border-radius:10px;background:#edf1f7;overflow:hidden;display:flex;min-width:110px}.bar i{display:block;height:100%}.foot{color:#8793a5;font-size:9px;margin:10px 2px}@media(max-width:900px){.shell{grid-template-columns:200px 1fr}.main{padding:20px}.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){.shell{display:block}.sidebar{display:none}.main{padding:15px 11px}.top{display:block}.actions{margin-top:10px}.tabs{overflow:auto}.tabs button{white-space:nowrap;flex:0 0 auto}.cards{gap:7px}.metric{padding:12px}.metric strong{font-size:21px}.metric-label{font-size:10px}.panel{padding:12px}.detail-grid{grid-template-columns:1fr}.filters{flex-wrap:wrap}.filters input{flex-basis:100%}td,th{padding:10px 9px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+ <div class="brand"><div class="logo">AST</div><div><b>AST SUMMARY</b><small>Stock Take Intelligence</small></div></div>
+ <div><div class="nav-label">ANALISIS AST</div><div class="nav">
+  <button><span>▦</span>Category Summary</button>
+  <button><span>▤</span>Sector &amp; Article</button>
+  <button class="active"><span>◫</span>Gudang vs Display</button>
+ </div></div>
+ <div class="side-foot">MOCKUP • Tampilan dan logika simulasi<br>Belum terhubung ke data produksi</div>
+</aside>
+<main class="main">
+ <header class="top"><div><div class="eyebrow">AST STOCK DISTRIBUTION</div><h1>Gudang vs Display</h1><div class="sub">Pemisahan posisi artikel berdasarkan alamat AST: kepala alamat 4 = Gudang, selain 4 = Area Display.</div></div><div class="actions"><button class="btn" onclick="resetView()">↻ Reset tampilan</button><button class="btn primary" onclick="alert('Mockup saja — belum ada export data produksi.')">↓ Export</button></div></header>
+ <div class="mock"><b>MODE MOCKUP</b> — Angka dan artikel di bawah hanya data contoh untuk menyepakati tampilan. Tidak mengubah Summary AST yang aktif.</div>
+ <div class="tabs"><button>Category Summary</button><button>Sector &amp; Article</button><button class="active">Gudang vs Display</button></div>
+ <section class="cards">
+  <div class="card metric blue"><div class="metric-label">TOTAL ARTIKEL</div><strong id="kTotal">1.248</strong><small>Artikel unik dalam AST</small></div>
+  <div class="card metric orange"><div class="metric-label">GUDANG SAJA</div><strong id="kWarehouse">286</strong><small>Hanya ditemukan di alamat kepala 4</small></div>
+  <div class="card metric green"><div class="metric-label">SUDAH DI DISPLAY</div><strong id="kDisplay">812</strong><small>Ditemukan di alamat non-4</small></div>
+  <div class="card metric cyan"><div class="metric-label">GUDANG + DISPLAY</div><strong id="kBoth">150</strong><small>Ada di kedua lokasi</small></div>
+ </section>
+ <section class="panel">
+  <div class="panel-head"><div><h2>Perbandingan per Category</h2><small>Klik satu kategori untuk melihat daftar artikel dan alamatnya</small></div><small id="categoryCount">6 kategori contoh</small></div>
+  <div class="filters"><input id="search" placeholder="Cari CAT atau nama category..." oninput="renderCategories()"><select id="status" onchange="renderCategories()"><option value="all">Semua kondisi</option><option value="warehouse">Gudang saja</option><option value="display">Ada di display</option><option value="both">Gudang + display</option></select></div>
+  <div class="table-wrap"><table><thead><tr><th>CAT</th><th>NAMA CATEGORY</th><th class="num">TOTAL SKU</th><th class="num">GUDANG SAJA</th><th class="num">DISPLAY</th><th class="num">GUDANG + DISPLAY</th><th>KOMPOSISI</th></tr></thead><tbody id="categoryRows"></tbody></table></div>
+  <div class="note"><b>Aturan klasifikasi:</b> sistem mengelompokkan per artikel unik. Jika semua alamat artikel diawali angka 4 → <b>Gudang saja</b>. Jika ada alamat selain 4 → artikel terdeteksi di Display. Jika artikel punya alamat kepala 4 sekaligus alamat non-4 → <b>Gudang + Display</b>. Qty tidak dijumlahkan lintas alamat untuk menentukan status.</div>
+ </section>
+ <section class="panel detail" id="detail">
+  <div class="panel-head"><div><h2 id="detailTitle">Detail Category</h2><small id="detailMeta"></small></div><button class="btn" onclick="closeDetail()">Tutup ✕</button></div>
+  <div class="filters"><input id="detailSearch" placeholder="Cari product code, nama artikel, barcode, atau alamat..." oninput="renderDetail()"><select id="detailStatus" onchange="renderDetail()"><option value="all">Semua status</option><option value="warehouse">Gudang saja</option><option value="display">Display saja</option><option value="both">Gudang + Display</option></select></div>
+  <div class="table-wrap"><table><thead><tr><th>PROD CODE</th><th>NAMA ARTIKEL</th><th>BARCODE</th><th>ALAMAT AST</th><th>QTY</th><th>KLASIFIKASI</th></tr></thead><tbody id="detailRows"></tbody></table></div>
+ </section>
+ <div class="foot">Mockup konsep • sumber produksi yang direncanakan: sheet SUM (CAT) + sheet AST (Prod cd, Barcode, Prod nm, Sector, Final Qty).</div>
+</main>
+</div>
+<script>
+const demo=[
+{cat:'101',name:'FOOD - SNACK',items:[
+['100101','KERIPIK KENTANG 68G','8991001001010',[['4-01-01',24]]],
+['100102','BISKUIT COKELAT 120G','8991001001027',[['4-01-02',12],['1-02-01',8]]],
+['100103','KACANG OVEN 100G','8991001001034',[['2-03-01',16]]],
+['100104','WAFER VANILA 90G','8991001001041',[['4-01-03',10],['3-01-02',6]]]]},
+{cat:'102',name:'FOOD - BEVERAGE',items:[
+['100201','AIR MINERAL 600ML','8991001002017',[['4-02-01',48]]],
+['100202','TEH BOTOL 450ML','8991001002024',[['1-04-02',18]]],
+['100203','SUSU UHT 1L','8991001002031',[['4-02-02',20],['2-02-01',12]]]]},
+{cat:'201',name:'NON FOOD - HOME',items:[
+['200101','PENGHARUM RUANGAN','8992001001018',[['4-03-01',9]]],
+['200102','CAIRAN PEMBERSIH','8992001001025',[['2-05-01',14]]],
+['200103','TISU WAJAH','8992001001032',[['4-03-02',30],['1-03-02',12]]]]},
+{cat:'202',name:'NON FOOD - PERSONAL CARE',items:[
+['200201','SABUN MANDI','8992001002015',[['1-06-01',22]]],
+['200202','SHAMPOO 170ML','8992001002022',[['4-04-01',15]]],
+['200203','PASTA GIGI','8992001002039',[['4-04-02',12],['1-06-02',9]]]]},
+{cat:'301',name:'FRESH - DAIRY',items:[
+['300101','YOGURT CUP','8993001001012',[['4-05-01',8]]],
+['300102','KEJU SLICE','8993001001029',[['2-07-01',11]]]]},
+{cat:'302',name:'FRESH - FROZEN',items:[
+['300201','NUGGET AYAM','8993001002019',[['4-06-01',16],['3-08-01',10]]],
+['300202','SOSIS SAPI','8993001002026',[['4-06-02',13]]]]}
+];
+const fmt=n=>new Intl.NumberFormat('id-ID').format(n);
+const classify=addresses=>{const warehouse=addresses.some(a=>String(a[0]).trim().startsWith('4'));const display=addresses.some(a=>!String(a[0]).trim().startsWith('4'));return warehouse&&display?'both':warehouse?'warehouse':display?'display':'unknown'};
+const all=demo.flatMap(c=>c.items.map(i=>({cat:c.cat,category:c.name,code:i[0],name:i[1],barcode:i[2],addresses:i[3],status:classify(i[3])})));
+const totals={warehouse:all.filter(x=>x.status==='warehouse').length,display:all.filter(x=>x.status==='display').length,both:all.filter(x=>x.status==='both').length};
+document.getElementById('kTotal').textContent=fmt(all.length);document.getElementById('kWarehouse').textContent=fmt(totals.warehouse);document.getElementById('kDisplay').textContent=fmt(totals.display+totals.both);document.getElementById('kBoth').textContent=fmt(totals.both);
+const labels={warehouse:'Gudang saja',display:'Display saja',both:'Gudang + Display',unknown:'Alamat belum terbaca'};
+let activeCat='';
+function catStats(c){const a=c.items.map(i=>({addresses:i[3],status:classify(i[3])}));return{total:a.length,warehouse:a.filter(x=>x.status==='warehouse').length,display:a.filter(x=>x.status==='display').length,both:a.filter(x=>x.status==='both').length};}
+function renderCategories(){const q=document.getElementById('search').value.toLowerCase();const st=document.getElementById('status').value;const rows=demo.filter(c=>(c.cat+' '+c.name).toLowerCase().includes(q)).map(c=>({c,s:catStats(c)})).filter(x=>st==='all'||(st==='warehouse'?x.s.warehouse>0:st==='display'?x.s.display+x.s.both>0:x.s.both>0));document.getElementById('categoryCount').textContent=rows.length+' kategori';document.getElementById('categoryRows').innerHTML=rows.map(({c,s})=>{const pct=s.total?Math.round((s.display+s.both)/s.total*100):0;return '<tr data-cat="'+c.cat+'" onclick="openCategory(\''+c.cat+'\')"><td><b>'+c.cat+'</b></td><td>'+c.name+'</td><td class="num">'+fmt(s.total)+'</td><td class="num">'+fmt(s.warehouse)+'</td><td class="num">'+fmt(s.display)+'</td><td class="num">'+fmt(s.both)+'</td><td><div style="display:flex;align-items:center;gap:8px"><div class="bar"><i style="width:'+pct+'%;background:linear-gradient(90deg,#16a36a,#18b6c9)"></i></div><small>'+pct+'%</small></div></td></tr>'}).join('')||'<tr><td colspan="7" class="empty">Kategori tidak ditemukan.</td></tr>';}
+function openCategory(cat){activeCat=cat;document.getElementById('detail').classList.add('show');const c=demo.find(x=>x.cat===cat);const s=catStats(c);document.getElementById('detailTitle').textContent='CAT '+c.cat+' • '+c.name;document.getElementById('detailMeta').textContent=s.total+' artikel unik • '+s.warehouse+' gudang saja • '+s.display+' display saja • '+s.both+' gudang + display';document.getElementById('detailSearch').value='';document.getElementById('detailStatus').value='all';renderDetail();document.getElementById('detail').scrollIntoView({behavior:'smooth',block:'start'});}
+function renderDetail(){const c=demo.find(x=>x.cat===activeCat);if(!c)return;const q=document.getElementById('detailSearch').value.toLowerCase();const st=document.getElementById('detailStatus').value;const rows=c.items.map(i=>({code:i[0],name:i[1],barcode:i[2],addresses:i[3],status:classify(i[3])})).filter(x=>(x.code+' '+x.name+' '+x.barcode+' '+x.addresses.map(a=>a[0]).join(' ')).toLowerCase().includes(q)&&(st==='all'||x.status===st));document.getElementById('detailRows').innerHTML=rows.map(x=>'<tr><td>'+x.code+'</td><td>'+x.name+'</td><td>'+x.barcode+'</td><td>'+x.addresses.map(a=>a[0]+' ('+fmt(a[1])+')').join(', ')+'</td><td class="num">'+fmt(x.addresses.reduce((n,a)=>n+a[1],0))+'</td><td><span class="pill '+x.status+'">'+labels[x.status]+'</span></td></tr>').join('')||'<tr><td colspan="6" class="empty">Tidak ada artikel sesuai filter.</td></tr>';}
+function closeDetail(){document.getElementById('detail').classList.remove('show');activeCat='';}
+function resetView(){document.getElementById('search').value='';document.getElementById('status').value='all';closeDetail();renderCategories();}
+renderCategories();
+</script>
+</body></html>
