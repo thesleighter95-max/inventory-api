@@ -581,17 +581,22 @@ async function renderWarehouseOnly(){
  try{
   const sum=await fetchCSV(SUM_CSV_URL);
   const h=sum.headers;
+  // SUM: kolom B = Prod cd, kolom A = Cat-1, kolom J = Cat-1 Name.
   const codeCol=h.find(x=>['prodcd','productcode','prodcode','itemcode','articlecode','sku'].includes(norm(x)));
-  const catCol=h.find(x=>['cat','catcode','category'].includes(norm(x)));
-  const catNameCol=h.find(x=>['catname','categoryname','catdescription','categorydescription'].includes(norm(x)));
-  if(codeCol&&catCol)sum.rows.forEach(r=>{const k=String(r[codeCol]??'').trim();if(k)categoryByCode.set(k,{cat:String(r[catCol]??'').trim(),category:String(catNameCol?r[catNameCol]??'':'').trim()})});
+  const catCol=h.find(x=>['cat1','cat','catcode','category'].includes(norm(x)));
+  const catNameCol=h.find(x=>['cat1name','catname','categoryname','catdescription','categorydescription'].includes(norm(x)));
+  const articleKey=value=>String(value??'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(codeCol&&catCol)sum.rows.forEach(r=>{
+   const k=articleKey(r[codeCol]);
+   if(k)categoryByCode.set(k,{cat:String(r[catCol]??'').trim(),category:String(catNameCol?r[catNameCol]??'':'').trim()});
+  });
  }catch(e){console.warn('Kategori SUM tidak tersedia untuk Warehouse Only:',e)}
  const grouped=new Map();
  astRows.forEach(row=>{
   const code=String(row[codeKey]??'').trim(),barcode=String(row[barcodeKey]??'').trim(),name=String(row[nameKey]??'').trim();
   const key=code?'P:'+code:'B:'+barcode;
   if(key==='B:')return;
-  if(!grouped.has(key)){const meta=categoryByCode.get(code)||{};grouped.set(key,{code,barcode,name,cat:meta.cat||'',category:meta.category||'',addresses:[],qty:0});}
+  if(!grouped.has(key)){const meta=categoryByCode.get(String(code).trim().toUpperCase().replace(/[^A-Z0-9]/g,''))||{};grouped.set(key,{code,barcode,name,cat:meta.cat||'',category:meta.category||'',addresses:[],qty:0});}
   const item=grouped.get(key),address=String(row[addressKey]??'').trim();
   item.addresses.push(address);
   if(warehouseHead(address)==='4')item.qty+=num(row[qtyKey]);
