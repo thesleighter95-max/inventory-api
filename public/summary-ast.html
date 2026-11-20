@@ -359,20 +359,26 @@
  </section>
  <section id="warehouseView" class="view-panel" style="display:none">
   <section class="panel summary-panel">
-   <div class="panel-head"><div><h3>Warehouse Only</h3><small id="warehouseHint">Artikel yang seluruh alamat AST-nya berada di gudang (digit pertama 4)</small></div><button class="btn" id="refreshWarehouse" type="button">↻ Refresh AST</button></div>
+   <div class="panel-head"><div><h3>Warehouse Only</h3><small id="warehouseHint">Data belum ditampilkan. Tekan Tampilkan Data jika ingin melihat daftar artikel.</small></div><button class="btn" id="refreshWarehouse" type="button">↻ Refresh AST</button></div>
    <div class="sector-kpis">
     <div class="sector-kpi"><span>ARTIKEL HANYA DI GUDANG</span><strong id="warehouseSkuCount">0</strong></div>
     <div class="sector-kpi"><span>TOTAL QTY GUDANG</span><strong id="warehouseQty">0</strong></div>
     <div class="sector-kpi"><span>CATEGORY TERLIBAT</span><strong id="warehouseCatCount">-</strong></div>
    </div>
    <div class="detail-filters">
-    <input id="warehouseSearch" type="search" placeholder="Cari kode produk, nama artikel, barcode, atau alamat...">
-    <select id="warehouseCategory"><option value="">Semua Category</option></select>
+    <input id="warehouseSearch" type="search" placeholder="Cari kode produk, nama artikel, barcode, atau alamat..." disabled>
+    <select id="warehouseCategory" disabled><option value="">Semua Category</option></select>
     <button class="btn" id="warehouseReset" type="button">Reset</button>
    </div>
-   <div class="detail-results"><span id="warehouseResultCount">0 artikel</span><span>Artikel dengan alamat display tidak ditampilkan</span></div>
-   <div class="table-wrap" style="overflow:auto">
-    <table style="min-width:850px"><thead><tr><th>NO</th><th>CAT</th><th>NAMA CATEGORY</th><th>PROD CODE</th><th>NAMA ARTIKEL</th><th>BARCODE</th><th>ALAMAT GUDANG</th><th style="text-align:right">FINAL QTY</th><th>STATUS</th></tr></thead><tbody id="warehouseBody"><tr><td class="empty" colspan="9">Memuat data AST...</td></tr></tbody></table>
+   <div style="display:flex;justify-content:center;margin:12px 0"><button class="btn" id="warehouseShowData" type="button">Tampilkan Data</button></div>
+   <div class="detail-results"><span id="warehouseResultCount">Data belum dimuat</span><span>Artikel dengan alamat display tidak ditampilkan</span></div>
+   <div class="table-wrap" id="warehouseTableWrap" style="overflow:auto;display:none">
+    <table style="min-width:850px"><thead><tr><th>NO</th><th>CAT</th><th>NAMA CATEGORY</th><th>PROD CODE</th><th>NAMA ARTIKEL</th><th>BARCODE</th><th>ALAMAT GUDANG</th><th style="text-align:right">FINAL QTY</th><th>STATUS</th></tr></thead><tbody id="warehouseBody"><tr><td class="empty" colspan="9">Tekan Tampilkan Data.</td></tr></tbody></table>
+   </div>
+   <div id="warehousePager" style="display:none;align-items:center;justify-content:center;gap:12px;margin:14px 0">
+    <button class="btn" id="warehousePrev" type="button" disabled>← Sebelumnya</button>
+    <span id="warehousePageInfo">Halaman 1</span>
+    <button class="btn" id="warehouseNext" type="button">Berikutnya →</button>
    </div>
    <div class="footnote">Kriteria: minimal satu alamat valid, dan seluruh alamat artikel diawali angka 4. Jika ada alamat kepala 5, 6, 7, atau 8, artikel tidak dimasukkan. Alamat kosong/tidak terbaca tidak dianggap gudang.</div>
   </section>
@@ -426,14 +432,34 @@ function switchView(view){
  $('tabSummary').classList.toggle('active',summary);
  $('tabSector').classList.toggle('active',view==='sector');
  $('tabWarehouse').classList.toggle('active',view==='warehouse');
- if(view!=='summary'&&!astLoaded)loadAstData();
- if(view==='warehouse'&&astLoaded)renderWarehouseOnly();
+ if(view==='sector'&&!astLoaded)loadAstData();
+ if(view==='warehouse'&&!warehouseDataRequested){
+  $('warehouseBody').innerHTML='<tr><td class="empty" colspan="9">Tekan Tampilkan Data untuk memuat daftar artikel.</td></tr>';
+  $('warehouseResultCount').textContent='Data belum dimuat';
+ }
+ if(view==='warehouse'&&warehouseDataRequested&&astLoaded&&!warehouseProducts.length)renderWarehouseOnly();
 }
 function astColumn(keys){
  return astHeaders.find(h=>keys.some(k=>norm(h)===norm(k)||norm(h).includes(norm(k))))||'';
 }
 function astVal(row,keys){const key=astColumn(keys);return key?String(row[key]??'').trim():''}
 function loadAstData(){
+ return fetchCSV(AST_CSV_URL).then(data=>{
+  astHeaders=data.headers;astRows=data.rows;astLoaded=true;
+  const required=['Prod cd','Barcode','Prod nm','Sector','Count1','Count3','Final Qty'];
+  const missing=required.filter(k=>!astColumn([k]));
+  if(missing.length)throw Error('Kolom tidak ditemukan: '+missing.join(', '));
+  populateAstSectorFilter();renderAstSummary();
+  $('sectorHint').textContent='Sumber: sheet AST • pilih sector untuk melihat artikel di dalamnya';
+  if(new URLSearchParams(location.search).get('view')==='warehouse'&&warehouseDataRequested)renderWarehouseOnly();
+  return true;
+ }).catch(error=>{
+  astLoaded=false;
+  $('astSectorBody').innerHTML=`<tr><td class="empty" colspan="4">Gagal memuat sheet AST: ${esc(error.message)}</td></tr>`;
+  if(warehouseDataRequested)$('warehouseBody').innerHTML='<tr><td class="empty" colspan="9">Gagal memuat AST: '+esc(error.message)+'</td></tr>';
+  throw error;
+ });
+ /* legacy body retained below */ 
  $('astSectorBody').innerHTML='<tr><td class="empty" colspan="4">Memuat data AST...</td></tr>';
  $('astArticleBody').innerHTML='<tr><td class="empty">Memuat data AST...</td></tr>';
  fetchCSV(AST_CSV_URL).then(data=>{
@@ -572,7 +598,8 @@ function renderAstSummary(){
  }
 }
 
-let warehouseProducts=[];
+let warehouseProducts=[],warehouseDataRequested=false,warehousePage=1;
+const WAREHOUSE_PAGE_SIZE=10;
 function warehouseHead(address){return String(address??'').trim().replace(/[^0-9]/g,'').charAt(0)}
 async function renderWarehouseOnly(){
  if(!astLoaded)return;
@@ -606,26 +633,53 @@ async function renderWarehouseOnly(){
  $('warehouseSkuCount').textContent=fmt(warehouseProducts.length);
  $('warehouseQty').textContent=fmt(warehouseProducts.reduce((s,p)=>s+p.qty,0));
  $('warehouseCatCount').textContent=cats.size?fmt(cats.size):'-';
- $('warehouseCategory').innerHTML='<option value="">Semua Category</option>'+[...cats].sort((a,b)=>a.localeCompare(b,'id',{numeric:true})).map(code=>{const item=warehouseProducts.find(p=>p.cat===code);return '<option value="'+esc(code)+'">'+esc(code+(item&&item.category?' • '+item.category:''))+'</option>'}).join('');
+ const categoryMap=new Map();
+ warehouseProducts.forEach(p=>{if(p.cat)categoryMap.set(p.cat,p.category||'')});
+ $('warehouseCategory').innerHTML='<option value="">Semua Category</option>'+[...categoryMap.entries()].sort((a,b)=>a[0].localeCompare(b[0],'id',{numeric:true})).map(([code,name])=>'<option value="'+esc(code)+'">'+esc(code+(name?' • '+name:''))+'</option>').join('');
+ $('warehouseSearch').disabled=false;$('warehouseCategory').disabled=false;
  $('warehouseHint').textContent='Data live dari sheet AST • '+fmt(astRows.length)+' baris diperiksa';
+ $('warehouseTableWrap').style.display='block';$('warehousePager').style.display='flex';
  renderWarehouseRows();
 }
 function renderWarehouseRows(){
  const q=$('warehouseSearch').value.trim().toLocaleLowerCase('id-ID');
  const cat=$('warehouseCategory').value;
- const rows=warehouseProducts.filter(p=>(!cat||p.cat===cat)&&[p.code,p.name,p.barcode,...p.addresses].join(' ').toLocaleLowerCase('id-ID').includes(q));
- $('warehouseResultCount').textContent=fmt(rows.length)+' dari '+fmt(warehouseProducts.length)+' artikel';
- $('warehouseBody').innerHTML=rows.map((p,i)=>'<tr><td>'+fmt(i+1)+'</td><td>'+esc(p.cat||'-')+'</td><td>'+esc(p.category||'-')+'</td><td><b>'+esc(p.code||'-')+'</b></td><td>'+esc(p.name||'-')+'</td><td>'+esc(p.barcode||'-')+'</td><td style="white-space:normal;min-width:125px;max-width:160px"><div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px">'+p.addresses.map(a=>'<span style="display:block;background:#f3f6fb;border:1px solid #e7edf5;border-radius:6px;padding:4px 7px;font-size:10px">'+esc(a)+'</span>').join('')+'</div></td><td style="text-align:right;font-weight:700">'+fmt(p.qty)+'</td><td><span class="pill warn">GUDANG SAJA</span></td></tr>').join('')||'<tr><td class="empty" colspan="9">Tidak ada artikel yang hanya berada di alamat gudang.</td></tr>';
+ const rows=warehouseProducts.filter(p=>(!cat||p.cat===cat)&&[p.code,p.name,p.barcode,p.cat,p.category,...p.addresses].join(' ').toLocaleLowerCase('id-ID').includes(q));
+ const pages=Math.max(1,Math.ceil(rows.length/WAREHOUSE_PAGE_SIZE));
+ warehousePage=Math.min(Math.max(1,warehousePage),pages);
+ const start=(warehousePage-1)*WAREHOUSE_PAGE_SIZE;
+ const pageRows=rows.slice(start,start+WAREHOUSE_PAGE_SIZE);
+ $('warehouseResultCount').textContent=fmt(rows.length)+' artikel ditemukan • '+(rows.length?fmt(start+1)+'–'+fmt(Math.min(start+WAREHOUSE_PAGE_SIZE,rows.length)):'0')+' ditampilkan';
+ $('warehouseBody').innerHTML=pageRows.map((p,i)=>'<tr><td>'+fmt(start+i+1)+'</td><td>'+esc(p.cat||'-')+'</td><td>'+esc(p.category||'-')+'</td><td><b>'+esc(p.code||'-')+'</b></td><td>'+esc(p.name||'-')+'</td><td>'+esc(p.barcode||'-')+'</td><td style="white-space:normal;min-width:125px;max-width:160px"><div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px">'+p.addresses.map(a=>'<span style="display:block;background:#f3f6fb;border:1px solid #e7edf5;border-radius:6px;padding:4px 7px;font-size:10px">'+esc(a)+'</span>').join('')+'</div></td><td style="text-align:right;font-weight:700">'+fmt(p.qty)+'</td><td><span class="pill warn">GUDANG SAJA</span></td></tr>').join('')||'<tr><td class="empty" colspan="9">Tidak ada artikel yang cocok dengan filter.</td></tr>';
+ $('warehousePageInfo').textContent='Halaman '+fmt(warehousePage)+' / '+fmt(pages);
+ $('warehousePrev').disabled=warehousePage<=1;$('warehouseNext').disabled=warehousePage>=pages;
 }
 
 function renderAstArticles(){renderAstSummary();}
 $('tabSummary').addEventListener('click',()=>switchView('summary'));
 $('tabSector').addEventListener('click',()=>switchView('sector'));
 $('tabWarehouse').addEventListener('click',()=>switchView('warehouse'));
-$('refreshWarehouse').addEventListener('click',()=>{astLoaded=false;loadAstData()});
-$('warehouseSearch').addEventListener('input',renderWarehouseOnly);
-$('warehouseCategory').addEventListener('change',renderWarehouseOnly);
-$('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';$('warehouseCategory').value='';renderWarehouseOnly()});
+function requestWarehouseData(refresh){
+ warehouseDataRequested=true;
+ $('warehouseShowData').disabled=true;$('warehouseShowData').textContent='Memuat data...';
+ if(refresh)astLoaded=false;
+ if(astLoaded){
+  renderWarehouseOnly();
+  $('warehouseShowData').disabled=false;$('warehouseShowData').textContent='Perbarui Tampilan Data';
+ }else{
+  $('warehouseBody').innerHTML='<tr><td class="empty" colspan="9">Mengambil data AST dan kategori SUM...</td></tr>';
+  loadAstData().then(()=>{}).catch(()=>{}).finally(()=>{
+   $('warehouseShowData').disabled=false;$('warehouseShowData').textContent='Perbarui Tampilan Data';
+  });
+ }
+}
+$('warehouseShowData').addEventListener('click',()=>requestWarehouseData(false));
+$('refreshWarehouse').addEventListener('click',()=>requestWarehouseData(true));
+$('warehouseSearch').addEventListener('input',()=>{warehousePage=1;renderWarehouseRows()});
+$('warehouseCategory').addEventListener('change',()=>{warehousePage=1;renderWarehouseRows()});
+$('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';$('warehouseCategory').value='';warehousePage=1;if(warehouseDataRequested)renderWarehouseRows()});
+$('warehousePrev').addEventListener('click',()=>{warehousePage--;renderWarehouseRows()});
+$('warehouseNext').addEventListener('click',()=>{warehousePage++;renderWarehouseRows()});
 $('refreshAst').addEventListener('click',()=>{astLoaded=false;loadAstData()});
 $('astFind').addEventListener('click',()=>renderAstSummary());
 $('astSearch').addEventListener('keydown',e=>{if(e.key==='Enter')renderAstSummary()});
