@@ -2418,6 +2418,9 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
   <div id="dshAstSectorPanel" class="panel-container dsh-embedded-panel">
     <iframe class="dsh-embedded-frame" src="/summary-ast.html?view=sector" title="AST 2026 Sector dan Artikel" loading="lazy"></iframe>
   </div>
+  <div id="dshAstWarehousePanel" class="panel-container dsh-embedded-panel">
+    <iframe class="dsh-embedded-frame" src="/summary-ast.html?view=warehouse" title="AST 2026 Warehouse Only" loading="lazy"></iframe>
+  </div>
 
   <div id="healthPanel" class="panel-container max-w-sm mx-auto px-4 pt-4 pb-24">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;">
@@ -4215,6 +4218,7 @@ function renderUserNav(){
     '<div id="navAstSubmenu" class="ast-submenu" style="display:none">' +
     '<div id="navAstSummary" class="nav-item ast-subitem flex items-center cursor-pointer text-gray-500" onclick="switchMainTab(\'astSummary\')"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 12h16M4 19h16"></path></svg><span class="text-[9px] font-semibold">Summary</span></div>' +
     '<div id="navAstSector" class="nav-item ast-subitem flex items-center cursor-pointer text-gray-500" onclick="switchMainTab(\'astSector\')"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h18v18H3z M8 8h8v8H8z"></path></svg><span class="text-[9px] font-semibold">Sector &amp; Article</span></div>' +
+    '<div id="navAstWarehouse" class="nav-item ast-subitem flex items-center cursor-pointer text-gray-500" onclick="switchMainTab(\'astWarehouse\')"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10l9-7 9 7v10a1 1 0 01-1 1H4a1 1 0 01-1-1z M9 21v-7h6v7"></path></svg><span class="text-[9px] font-semibold">Warehouse Only</span></div>' +
     '</div>' +
     '<div id="navExpired" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'expired\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[10px] font-medium">Expired</span></div>'+
     '<div class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="window.open(\'https://pog-mataram.netlify.app/\',\'_blank\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg><span class="text-[10px] font-medium">POG</span></div>'+
@@ -5391,6 +5395,7 @@ function switchMainTab(tab){
   else if(tab==="kpi"){$("dshKpiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navDashboard");setMarquee(false);}
   else if(tab==="astSummary"){$("dshAstSummaryPanel").classList.add("active");document.body.classList.remove("light-mode");openAstSubmenu();activateNav("navAstGroup");activateNav("navAstSummary");setMarquee(false);}
   else if(tab==="astSector"){$("dshAstSectorPanel").classList.add("active");document.body.classList.remove("light-mode");openAstSubmenu();activateNav("navAstGroup");activateNav("navAstSector");setMarquee(false);}
+  else if(tab==="astWarehouse"){$("dshAstWarehousePanel").classList.add("active");document.body.classList.remove("light-mode");openAstSubmenu();activateNav("navAstGroup");activateNav("navAstWarehouse");setMarquee(false);}
   else if(tab==="dashboard"){$("dashboardPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navDashboard");setMarquee(false);initDashboard();}
 }
 function activateNav(id){var nav=$(id);if(nav){nav.classList.add("active");nav.classList.remove("text-gray-500");var ind=nav.querySelector(".nav-indicator");if(ind)ind.style.opacity="1"}}
