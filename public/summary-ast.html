@@ -373,7 +373,7 @@
    <div style="display:flex;justify-content:center;margin:12px 0"><button class="btn" id="warehouseShowData" type="button">Tampilkan Data</button></div>
    <div class="detail-results" id="warehouseMeta" style="display:none"><span id="warehouseResultCount">Data belum dimuat</span><span></span></div>
    <div class="table-wrap" id="warehouseTableWrap" style="overflow:auto;display:none">
-    <table style="min-width:850px"><thead><tr><th>NO</th><th>CAT</th><th>NAMA CATEGORY</th><th>PROD CODE</th><th>NAMA ARTIKEL</th><th>BARCODE</th><th>ALAMAT GUDANG</th><th style="text-align:right">FINAL QTY</th><th>STATUS</th></tr></thead><tbody id="warehouseBody"><tr><td class="empty" colspan="9">Tekan Tampilkan Data.</td></tr></tbody></table>
+    <table style="min-width:850px"><thead><tr><th>NO</th><th>CAT</th><th>NAMA CATEGORY</th><th>PROD CODE</th><th>NAMA ARTIKEL</th><th>BARCODE</th><th>ALAMAT GUDANG</th><th style="text-align:right">FINAL QTY</th><th>STATUS DISPLAY</th></tr></thead><tbody id="warehouseBody"><tr><td class="empty" colspan="9">Tekan Tampilkan Data.</td></tr></tbody></table>
    </div>
    <div id="warehousePager" style="display:none;align-items:center;justify-content:center;gap:12px;margin:14px 0">
     <button class="btn" id="warehousePrev" type="button" disabled>← Sebelumnya</button>
@@ -586,7 +586,21 @@ function renderAstSummary(){
 }
 
 let warehouseProducts=[],warehouseDataRequested=false,warehousePage=1;
+let warehouseStatuses={},warehouseStatusLoaded=false,warehouseStatusLoading=null;
 const WAREHOUSE_PAGE_SIZE=10;
+function warehouseSessionToken(){try{const raw=localStorage.getItem('inv_sess_v1');if(!raw)return '';const session=JSON.parse(decodeURIComponent(escape(atob(raw))));return session&&session.exp>Date.now()?String(session.t||''):''}catch(e){return ''}}
+async function loadWarehouseStatuses(){
+ if(warehouseStatusLoaded)return warehouseStatuses;
+ if(warehouseStatusLoading)return warehouseStatusLoading;
+ warehouseStatusLoading=(async()=>{const token=warehouseSessionToken();if(!token)throw new Error('Sesi login tidak ditemukan. Silakan login kembali.');const response=await fetch('/api/warehouse-status',{headers:{Authorization:'Bearer '+token},cache:'no-store'});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.message||'Gagal mengambil status display.');warehouseStatuses=data.statuses||{};warehouseStatusLoaded=true;return warehouseStatuses})();
+ try{return await warehouseStatusLoading}finally{warehouseStatusLoading=null}
+}
+async function saveWarehouseStatus(productCode,displayed){
+ const token=warehouseSessionToken();if(!token)throw new Error('Sesi login tidak ditemukan. Silakan login kembali.');
+ const response=await fetch('/api/warehouse-status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({productCode,displayed})});
+ const data=await response.json();if(!response.ok||!data.success)throw new Error(data.message||'Gagal menyimpan status.');
+ if(displayed)warehouseStatuses[productCode]=data.status;else delete warehouseStatuses[productCode];return data;
+}
 function warehouseHead(address){return String(address??'').trim().replace(/[^0-9]/g,'').charAt(0)}
 async function renderWarehouseOnly(){
  if(!astLoaded)return;
@@ -620,6 +634,7 @@ async function renderWarehouseOnly(){
  $('warehouseSkuCount').textContent=fmt(warehouseProducts.length);
  $('warehouseQty').textContent=fmt(warehouseProducts.reduce((s,p)=>s+p.qty,0));
  $('warehouseCatCount').textContent=cats.size?fmt(cats.size):'-';
+ await loadWarehouseStatuses();
  const categoryMap=new Map();
  warehouseProducts.forEach(p=>{if(p.cat)categoryMap.set(p.cat,p.category||'')});
  $('warehouseCategory').innerHTML='<option value="">Semua Category</option>'+[...categoryMap.entries()].sort((a,b)=>a[0].localeCompare(b[0],'id',{numeric:true})).map(([code,name])=>'<option value="'+esc(code)+'">'+esc(code+(name?' • '+name:''))+'</option>').join('');
@@ -637,7 +652,7 @@ function renderWarehouseRows(){
  const start=(warehousePage-1)*WAREHOUSE_PAGE_SIZE;
  const pageRows=rows.slice(start,start+WAREHOUSE_PAGE_SIZE);
  $('warehouseResultCount').textContent=fmt(rows.length)+' artikel ditemukan • '+(rows.length?fmt(start+1)+'–'+fmt(Math.min(start+WAREHOUSE_PAGE_SIZE,rows.length)):'0')+' ditampilkan';
- $('warehouseBody').innerHTML=pageRows.map((p,i)=>'<tr><td>'+fmt(start+i+1)+'</td><td>'+esc(p.cat||'-')+'</td><td>'+esc(p.category||'-')+'</td><td><b>'+esc(p.code||'-')+'</b></td><td>'+esc(p.name||'-')+'</td><td>'+esc(p.barcode||'-')+'</td><td style="white-space:normal;min-width:125px;max-width:160px"><div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px">'+p.addresses.map(a=>'<span style="display:block;background:#f3f6fb;border:1px solid #e7edf5;border-radius:6px;padding:4px 7px;font-size:10px">'+esc(a)+'</span>').join('')+'</div></td><td style="text-align:right;font-weight:700">'+fmt(p.qty)+'</td><td><span class="pill warn">GUDANG SAJA</span></td></tr>').join('')||'<tr><td class="empty" colspan="9">Tidak ada artikel yang cocok dengan filter.</td></tr>';
+ $('warehouseBody').innerHTML=pageRows.map((p,i)=>'<tr><td>'+fmt(start+i+1)+'</td><td>'+esc(p.cat||'-')+'</td><td>'+esc(p.category||'-')+'</td><td><b>'+esc(p.code||'-')+'</b></td><td>'+esc(p.name||'-')+'</td><td>'+esc(p.barcode||'-')+'</td><td style="white-space:normal;min-width:125px;max-width:160px"><div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px">'+p.addresses.map(a=>'<span style="display:block;background:#f3f6fb;border:1px solid #e7edf5;border-radius:6px;padding:4px 7px;font-size:10px">'+esc(a)+'</span>').join('')+'</div></td><td style="text-align:right;font-weight:700">'+fmt(p.qty)+'</td><td><label style="display:inline-flex;align-items:center;gap:7px;white-space:nowrap;cursor:pointer"><input type="checkbox" class="warehouse-display-check" data-product-code="'+esc(p.code)+'" '+(warehouseStatuses[p.code]&&warehouseStatuses[p.code].displayed?'checked':'')+' style="width:18px;height:18px;accent-color:#16a36a"><span>Ter-display</span></label></td></tr>').join('')||'<tr><td class="empty" colspan="9">Tidak ada artikel yang cocok dengan filter.</td></tr>';
  $('warehousePageInfo').textContent='Halaman '+fmt(warehousePage)+' / '+fmt(pages);
  $('warehousePrev').disabled=warehousePage<=1;$('warehouseNext').disabled=warehousePage>=pages;
 }
@@ -667,6 +682,7 @@ $('warehouseCategory').addEventListener('change',()=>{warehousePage=1;renderWare
 $('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';$('warehouseCategory').value='';warehousePage=1;if(warehouseDataRequested)renderWarehouseRows()});
 $('warehousePrev').addEventListener('click',()=>{warehousePage--;renderWarehouseRows()});
 $('warehouseNext').addEventListener('click',()=>{warehousePage++;renderWarehouseRows()});
+$('warehouseBody').addEventListener('change',async e=>{const checkbox=e.target.closest('.warehouse-display-check');if(!checkbox)return;const code=checkbox.getAttribute('data-product-code'),checked=checkbox.checked;checkbox.disabled=true;try{await saveWarehouseStatus(code,checked)}catch(error){checkbox.checked=!checked;alert('Status belum tersimpan: '+error.message)}finally{checkbox.disabled=false}});
 $('refreshAst').addEventListener('click',()=>{astLoaded=false;loadAstData()});
 $('astFind').addEventListener('click',()=>renderAstSummary());
 $('astSearch').addEventListener('keydown',e=>{if(e.key==='Enter')renderAstSummary()});
