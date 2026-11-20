@@ -589,11 +589,23 @@ let warehouseProducts=[],warehouseDataRequested=false,warehousePage=1;
 let warehouseStatuses={},warehouseStatusLoaded=false,warehouseStatusLoading=null;
 const WAREHOUSE_PAGE_SIZE=10;
 function warehouseSessionToken(){try{const raw=localStorage.getItem('inv_sess_v1');if(!raw)return '';const session=JSON.parse(decodeURIComponent(escape(atob(raw))));return session&&session.exp>Date.now()?String(session.t||''):''}catch(e){return ''}}
-async function loadWarehouseStatuses(){
- if(warehouseStatusLoaded)return warehouseStatuses;
+async function loadWarehouseStatuses(forceRefresh=false){
  if(warehouseStatusLoading)return warehouseStatusLoading;
+ if(warehouseStatusLoaded&&!forceRefresh)return warehouseStatuses;
  warehouseStatusLoading=(async()=>{const token=warehouseSessionToken();if(!token)throw new Error('Sesi login tidak ditemukan. Silakan login kembali.');const response=await fetch('/api/warehouse-status',{headers:{Authorization:'Bearer '+token},cache:'no-store'});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.message||'Gagal mengambil status display.');warehouseStatuses=data.statuses||{};warehouseStatusLoaded=true;return warehouseStatuses})();
  try{return await warehouseStatusLoading}finally{warehouseStatusLoading=null}
+}
+async function refreshWarehouseStatusesForAllUsers(){
+ if(!$('warehouseView')||$('warehouseView').style.display==='none'||!warehouseDataRequested)return;
+ try{
+  await loadWarehouseStatuses(true);
+  $('warehouseBody').querySelectorAll('.warehouse-display-check').forEach(checkbox=>{
+   if(checkbox.disabled||document.activeElement===checkbox)return;
+   const code=checkbox.getAttribute('data-product-code');
+   checkbox.checked=!!(warehouseStatuses[code]&&warehouseStatuses[code].displayed);
+  });
+  updateWarehouseDisplayProgress();
+ }catch(error){console.warn('Sinkronisasi status Ter-display gagal:',error)}
 }
 async function saveWarehouseStatus(productCode,displayed){
  const token=warehouseSessionToken();if(!token)throw new Error('Sesi login tidak ditemukan. Silakan login kembali.');
@@ -716,6 +728,8 @@ $('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';
 $('warehousePrev').addEventListener('click',()=>{warehousePage--;renderWarehouseRows()});
 $('warehouseNext').addEventListener('click',()=>{warehousePage++;renderWarehouseRows()});
 $('warehouseBody').addEventListener('change',async e=>{const checkbox=e.target.closest('.warehouse-display-check');if(!checkbox)return;const code=checkbox.getAttribute('data-product-code'),checked=checkbox.checked;checkbox.disabled=true;try{await saveWarehouseStatus(code,checked)}catch(error){checkbox.checked=!checked;alert('Status belum tersimpan: '+error.message)}finally{checkbox.disabled=false}});
+// Refresh shared status while Warehouse Only is open so other signed-in users see updates.
+setInterval(refreshWarehouseStatusesForAllUsers,15000);
 $('refreshAst').addEventListener('click',()=>{astLoaded=false;loadAstData()});
 $('astFind').addEventListener('click',()=>renderAstSummary());
 $('astSearch').addEventListener('keydown',e=>{if(e.key==='Enter')renderAstSummary()});
