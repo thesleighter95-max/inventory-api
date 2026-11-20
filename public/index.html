@@ -2494,23 +2494,20 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
         <section class="cc-section" style="margin-bottom:13px"><h3>◷ RECENT CHECK HISTORY</h3><div class="cc-foot" style="margin-bottom:8px">Riwayat pemeriksaan pada sesi browser ini saja.</div><div id="ccHistory" class="cc-foot">Belum ada riwayat.</div></section>
         <section id="ccVercelUsagePanel" class="cc-section" style="margin-bottom:13px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
-            <div><h3>☁ VERCEL USAGE / PLAN MONITOR</h3><div class="cc-foot">Paket Hobby · Monitoring kuota dan akses dashboard resmi</div></div>
-            <a class="cc-btn" href="https://vercel.com/pda-mini-mataram/pda-mini-mataram/usage" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center">Buka Vercel Usage ↗</a>
+            <div><h3>☁ VERCEL USAGE / ACTUAL CONSUMPTION</h3><div class="cc-foot">Paket Hobby · Data aktual melalui API resmi Vercel</div></div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <button id="ccVercelRefresh" class="cc-btn" onclick="loadVercelUsage()">⟳ Ambil Pemakaian</button>
+              <a class="cc-btn" href="https://vercel.com/pda-mini-mataram/pda-mini-mataram/usage" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center;background:#25334b">Dashboard ↗</a>
+            </div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:14px">
-            <div class="cc-card"><div class="cc-label">Function Invocations</div><div class="cc-value" style="font-size:19px">1.000.000</div><div class="cc-note">Kuota paket Hobby</div></div>
-            <div class="cc-card"><div class="cc-label">Edge Requests</div><div class="cc-value" style="font-size:19px">1.000.000</div><div class="cc-note">Kuota paket Hobby</div></div>
-            <div class="cc-card"><div class="cc-label">Active CPU</div><div class="cc-value" style="font-size:19px">4 jam</div><div class="cc-note">Kuota bulanan Hobby</div></div>
-            <div class="cc-card"><div class="cc-label">Provisioned Memory</div><div class="cc-value" style="font-size:19px">360 GB-hrs</div><div class="cc-note">Kuota bulanan Hobby</div></div>
-            <div class="cc-card"><div class="cc-label">Edge Config Reads</div><div class="cc-value" style="font-size:19px">100.000</div><div class="cc-note">Kuota paket Hobby</div></div>
-            <div class="cc-card"><div class="cc-label">Edge Config Writes</div><div class="cc-value" style="font-size:19px">100</div><div class="cc-note">Kuota paket Hobby</div></div>
+            <div class="cc-card"><div class="cc-label">Total Billed Cost</div><div class="cc-value" id="ccVercelCost" style="font-size:19px">—</div><div class="cc-note">Biaya tercatat periode ini</div></div>
+            <div class="cc-card"><div class="cc-label">Charge Records</div><div class="cc-value" id="ccVercelRecords" style="font-size:19px">—</div><div class="cc-note">Baris data dari Vercel</div></div>
+            <div class="cc-card"><div class="cc-label">Last Updated</div><div class="cc-value" id="ccVercelUpdated" style="font-size:13px">Belum diambil</div><div class="cc-note" id="ccVercelPeriod">Periode bulan berjalan</div></div>
           </div>
-          <div style="margin-top:12px;padding:12px;border:1px solid #334155;border-radius:10px;background:#111c2d">
-            <div style="font-size:11px;font-weight:800;color:#cbd5e1;margin-bottom:5px">STATUS AKSES DATA</div>
-            <div style="font-size:11px;color:#fbbf24;font-weight:800">● DASHBOARD RESMI — PEMAKAIAN AKTUAL DIBUKA DI VERCEL</div>
-            <div class="cc-foot" style="margin-top:6px">Angka di atas adalah batas kuota paket, bukan angka pemakaian saat ini. Grafik pemakaian aktual dan persentase terpakai belum tersedia lewat Billing API untuk tim Hobby. Klik tombol di atas untuk melihat angka real-time/terbaru dari Vercel.</div>
-            <div class="cc-foot" style="margin-top:7px">Catatan: data Usage Vercel dapat mengalami jeda pembaruan. Panel ini tidak melakukan polling otomatis dan tidak menambah request berkala ke Vercel.</div>
-          </div>
+          <div id="ccVercelMessage" class="cc-foot" style="margin-top:11px;padding:10px;border:1px solid #334155;border-radius:9px;background:#111c2d">Tekan “Ambil Pemakaian” untuk meminta data aktual dari Vercel. Tidak ada polling otomatis.</div>
+          <div id="ccVercelBreakdown" style="margin-top:12px;overflow-x:auto"></div>
+          <div class="cc-foot" style="margin-top:8px">Catatan: API Billing menampilkan data charge/usage yang tersedia untuk akun dan otorisasi token. Pembaruan dapat tertinggal dari halaman Observability; gunakan Dashboard Vercel sebagai pembanding resmi.</div>
         </section>
         <div class="cc-foot" style="text-align:center;padding:5px">DSH COMMAND CENTER · READ-ONLY · DATA BERDASARKAN ENDPOINT YANG TERSEDIA</div>
       </main>
@@ -11652,6 +11649,77 @@ function renderCommandCenter(results){
 function loadCommandCenterDatabase(){
  if(!isAdmin)return;
  fetch(API_BASE_URL+'/neo-status?adminPassword='+encodeURIComponent(ADMIN_PASSWORD),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(d){if(!d||!d.success)throw new Error(d&&d.message||'Data database tidak tersedia');var db=d.db||{},pct=parseFloat(db.usedPercent||0);var set=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};set('ccDbUsage',isFinite(pct)?pct+'%':'—');set('ccDbSize',db.dbSizePretty||'—');set('ccDbNote','Storage Neon terpakai');set('ccDbDetail',(db.freeSizePretty||'—')+' tersisa dari limit '+(db.limitPretty||'—')+' · '+(db.tableSize||'—')+' table');set('ccDbRows',Number(db.rowCount||0).toLocaleString('id-ID'));set('ccCacheKeys',Number(d.cache&&d.cache.hitKeys||0).toLocaleString('id-ID'));var bar=document.getElementById('ccDbBar');if(bar)bar.style.width=Math.max(0,Math.min(100,pct))+'%';}).catch(function(e){var n=document.getElementById('ccDbNote');if(n)n.textContent='Tidak dapat dimuat: '+e.message;});
+}
+function loadVercelUsage(){
+ if(!isAdmin)return;
+ var btn=document.getElementById('ccVercelRefresh'),msg=document.getElementById('ccVercelMessage'),breakdown=document.getElementById('ccVercelBreakdown');
+ if(btn){btn.disabled=true;btn.textContent='⏳ Mengambil...';}
+ if(msg)msg.textContent='Menghubungi API resmi Vercel...';
+ if(breakdown)breakdown.innerHTML='';
+ fetch(API_BASE_URL+'/vercel-usage?adminPassword='+encodeURIComponent(ADMIN_PASSWORD),{cache:'no-store'})
+ .then(function(r){return r.json().then(function(d){if(!r.ok||!d.success){var e=new Error(d&&d.message||'Gagal mengambil data Vercel');e.code=d&&d.code;e.status=r.status;throw e;}return d;});})
+ .then(function(d){
+  var rows=Array.isArray(d.charges)?d.charges:[];
+  var money=function(v){var n=Number(v||0);return isFinite(n)?'if(!isAdmin)return;var btn=document.getElementById('healthRefreshBtn'),box=document.getElementById('healthChecks'),badge=document.getElementById('healthOverallBadge'),summary=document.getElementById('healthSummary');if(btn){btn.disabled=true;btn.textContent='⏳ Memeriksa...';}if(badge){badge.textContent='MEMERIKSA';badge.style.color='#fbbf24';}if(summary)summary.textContent='Memeriksa API, layanan data, dan sinkronisasi (read-only)...';if(box)box.innerHTML='<div style="color:#94a3b8;text-align:center;padding:18px;font-size:11px;">Memeriksa layanan DSH...</div>';
+ var jobs=[
+  healthFetch(window.location.origin+'/','text','Aplikasi utama DSH / PDA Mini'),
+  healthFetch(window.location.origin+'/absen/','text','DSH Attendance'),
+  healthFetch(window.location.origin+'/report-absensi/','text','DSH Report Absensi'),
+  healthFetch(window.location.origin+'/summary-ast.html','text','AST Summary'),
+  healthFetch(API_BASE_URL+'/bblm-status','json','API DSH / BBLM status'),
+  healthFetch(API_BASE_URL+'/company-location','json','Layanan data lokasi'),
+  healthFetch(API_BASE_URL+'/maintenance','json','Layanan status maintenance'),
+  healthFetch(API_BASE_URL+'/morning-reset-status','json','Layanan status reset harian'),
+  healthFetch(API_BASE_URL+'/price-refresh-ts','json','Layanan timestamp refresh harga'),
+  healthFetch(API_BASE_URL+'/promo-list','json','API daftar Promo'),
+  healthFetch(API_BASE_URL+'/sync-prices','json','Layanan sinkronisasi harga'),
+  healthFetch(BBLM_URL,'text','Google Spreadsheet BBLM'),
+  healthFetch(PROMO_URL,'text','Google Spreadsheet Promo')
+ ];
+ Promise.all(jobs).then(function(results){
+  var meta=null,syncStatus='warn',syncInfo='Belum ada metadata sinkronisasi di sesi browser ini';try{meta=JSON.parse(sessionStorage.getItem('sync_meta')||'null');if(meta){syncStatus='ok';syncInfo='Catatan sesi browser: '+(meta.time||'waktu tidak tercatat')+' · '+Number(meta.count||0).toLocaleString('id-ID')+' produk';}}catch(e){syncInfo='Metadata sinkronisasi sesi tidak dapat dibaca';}
+  results.push({title:'Metadata sinkronisasi terakhir',status:syncStatus,detail:syncInfo+' (bukan verifikasi isi database)',latency:''});
+  results.push({title:'Koneksi database',status:'warn',detail:'Belum dapat diverifikasi langsung. Backend perlu menyediakan endpoint health database yang aman dan read-only.',latency:''});
+  var storageInfo='Browser tidak mendukung estimasi storage',storageStatus='warn';var storagePromise=(navigator.storage&&navigator.storage.estimate)?navigator.storage.estimate().then(function(q){var used=Number(q.usage||0),quota=Number(q.quota||0),pct=quota?used/quota*100:0;storageInfo='Browser memakai '+(used/1048576).toFixed(1)+' MB dari '+(quota/1048576).toFixed(1)+' MB ('+pct.toFixed(1)+'%)';storageStatus=pct>=90?'warn':'ok';}).catch(function(){}):Promise.resolve();
+  return storagePromise.then(function(){results.push({title:'Penyimpanan browser',status:storageStatus,detail:storageInfo+' · bukan kapasitas disk server',latency:''});return results;});
+ }).then(function(results){
+  renderCommandCenter(results);
+  saveCCCheckHistory(results);
+  if(box)box.innerHTML=results.map(function(r){return healthCard(r.title,r.status,r.detail,r.latency);}).join('');
+  var errors=results.filter(function(r){return r.status==='error'}).length,warns=results.filter(function(r){return r.status==='warn'}).length;
+  if(badge){badge.textContent=errors?'ADA GANGGUAN':warns?'PERLU VERIFIKASI':'SEMUA NORMAL';badge.style.color=errors?'#f87171':warns?'#fbbf24':'#34d399';}
+  if(summary)summary.textContent=errors?errors+' pemeriksaan gagal. Periksa endpoint yang OFFLINE.':warns?warns+' bagian belum dapat diverifikasi; koneksi yang diuji tetap ditampilkan terpisah.':'Semua endpoint dan sumber data yang diuji merespons.';
+  var at=document.getElementById('healthCheckedAt');if(at)at.textContent='Pemeriksaan terakhir: '+new Date().toLocaleString('id-ID',{timeZone:'Asia/Makassar'})+' WITA';
+ }).catch(function(e){if(box)box.innerHTML=healthCard('Pemeriksaan sistem','error',e.message,'');if(badge){badge.textContent='GAGAL';badge.style.color='#f87171';}if(summary)summary.textContent='Pemeriksaan tidak dapat diselesaikan.';}).finally(function(){if(btn){btn.disabled=false;btn.textContent='⟳ Refresh';}});
+}
+</script>
+
+</body>
+</html>
++n.toFixed(4):'—';};
+  var total=rows.reduce(function(a,x){return a+Number(x.BilledCost||x.billed_cost||0);},0);
+  var set=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  set('ccVercelCost',money(total));set('ccVercelRecords',rows.length.toLocaleString('id-ID'));
+  set('ccVercelUpdated',new Date(d.fetchedAt||Date.now()).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}));
+  set('ccVercelPeriod',d.period?'Periode '+new Date(d.period.from).toLocaleDateString('id-ID')+' – '+new Date(d.period.to).toLocaleDateString('id-ID'):'Periode berjalan');
+  if(msg)msg.textContent=rows.length?'Data berhasil diambil dari Vercel. Nilai biaya memakai BilledCost dari setiap charge.':'API berhasil dihubungi, tetapi belum ada baris charge untuk periode ini. Ini tidak selalu berarti pemakaian resource nol.';
+  if(!breakdown)return;
+  if(!rows.length){breakdown.innerHTML='<div class="cc-foot">Belum ada rincian charge yang dikembalikan API.</div>';return;}
+  var grouped={};
+  rows.forEach(function(x){
+   var name=String(x.ServiceName||x.service_name||x.SkuName||x.sku_name||'Layanan Vercel');
+   if(!grouped[name])grouped[name]={qty:0,unit:'',cost:0,count:0};
+   var g=grouped[name];g.qty+=Number(x.ConsumedQuantity||x.consumed_quantity||0);g.unit=g.unit||String(x.ConsumedUnit||x.consumed_unit||'');g.cost+=Number(x.BilledCost||x.billed_cost||0);g.count++;
+  });
+  var html='<table style="width:100%;border-collapse:collapse;font-size:10px;min-width:440px"><thead><tr style="color:#94a3b8;text-align:left"><th style="padding:9px;border-bottom:1px solid #334155">SERVICE</th><th style="padding:9px;border-bottom:1px solid #334155;text-align:right">CONSUMED</th><th style="padding:9px;border-bottom:1px solid #334155;text-align:right">BILLED COST</th></tr></thead><tbody>';
+  Object.keys(grouped).sort().forEach(function(k){var g=grouped[k];html+='<tr><td style="padding:9px;border-bottom:1px solid #1e293b;color:#e2e8f0">'+k.replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];})+'</td><td style="padding:9px;border-bottom:1px solid #1e293b;text-align:right;color:#cbd5e1">'+g.qty.toLocaleString('en-US',{maximumFractionDigits:4})+' '+g.unit+'</td><td style="padding:9px;border-bottom:1px solid #1e293b;text-align:right;color:#cbd5e1">'+money(g.cost)+'</td></tr>';});
+  breakdown.innerHTML=html+'</tbody></table>';
+ }).catch(function(e){
+  var message=e.message||'Tidak dapat mengambil data.';
+  if(e.code==='NOT_CONFIGURED')message='Token belum dipasang. Tambahkan VERCEL_ACCESS_TOKEN di Vercel → Project Settings → Environment Variables, lalu redeploy.';
+  else if(e.status===401||e.status===403)message='Vercel menolak token/akses. Periksa token, izin akun, dan team scope.';
+  if(msg)msg.textContent='Gagal: '+message;
+ }).finally(function(){if(btn){btn.disabled=false;btn.textContent='⟳ Ambil Pemakaian';}});
 }
 function runHealthCheck(){if(!isAdmin)return;var btn=document.getElementById('healthRefreshBtn'),box=document.getElementById('healthChecks'),badge=document.getElementById('healthOverallBadge'),summary=document.getElementById('healthSummary');if(btn){btn.disabled=true;btn.textContent='⏳ Memeriksa...';}if(badge){badge.textContent='MEMERIKSA';badge.style.color='#fbbf24';}if(summary)summary.textContent='Memeriksa API, layanan data, dan sinkronisasi (read-only)...';if(box)box.innerHTML='<div style="color:#94a3b8;text-align:center;padding:18px;font-size:11px;">Memeriksa layanan DSH...</div>';
  var jobs=[
