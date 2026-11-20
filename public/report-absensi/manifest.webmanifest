@@ -1,0 +1,19 @@
+{
+  "name": "DSH Report Absensi",
+  "short_name": "DSH",
+  "description": "Digital System Hybrid",
+  "id": "/report-absensi/",
+  "start_url": "/report-absensi/",
+  "scope": "/report-absensi/",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#07111f",
+  "icons": [
+    {
+      "src": "/dsh-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
