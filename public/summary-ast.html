@@ -443,6 +443,7 @@ function loadAstData(){
   if(missing.length)throw Error('Kolom tidak ditemukan: '+missing.join(', '));
   populateAstSectorFilter();renderAstSummary();
   $('sectorHint').textContent='Sumber: sheet AST • pilih sector untuk melihat artikel di dalamnya';
+  if(new URLSearchParams(location.search).get('view')==='warehouse')renderWarehouseOnly();
  }).catch(error=>{
   astLoaded=false;
   $('astSectorBody').innerHTML=`<tr><td class="empty" colspan="4">Gagal memuat sheet AST: ${esc(error.message)}</td></tr>`;
