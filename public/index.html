@@ -6948,7 +6948,7 @@ function proceedQuickLogin(data) {
           offerQuickLoginSetup(user,pass,d.namaLengkap||user,false);
           return;
         }
-        if(errorEl)errorEl.innerText=d.suspended?"Akun Anda ditangguhkan oleh admin.":(d.message||"Login gagal. Periksa username dan password.");
+        if(errorEl)errorEl.innerText=d.suspended?"Akun Anda ditangguhkan oleh admin.":"Password salah, klik link Hubungi Admin jika lupa password.";
       }).catch(function(){if(errorEl)errorEl.innerText="Gagal menghubungi server login. Periksa koneksi internet.";});
   };
 })();
