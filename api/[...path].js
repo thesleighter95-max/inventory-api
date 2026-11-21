@@ -1,5 +1,5 @@
 // PDA Mini API — signed short-lived session bridge for Report Absensi
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, createSign, timingSafeEqual } from "node:crypto";
 import { put as vercelBlobPut, list as vercelBlobList } from "@vercel/blob";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "00000";
@@ -299,7 +299,7 @@ function parseCSV(text) {
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") { res.status(200).end(); return; }
 
@@ -316,6 +316,30 @@ export default async function handler(req, res) {
   const send = (data, status = 200) => res.status(status).json(data);
 
   try {
+async function getGoogleDriveAccessToken(){
+  const raw=process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON||"";
+  if(!raw)throw new Error("Google Drive belum dikonfigurasi: tambahkan GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON di Vercel.");
+  let account;try{account=JSON.parse(raw)}catch{throw new Error("GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON bukan JSON yang valid.")}
+  if(!account.client_email||!account.private_key)throw new Error("Service account Google Drive tidak memiliki client_email/private_key.");
+  const now=Math.floor(Date.now()/1000),b64=value=>Buffer.from(value).toString("base64url");
+  const unsigned=b64(JSON.stringify({alg:"RS256",typ:"JWT"}))+"."+b64(JSON.stringify({iss:account.client_email,scope:"https://www.googleapis.com/auth/drive",aud:"https://oauth2.googleapis.com/token",iat:now,exp:now+3600}));
+  const signer=createSign("RSA-SHA256");signer.update(unsigned);signer.end();
+  const assertion=unsigned+"."+signer.sign(account.private_key).toString("base64url");
+  const response=await fetch("https://oauth2.googleapis.com/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({grant_type:"urn:ietf:params:oauth:grant-type:jwt-bearer",assertion})});
+  const data=await response.json();if(!response.ok||!data.access_token)throw new Error(data.error_description||data.error||"Gagal autentikasi ke Google Drive.");
+  return data.access_token;
+}
+async function readWarehousePhotoIndex(){
+  const raw=await vbFetch("pda-mini-warehouse-photos.json");if(raw===null)return {};
+  try{const value=JSON.parse(raw);return value&&typeof value==="object"&&!Array.isArray(value)?value:{}}catch{throw new Error("Database indeks foto Warehouse rusak; penyimpanan dihentikan agar data tidak tertimpa.")}
+}
+async function writeWarehousePhotoIndex(index){await vbPut("pda-mini-warehouse-photos.json",JSON.stringify(index));}
+async function driveApi(accessToken,url,options={}){
+  const response=await fetch(url,{...options,headers:{Authorization:"Bearer "+accessToken,...(options.headers||{})}});
+  const text=await response.text();let data={};try{data=text?JSON.parse(text):{}}catch{}
+  if(!response.ok)throw new Error(data.error&&data.error.message?data.error.message:"Google Drive API gagal (HTTP "+response.status+").");
+  return data;
+}
     // Shared Warehouse Only display status. Visible and editable by signed-in PDA Mini users.
     if (path === "/warehouse-status" && (method === "GET" || method === "POST")) {
       const auth = String(req.headers.authorization || "");
@@ -337,6 +361,28 @@ export default async function handler(req, res) {
       };
       await saveWarehouseDisplayToVercel(statuses);
       return send({ success: true, productCode, status: statuses[productCode] || null, storage: "vercel-blob" });
+    }
+
+    // One Google Drive display photo per Product Code.
+    if(path==="/warehouse-photos"&&(method==="GET"||method==="POST")){
+      const auth=String(req.headers.authorization||"");const token=auth.startsWith("Bearer ")?auth.slice(7):"";
+      const session=verifyPdaSession(token);if(!session)return send({success:false,message:"Sesi PDA Mini tidak valid atau sudah berakhir. Silakan login kembali."},401);
+      if(method==="GET")return send({success:true,photos:await readWarehousePhotoIndex(),storage:"google-drive"});
+      const productCode=String(body.productCode||"").trim(),mimeType=String(body.mimeType||"").toLowerCase(),imageBase64=String(body.imageBase64||"").replace(/^data:[^;]+;base64,/,"");
+      if(!productCode)return send({success:false,message:"Product Code wajib diisi."},400);
+      if(!["image/jpeg","image/png","image/webp"].includes(mimeType))return send({success:false,message:"Format foto harus JPG, PNG, atau WEBP."},400);
+      if(!imageBase64||imageBase64.length>4_000_000)return send({success:false,message:"Ukuran foto terlalu besar. Maksimal sekitar 3 MB setelah kompresi."},413);
+      const bytes=Buffer.from(imageBase64,"base64");if(!bytes.length||bytes.length>3_000_000)return send({success:false,message:"Ukuran foto maksimal 3 MB."},413);
+      const folderId=process.env.GOOGLE_DRIVE_FOLDER_ID||"";if(!folderId)return send({success:false,message:"Google Drive belum dikonfigurasi: tambahkan GOOGLE_DRIVE_FOLDER_ID di Vercel."},503);
+      const accessToken=await getGoogleDriveAccessToken(),safeCode=productCode.replace(/[^a-zA-Z0-9._-]/g,"_"),extension=mimeType==="image/png"?"png":mimeType==="image/webp"?"webp":"jpg",fileName="DISPLAY_"+safeCode+"."+extension,boundary="pdaMiniDrive"+Date.now();
+      const metadata={name:fileName,mimeType,parents:[folderId],description:"PDA Mini Warehouse Display • Product Code: "+productCode};
+      const prefix=Buffer.from("--"+boundary+"\\r\\nContent-Type: application/json; charset=UTF-8\\r\\n\\r\\n"+JSON.stringify(metadata)+"\\r\\n--"+boundary+"\\r\\nContent-Type: "+mimeType+"\\r\\n\\r\\n"),suffix=Buffer.from("\\r\\n--"+boundary+"--"),multipart=Buffer.concat([prefix,bytes,suffix]);
+      const uploaded=await driveApi(accessToken,"https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType",{method:"POST",headers:{"Content-Type":"multipart/related; boundary="+boundary},body:multipart});
+      await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(uploaded.id)+"/permissions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"anyone",role:"reader"})});
+      const photos=await readWarehousePhotoIndex(),previous=photos[productCode],photo={fileId:uploaded.id,fileName:uploaded.name,viewUrl:"https://drive.google.com/uc?export=view&id="+uploaded.id,thumbnailUrl:"https://drive.google.com/thumbnail?id="+uploaded.id+"&sz=w320",updatedAt:new Date().toISOString(),updatedBy:String(session.name||session.sub||"User")};
+      photos[productCode]=photo;await writeWarehousePhotoIndex(photos);
+      if(previous&&previous.fileId&&previous.fileId!==uploaded.id){try{await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(previous.fileId),{method:"DELETE"})}catch(error){console.warn("Foto display lama tidak dapat dihapus:",error.message)}}
+      return send({success:true,productCode,photo,storage:"google-drive"});
     }
 
     if (path === "/healthz" && method === "GET") return send({ status: "ok" });
