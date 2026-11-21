@@ -1359,16 +1359,46 @@ loadStatus();
         }
         if (!incoming.size) return send({ success: false, message: "Tidak ada baris AST yang memiliki Prod cd dan Sector." }, 422);
         const existing = new Map((state.master || []).map(x => [x.key, x]));
+        const now = new Date().toISOString();
         const merged = Array.from(incoming.values()).map(item => {
           const prior = existing.get(item.key);
-          return prior ? { ...item, stockQty: Number(prior.stockQty || 0), baselineQty: item.finalQty, updatedFromAstAt: new Date().toISOString() }
-                       : { ...item, stockQty: item.finalQty, baselineQty: item.finalQty, updatedFromAstAt: new Date().toISOString() };
+          return prior ? { ...item, source: prior.source || "ast", stockQty: Number(prior.stockQty || 0), baselineQty: item.finalQty, updatedFromAstAt: now }
+                       : { ...item, source: "ast", stockQty: item.finalQty, baselineQty: item.finalQty, updatedFromAstAt: now };
         });
+        const incomingKeys = new Set(incoming.keys());
+        for (const prior of (state.master || [])) if (!incomingKeys.has(prior.key)) merged.push(prior);
         state.master = merged;
         state.importedAt = new Date().toISOString();
         state.updatedAt = state.importedAt;
         await setJson(KEY, state);
         return send({ success: true, imported: merged.length, sectors: Array.from(new Set(merged.map(x => x.sector))).length, importedAt: state.importedAt, preservedExistingStock: true });
+      }
+      if (action === "setQty") {
+        const code = String(body.productCode || "").trim(), sector = String(body.sector || "").trim();
+        const qty = Number(body.qty), note = String(body.note || "").trim().slice(0, 300), operator = String(body.operator || "Admin").trim().slice(0, 100);
+        if (!code || !sector || !Number.isFinite(qty) || qty < 0 || qty > 10000000 || !note) return send({ success: false, message: "Artikel, alamat, qty nol atau lebih, dan keterangan wajib diisi." }, 400);
+        const item = (state.master || []).find(x => x.productCode === code && x.sector === sector);
+        if (!item) return send({ success: false, message: "Artikel tidak ditemukan pada alamat tersebut." }, 404);
+        const before = Number(item.stockQty || 0), after = qty, now = new Date().toISOString();
+        item.stockQty = after; item.updatedAt = now;
+        const tx = { id: "WH-" + Date.now().toString(36).toUpperCase() + "-" + randomBytes(3).toString("hex").toUpperCase(), type: "STOCKTAKE", productCode: code, productName: item.productName, sector, qty: Math.abs(after-before), delta: after-before, before, after, note, operator, createdAt: now };
+        state.transactions = [tx, ...(state.transactions || [])].slice(0, 5000); state.updatedAt = now;
+        await setJson(KEY, state);
+        return send({ success: true, transaction: tx, stockQty: after });
+      }
+      if (action === "addArticle") {
+        const code = String(body.productCode || "").trim(), sector = String(body.sector || "").trim();
+        const name = String(body.productName || "").trim(), barcode = String(body.barcode || "").trim();
+        const qty = Number(body.qty), note = String(body.note || "Penambahan artikel manual").trim().slice(0, 300), operator = String(body.operator || "Admin").trim().slice(0, 100);
+        if (!code || !sector || !name || !Number.isFinite(qty) || qty < 0 || qty > 10000000) return send({ success: false, message: "Kode, alamat, nama, dan qty valid wajib diisi." }, 400);
+        if ((state.master || []).some(x => x.productCode === code && x.sector === sector)) return send({ success: false, message: "Artikel sudah terdaftar pada alamat ini." }, 409);
+        const now = new Date().toISOString(), key = code + "::" + sector;
+        const item = { key, productCode: code, barcode, productName: name, sector, finalQty: 0, baselineQty: 0, stockQty: qty, source: "manual", createdAt: now, updatedAt: now };
+        state.master = [item, ...(state.master || [])];
+        const tx = { id: "WH-" + Date.now().toString(36).toUpperCase() + "-" + randomBytes(3).toString("hex").toUpperCase(), type: "MANUAL_ADD", productCode: code, productName: name, sector, qty, delta: qty, before: 0, after: qty, note, operator, createdAt: now };
+        state.transactions = [tx, ...(state.transactions || [])].slice(0, 5000); state.updatedAt = now;
+        await setJson(KEY, state);
+        return send({ success: true, item, transaction: tx, stockQty: qty });
       }
       if (action === "transaction") {
         const type = String(body.type || "");
