@@ -31,10 +31,17 @@ export function verifyPdaSession(token) {
   } catch { return null; }
 }
 
-// Isolated persistent storage for Warehouse Only display status.
-// This intentionally does not alter the shared Netlify Blob helpers used by other APIs.
+// Warehouse Only display status: migrate Vercel data once, then use Netlify Blobs.
 const WAREHOUSE_DISPLAY_BLOB_PATH = "pda-mini/ast-warehouse-display-status.json";
 const WAREHOUSE_DISPLAY_LEGACY_KEY = "ast-warehouse-display-status.json";
+const WAREHOUSE_DISPLAY_NETLIFY_KEY = "ast-warehouse-display-status-v2.json";
+
+function validateWarehouseStatuses(value, source) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Format data Ter-display dari " + source + " tidak valid; migrasi dibatalkan.");
+  }
+  return value;
+}
 
 async function readWarehouseDisplayFromVercel() {
   const token = process.env.BLOB_READ_WRITE_TOKEN || "";
@@ -43,48 +50,48 @@ async function readWarehouseDisplayFromVercel() {
   const blob = (result.blobs || []).find(item => item.pathname === WAREHOUSE_DISPLAY_BLOB_PATH);
   if (!blob) return null;
   const response = await fetch(blob.url, { cache: "no-store" });
-  if (!response.ok) throw new Error("Gagal membaca status Ter-display dari Vercel Blob: HTTP " + response.status);
-  const value = await response.json();
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Format data Ter-display di Vercel Blob tidak valid.");
-  return value;
+  if (!response.ok) throw new Error("Gagal membaca data lama Vercel Blob: HTTP " + response.status);
+  return validateWarehouseStatuses(await response.json(), "Vercel Blob");
 }
 
-async function readWarehouseDisplayFromLegacyNetlify() {
-  const response = await fetch(`${_NB_BASE}/${encodeURIComponent(WAREHOUSE_DISPLAY_LEGACY_KEY)}`, {
+async function readWarehouseDisplayFromNetlifyKey(key) {
+  const response = await fetch(`${_NB_BASE}/${encodeURIComponent(key)}`, {
     headers: { Authorization: `Bearer ${_getNbToken()}` },
     cache: "no-store"
   });
-  if (response.status === 404) return {};
-  if (!response.ok) throw new Error("Tidak dapat membaca backup status lama dari Netlify: HTTP " + response.status);
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("Gagal membaca data Ter-display dari Netlify: HTTP " + response.status);
   const signed = await response.json();
-  if (!signed.url) throw new Error("Netlify tidak memberikan URL data status lama.");
+  if (!signed.url) throw new Error("Netlify tidak memberikan URL data Ter-display.");
   const dataResponse = await fetch(signed.url, { cache: "no-store" });
-  if (!dataResponse.ok) throw new Error("Gagal mengambil isi backup status lama: HTTP " + dataResponse.status);
-  const value = await dataResponse.json();
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Format backup status lama tidak valid; migrasi dibatalkan.");
-  return value;
+  if (!dataResponse.ok) throw new Error("Gagal mengambil isi data Ter-display dari Netlify: HTTP " + dataResponse.status);
+  return validateWarehouseStatuses(await dataResponse.json(), "Netlify Blob");
 }
 
-async function saveWarehouseDisplayToVercel(statuses) {
-  const token = process.env.BLOB_READ_WRITE_TOKEN || "";
-  if (!token) throw new Error("BLOB_READ_WRITE_TOKEN belum tersedia di environment Vercel.");
-  return await vercelBlobPut(WAREHOUSE_DISPLAY_BLOB_PATH, JSON.stringify(statuses), {
-    access: "public",
-    addRandomSuffix: false,
-    contentType: "application/json",
-    cacheControlMaxAge: 0,
-    token
-  });
+async function readWarehouseDisplayFromLegacyNetlify() {
+  const value = await readWarehouseDisplayFromNetlifyKey(WAREHOUSE_DISPLAY_LEGACY_KEY);
+  return value || {};
+}
+
+async function writeWarehouseDisplayToNetlify(statuses) {
+  await vbPut(WAREHOUSE_DISPLAY_NETLIFY_KEY, JSON.stringify(statuses), "application/json");
+  const verified = await readWarehouseDisplayFromNetlifyKey(WAREHOUSE_DISPLAY_NETLIFY_KEY);
+  if (!verified || JSON.stringify(verified) !== JSON.stringify(statuses)) {
+    throw new Error("Verifikasi salinan Netlify gagal. Data lama tetap dipertahankan; jangan hapus cadangan.");
+  }
+  return verified;
 }
 
 async function getWarehouseDisplayStatuses() {
-  const current = await readWarehouseDisplayFromVercel();
+  const current = await readWarehouseDisplayFromNetlifyKey(WAREHOUSE_DISPLAY_NETLIFY_KEY);
   if (current !== null) return current;
-  // First access only: copy legacy data before serving or accepting any new checkbox changes.
-  // Any Netlify read/parse failure throws; it never silently replaces old data with an empty object.
-  const legacy = await readWarehouseDisplayFromLegacyNetlify();
-  await saveWarehouseDisplayToVercel(legacy);
-  return legacy;
+
+  // One-time safe migration: Vercel is the primary source; legacy Netlify is used only if Vercel has no file.
+  // A Vercel read error is allowed to stop migration rather than risk replacing newer data with an empty copy.
+  const vercelData = await readWarehouseDisplayFromVercel();
+  const source = vercelData !== null ? vercelData : await readWarehouseDisplayFromLegacyNetlify();
+  await writeWarehouseDisplayToNetlify(source);
+  return source;
 }
 
 async function callDshAttendance(action, extra = {}) {
@@ -408,7 +415,7 @@ async function driveApi(accessToken,url,options={}){
       if (!session) return send({ success: false, message: "Sesi PDA Mini tidak valid atau sudah berakhir. Silakan login kembali." }, 401);
       if (method === "GET") {
         const statuses = await getWarehouseDisplayStatuses();
-        return send({ success: true, statuses, storage: "vercel-blob" });
+        return send({ success: true, statuses, storage: "netlify-blob" });
       }
       const productCode = String(body.productCode || "").trim();
       if (!productCode) return send({ success: false, message: "Prod Code wajib diisi." }, 400);
@@ -419,8 +426,8 @@ async function driveApi(accessToken,url,options={}){
         updatedAt: new Date().toISOString(),
         updatedBy: String(session.name || session.sub || "User")
       };
-      await saveWarehouseDisplayToVercel(statuses);
-      return send({ success: true, productCode, status: statuses[productCode] || null, storage: "vercel-blob" });
+      await writeWarehouseDisplayToNetlify(statuses);
+      return send({ success: true, productCode, status: statuses[productCode] || null, storage: "netlify-blob" });
     }
 
     // One Google Drive display photo per Product Code.
