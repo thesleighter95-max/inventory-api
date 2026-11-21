@@ -710,14 +710,14 @@ $('tabWarehouse').addEventListener('click',()=>switchView('warehouse'));
 async function requestWarehouseData(refresh){
  warehouseDataRequested=true;
  $('warehouseShowData').disabled=true;$('warehouseShowData').textContent='Memuat data...';
- $('warehouseBody').innerHTML='<tr><td class="empty" colspan="10">Mengambil data AST, kategori, status, dan foto...</td></tr>';
+ $('warehouseBody').innerHTML='<tr><td class="empty" colspan="9">Mengambil data AST dan foto...</td></tr>';
  if(refresh)astLoaded=false;
  try{
   if(astLoaded)await renderWarehouseOnly();
   else await loadAstData();
  }catch(error){
   console.error('Warehouse Only gagal dimuat:',error);
-  $('warehouseBody').innerHTML='<tr><td class="empty" colspan="10">Gagal memuat Warehouse Only: '+esc(error&&error.message?error.message:'Kesalahan tidak diketahui')+'</td></tr>';
+  $('warehouseBody').innerHTML='<tr><td class="empty" colspan="9">Gagal memuat Warehouse Only: '+esc(error&&error.message?error.message:'Kesalahan tidak diketahui')+'</td></tr>';
   $('warehouseHint').textContent='Periksa koneksi dan sumber data, lalu coba lagi.';
  }finally{
   $('warehouseShowData').disabled=false;$('warehouseShowData').textContent='Perbarui Tampilan Data';
@@ -731,7 +731,6 @@ $('warehouseCategory').addEventListener('change',()=>{warehousePage=1;renderWare
 $('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';$('warehouseCategory').value='';warehousePage=1;if(warehouseDataRequested)renderWarehouseRows()});
 $('warehousePrev').addEventListener('click',()=>{warehousePage--;renderWarehouseRows()});
 $('warehouseNext').addEventListener('click',()=>{warehousePage++;renderWarehouseRows()});
-$('warehouseBody').addEventListener('change',async e=>{const checkbox=e.target.closest('.warehouse-display-check');if(!checkbox)return;const code=checkbox.getAttribute('data-product-code'),checked=checkbox.checked;checkbox.disabled=true;try{await saveWarehouseStatus(code,checked)}catch(error){checkbox.checked=!checked;alert('Status belum tersimpan: '+error.message)}finally{checkbox.disabled=false}});
  function showWarehousePhotoSourcePicker(){const overlay=document.createElement('div');overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(10,18,32,.62);display:flex;align-items:center;justify-content:center;padding:20px';overlay.innerHTML='<div role="dialog" aria-modal="true" style="width:min(100%,360px);background:#fff;border-radius:18px;padding:22px;box-shadow:0 18px 55px rgba(0,0,0,.28);font-family:inherit"><div style="font-size:18px;font-weight:800;color:#172033;margin-bottom:6px">Pilih Sumber Foto</div><div style="font-size:13px;color:#64748b;margin-bottom:18px">Ambil foto langsung atau pilih dari galeri.</div><div style="display:flex;gap:10px"><button type="button" data-photo-source="camera" style="flex:1;border:0;border-radius:12px;padding:14px 8px;background:#0f766e;color:white;font-weight:700;font-size:14px">📷 Kamera</button><button type="button" data-photo-source="gallery" style="flex:1;border:0;border-radius:12px;padding:14px 8px;background:#e8eef5;color:#172033;font-weight:700;font-size:14px">🖼️ Galeri</button></div><button type="button" data-photo-cancel style="width:100%;margin-top:12px;border:0;background:transparent;padding:9px;color:#64748b;font-weight:600">Batal</button></div>';document.body.appendChild(overlay);overlay.addEventListener('click',ev=>{if(ev.target===overlay||ev.target.closest('[data-photo-cancel]')){overlay.remove();return;}const choice=ev.target.closest('[data-photo-source]');if(!choice)return;const picker=$(choice.getAttribute('data-photo-source')==='camera'?'warehousePhotoCamera':'warehousePhotoGallery');overlay.remove();picker.value='';picker.click();});}
  $('warehouseBody').addEventListener('click',async e=>{const photo=e.target.closest('[data-photo-view]');if(photo){openWarehousePhoto(photo.getAttribute('data-photo-view'));return;}const del=e.target.closest('.warehouse-photo-delete');if(del){const code=del.getAttribute('data-product-code')||'';if(!code||!confirm('Hapus foto display untuk Product Code '+code+'? Foto akan dihapus dari Google Drive dan tidak tampil pada semua alamat produk ini.'))return;del.disabled=true;del.textContent='Menghapus...';try{await deleteWarehousePhoto(code);renderWarehouseRows();alert('Foto display berhasil dihapus.');}catch(error){alert('Foto belum terhapus: '+error.message);del.disabled=false;del.textContent='Hapus';}return;}const button=e.target.closest('.warehouse-photo-action');if(!button)return;warehousePhotoTarget=button.getAttribute('data-product-code')||'';showWarehousePhotoSourcePicker();});
  const handleWarehousePhotoChange=async e=>{const file=e.target.files&&e.target.files[0],code=warehousePhotoTarget;if(!file||!code)return;const button=$('warehouseBody').querySelector('.warehouse-photo-action[data-product-code="'+CSS.escape(code)+'"]');if(button){button.disabled=true;button.textContent='Mengunggah...';}try{
