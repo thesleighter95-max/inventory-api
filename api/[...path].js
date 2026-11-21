@@ -1313,6 +1313,90 @@ loadStatus();
 
 
 
+    // DS Warehouse admin test module. Isolated Netlify Blob key; does not modify existing app datasets.
+    if (path === "/warehouse-admin" && (method === "GET" || method === "POST")) {
+      const adminPassword = method === "GET" ? query.adminPassword : body.adminPassword;
+      if (adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
+      const KEY = "dsh-warehouse-management-v1";
+      const empty = { version: 1, master: [], transactions: [], importedAt: null, updatedAt: null };
+      const state = await getJson(KEY, empty);
+      if (method === "GET") {
+        return send({ success: true, data: state, storage: "netlify-blobs", module: "DS Warehouse Admin Test" });
+      }
+      const action = String(body.action || "");
+      if (action === "importAst") {
+        const astUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnlONZ-p5AkcV9jgi_JWOJRvSXg49aBvN7GiPebIE08rTtvIJXLp-qCzvHvM2vXcuF8z9p0xM-6pxZ/pub?gid=368396964&single=true&output=csv";
+        const response = await fetch(astUrl, { cache: "no-store", redirect: "follow" });
+        if (!response.ok) return send({ success: false, message: "Gagal membaca sheet AST (HTTP " + response.status + ")." }, 502);
+        const raw = await response.text();
+        if (raw.trim().startsWith("<")) return send({ success: false, message: "Sheet AST mengembalikan HTML, bukan CSV." }, 502);
+        const rows = parseCSV(raw);
+        if (!rows.length) return send({ success: false, message: "Data AST kosong atau format tidak valid." }, 422);
+        const norm = v => String(v || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const headerMap = Object.keys(rows[0] || {}).reduce((o,k) => { o[norm(k)] = k; return o; }, {});
+        const col = name => headerMap[norm(name)] || "";
+        const required = ["Prod cd","Barcode","Prod nm","Sector","Final Qty"];
+        const missing = required.filter(k => !col(k));
+        if (missing.length) return send({ success: false, message: "Kolom AST tidak ditemukan: " + missing.join(", ") }, 422);
+        const num = value => {
+          let x = String(value == null ? "" : value).trim().replace(/\s/g, "");
+          if (!x) return 0;
+          if (/^\(?-?\d{1,3}(\.\d{3})+(,\d+)?\)?$/.test(x)) x = x.replace(/[()]/g, "").replace(/\./g, "").replace(",", ".");
+          else x = x.replace(/,/g, "");
+          const n = Number(x); return Number.isFinite(n) ? n : 0;
+        };
+        const incoming = new Map();
+        for (const row of rows) {
+          const code = String(row[col("Prod cd")] || "").trim();
+          const name = String(row[col("Prod nm")] || "").trim();
+          const sector = String(row[col("Sector")] || "").trim();
+          if (!code || !sector) continue;
+          const key = code + "::" + sector;
+          const old = incoming.get(key);
+          const qty = num(row[col("Final Qty")]);
+          if (old) { old.finalQty += qty; if (!old.barcode) old.barcode = String(row[col("Barcode")] || "").trim(); }
+          else incoming.set(key, { key, productCode: code, barcode: String(row[col("Barcode")] || "").trim(), productName: name, sector, finalQty: qty });
+        }
+        if (!incoming.size) return send({ success: false, message: "Tidak ada baris AST yang memiliki Prod cd dan Sector." }, 422);
+        const existing = new Map((state.master || []).map(x => [x.key, x]));
+        const merged = Array.from(incoming.values()).map(item => {
+          const prior = existing.get(item.key);
+          return prior ? { ...item, stockQty: Number(prior.stockQty || 0), baselineQty: item.finalQty, updatedFromAstAt: new Date().toISOString() }
+                       : { ...item, stockQty: item.finalQty, baselineQty: item.finalQty, updatedFromAstAt: new Date().toISOString() };
+        });
+        state.master = merged;
+        state.importedAt = new Date().toISOString();
+        state.updatedAt = state.importedAt;
+        await setJson(KEY, state);
+        return send({ success: true, imported: merged.length, sectors: Array.from(new Set(merged.map(x => x.sector))).length, importedAt: state.importedAt, preservedExistingStock: true });
+      }
+      if (action === "transaction") {
+        const type = String(body.type || "");
+        const code = String(body.productCode || "").trim();
+        const sector = String(body.sector || "").trim();
+        const qty = Number(body.qty);
+        const note = String(body.note || "").trim().slice(0, 300);
+        const operator = String(body.operator || "Admin").trim().slice(0, 100);
+        if (!["IN","OUT","ADJ_PLUS","ADJ_MINUS"].includes(type)) return send({ success: false, message: "Jenis transaksi tidak valid." }, 400);
+        if (!code || !sector || !Number.isFinite(qty) || qty <= 0 || qty > 10000000) return send({ success: false, message: "Artikel, sektor, dan jumlah positif wajib diisi." }, 400);
+        if (!note) return send({ success: false, message: "Keterangan transaksi wajib diisi." }, 400);
+        const item = (state.master || []).find(x => x.productCode === code && x.sector === sector);
+        if (!item) return send({ success: false, message: "Artikel belum terdaftar pada sektor tersebut. Sinkronkan AST atau periksa sektor." }, 404);
+        const before = Number(item.stockQty || 0);
+        const delta = type === "IN" || type === "ADJ_PLUS" ? qty : -qty;
+        const after = before + delta;
+        if (after < 0) return send({ success: false, message: "Stok tidak mencukupi. Stok tersedia: " + before }, 409);
+        item.stockQty = after;
+        item.updatedAt = new Date().toISOString();
+        const tx = { id: "WH-" + Date.now().toString(36).toUpperCase() + "-" + randomBytes(3).toString("hex").toUpperCase(), type, productCode: code, productName: item.productName, sector, qty, delta, before, after, note, operator, createdAt: new Date().toISOString() };
+        state.transactions = [tx, ...(state.transactions || [])].slice(0, 5000);
+        state.updatedAt = tx.createdAt;
+        await setJson(KEY, state);
+        return send({ success: true, transaction: tx, stockQty: after });
+      }
+      return send({ success: false, message: "Aksi warehouse tidak dikenal." }, 400);
+    }
+
     // GET /neo-status — statistik lengkap storage Neon DB (admin only)
     if (path === "/neo-status" && method === "GET") {
       if (query.adminPassword !== ADMIN_PASSWORD) return send({ success: false, message: "Unauthorized" }, 403);
