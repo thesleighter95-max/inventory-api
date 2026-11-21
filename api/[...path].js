@@ -451,33 +451,68 @@ async function driveApi(accessToken,url,options={}){
       return send({success:true,message:"Pemulihan status dari foto berhasil.",photoProductCount:productCodes.length,restoredCount:restored,totalDisplayed:Object.values(statuses).filter(item=>item&&item.displayed===true).length,storage:"netlify-blob"});
     }
 
-    // One Google Drive display photo per Product Code.
+    // Warehouse photo metadata is read from Google Drive itself, avoiding shared-index write races.
     if(path==="/warehouse-photos"&&(method==="GET"||method==="POST"||method==="DELETE")){
       const auth=String(req.headers.authorization||"");const token=auth.startsWith("Bearer ")?auth.slice(7):"";
       const session=verifyPdaSession(token);if(!session)return send({success:false,message:"Sesi PDA Mini tidak valid atau sudah berakhir. Silakan login kembali."},401);
-      if(method==="GET")return send({success:true,photos:await readWarehousePhotoIndex(),storage:"google-drive"});
-      const productCode=String(body.productCode||"").trim(),mimeType=String(body.mimeType||"").toLowerCase(),imageBase64=String(body.imageBase64||"").replace(/^data:[^;]+;base64,/,"");
+      const folderId=process.env.GOOGLE_DRIVE_FOLDER_ID||"";
+      if(!folderId)return send({success:false,message:"Google Drive belum dikonfigurasi: tambahkan GOOGLE_DRIVE_FOLDER_ID di Vercel."},503);
+      const accessToken=await getGoogleDriveAccessToken();
+      const listFiles=async()=>{
+        const files=[];let pageToken="";
+        do{
+          const params=new URLSearchParams({q:"'"+folderId+"' in parents and trashed=false",fields:"nextPageToken,files(id,name,mimeType,description,appProperties,modifiedTime)",pageSize:"100"});
+          if(pageToken)params.set("pageToken",pageToken);
+          const page=await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files?"+params.toString());
+          files.push(...(page.files||[]));pageToken=page.nextPageToken||"";
+        }while(pageToken);
+        return files;
+      };
+      const codeOf=file=>{
+        const prop=file&&file.appProperties&&file.appProperties.productCode;
+        if(prop)return String(prop).trim();
+        const m=String(file&&file.description||"").match(/Product Code:\s*([^\r\n]+)/i);
+        return m?m[1].trim():"";
+      };
+      const legacy=async()=>{try{return await readWarehousePhotoIndex()}catch(error){console.warn("Indeks foto lama tidak terbaca; Drive tetap menjadi sumber utama:",error.message);return {}}};
+      if(method==="GET"){
+        const photos={},files=await listFiles();
+        for(const file of [...files].sort((a,b)=>String(a.modifiedTime||"").localeCompare(String(b.modifiedTime||"")))){
+          const code=codeOf(file);if(!code)continue;
+          const old=photos[code]||{};
+          photos[code]={...old,fileId:file.id,fileName:file.name||old.fileName||"",viewUrl:"https://drive.google.com/uc?export=view&id="+file.id,thumbnailUrl:"https://drive.google.com/thumbnail?id="+file.id+"&sz=w320",updatedAt:file.modifiedTime||old.updatedAt||"",updatedBy:old.updatedBy||""};
+        }
+        return send({success:true,photos,storage:"google-drive"});
+      }
+      const productCode=String(body.productCode||"").trim();
       if(!productCode)return send({success:false,message:"Product Code wajib diisi."},400);
+      const files=await listFiles(),safeCode=productCode.replace(/[^a-zA-Z0-9._-]/g,"_");
+      const previous=files.find(f=>codeOf(f)===productCode)||files.find(f=>String(f.name||"").startsWith("DISPLAY_"+safeCode+"."));
       if(method==="DELETE"){
-        const photos=await readWarehousePhotoIndex(),previous=photos[productCode];
-        if(!previous||!previous.fileId)return send({success:false,message:"Foto untuk Product Code ini tidak ditemukan."},404);
-        const accessToken=await getGoogleDriveAccessToken();
-        await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(previous.fileId),{method:"DELETE"});
-        delete photos[productCode];await writeWarehousePhotoIndex(photos);
+        const old=previous?{}:(await legacy())[productCode];
+        const fileId=(previous&&previous.id)||(old&&old.fileId);
+        if(!fileId)return send({success:false,message:"Foto untuk Product Code ini tidak ditemukan."},404);
+        await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(fileId),{method:"DELETE"});
         return send({success:true,productCode,deleted:true,storage:"google-drive"});
       }
+      const mimeType=String(body.mimeType||"").toLowerCase(),imageBase64=String(body.imageBase64||"").replace(/^data:[^;]+;base64,/,"");
       if(!["image/jpeg","image/png","image/webp"].includes(mimeType))return send({success:false,message:"Format foto harus JPG, PNG, atau WEBP."},400);
       if(!imageBase64||imageBase64.length>4_000_000)return send({success:false,message:"Ukuran foto terlalu besar. Maksimal sekitar 3 MB setelah kompresi."},413);
       const bytes=Buffer.from(imageBase64,"base64");if(!bytes.length||bytes.length>3_000_000)return send({success:false,message:"Ukuran foto maksimal 3 MB."},413);
-      const folderId=process.env.GOOGLE_DRIVE_FOLDER_ID||"";if(!folderId)return send({success:false,message:"Google Drive belum dikonfigurasi: tambahkan GOOGLE_DRIVE_FOLDER_ID di Vercel."},503);
-      const accessToken=await getGoogleDriveAccessToken(),safeCode=productCode.replace(/[^a-zA-Z0-9._-]/g,"_"),extension=mimeType==="image/png"?"png":mimeType==="image/webp"?"webp":"jpg",fileName="DISPLAY_"+safeCode+"."+extension,boundary="pdaMiniDrive"+Date.now();
-      const metadata={name:fileName,mimeType,parents:[folderId],description:"PDA Mini Warehouse Display • Product Code: "+productCode};
-      const prefix=Buffer.from("--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+JSON.stringify(metadata)+"\r\n--"+boundary+"\r\nContent-Type: "+mimeType+"\r\n\r\n"),suffix=Buffer.from("\r\n--"+boundary+"--"),multipart=Buffer.concat([prefix,bytes,suffix]);
-      const uploaded=await driveApi(accessToken,"https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType",{method:"POST",headers:{"Content-Type":"multipart/related; boundary="+boundary},body:multipart});
-      await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(uploaded.id)+"/permissions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"anyone",role:"reader"})});
-      const photos=await readWarehousePhotoIndex(),previous=photos[productCode],photo={fileId:uploaded.id,fileName:uploaded.name,viewUrl:"https://drive.google.com/uc?export=view&id="+uploaded.id,thumbnailUrl:"https://drive.google.com/thumbnail?id="+uploaded.id+"&sz=w320",updatedAt:new Date().toISOString(),updatedBy:String(session.name||session.sub||"User")};
-      photos[productCode]=photo;await writeWarehousePhotoIndex(photos);
-      if(previous&&previous.fileId&&previous.fileId!==uploaded.id){try{await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(previous.fileId),{method:"DELETE"})}catch(error){console.warn("Foto display lama tidak dapat dihapus:",error.message)}}
+      const extension=mimeType==="image/png"?"png":mimeType==="image/webp"?"webp":"jpg",fileName="DISPLAY_"+safeCode+"."+extension;
+      const metadata={name:fileName,mimeType,description:"PDA Mini Warehouse Display • Product Code: "+productCode,appProperties:{productCode}};
+      const boundary="pdaMiniDrive"+Date.now()+Math.random().toString(16).slice(2);
+      const prefix=Buffer.from("--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+JSON.stringify(metadata)+"\r\n--"+boundary+"\r\nContent-Type: "+mimeType+"\r\n\r\n"),suffix=Buffer.from("\r\n--"+boundary+"--");
+      let uploaded;
+      if(previous&&previous.id){
+        uploaded=await driveApi(accessToken,"https://www.googleapis.com/upload/drive/v3/files/"+encodeURIComponent(previous.id)+"?uploadType=multipart&fields=id,name,mimeType",{method:"PATCH",headers:{"Content-Type":"multipart/related; boundary="+boundary},body:Buffer.concat([prefix,bytes,suffix])});
+      }else{
+        metadata.parents=[folderId];
+        const createPrefix=Buffer.from("--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+JSON.stringify(metadata)+"\r\n--"+boundary+"\r\nContent-Type: "+mimeType+"\r\n\r\n");
+        uploaded=await driveApi(accessToken,"https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType",{method:"POST",headers:{"Content-Type":"multipart/related; boundary="+boundary},body:Buffer.concat([createPrefix,bytes,suffix])});
+        await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(uploaded.id)+"/permissions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"anyone",role:"reader"})});
+      }
+      const photo={fileId:uploaded.id,fileName:uploaded.name||fileName,viewUrl:"https://drive.google.com/uc?export=view&id="+uploaded.id,thumbnailUrl:"https://drive.google.com/thumbnail?id="+uploaded.id+"&sz=w320",updatedAt:new Date().toISOString(),updatedBy:String(session.name||session.sub||"User")};
       return send({success:true,productCode,photo,storage:"google-drive"});
     }
 
