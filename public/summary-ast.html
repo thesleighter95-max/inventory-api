@@ -453,14 +453,14 @@ function astVal(row,keys){const key=astColumn(keys);return key?String(row[key]??
 function loadAstData(){
  $('astSectorBody').innerHTML='<tr><td class="empty" colspan="4">Memuat data AST...</td></tr>';
  $('astArticleBody').innerHTML='<tr><td class="empty">Memuat data AST...</td></tr>';
- return fetchCSV(AST_CSV_URL).then(data=>{
+ return fetchCSV(AST_CSV_URL).then(async data=>{
   astHeaders=data.headers;astRows=data.rows;astLoaded=true;
   const required=['Prod cd','Barcode','Prod nm','Sector','Count1','Count3','Final Qty'];
   const missing=required.filter(k=>!astColumn([k]));
   if(missing.length)throw Error('Kolom tidak ditemukan: '+missing.join(', '));
   populateAstSectorFilter();renderAstSummary();
   $('sectorHint').textContent='Sumber: sheet AST • pilih sector untuk melihat artikel di dalamnya';
-  if(new URLSearchParams(location.search).get('view')==='warehouse'&&warehouseDataRequested)renderWarehouseOnly();
+  if(new URLSearchParams(location.search).get('view')==='warehouse'&&warehouseDataRequested)await renderWarehouseOnly();
   return true;
  }).catch(error=>{
   astLoaded=false;
@@ -640,7 +640,7 @@ function updateWarehouseDisplayProgress(){
  $('warehouseDisplayProgress').textContent=percent+'% dari '+fmt(total)+' artikel gudang';
 }
 function warehouseHead(address){return String(address??'').trim().replace(/[^0-9]/g,'').charAt(0)}
-async function renderWarehouseOnly(){
+async async function renderWarehouseOnly(){
  if(!astLoaded)return;
  const codeKey=astColumn(['Prod cd']),barcodeKey=astColumn(['Barcode']),nameKey=astColumn(['Prod nm']),addressKey=astColumn(['Sector']),qtyKey=astColumn(['Final Qty']);
  let categoryByCode=new Map();
@@ -725,18 +725,20 @@ function renderAstArticles(){renderAstSummary();}
 $('tabSummary').addEventListener('click',()=>switchView('summary'));
 $('tabSector').addEventListener('click',()=>switchView('sector'));
 $('tabWarehouse').addEventListener('click',()=>switchView('warehouse'));
-function requestWarehouseData(refresh){
+async function requestWarehouseData(refresh){
  warehouseDataRequested=true;
  $('warehouseShowData').disabled=true;$('warehouseShowData').textContent='Memuat data...';
+ $('warehouseBody').innerHTML='<tr><td class="empty" colspan="10">Mengambil data AST, kategori, status, dan foto...</td></tr>';
  if(refresh)astLoaded=false;
- if(astLoaded){
-  renderWarehouseOnly();
+ try{
+  if(astLoaded)await renderWarehouseOnly();
+  else await loadAstData();
+ }catch(error){
+  console.error('Warehouse Only gagal dimuat:',error);
+  $('warehouseBody').innerHTML='<tr><td class="empty" colspan="10">Gagal memuat Warehouse Only: '+esc(error&&error.message?error.message:'Kesalahan tidak diketahui')+'</td></tr>';
+  $('warehouseHint').textContent='Periksa koneksi dan sumber data, lalu coba lagi.';
+ }finally{
   $('warehouseShowData').disabled=false;$('warehouseShowData').textContent='Perbarui Tampilan Data';
- }else{
-  $('warehouseBody').innerHTML='<tr><td class="empty" colspan="9">Mengambil data AST dan kategori SUM...</td></tr>';
-  loadAstData().then(()=>{}).catch(()=>{}).finally(()=>{
-   $('warehouseShowData').disabled=false;$('warehouseShowData').textContent='Perbarui Tampilan Data';
-  });
  }
 }
 $('exportWarehouseExcel').addEventListener('click',exportWarehouseExcel);
