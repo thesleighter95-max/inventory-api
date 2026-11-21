@@ -676,14 +676,25 @@ async function renderWarehouseOnly(){
  const cats=new Set(warehouseProducts.map(p=>p.cat).filter(Boolean));
  $('warehouseSkuCount').textContent=fmt(warehouseProducts.length);
  $('warehouseQty').textContent=fmt(warehouseProducts.reduce((s,p)=>s+p.qty,0));
- await loadWarehouseStatuses();
- await loadWarehousePhotos();
+ // Status dan foto adalah fitur tambahan. Jika penyimpanan sedang bermasalah,
+ // jangan gagalkan daftar artikel AST: tampilkan list terlebih dahulu.
+ const warehouseWarnings=[];
+ try{await loadWarehouseStatuses(true)}catch(error){
+  console.warn('Status Ter-display tidak tersedia; daftar artikel tetap ditampilkan:',error);
+  warehouseStatuses={};warehouseStatusLoaded=false;
+  warehouseWarnings.push('Status Ter-display sementara tidak tersedia');
+ }
+ try{await loadWarehousePhotos(true)}catch(error){
+  console.warn('Indeks foto tidak tersedia; daftar artikel tetap ditampilkan:',error);
+  warehousePhotos={};warehousePhotoLoaded=false;
+  warehouseWarnings.push('Foto display sementara tidak tersedia');
+ }
  updateWarehouseDisplayProgress();
  const categoryMap=new Map();
  warehouseProducts.forEach(p=>{if(p.cat)categoryMap.set(p.cat,p.category||'')});
  $('warehouseCategory').innerHTML='<option value="">Semua Category</option>'+[...categoryMap.entries()].sort((a,b)=>a[0].localeCompare(b[0],'id',{numeric:true})).map(([code,name])=>'<option value="'+esc(code)+'">'+esc(code+(name?' • '+name:''))+'</option>').join('');
  $('warehouseSearch').disabled=false;$('warehouseCategory').disabled=false;
- $('warehouseHint').textContent='Data live dari sheet AST • '+fmt(astRows.length)+' baris diperiksa';
+ $('warehouseHint').textContent='Data live dari sheet AST • '+fmt(astRows.length)+' baris diperiksa'+(warehouseWarnings.length?' • '+warehouseWarnings.join(' • '):'');
  $('warehouseTableWrap').style.display='block';$('warehousePager').style.display='flex';
  renderWarehouseRows();
 }
