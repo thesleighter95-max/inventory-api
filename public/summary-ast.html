@@ -948,9 +948,47 @@ $('download').onclick=()=>{
  link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
  link.download='AST_Category_Summary_HASIL.csv';link.click();URL.revokeObjectURL(link.href);
 };
+
+let warehouseLeavePromptOpen=false,warehouseLeaveAllowed=false,warehouseGuardArmed=false;
+function showWarehouseLeavePrompt(){
+ if(warehouseLeavePromptOpen||warehouseLeaveAllowed)return;
+ warehouseLeavePromptOpen=true;
+ let bar=document.getElementById('warehouseLeaveGuard');
+ if(!bar){
+  bar=document.createElement('div');bar.id='warehouseLeaveGuard';
+  bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:1000000;padding:13px 16px;background:#172b4d;color:#fff;box-shadow:0 5px 22px rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;font:600 14px system-ui,sans-serif';
+  bar.innerHTML='<span>⚠️ Anda akan meninggalkan halaman Warehouse. Apakah ingin pindah halaman?</span><button type="button" id="warehouseStayHere" style="border:0;border-radius:8px;padding:9px 14px;background:#fff;color:#17324f;font-weight:800">Tetap di sini</button><button type="button" id="warehouseLeaveNow" style="border:1px solid rgba(255,255,255,.55);border-radius:8px;padding:9px 14px;background:#b42318;color:#fff;font-weight:800">Ya, pindah halaman</button>';
+  document.body.appendChild(bar);
+  document.getElementById('warehouseStayHere').addEventListener('click',()=>{
+   bar.remove();warehouseLeavePromptOpen=false;
+   if(warehouseGuardArmed&&!warehouseLeaveAllowed)history.pushState({warehouseLeaveGuard:true},'',location.href);
+  });
+  document.getElementById('warehouseLeaveNow').addEventListener('click',()=>{
+   warehouseLeaveAllowed=true;bar.remove();warehouseLeavePromptOpen=false;
+   history.back();
+  });
+ }else bar.style.display='flex';
+}
+function armWarehouseLeaveGuard(){
+ if(warehouseGuardArmed)return;
+ warehouseGuardArmed=true;
+ history.pushState({warehouseLeaveGuard:true},'',location.href);
+ window.addEventListener('popstate',()=>{
+  if(warehouseLeaveAllowed)return;
+  showWarehouseLeavePrompt();
+ });
+ window.addEventListener('beforeunload',event=>{
+  if(warehouseLeaveAllowed||!warehouseGuardArmed)return;
+  saveWarehouseUiState();
+  event.preventDefault();
+  event.returnValue='';
+ });
+}
+
 const requestedView=new URLSearchParams(location.search).get('view');
 const initialView=requestedView||((warehouseRestoreState&&warehouseRestoreState.view==='warehouse')?'warehouse':'');
 if(initialView==='sector'||initialView==='warehouse')switchView(initialView);
+if(initialView==='warehouse')armWarehouseLeaveGuard();
 if(initialView==='warehouse'&&warehouseRestoreState&&warehouseRestoreState.dataRequested){warehouseDataRequested=true;requestWarehouseData(false);}
 load();setInterval(()=>{load();if(astLoaded)loadAstData()},60000);
 </script></body></html>
