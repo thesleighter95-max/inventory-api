@@ -2483,13 +2483,57 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
         <div><div style="display:flex;align-items:center;gap:7px;color:#059669;font-size:10px;letter-spacing:1.4px;font-weight:900"><span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block"></span> DS WAREHOUSE · ADMIN WORKSPACE</div><h2 style="font-size:25px;font-weight:900;color:#172033;margin:5px 0 3px;letter-spacing:-.7px">Manajemen Stok Gudang</h2><div class="wh-muted">Kelola isi barang berdasarkan alamat. Pilih alamat, periksa stok, lalu catat setiap perubahan.</div></div>
         <div class="wh-head-actions" style="display:flex;gap:8px;flex-wrap:wrap"><button class="wh-btn" onclick="whLoadData()">↻ Muat Ulang</button><button class="wh-btn green" id="whImportBtn" onclick="whImportAst()">↓ Sinkron Salinan AST</button></div>
       </div>
-      <div class="wh-grid" style="margin-bottom:14px">
+      
+      <div id="whSubnav" class="wh-subnav" role="navigation" aria-label="Menu DS Warehouse">
+        <button type="button" class="wh-subnav-btn active" data-page="dashboard" onclick="whShowPage('dashboard')">▦ Dashboard</button>
+        <button type="button" class="wh-subnav-btn" data-page="stock" onclick="whShowPage('stock')">▣ Stok Gudang</button>
+        <button type="button" class="wh-subnav-btn" data-page="in" onclick="whShowPage('in')">↓ Barang Masuk</button>
+        <button type="button" class="wh-subnav-btn" data-page="out" onclick="whShowPage('out')">↑ Barang Keluar</button>
+        <button type="button" class="wh-subnav-btn" data-page="master" onclick="whShowPage('master')">▤ Master Artikel</button>
+        <button type="button" class="wh-subnav-btn" data-page="addresses" onclick="whShowPage('addresses')">⌖ Master Alamat</button>
+        <button type="button" class="wh-subnav-btn" data-page="reports" onclick="whShowPage('reports')">▥ Laporan Stok</button>
+        <button type="button" class="wh-subnav-btn" data-page="history" onclick="whShowPage('history')">◷ Riwayat</button>
+      </div>
+      <div id="whDashboardWelcome" class="wh-dashboard-welcome">
+        <div><div class="wh-dash-kicker">WAREHOUSE OVERVIEW</div><h3>Selamat datang di DS Warehouse</h3><p>Pantau stok, kelola alamat penyimpanan, dan catat setiap pergerakan barang dalam satu tempat.</p></div>
+        <div class="wh-dash-actions"><button type="button" onclick="whShowPage('in')">＋ Barang Masuk</button><button type="button" onclick="whShowPage('out')">− Barang Keluar</button><button type="button" onclick="whShowPage('stock')">Lihat Stok</button></div>
+      </div>
+      <div id="whDashboardSummary" class="wh-dashboard-summary">
+        <div class="wh-dash-panel"><div class="wh-section-title">Ringkasan Gudang</div><div id="whDashboardFacts" class="wh-dash-facts"><span>Memuat ringkasan...</span></div></div>
+        <div class="wh-dash-panel"><div class="wh-section-title">Aktivitas Terbaru</div><div id="whDashboardActivity" class="wh-dash-activity">Belum ada aktivitas.</div></div>
+      </div>
+      <div id="whReportCard" class="wh-card" style="display:none;margin-bottom:13px">
+        <div class="wh-section-title">Laporan Stok per Alamat</div>
+        <div class="wh-muted" style="margin:5px 0 12px">Ringkasan stok dari database Warehouse yang sedang tersimpan.</div>
+        <div class="wh-table-wrap"><table><thead><tr><th>ALAMAT</th><th>JUMLAH ARTIKEL</th><th>TOTAL QTY</th></tr></thead><tbody id="whReportBody"><tr><td colspan="3">Memuat laporan...</td></tr></tbody></table></div>
+      </div>
+      <style>
+        #warehouseAdminPanel .wh-subnav{display:flex;gap:7px;overflow-x:auto;padding:5px 2px 13px;margin:0 0 12px;scrollbar-width:thin}
+        #warehouseAdminPanel .wh-subnav-btn{flex:0 0 auto;border:1px solid #dce4ef;background:#fff;color:#64748b;border-radius:10px;padding:10px 13px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer}
+        #warehouseAdminPanel .wh-subnav-btn.active{background:#172554;border-color:#172554;color:#fff;box-shadow:0 4px 12px rgba(23,37,84,.16)}
+        #warehouseAdminPanel .wh-dashboard-welcome{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px;border-radius:18px;background:linear-gradient(115deg,#101f43,#1e3a68 58%,#0f766e);color:#fff;margin-bottom:14px}
+        #warehouseAdminPanel .wh-dash-kicker{font-size:9px;letter-spacing:1.8px;font-weight:900;color:#a5f3fc}
+        #warehouseAdminPanel .wh-dashboard-welcome h3{font-size:21px;font-weight:900;margin:5px 0}
+        #warehouseAdminPanel .wh-dashboard-welcome p{font-size:11px;line-height:1.6;color:#dbeafe;margin:0;max-width:540px}
+        #warehouseAdminPanel .wh-dash-actions{display:flex;gap:7px;flex-wrap:wrap}
+        #warehouseAdminPanel .wh-dash-actions button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:10px;color:#fff;padding:10px 12px;font-size:10px;font-weight:800;cursor:pointer}
+        #warehouseAdminPanel .wh-dashboard-summary{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+        #warehouseAdminPanel .wh-dash-panel{background:#fff;border:1px solid #e4eaf2;border-radius:16px;padding:16px;min-width:0}
+        #warehouseAdminPanel .wh-dash-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+        #warehouseAdminPanel .wh-dash-facts div{background:#f7f9fc;border-radius:10px;padding:10px}
+        #warehouseAdminPanel .wh-dash-facts strong{display:block;color:#172033;font-size:17px;font-weight:900}
+        #warehouseAdminPanel .wh-dash-facts span{display:block;color:#718096;font-size:9px;margin-top:3px}
+        #warehouseAdminPanel .wh-dash-activity{font-size:11px;color:#64748b;line-height:1.7;margin-top:9px}
+        @media(max-width:760px){#warehouseAdminPanel .wh-dashboard-welcome{align-items:flex-start;flex-direction:column;padding:16px}#warehouseAdminPanel .wh-dashboard-welcome h3{font-size:18px}#warehouseAdminPanel .wh-dash-actions{width:100%}#warehouseAdminPanel .wh-dash-actions button{flex:1}#warehouseAdminPanel .wh-dashboard-summary{grid-template-columns:1fr}}
+      </style>
+
+      <div id="whDashboardStats" class="wh-grid" style="margin-bottom:14px">
         <div class="wh-card wh-stat"><div class="wh-stat-label">TOTAL ARTIKEL</div><div id="whSkuCount" class="wh-stat-value">—</div><div class="wh-muted">Di seluruh alamat</div></div>
         <div class="wh-card wh-stat"><div class="wh-stat-label">TOTAL UNIT STOK</div><div id="whStockTotal" class="wh-stat-value">—</div><div class="wh-muted">Qty tersimpan di Warehouse</div></div>
         <div class="wh-card wh-stat"><div class="wh-stat-label">ALAMAT AKTIF</div><div id="whSectorCount" class="wh-stat-value">—</div><div class="wh-muted">Sector terdaftar</div></div>
         <div class="wh-card wh-stat"><div class="wh-stat-label">CATATAN TRANSAKSI</div><div id="whTxCount" class="wh-stat-value">—</div><div class="wh-muted">Riwayat perubahan stok</div></div>
       </div>
-      <div class="wh-card" style="margin-bottom:13px">
+      <div id="whAddressCard" class="wh-card" style="margin-bottom:13px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div><div class="wh-section-title"><span class="wh-step">1</span>Pilih alamat gudang</div><div class="wh-muted" style="margin:4px 0 0 32px">Semua daftar barang akan mengikuti alamat yang dipilih.</div></div><span class="wh-pill">ADDRESS FIRST</span></div>
         <div class="wh-address-box">
           <label>ALAMAT / SECTOR</label>
@@ -2497,12 +2541,12 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
           <div id="whAddressSummary" class="wh-muted" style="margin-top:9px">Belum ada alamat dipilih. Pilih alamat untuk melihat isi stoknya.</div>
         </div>
       </div>
-      <div class="wh-card" style="margin-bottom:13px">
+      <div id="whItemsCard" class="wh-card" style="margin-bottom:13px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div><div class="wh-section-title"><span class="wh-step">2</span>Isi barang pada alamat</div><div class="wh-muted" style="margin:4px 0 0 32px">Pilih satu artikel untuk melakukan transaksi atau koreksi.</div></div><input id="whSearch" oninput="whRenderAddress()" placeholder="⌕ Cari kode, nama, barcode..." style="max-width:310px"></div>
         <div class="wh-table-wrap"><table style="min-width:620px"><thead><tr><th>KODE ARTIKEL</th><th>NAMA BARANG</th><th>BARCODE</th><th>STOK SEKARANG</th><th>QTY AWAL AST</th><th>SUMBER</th></tr></thead><tbody id="whStockBody"><tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:28px">Pilih alamat di atas untuk menampilkan barang.</td></tr></tbody></table></div>
         <div class="wh-muted" style="margin-top:9px">Tips: ketuk baris barang untuk memilihnya. Baris terpilih akan diberi warna penanda.</div>
       </div>
-      <div class="wh-card" style="margin-bottom:13px">
+      <div id="whTransactionCard" class="wh-card" style="margin-bottom:13px">
         <div class="wh-section-title"><span class="wh-step">3</span>Catat perubahan stok</div>
         <div id="whSelectedInfo" class="wh-address-box wh-muted" style="margin:11px 0">Belum ada barang dipilih. Pilih artikel dari tabel di atas.</div>
         <div class="wh-form-grid">
@@ -2512,7 +2556,7 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
         <div style="margin-top:11px"><label>KETERANGAN / ALASAN</label><input id="whNote" maxlength="300" placeholder="Contoh: penerimaan barang, penjualan, atau hasil hitung fisik"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:13px"><div id="whFormMessage" class="wh-muted">Pastikan alamat dan artikel sudah benar sebelum menyimpan.</div><button class="wh-btn primary" id="whSubmitBtn" onclick="whSubmitTransaction()">Simpan Perubahan Stok →</button></div>
       </div>
-      <div class="wh-card" style="margin-bottom:13px">
+      <div id="whManualCard" class="wh-card" style="margin-bottom:13px">
         <div class="wh-section-title"><span class="wh-step">4</span>Tambah barang yang belum terdaftar</div>
         <div class="wh-muted" style="margin:4px 0 12px 32px">Artikel manual hanya ditambahkan ke alamat yang sedang dipilih.</div>
         <div class="wh-action-card">
@@ -2525,7 +2569,7 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
           <button class="wh-btn green" style="margin-top:12px;width:100%" onclick="whAddManualArticle()">＋ Tambahkan Barang ke Alamat Terpilih</button>
         </div>
       </div>
-      <div class="wh-card">
+      <div id="whHistoryCard" class="wh-card">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px"><div><div class="wh-section-title">Riwayat aktivitas</div><div class="wh-muted">Jejak perubahan stok terbaru di Warehouse.</div></div><span class="wh-pill">AUDIT TRAIL</span></div>
         <div class="wh-table-wrap"><table><thead><tr><th>WAKTU</th><th>NO. TRANSAKSI</th><th>AKTIVITAS</th><th>ARTIKEL</th><th>ALAMAT</th><th>QTY</th><th>SEBELUM → SESUDAH</th><th>KETERANGAN</th></tr></thead><tbody id="whTxBody"><tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:25px">Belum ada riwayat perubahan.</td></tr></tbody></table></div>
       </div>
@@ -5604,7 +5648,44 @@ function whSelectArticle(key){whState.selectedKey=key;var item=whSelectedItem();
 function whPopulateSectors(){var el=document.getElementById("whSectorSelect"),current=el.value,sectors=Array.from(new Set(whState.master.map(function(x){return x.sector;}))).sort(function(a,b){return a.localeCompare(b);});el.innerHTML='<option value="">Pilih alamat terlebih dahulu...</option>'+sectors.map(function(x){return '<option value="'+whEsc(x)+'">'+whEsc(x)+'</option>';}).join("");if(sectors.includes(current))el.value=current;whRenderAddress();}
 function whRenderTransactions(){var body=document.getElementById("whTxBody");body.innerHTML=(whState.transactions||[]).slice(0,100).map(function(x){var labels={IN:"BARANG MASUK",OUT:"BARANG KELUAR",ADJ_PLUS:"KOREKSI +",ADJ_MINUS:"KOREKSI −",STOCKTAKE:"UPDATE QTY",MANUAL_ADD:"TAMBAH MANUAL"};return '<tr><td>'+whEsc(new Date(x.createdAt).toLocaleString("id-ID"))+'</td><td>'+whEsc(x.id)+'</td><td>'+whEsc(labels[x.type]||x.type)+'</td><td>'+whEsc(x.productCode+" — "+x.productName)+'</td><td>'+whEsc(x.sector)+'</td><td>'+whFmt(x.qty)+'</td><td>'+whFmt(x.before)+' → '+whFmt(x.after)+'</td><td>'+whEsc(x.note)+'</td></tr>';}).join("")||'<tr><td colspan="8">Belum ada perubahan.</td></tr>';}
 function whUpdateKpis(){var total=whState.master.reduce(function(a,x){return a+Number(x.stockQty||0);},0),sectors=new Set(whState.master.map(function(x){return x.sector;}));var set=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};set("whSkuCount",whState.master.length.toLocaleString("id-ID"));set("whStockTotal",whFmt(total));set("whSectorCount",sectors.size.toLocaleString("id-ID"));set("whTxCount",(whState.transactions||[]).length.toLocaleString("id-ID"));}
-function whLoadData(){var status=document.getElementById("whFormMessage");if(status)status.textContent="Memuat database warehouse...";return fetch(whAdminUrl()+"?adminPassword="+encodeURIComponent(ADMIN_PASSWORD),{cache:"no-store"}).then(function(r){return r.json().then(function(d){if(!r.ok||!d.success)throw new Error(d.message||"Gagal memuat warehouse.");return d;});}).then(function(d){whState.master=Array.isArray(d.data.master)?d.data.master:[];whState.transactions=Array.isArray(d.data.transactions)?d.data.transactions:[];whUpdateKpis();whPopulateSectors();whRenderTransactions();if(status)status.textContent=d.data.importedAt?"Salinan AST terakhir: "+new Date(d.data.importedAt).toLocaleString("id-ID"):"Belum ada salinan AST. Tekan Salin Data AST.";}).catch(function(e){if(status)status.textContent="Gagal memuat: "+e.message;});}
+
+function whShowPage(page){
+ var ids=["whDashboardStats","whDashboardWelcome","whDashboardSummary","whAddressCard","whItemsCard","whTransactionCard","whManualCard","whHistoryCard","whReportCard"];
+ var visible={
+  dashboard:["whDashboardStats","whDashboardWelcome","whDashboardSummary"],
+  stock:["whAddressCard","whItemsCard"],
+  in:["whAddressCard","whItemsCard","whTransactionCard"],
+  out:["whAddressCard","whItemsCard","whTransactionCard"],
+  master:["whAddressCard","whManualCard"],
+  addresses:["whAddressCard"],
+  reports:["whReportCard"],
+  history:["whHistoryCard"]
+ };
+ ids.forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=(visible[page]||visible.dashboard).indexOf(id)>=0?"":"none";});
+ document.querySelectorAll("#whSubnav .wh-subnav-btn").forEach(function(btn){btn.classList.toggle("active",btn.getAttribute("data-page")===page);});
+ var type=document.getElementById("whChangeType");
+ if(type&&(page==="in"||page==="out")){type.value=page==="in"?"IN":"OUT";type.disabled=true;}
+ else if(type){type.disabled=false;}
+ if(page==="dashboard")whRenderDashboard();
+ if(page==="addresses")whRenderAddressList();
+ if(page==="reports")whRenderStockReport();
+}
+function whRenderDashboard(){
+ var master=whState.master||[],tx=whState.transactions||[],sectors=new Set(master.map(function(x){return x.sector;}));
+ var el=document.getElementById("whDashboardFacts");
+ if(el)el.innerHTML='<div><strong>'+master.length.toLocaleString("id-ID")+'</strong><span>Baris artikel-alamat</span></div><div><strong>'+sectors.size.toLocaleString("id-ID")+'</strong><span>Alamat terdaftar</span></div><div><strong>'+whFmt(master.reduce(function(a,x){return a+Number(x.stockQty||0);},0))+'</strong><span>Total unit stok</span></div><div><strong>'+tx.length.toLocaleString("id-ID")+'</strong><span>Catatan aktivitas</span></div>';
+ var activity=document.getElementById("whDashboardActivity");
+ if(activity){var recent=tx.slice(0,5);activity.innerHTML=recent.length?recent.map(function(x){return '<div style="padding:6px 0;border-bottom:1px solid #edf1f6"><strong style="color:#334155">'+whEsc(x.type||"AKTIVITAS")+'</strong> · '+whEsc(x.productCode||"")+'<br><span style="color:#94a3b8">'+whEsc(x.sector||"")+' · '+whEsc(new Date(x.createdAt).toLocaleString("id-ID"))+'</span></div>';}).join(""):"Belum ada aktivitas transaksi.";}
+}
+function whRenderAddressList(){
+ var body=document.getElementById("whReportBody");if(!body)return;
+ var map={};(whState.master||[]).forEach(function(x){var s=String(x.sector||"");if(!map[s])map[s]={count:0,qty:0};map[s].count++;map[s].qty+=Number(x.stockQty||0);});
+ var rows=Object.keys(map).sort().map(function(s){return '<tr><td><strong>'+whEsc(s)+'</strong></td><td>'+map[s].count.toLocaleString("id-ID")+'</td><td>'+whFmt(map[s].qty)+'</td></tr>';});
+ body.innerHTML=rows.join("")||'<tr><td colspan="3">Belum ada alamat di database.</td></tr>';
+}
+function whRenderStockReport(){whRenderAddressList();}
+
+function whLoadData(){var status=document.getElementById("whFormMessage");if(status)status.textContent="Memuat database warehouse...";return fetch(whAdminUrl()+"?adminPassword="+encodeURIComponent(ADMIN_PASSWORD),{cache:"no-store"}).then(function(r){return r.json().then(function(d){if(!r.ok||!d.success)throw new Error(d.message||"Gagal memuat warehouse.");return d;});}).then(function(d){whState.master=Array.isArray(d.data.master)?d.data.master:[];whState.transactions=Array.isArray(d.data.transactions)?d.data.transactions:[];whUpdateKpis();whPopulateSectors();whRenderTransactions();whRenderDashboard();if(statusstatus.textContent=d.data.importedAt?"Salinan AST terakhir: "+new Date(d.data.importedAt).toLocaleString("id-ID"):"Belum ada salinan AST. Tekan Salin Data AST.";}).catch(function(e){if(status)status.textContent="Gagal memuat: "+e.message;});}
 function whImportAst(){var btn=document.getElementById("whImportBtn"),status=document.getElementById("whFormMessage");if(btn){btn.disabled=true;btn.textContent="⏳ Menyalin...";}if(status)status.textContent="Membuat / memperbarui salinan master dari AST...";fetch(whAdminUrl(),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({adminPassword:ADMIN_PASSWORD,action:"importAst"})}).then(function(r){return r.json().then(function(d){if(!r.ok||!d.success)throw new Error(d.message||"Salin AST gagal.");return d;});}).then(function(d){if(status)status.textContent="Salinan AST selesai: "+d.imported.toLocaleString("id-ID")+" artikel-alamat pada "+d.sectors.toLocaleString("id-ID")+" alamat. Qty Warehouse tetap dipertahankan.";return whLoadData();}).catch(function(e){if(status)status.textContent="Gagal salin AST: "+e.message;}).finally(function(){if(btn){btn.disabled=false;btn.textContent="⇩ Salin Data AST";}});}
 function whPost(payload){payload.adminPassword=ADMIN_PASSWORD;payload.operator=typeof currentUserNameInv!=="undefined"&&currentUserNameInv?currentUserNameInv:"Admin";return fetch(whAdminUrl(),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}).then(function(r){return r.json().then(function(d){if(!r.ok||!d.success)throw new Error(d.message||"Permintaan gagal.");return d;});});}
 function whSubmitTransaction(){var item=whSelectedItem(),qty=Number(document.getElementById("whQty").value),type=document.getElementById("whChangeType").value,note=String(document.getElementById("whNote").value||"").trim(),status=document.getElementById("whFormMessage"),btn=document.getElementById("whSubmitBtn");if(!item){status.textContent="Pilih artikel dari daftar alamat terlebih dahulu.";return;}if(!Number.isFinite(qty)||(type==="SET"?qty<0:qty<=0)){status.textContent=type==="SET"?"Qty aktual tidak boleh negatif.":"Jumlah harus lebih besar dari nol.";return;}if(!note){status.textContent="Keterangan wajib diisi.";return;}btn.disabled=true;btn.textContent="Menyimpan...";var payload=type==="SET"?{action:"setQty",productCode:item.productCode,sector:item.sector,qty:qty,note:note}:{action:"transaction",type:type,productCode:item.productCode,sector:item.sector,qty:qty,note:note};whPost(payload).then(function(d){status.textContent="Berhasil disimpan. Qty terbaru: "+whFmt(d.stockQty)+".";document.getElementById("whQty").value="";document.getElementById("whNote").value="";return whLoadData().then(function(){whSelectArticle(item.key);});}).catch(function(e){status.textContent="Gagal menyimpan: "+e.message;}).finally(function(){btn.disabled=false;btn.textContent="Simpan Perubahan";});}
@@ -5623,7 +5704,7 @@ function switchMainTab(tab){
   if(_bnfInterval){clearInterval(_bnfInterval);_bnfInterval=null;}if(tab==="inventory"){$("inventoryPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navInventory");setMarquee(true);kirimAktivitas("tab_inventory","Buka panel Inventory")}
   else if(tab==="expired"){$("expiredPanel").classList.add("active");document.body.classList.add("light-mode");activateNav("navExpired");setMarquee(false);lucide.createIcons();kirimAktivitas("tab_expired","Buka panel Expired")}
   else if(tab==="logs"){$("logsPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navLogs");setMarquee(false);loadMonitoringData();loadProductRequests();loadUserList();loadBarcodeNotFound();if(isAdmin)loadPwResetRequests();if(_bnfInterval)clearInterval(_bnfInterval);_bnfInterval=setInterval(loadBarcodeNotFound,180000);}
-  else if(tab==="warehouseAdmin"){if(!isAdmin){switchMainTab("inventory");return;}$("warehouseAdminPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navWarehouseAdmin");setMarquee(false);whLoadData();}
+  else if(tab==="warehouseAdmin"){if(!isAdmin){switchMainTab("inventory");return;}$("warehouseAdminPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navWarehouseAdmin");setMarquee(false);whShowPage("dashboard");whLoadData();}
   else if(tab==="health"){$("healthPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navHealth");setMarquee(false);renderCCCheckHistory();}
   else if(tab==="pop"){$("popPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navPop");setMarquee(false);ensurePopLoaded().then(function(ok){if(ok)popInit();});}
   else if(tab==="promo"){$("promoPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navPromo");setMarquee(false);loadPromoList();}
