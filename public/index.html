@@ -2427,72 +2427,109 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
     <iframe class="dsh-embedded-frame" src="/summary-ast.html?view=warehouse" title="AST 2026 Warehouse Only" loading="lazy"></iframe>
   </div>
 
-  <div id="warehouseAdminPanel" class="panel-container" style="width:100%;max-width:none;margin:0;padding:16px 14px 110px;box-sizing:border-box;color:#e2e8f0;background:#080d19;min-height:100vh">
+  <div id="warehouseAdminPanel" class="panel-container" style="width:100%;max-width:none;margin:0;padding:18px 14px 110px;box-sizing:border-box;color:#172033;background:#f4f7fb;min-height:100vh">
     <style>
-      #warehouseAdminPanel .wh-wrap{max-width:1450px;margin:auto}
-      #warehouseAdminPanel .wh-card{background:linear-gradient(145deg,#111d31,#0c1728);border:1px solid #26364e;border-radius:15px;padding:14px;min-width:0}
-      #warehouseAdminPanel .wh-muted{color:#91a2bd;font-size:11px}
-      #warehouseAdminPanel .wh-btn{border:1px solid #334866;background:#1b2d48;color:#e7efff;border-radius:10px;padding:10px 13px;font-size:11px;font-weight:800;cursor:pointer}
-      #warehouseAdminPanel .wh-btn.primary{background:#5145e5;border-color:#665cf0}
-      #warehouseAdminPanel .wh-btn.green{background:#087b55;border-color:#0b9a69}
-      #warehouseAdminPanel input,#warehouseAdminPanel select{width:100%;min-width:0;background:#0a1425;border:1px solid #33445f;border-radius:9px;color:#eef4ff;padding:11px;font-size:12px;outline:none}
-      #warehouseAdminPanel label{display:block;font-size:10px;color:#9fb0c9;font-weight:800;margin-bottom:6px}
-      #warehouseAdminPanel .wh-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-      #warehouseAdminPanel .wh-table-wrap{overflow:auto;border:1px solid #26364e;border-radius:12px}
-      #warehouseAdminPanel table{border-collapse:collapse;width:100%;min-width:680px;font-size:11px}
-      #warehouseAdminPanel th{background:#14233a;color:#a9bad4;text-align:left;padding:10px;position:sticky;top:0}
-      #warehouseAdminPanel td{padding:10px;border-top:1px solid #1e2e45;color:#dbe7f8}
-      #warehouseAdminPanel .wh-row{cursor:pointer}
-      #warehouseAdminPanel .wh-row.selected{background:#1a3150}
-      @media(max-width:760px){#warehouseAdminPanel .wh-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#warehouseAdminPanel .wh-head{align-items:flex-start!important;flex-direction:column}#warehouseAdminPanel .wh-form-grid{grid-template-columns:1fr!important}}
+      #warehouseAdminPanel{font-family:inherit}
+      #warehouseAdminPanel .wh-wrap{max-width:1440px;margin:auto}
+      #warehouseAdminPanel .wh-card{background:#fff;border:1px solid #e4eaf2;border-radius:18px;padding:17px;min-width:0;box-shadow:0 5px 18px rgba(20,40,75,.045)}
+      #warehouseAdminPanel .wh-muted{color:#718096;font-size:12px;line-height:1.55}
+      #warehouseAdminPanel .wh-btn{border:1px solid #d8e1ed;background:#fff;color:#34445c;border-radius:11px;padding:11px 15px;font-size:12px;font-weight:800;cursor:pointer;transition:.15s}
+      #warehouseAdminPanel .wh-btn:hover{filter:brightness(.97);transform:translateY(-1px)}
+      #warehouseAdminPanel .wh-btn:disabled{opacity:.55;cursor:wait;transform:none}
+      #warehouseAdminPanel .wh-btn.primary{background:#4f46e5;border-color:#4f46e5;color:#fff;box-shadow:0 5px 12px rgba(79,70,229,.18)}
+      #warehouseAdminPanel .wh-btn.green{background:#059669;border-color:#059669;color:#fff}
+      #warehouseAdminPanel input,#warehouseAdminPanel select{width:100%;min-width:0;background:#fff;border:1px solid #d8e1ed;border-radius:11px;color:#172033;padding:12px 13px;font-size:13px;outline:none;box-sizing:border-box}
+      #warehouseAdminPanel input:focus,#warehouseAdminPanel select:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+      #warehouseAdminPanel label{display:block;font-size:10px;letter-spacing:.7px;color:#66758b;font-weight:900;margin-bottom:7px}
+      #warehouseAdminPanel .wh-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+      #warehouseAdminPanel .wh-stat{position:relative;overflow:hidden}
+      #warehouseAdminPanel .wh-stat:after{content:"";position:absolute;width:62px;height:62px;border-radius:50%;right:-18px;top:-18px;background:#eef2ff}
+      #warehouseAdminPanel .wh-stat:nth-child(2):after{background:#e8fff5}
+      #warehouseAdminPanel .wh-stat:nth-child(3):after{background:#fff6e8}
+      #warehouseAdminPanel .wh-stat:nth-child(4):after{background:#eff6ff}
+      #warehouseAdminPanel .wh-stat-label{font-size:10px;letter-spacing:.8px;color:#77869b;font-weight:900}
+      #warehouseAdminPanel .wh-stat-value{font-size:27px;font-weight:900;color:#18243a;margin-top:7px;letter-spacing:-.8px}
+      #warehouseAdminPanel .wh-section-title{font-size:15px;font-weight:900;color:#1b2940}
+      #warehouseAdminPanel .wh-step{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border-radius:8px;background:#eef2ff;color:#4f46e5;font-size:11px;font-weight:900;margin-right:7px}
+      #warehouseAdminPanel .wh-table-wrap{overflow:auto;border:1px solid #e5eaf1;border-radius:13px;background:#fff}
+      #warehouseAdminPanel table{border-collapse:collapse;width:100%;min-width:680px;font-size:12px}
+      #warehouseAdminPanel th{background:#f7f9fc;color:#64748b;text-align:left;padding:12px 11px;font-size:10px;letter-spacing:.5px;white-space:nowrap}
+      #warehouseAdminPanel td{padding:12px 11px;border-top:1px solid #edf1f6;color:#34445c;vertical-align:middle}
+      #warehouseAdminPanel .wh-row{cursor:pointer;transition:background .12s}
+      #warehouseAdminPanel .wh-row:hover{background:#f8faff}
+      #warehouseAdminPanel .wh-row.selected{background:#eef2ff}
+      #warehouseAdminPanel .wh-row.selected td:first-child{box-shadow:inset 3px 0 #6366f1}
+      #warehouseAdminPanel .wh-pill{display:inline-flex;align-items:center;border-radius:20px;padding:4px 8px;font-size:9px;font-weight:900;background:#f0fdf4;color:#15803d}
+      #warehouseAdminPanel .wh-address-box{background:linear-gradient(110deg,#f0f4ff,#f8fbff);border:1px solid #dce5ff;border-radius:15px;padding:14px}
+      #warehouseAdminPanel .wh-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+      #warehouseAdminPanel .wh-action-card{border:1px solid #e5eaf1;border-radius:14px;padding:14px;background:#fbfcfe}
+      #warehouseAdminPanel .wh-note{border-radius:12px;background:#f7f9fc;border:1px solid #e8edf4;padding:12px;color:#66758b;font-size:11px;line-height:1.6}
+      #warehouseAdminPanel .wh-divider{height:1px;background:#edf1f6;margin:14px 0}
+      @media(max-width:760px){
+        #warehouseAdminPanel{padding:12px 10px 100px!important}
+        #warehouseAdminPanel .wh-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+        #warehouseAdminPanel .wh-card{padding:13px;border-radius:15px}
+        #warehouseAdminPanel .wh-stat-value{font-size:23px}
+        #warehouseAdminPanel .wh-head{align-items:flex-start!important;flex-direction:column}
+        #warehouseAdminPanel .wh-head-actions{width:100%}
+        #warehouseAdminPanel .wh-head-actions button{flex:1}
+        #warehouseAdminPanel .wh-form-grid{grid-template-columns:1fr!important}
+        #warehouseAdminPanel .wh-section-title{font-size:14px}
+        #warehouseAdminPanel .wh-address-box{padding:12px}
+      }
     </style>
     <div class="wh-wrap">
-      <div class="wh-head" style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px">
-        <div><div style="font-size:10px;letter-spacing:2px;color:#34d399;font-weight:900">DS WAREHOUSE · ADMIN TEST</div><h2 style="font-size:23px;font-weight:900;color:#f8fafc;margin:4px 0">Warehouse by Address</h2><div class="wh-muted">Pilih alamat/sector terlebih dahulu untuk melihat seluruh isi stoknya.</div></div>
-        <div style="display:flex;gap:7px;flex-wrap:wrap"><button class="wh-btn" onclick="whLoadData()">↻ Refresh</button><button class="wh-btn green" id="whImportBtn" onclick="whImportAst()">⇩ Salin Data AST</button></div>
+      <div class="wh-head" style="display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px">
+        <div><div style="display:flex;align-items:center;gap:7px;color:#059669;font-size:10px;letter-spacing:1.4px;font-weight:900"><span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block"></span> DS WAREHOUSE · ADMIN WORKSPACE</div><h2 style="font-size:25px;font-weight:900;color:#172033;margin:5px 0 3px;letter-spacing:-.7px">Manajemen Stok Gudang</h2><div class="wh-muted">Kelola isi barang berdasarkan alamat. Pilih alamat, periksa stok, lalu catat setiap perubahan.</div></div>
+        <div class="wh-head-actions" style="display:flex;gap:8px;flex-wrap:wrap"><button class="wh-btn" onclick="whLoadData()">↻ Muat Ulang</button><button class="wh-btn green" id="whImportBtn" onclick="whImportAst()">↓ Sinkron Salinan AST</button></div>
       </div>
-      <div class="wh-grid" style="margin-bottom:13px">
-        <div class="wh-card"><div class="wh-muted">ARTIKEL DI DATABASE</div><div id="whSkuCount" style="font-size:24px;font-weight:900;margin-top:6px">—</div></div>
-        <div class="wh-card"><div class="wh-muted">TOTAL QTY WAREHOUSE</div><div id="whStockTotal" style="font-size:24px;font-weight:900;margin-top:6px">—</div></div>
-        <div class="wh-card"><div class="wh-muted">ALAMAT / SECTOR</div><div id="whSectorCount" style="font-size:24px;font-weight:900;margin-top:6px">—</div></div>
-        <div class="wh-card"><div class="wh-muted">RIWAYAT PERUBAHAN</div><div id="whTxCount" style="font-size:24px;font-weight:900;margin-top:6px">—</div></div>
-      </div>
-      <div class="wh-card" style="margin-bottom:13px">
-        <div style="font-size:14px;font-weight:900;margin-bottom:9px">① Pilih Alamat / Sector</div>
-        <label>ALAMAT GUDANG</label><select id="whSectorSelect" onchange="whRenderAddress()"><option value="">Pilih alamat terlebih dahulu...</option></select>
-        <div id="whAddressSummary" class="wh-muted" style="margin-top:9px">Pilih alamat untuk melihat daftar barang dan jumlahnya.</div>
+      <div class="wh-grid" style="margin-bottom:14px">
+        <div class="wh-card wh-stat"><div class="wh-stat-label">TOTAL ARTIKEL</div><div id="whSkuCount" class="wh-stat-value">—</div><div class="wh-muted">Di seluruh alamat</div></div>
+        <div class="wh-card wh-stat"><div class="wh-stat-label">TOTAL UNIT STOK</div><div id="whStockTotal" class="wh-stat-value">—</div><div class="wh-muted">Qty tersimpan di Warehouse</div></div>
+        <div class="wh-card wh-stat"><div class="wh-stat-label">ALAMAT AKTIF</div><div id="whSectorCount" class="wh-stat-value">—</div><div class="wh-muted">Sector terdaftar</div></div>
+        <div class="wh-card wh-stat"><div class="wh-stat-label">CATATAN TRANSAKSI</div><div id="whTxCount" class="wh-stat-value">—</div><div class="wh-muted">Riwayat perubahan stok</div></div>
       </div>
       <div class="wh-card" style="margin-bottom:13px">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px"><div style="font-size:14px;font-weight:900">② Isi Alamat · Daftar Artikel</div><input id="whSearch" oninput="whRenderAddress()" placeholder="Cari kode / nama / barcode..." style="max-width:280px"></div>
-        <div class="wh-table-wrap"><table style="min-width:620px"><thead><tr><th>KODE ARTIKEL</th><th>NAMA ARTIKEL</th><th>BARCODE</th><th>QTY WAREHOUSE</th><th>QTY AWAL AST</th><th>SUMBER</th></tr></thead><tbody id="whStockBody"><tr><td colspan="6">Pilih alamat di atas.</td></tr></tbody></table></div>
-        <div class="wh-muted" style="margin-top:8px">Ketuk salah satu artikel untuk memilihnya dan melakukan perubahan qty.</div>
-      </div>
-      <div class="wh-card" style="margin-bottom:13px">
-        <div style="font-size:14px;font-weight:900;margin-bottom:10px">③ Perubahan Barang pada Alamat Terpilih</div>
-        <div id="whSelectedInfo" class="wh-muted" style="margin-bottom:10px">Pilih artikel dari daftar alamat terlebih dahulu.</div>
-        <div class="wh-form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div><label>JENIS PERUBAHAN</label><select id="whChangeType"><option value="IN">Barang masuk (+)</option><option value="OUT">Barang keluar / terjual (−)</option><option value="SET">Perbarui qty aktual (set stok)</option></select></div>
-          <div><label>JUMLAH / QTY AKTUAL</label><input id="whQty" type="number" min="0" step="any" inputmode="decimal" placeholder="Masukkan jumlah"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div><div class="wh-section-title"><span class="wh-step">1</span>Pilih alamat gudang</div><div class="wh-muted" style="margin:4px 0 0 32px">Semua daftar barang akan mengikuti alamat yang dipilih.</div></div><span class="wh-pill">ADDRESS FIRST</span></div>
+        <div class="wh-address-box">
+          <label>ALAMAT / SECTOR</label>
+          <select id="whSectorSelect" onchange="whRenderAddress()" style="font-size:15px;font-weight:800;border-color:#cbd5f5;background:#fff"><option value="">Pilih alamat untuk mulai...</option></select>
+          <div id="whAddressSummary" class="wh-muted" style="margin-top:9px">Belum ada alamat dipilih. Pilih alamat untuk melihat isi stoknya.</div>
         </div>
-        <div style="margin-top:10px"><label>KETERANGAN WAJIB</label><input id="whNote" maxlength="300" placeholder="Contoh: barang masuk, terjual, atau hasil pengecekan fisik"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px"><div id="whFormMessage" class="wh-muted">Perubahan hanya berlaku pada database DS Warehouse.</div><button class="wh-btn primary" id="whSubmitBtn" onclick="whSubmitTransaction()">Simpan Perubahan</button></div>
       </div>
       <div class="wh-card" style="margin-bottom:13px">
-        <div style="font-size:14px;font-weight:900;margin-bottom:10px">④ Tambah Artikel Manual ke Alamat</div>
-        <div class="wh-muted" style="margin-bottom:10px">Gunakan jika ada barang di alamat yang belum tercatat pada salinan AST.</div>
-        <div class="wh-form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div><label>KODE ARTIKEL</label><input id="whNewCode" placeholder="Kode artikel / SKU"></div>
-          <div><label>BARCODE (OPSIONAL)</label><input id="whNewBarcode" placeholder="Barcode"></div>
-          <div><label>NAMA ARTIKEL</label><input id="whNewName" placeholder="Nama barang"></div>
-          <div><label>QTY AWAL</label><input id="whNewQty" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div><div class="wh-section-title"><span class="wh-step">2</span>Isi barang pada alamat</div><div class="wh-muted" style="margin:4px 0 0 32px">Pilih satu artikel untuk melakukan transaksi atau koreksi.</div></div><input id="whSearch" oninput="whRenderAddress()" placeholder="⌕ Cari kode, nama, barcode..." style="max-width:310px"></div>
+        <div class="wh-table-wrap"><table style="min-width:620px"><thead><tr><th>KODE ARTIKEL</th><th>NAMA BARANG</th><th>BARCODE</th><th>STOK SEKARANG</th><th>QTY AWAL AST</th><th>SUMBER</th></tr></thead><tbody id="whStockBody"><tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:28px">Pilih alamat di atas untuk menampilkan barang.</td></tr></tbody></table></div>
+        <div class="wh-muted" style="margin-top:9px">Tips: ketuk baris barang untuk memilihnya. Baris terpilih akan diberi warna penanda.</div>
+      </div>
+      <div class="wh-card" style="margin-bottom:13px">
+        <div class="wh-section-title"><span class="wh-step">3</span>Catat perubahan stok</div>
+        <div id="whSelectedInfo" class="wh-address-box wh-muted" style="margin:11px 0">Belum ada barang dipilih. Pilih artikel dari tabel di atas.</div>
+        <div class="wh-form-grid">
+          <div class="wh-action-card"><label>JENIS PERUBAHAN</label><select id="whChangeType"><option value="IN">＋ Barang masuk</option><option value="OUT">− Barang keluar / terjual</option><option value="SET">＝ Koreksi stok aktual</option></select><div class="wh-muted" style="margin-top:7px">Pilih jenis perubahan sesuai aktivitas fisik barang.</div></div>
+          <div class="wh-action-card"><label>JUMLAH BARANG</label><input id="whQty" type="number" min="0" step="any" inputmode="decimal" placeholder="Masukkan jumlah unit"><div class="wh-muted" style="margin-top:7px">Untuk koreksi, masukkan total stok fisik terbaru.</div></div>
         </div>
-        <button class="wh-btn green" style="margin-top:12px" onclick="whAddManualArticle()">＋ Tambahkan ke Alamat Ini</button>
+        <div style="margin-top:11px"><label>KETERANGAN / ALASAN</label><input id="whNote" maxlength="300" placeholder="Contoh: penerimaan barang, penjualan, atau hasil hitung fisik"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:13px"><div id="whFormMessage" class="wh-muted">Pastikan alamat dan artikel sudah benar sebelum menyimpan.</div><button class="wh-btn primary" id="whSubmitBtn" onclick="whSubmitTransaction()">Simpan Perubahan Stok →</button></div>
+      </div>
+      <div class="wh-card" style="margin-bottom:13px">
+        <div class="wh-section-title"><span class="wh-step">4</span>Tambah barang yang belum terdaftar</div>
+        <div class="wh-muted" style="margin:4px 0 12px 32px">Artikel manual hanya ditambahkan ke alamat yang sedang dipilih.</div>
+        <div class="wh-action-card">
+          <div class="wh-form-grid">
+            <div><label>KODE ARTIKEL / SKU</label><input id="whNewCode" placeholder="Masukkan kode artikel"></div>
+            <div><label>BARCODE (OPSIONAL)</label><input id="whNewBarcode" placeholder="Masukkan barcode"></div>
+            <div><label>NAMA BARANG</label><input id="whNewName" placeholder="Masukkan nama barang"></div>
+            <div><label>QTY AWAL</label><input id="whNewQty" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></div>
+          </div>
+          <button class="wh-btn green" style="margin-top:12px;width:100%" onclick="whAddManualArticle()">＋ Tambahkan Barang ke Alamat Terpilih</button>
+        </div>
       </div>
       <div class="wh-card">
-        <div style="font-size:14px;font-weight:900;margin-bottom:10px">Riwayat Perubahan Terbaru</div>
-        <div class="wh-table-wrap"><table><thead><tr><th>WAKTU</th><th>NO TRANSAKSI</th><th>JENIS</th><th>ARTIKEL</th><th>ALAMAT</th><th>QTY</th><th>SEBELUM → SESUDAH</th><th>KETERANGAN</th></tr></thead><tbody id="whTxBody"><tr><td colspan="8">Belum ada perubahan.</td></tr></tbody></table></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px"><div><div class="wh-section-title">Riwayat aktivitas</div><div class="wh-muted">Jejak perubahan stok terbaru di Warehouse.</div></div><span class="wh-pill">AUDIT TRAIL</span></div>
+        <div class="wh-table-wrap"><table><thead><tr><th>WAKTU</th><th>NO. TRANSAKSI</th><th>AKTIVITAS</th><th>ARTIKEL</th><th>ALAMAT</th><th>QTY</th><th>SEBELUM → SESUDAH</th><th>KETERANGAN</th></tr></thead><tbody id="whTxBody"><tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:25px">Belum ada riwayat perubahan.</td></tr></tbody></table></div>
       </div>
-      <div class="wh-muted" style="margin-top:12px">AST disalin sebagai snapshot awal ke database Warehouse terpisah. Perubahan qty, penambahan artikel, dan transaksi tidak mengedit sumber AST. Sinkron AST berikutnya memperbarui snapshot dasar, tetapi mempertahankan qty Warehouse dan artikel manual.</div>
+      <div class="wh-note" style="margin-top:13px"><strong>Perlindungan data:</strong> Data AST hanya disalin sebagai referensi awal. Transaksi dan koreksi tersimpan di database DS Warehouse tersendiri. Sinkronisasi AST tidak mengubah sumber AST dan mempertahankan qty Warehouse serta artikel manual.</div>
     </div>
   </div>
 
