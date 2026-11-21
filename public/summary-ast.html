@@ -422,7 +422,12 @@ function num(x){
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function setError(message){$('error').style.display=message?'block':'none';$('error').textContent=message||''}
 async function fetchCSV(url){
- const response=await fetch(url+(url.includes('?')?'&':'?')+'_='+Date.now(),{cache:'no-store'});
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),25000);
+ let response;
+ try{response=await fetch(url+(url.includes('?')?'&':'?')+'_='+Date.now(),{cache:'no-store',signal:controller.signal});}
+ catch(error){if(error&&error.name==='AbortError')throw Error('Waktu tunggu Google Sheets habis (25 detik).');throw error;}
+ finally{clearTimeout(timeout);}
  if(!response.ok)throw Error('HTTP '+response.status);
  const text=await response.text();
  if(text.trim().startsWith('<'))throw Error('Google Sheets mengembalikan HTML, bukan CSV. Periksa publikasi tab.');
@@ -640,7 +645,7 @@ function updateWarehouseDisplayProgress(){
  $('warehouseDisplayProgress').textContent=percent+'% dari '+fmt(total)+' artikel gudang';
 }
 function warehouseHead(address){return String(address??'').trim().replace(/[^0-9]/g,'').charAt(0)}
-async async function renderWarehouseOnly(){
+async function renderWarehouseOnly(){
  if(!astLoaded)return;
  const codeKey=astColumn(['Prod cd']),barcodeKey=astColumn(['Barcode']),nameKey=astColumn(['Prod nm']),addressKey=astColumn(['Sector']),qtyKey=astColumn(['Final Qty']);
  let categoryByCode=new Map();
