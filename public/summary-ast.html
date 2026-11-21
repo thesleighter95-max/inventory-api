@@ -421,7 +421,7 @@ function num(x){
 }
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function setError(message){$('error').style.display=message?'block':'none';$('error').textContent=message||''}
-async function fetchCSV(url){
+async async function fetchCSV(url){
  const controller=new AbortController();
  const timeout=setTimeout(()=>controller.abort(),25000);
  let response;
