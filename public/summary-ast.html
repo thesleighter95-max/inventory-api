@@ -378,8 +378,9 @@
    <div style="display:flex;justify-content:center;margin:12px 0"><button class="btn" id="warehouseShowData" type="button">Tampilkan Data</button></div>
    <div class="detail-results" id="warehouseMeta" style="display:none"><span id="warehouseResultCount">Data belum dimuat</span><span></span></div>
    <div class="table-wrap" id="warehouseTableWrap" style="overflow:auto;display:none">
-    <table style="min-width:850px"><thead><tr><th>NO</th><th>CAT</th><th>NAMA CATEGORY</th><th>PROD CODE</th><th>NAMA ARTIKEL</th><th>BARCODE</th><th>ALAMAT GUDANG</th><th style="text-align:right">FINAL QTY</th><th>STATUS DISPLAY</th></tr></thead><tbody id="warehouseBody"><tr><td class="empty" colspan="9">Tekan Tampilkan Data.</td></tr></tbody></table>
+    <table style="min-width:850px"><thead><tr><th>NO</th><th>CAT</th><th>NAMA CATEGORY</th><th>PROD CODE</th><th>NAMA ARTIKEL</th><th>BARCODE</th><th>ALAMAT GUDANG</th><th style="text-align:right">FINAL QTY</th><th>STATUS DISPLAY</th><th>FOTO DISPLAY</th></tr></thead><tbody id="warehouseBody"><tr><td class="empty" colspan="10">Tekan Tampilkan Data.</td></tr></tbody></table>
    </div>
+   <input id="warehousePhotoFile" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" style="display:none">
    <div id="warehousePager" style="display:none;align-items:center;justify-content:center;gap:12px;margin:14px 0">
     <button class="btn" id="warehousePrev" type="button" disabled>← Sebelumnya</button>
     <span id="warehousePageInfo">Halaman 1</span>
@@ -591,6 +592,17 @@ function renderAstSummary(){
 }
 
 let warehouseProducts=[],warehouseDataRequested=false,warehousePage=1;
+let warehousePhotos={},warehousePhotoLoaded=false,warehousePhotoLoading=null,warehousePhotoTarget='';
+async function loadWarehousePhotos(forceRefresh=false){
+ if(warehousePhotoLoading)return warehousePhotoLoading;
+ if(warehousePhotoLoaded&&!forceRefresh)return warehousePhotos;
+ warehousePhotoLoading=(async()=>{const token=warehouseSessionToken();if(!token)throw new Error('Sesi login tidak ditemukan. Silakan login kembali.');const response=await fetch('/api/warehouse-photos',{headers:{Authorization:'Bearer '+token},cache:'no-store'});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.message||'Gagal mengambil foto display.');warehousePhotos=data.photos||{};warehousePhotoLoaded=true;return warehousePhotos})();
+ try{return await warehousePhotoLoading}finally{warehousePhotoLoading=null}
+}
+function openWarehousePhoto(productCode){const photo=warehousePhotos[productCode];if(!photo||!photo.viewUrl)return;const w=window.open(photo.viewUrl,'_blank','noopener');if(!w)alert('Izinkan pop-up untuk melihat foto display.');}
+function compressWarehousePhoto(file){return new Promise((resolve,reject)=>{if(!file||!/^image\\/(jpeg|png|webp)$/i.test(file.type)){reject(new Error('Pilih file foto JPG, PNG, atau WEBP.'));return;}const reader=new FileReader();reader.onerror=()=>reject(new Error('Foto tidak dapat dibaca.'));reader.onload=()=>{const img=new Image();img.onerror=()=>reject(new Error('Format foto tidak dapat dibuka.'));img.onload=()=>{const max=1600,scale=Math.min(1,max/Math.max(img.width,img.height));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);const dataUrl=canvas.toDataURL('image/jpeg',0.82);resolve({mimeType:'image/jpeg',fileName:(file.name||'display').replace(/\\.[^.]+$/,'')+'.jpg',imageBase64:dataUrl.split(',')[1]});};img.src=reader.result;};reader.readAsDataURL(file);});}
+async function uploadWarehousePhoto(file,productCode){const token=warehouseSessionToken();if(!token)throw new Error('Sesi login tidak ditemukan. Silakan login kembali.');const compressed=await compressWarehousePhoto(file);const response=await fetch('/api/warehouse-photos',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({productCode,...compressed})});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.message||'Upload foto gagal.');warehousePhotos[productCode]=data.photo;warehousePhotoLoaded=true;return data.photo;}
+
 let warehouseStatuses={},warehouseStatusLoaded=false,warehouseStatusLoading=null;
 const WAREHOUSE_PAGE_SIZE=10;
 function warehouseSessionToken(){try{const raw=localStorage.getItem('inv_sess_v1');if(!raw)return '';const session=JSON.parse(decodeURIComponent(escape(atob(raw))));return session&&session.exp>Date.now()?String(session.t||''):''}catch(e){return ''}}
@@ -658,6 +670,7 @@ async function renderWarehouseOnly(){
  $('warehouseSkuCount').textContent=fmt(warehouseProducts.length);
  $('warehouseQty').textContent=fmt(warehouseProducts.reduce((s,p)=>s+p.qty,0));
  await loadWarehouseStatuses();
+ await loadWarehousePhotos();
  updateWarehouseDisplayProgress();
  const categoryMap=new Map();
  warehouseProducts.forEach(p=>{if(p.cat)categoryMap.set(p.cat,p.category||'')});
@@ -700,7 +713,7 @@ function renderWarehouseRows(){
  const start=(warehousePage-1)*WAREHOUSE_PAGE_SIZE;
  const pageRows=rows.slice(start,start+WAREHOUSE_PAGE_SIZE);
  $('warehouseResultCount').textContent=fmt(rows.length)+' artikel ditemukan • '+(rows.length?fmt(start+1)+'–'+fmt(Math.min(start+WAREHOUSE_PAGE_SIZE,rows.length)):'0')+' ditampilkan';
- $('warehouseBody').innerHTML=pageRows.map((p,i)=>'<tr><td>'+fmt(start+i+1)+'</td><td>'+esc(p.cat||'-')+'</td><td>'+esc(p.category||'-')+'</td><td><b>'+esc(p.code||'-')+'</b></td><td>'+esc(p.name||'-')+'</td><td>'+esc(p.barcode||'-')+'</td><td style="white-space:normal;min-width:125px;max-width:160px"><div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px">'+p.addresses.map(a=>'<span style="display:block;background:#f3f6fb;border:1px solid #e7edf5;border-radius:6px;padding:4px 7px;font-size:10px">'+esc(a)+'</span>').join('')+'</div></td><td style="text-align:right;font-weight:700">'+fmt(p.qty)+'</td><td><label style="display:inline-flex;align-items:center;gap:7px;white-space:nowrap;cursor:pointer"><input type="checkbox" class="warehouse-display-check" data-product-code="'+esc(p.code)+'" '+(warehouseStatuses[p.code]&&warehouseStatuses[p.code].displayed?'checked':'')+' style="width:18px;height:18px;accent-color:#16a36a"><span>Ter-display</span></label></td></tr>').join('')||'<tr><td class="empty" colspan="9">Tidak ada artikel yang cocok dengan filter.</td></tr>';
+ $('warehouseBody').innerHTML=pageRows.map((p,i)=>{const photo=warehousePhotos[p.code];const photoCell=photo&&photo.viewUrl?'<div style="display:flex;align-items:center;gap:7px;min-width:150px"><img src="'+esc(photo.thumbnailUrl||photo.viewUrl)+'" alt="Foto display" loading="lazy" style="width:46px;height:46px;object-fit:cover;border-radius:7px;border:1px solid #e7edf5;cursor:pointer" data-photo-view="'+esc(p.code)+'"><button type="button" class="btn warehouse-photo-action" data-product-code="'+esc(p.code)+'" style="padding:7px 9px;font-size:10px">Foto Ulang</button></div>':'<button type="button" class="btn warehouse-photo-action" data-product-code="'+esc(p.code)+'" style="padding:8px 10px;font-size:10px;white-space:nowrap">＋ Input Foto</button>';return '<tr><td>'+fmt(start+i+1)+'</td><td>'+esc(p.cat||'-')+'</td><td>'+esc(p.category||'-')+'</td><td><b>'+esc(p.code||'-')+'</b></td><td>'+esc(p.name||'-')+'</td><td>'+esc(p.barcode||'-')+'</td><td style="white-space:normal;min-width:125px;max-width:160px"><div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px">'+p.addresses.map(a=>'<span style="display:block;background:#f3f6fb;border:1px solid #e7edf5;border-radius:6px;padding:4px 7px;font-size:10px">'+esc(a)+'</span>').join('')+'</div></td><td style="text-align:right;font-weight:700">'+fmt(p.qty)+'</td><td><label style="display:inline-flex;align-items:center;gap:7px;white-space:nowrap;cursor:pointer"><input type="checkbox" class="warehouse-display-check" data-product-code="'+esc(p.code)+'" '+(warehouseStatuses[p.code]&&warehouseStatuses[p.code].displayed?'checked':'')+' style="width:18px;height:18px;accent-color:#16a36a"><span>Ter-display</span></label></td><td>'+photoCell+'</td></tr>';}).join('')||'<tr><td class="empty" colspan="10">Tidak ada artikel yang cocok dengan filter.</td></tr>';
  $('exportWarehouseExcel').disabled=false;
  $('warehousePageInfo').textContent='Halaman '+fmt(warehousePage)+' / '+fmt(pages);
  $('warehousePrev').disabled=warehousePage<=1;$('warehouseNext').disabled=warehousePage>=pages;
@@ -733,6 +746,9 @@ $('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';
 $('warehousePrev').addEventListener('click',()=>{warehousePage--;renderWarehouseRows()});
 $('warehouseNext').addEventListener('click',()=>{warehousePage++;renderWarehouseRows()});
 $('warehouseBody').addEventListener('change',async e=>{const checkbox=e.target.closest('.warehouse-display-check');if(!checkbox)return;const code=checkbox.getAttribute('data-product-code'),checked=checkbox.checked;checkbox.disabled=true;try{await saveWarehouseStatus(code,checked)}catch(error){checkbox.checked=!checked;alert('Status belum tersimpan: '+error.message)}finally{checkbox.disabled=false}});
+ $('warehouseBody').addEventListener('click',e=>{const photo=e.target.closest('[data-photo-view]');if(photo){openWarehousePhoto(photo.getAttribute('data-photo-view'));return;}const button=e.target.closest('.warehouse-photo-action');if(!button)return;warehousePhotoTarget=button.getAttribute('data-product-code')||'';const picker=$('warehousePhotoFile');picker.value='';picker.click();});
+ $('warehousePhotoFile').addEventListener('change',async e=>{const file=e.target.files&&e.target.files[0],code=warehousePhotoTarget;if(!file||!code)return;const button=$('warehouseBody').querySelector('.warehouse-photo-action[data-product-code="'+CSS.escape(code)+'"]');if(button){button.disabled=true;button.textContent='Mengunggah...';}try{await uploadWarehousePhoto(file,code);renderWarehouseRows();alert('Foto display berhasil disimpan ke Google Drive.');}catch(error){alert('Foto belum tersimpan: '+error.message);if(button){button.disabled=false;button.textContent=warehousePhotos[code]?'Foto Ulang':'＋ Input Foto';}}finally{e.target.value='';}});
+
 // Refresh shared status while Warehouse Only is open so other signed-in users see updates.
 setInterval(refreshWarehouseStatusesForAllUsers,15000);
 $('refreshAst').addEventListener('click',()=>{astLoaded=false;loadAstData()});
