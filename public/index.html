@@ -5453,7 +5453,40 @@ function refreshReportAbsensiNav(){
     .catch(function(e){console.warn("Cek izin Report Absensi gagal",e);});
 }
 
+let warehousePdaLeavePendingTab=null;
+let warehousePdaLeaveApproved=false;
+function showWarehousePdaLeavePrompt(tab){
+  warehousePdaLeavePendingTab=tab;
+  var bar=document.getElementById("warehousePdaMenuLeaveGuard");
+  if(!bar){
+    bar=document.createElement("div");
+    bar.id="warehousePdaMenuLeaveGuard";
+    bar.style.cssText="position:fixed;top:0;left:0;right:0;z-index:1000001;padding:13px 16px;background:#172b4d;color:#fff;box-shadow:0 5px 22px rgba(0,0,0,.24);display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;font:600 14px system-ui,sans-serif";
+    bar.innerHTML='<span>⚠️ Anda akan meninggalkan halaman Warehouse. Apakah ingin pindah halaman?</span><button type="button" id="warehousePdaStayHere" style="border:0;border-radius:8px;padding:9px 14px;background:#fff;color:#17324f;font-weight:800">Tetap di sini</button><button type="button" id="warehousePdaLeaveNow" style="border:1px solid rgba(255,255,255,.55);border-radius:8px;padding:9px 14px;background:#b42318;color:#fff;font-weight:800">Ya, pindah halaman</button>';
+    document.body.appendChild(bar);
+    document.getElementById("warehousePdaStayHere").addEventListener("click",function(){
+      warehousePdaLeavePendingTab=null;
+      bar.remove();
+    });
+    document.getElementById("warehousePdaLeaveNow").addEventListener("click",function(){
+      var nextTab=warehousePdaLeavePendingTab;
+      warehousePdaLeavePendingTab=null;
+      bar.remove();
+      if(nextTab){
+        warehousePdaLeaveApproved=true;
+        try{switchMainTab(nextTab);}finally{warehousePdaLeaveApproved=false;}
+      }
+    });
+  }
+  bar.style.display="flex";
+}
+
 function switchMainTab(tab){
+  var warehousePanel=document.getElementById("dshAstWarehousePanel");
+  if(!warehousePdaLeaveApproved && tab!=="astWarehouse" && warehousePanel && warehousePanel.classList.contains("active")){
+    showWarehousePdaLeavePrompt(tab);
+    return;
+  }
   closeDshSideMenuAfterNav();
   /* Sidebar hanya disembunyikan selama panel Absensi aktif. */
   if(tab!=="absensi")document.body.classList.remove("dsh-absensi-focus");
