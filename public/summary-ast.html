@@ -598,6 +598,20 @@ function renderAstSummary(){
 }
 
 let warehouseProducts=[],warehouseDataRequested=false,warehousePage=1;
+const WAREHOUSE_STATE_KEY='pda_mini_warehouse_ui_v1';
+let warehouseRestoreState=null,warehouseLastProductCode='';
+try{warehouseRestoreState=JSON.parse(localStorage.getItem(WAREHOUSE_STATE_KEY)||'null')}catch(e){warehouseRestoreState=null}
+function saveWarehouseUiState(){
+ try{localStorage.setItem(WAREHOUSE_STATE_KEY,JSON.stringify({view:'warehouse',search:$('warehouseSearch')?.value||'',category:$('warehouseCategory')?.value||'',page:warehousePage,dataRequested:warehouseDataRequested,lastProductCode:warehouseLastProductCode,savedAt:Date.now()}))}catch(e){console.warn('Posisi Warehouse tidak dapat disimpan:',e)}
+}
+function restoreWarehouseUiState(){
+ if(!warehouseRestoreState)return;
+ $('warehouseSearch').value=String(warehouseRestoreState.search||'');
+ $('warehouseCategory').value=String(warehouseRestoreState.category||'');
+ warehouseLastProductCode=String(warehouseRestoreState.lastProductCode||'');
+ warehousePage=Math.max(1,Number(warehouseRestoreState.page)||1);
+}
+
 let warehousePhotos={},warehousePhotoLoaded=false,warehousePhotoLoading=null,warehousePhotoTarget='';
 async function loadWarehousePhotos(forceRefresh=false){
  if(warehousePhotoLoading)return warehousePhotoLoading;
@@ -663,6 +677,8 @@ async function renderWarehouseOnly(){
  warehouseProducts.forEach(p=>{if(p.cat)categoryMap.set(p.cat,p.category||'')});
  $('warehouseCategory').innerHTML='<option value="">Semua Category</option>'+[...categoryMap.entries()].sort((a,b)=>a[0].localeCompare(b[0],'id',{numeric:true})).map(([code,name])=>'<option value="'+esc(code)+'">'+esc(code+(name?' • '+name:''))+'</option>').join('');
  $('warehouseSearch').disabled=false;$('warehouseCategory').disabled=false;
+ restoreWarehouseUiState();
+ if(warehouseLastProductCode){const filtered=getWarehouseFilteredRows();const idx=filtered.findIndex(p=>p.code===warehouseLastProductCode);if(idx>=0)warehousePage=Math.floor(idx/WAREHOUSE_PAGE_SIZE)+1;}
  $('warehouseHint').textContent='Data live dari sheet AST • '+fmt(astRows.length)+' baris diperiksa'+(warehouseWarnings.length?' • '+warehouseWarnings.join(' • '):'');
  $('warehouseTableWrap').style.display='block';$('warehousePager').style.display='flex';
  renderWarehouseRows();
@@ -697,10 +713,11 @@ function renderWarehouseRows(){
  const start=(warehousePage-1)*WAREHOUSE_PAGE_SIZE;
  const pageRows=rows.slice(start,start+WAREHOUSE_PAGE_SIZE);
  $('warehouseResultCount').textContent=fmt(rows.length)+' artikel ditemukan • '+(rows.length?fmt(start+1)+'–'+fmt(Math.min(start+WAREHOUSE_PAGE_SIZE,rows.length)):'0')+' ditampilkan';
- $('warehouseBody').innerHTML=pageRows.map((p,i)=>{const photo=warehousePhotos[p.code];const photoCell=photo&&photo.viewUrl?'<div style="display:flex;align-items:center;gap:7px;min-width:150px;flex-wrap:wrap"><img src="'+esc(photo.thumbnailUrl||photo.viewUrl)+'" alt="Foto display" loading="lazy" style="width:46px;height:46px;object-fit:cover;border-radius:7px;border:1px solid #e7edf5;cursor:pointer" data-photo-view="'+esc(p.code)+'"><button type="button" class="btn warehouse-photo-action" data-product-code="'+esc(p.code)+'" style="padding:7px 9px;font-size:10px">Foto Ulang</button><button type="button" class="btn warehouse-photo-delete" data-product-code="'+esc(p.code)+'" style="padding:7px 9px;font-size:10px;background:#fff1f1;color:#b42318">Hapus</button></div>':'<button type="button" class="btn warehouse-photo-action" data-product-code="'+esc(p.code)+'" style="padding:8px 10px;font-size:10px;white-space:nowrap">＋ Input Foto</button>';return '<tr><td>'+fmt(start+i+1)+'</td><td>'+esc(p.cat||'-')+'</td><td>'+esc(p.category||'-')+'</td><td><b>'+esc(p.code||'-')+'</b></td><td>'+esc(p.name||'-')+'</td><td>'+esc(p.barcode||'-')+'</td><td style="white-space:normal;min-width:125px;max-width:160px"><div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px">'+p.addresses.map(a=>'<span style="display:block;background:#f3f6fb;border:1px solid #e7edf5;border-radius:6px;padding:4px 7px;font-size:10px">'+esc(a)+'</span>').join('')+'</div></td><td style="text-align:right;font-weight:700">'+fmt(p.qty)+'</td><td>'+photoCell+'</td></tr>';}).join('')||'<tr><td class="empty" colspan="9">Tidak ada artikel yang cocok dengan filter.</td></tr>';
+ $('warehouseBody').innerHTML=pageRows.map((p,i)=>{const photo=warehousePhotos[p.code];const photoCell=photo&&photo.viewUrl?'<div style="display:flex;align-items:center;gap:7px;min-width:150px;flex-wrap:wrap"><img src="'+esc(photo.thumbnailUrl||photo.viewUrl)+'" alt="Foto display" loading="lazy" style="width:46px;height:46px;object-fit:cover;border-radius:7px;border:1px solid #e7edf5;cursor:pointer" data-photo-view="'+esc(p.code)+'"><button type="button" class="btn warehouse-photo-action" data-product-code="'+esc(p.code)+'" style="padding:7px 9px;font-size:10px">Foto Ulang</button><button type="button" class="btn warehouse-photo-delete" data-product-code="'+esc(p.code)+'" style="padding:7px 9px;font-size:10px;background:#fff1f1;color:#b42318">Hapus</button></div>':'<button type="button" class="btn warehouse-photo-action" data-product-code="'+esc(p.code)+'" style="padding:8px 10px;font-size:10px;white-space:nowrap">＋ Input Foto</button>';return '<tr data-warehouse-code="'+esc(p.code)+'"'+(p.code===warehouseLastProductCode?' style="background:#eef8ff;outline:2px solid #7cc4f5"':'')+'><td>'+fmt(start+i+1)+'</td><td>'+esc(p.cat||'-')+'</td><td>'+esc(p.category||'-')+'</td><td><b>'+esc(p.code||'-')+'</b></td><td>'+esc(p.name||'-')+'</td><td>'+esc(p.barcode||'-')+'</td><td style="white-space:normal;min-width:125px;max-width:160px"><div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px">'+p.addresses.map(a=>'<span style="display:block;background:#f3f6fb;border:1px solid #e7edf5;border-radius:6px;padding:4px 7px;font-size:10px">'+esc(a)+'</span>').join('')+'</div></td><td style="text-align:right;font-weight:700">'+fmt(p.qty)+'</td><td>'+photoCell+'</td></tr>';}).join('')||'<tr><td class="empty" colspan="9">Tidak ada artikel yang cocok dengan filter.</td></tr>';
  $('exportWarehouseExcel').disabled=false;
  $('warehousePageInfo').textContent='Halaman '+fmt(warehousePage)+' / '+fmt(pages);
  $('warehousePrev').disabled=warehousePage<=1;$('warehouseNext').disabled=warehousePage>=pages;
+ saveWarehouseUiState();
 }
 
 function renderAstArticles(){renderAstSummary();}
@@ -726,15 +743,16 @@ async function requestWarehouseData(refresh){
 $('exportWarehouseExcel').addEventListener('click',exportWarehouseExcel);
 $('warehouseShowData').addEventListener('click',()=>requestWarehouseData(false));
 $('refreshWarehouse').addEventListener('click',()=>requestWarehouseData(true));
-$('warehouseSearch').addEventListener('input',()=>{warehousePage=1;renderWarehouseRows()});
-$('warehouseCategory').addEventListener('change',()=>{warehousePage=1;renderWarehouseRows()});
-$('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';$('warehouseCategory').value='';warehousePage=1;if(warehouseDataRequested)renderWarehouseRows()});
-$('warehousePrev').addEventListener('click',()=>{warehousePage--;renderWarehouseRows()});
-$('warehouseNext').addEventListener('click',()=>{warehousePage++;renderWarehouseRows()});
+$('warehouseSearch').addEventListener('input',()=>{warehousePage=1;renderWarehouseRows();saveWarehouseUiState()});
+$('warehouseCategory').addEventListener('change',()=>{warehousePage=1;renderWarehouseRows();saveWarehouseUiState()});
+$('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';$('warehouseCategory').value='';warehousePage=1;warehouseLastProductCode='';if(warehouseDataRequested)renderWarehouseRows();saveWarehouseUiState()});
+$('warehousePrev').addEventListener('click',()=>{warehousePage--;renderWarehouseRows();saveWarehouseUiState()});
+$('warehouseNext').addEventListener('click',()=>{warehousePage++;renderWarehouseRows();saveWarehouseUiState()});
  function showWarehousePhotoSourcePicker(){const overlay=document.createElement('div');overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(10,18,32,.62);display:flex;align-items:center;justify-content:center;padding:20px';overlay.innerHTML='<div role="dialog" aria-modal="true" style="width:min(100%,360px);background:#fff;border-radius:18px;padding:22px;box-shadow:0 18px 55px rgba(0,0,0,.28);font-family:inherit"><div style="font-size:18px;font-weight:800;color:#172033;margin-bottom:6px">Pilih Sumber Foto</div><div style="font-size:13px;color:#64748b;margin-bottom:18px">Ambil foto langsung atau pilih dari galeri.</div><div style="display:flex;gap:10px"><button type="button" data-photo-source="camera" style="flex:1;border:0;border-radius:12px;padding:14px 8px;background:#0f766e;color:white;font-weight:700;font-size:14px">📷 Kamera</button><button type="button" data-photo-source="gallery" style="flex:1;border:0;border-radius:12px;padding:14px 8px;background:#e8eef5;color:#172033;font-weight:700;font-size:14px">🖼️ Galeri</button></div><button type="button" data-photo-cancel style="width:100%;margin-top:12px;border:0;background:transparent;padding:9px;color:#64748b;font-weight:600">Batal</button></div>';document.body.appendChild(overlay);overlay.addEventListener('click',ev=>{if(ev.target===overlay||ev.target.closest('[data-photo-cancel]')){overlay.remove();return;}const choice=ev.target.closest('[data-photo-source]');if(!choice)return;const picker=$(choice.getAttribute('data-photo-source')==='camera'?'warehousePhotoCamera':'warehousePhotoGallery');overlay.remove();picker.value='';picker.click();});}
- $('warehouseBody').addEventListener('click',async e=>{const photo=e.target.closest('[data-photo-view]');if(photo){openWarehousePhoto(photo.getAttribute('data-photo-view'));return;}const del=e.target.closest('.warehouse-photo-delete');if(del){const code=del.getAttribute('data-product-code')||'';if(!code||!confirm('Hapus foto display untuk Product Code '+code+'? Foto akan dihapus dari Google Drive dan tidak tampil pada semua alamat produk ini.'))return;del.disabled=true;del.textContent='Menghapus...';try{await deleteWarehousePhoto(code);renderWarehouseRows();alert('Foto display berhasil dihapus.');}catch(error){alert('Foto belum terhapus: '+error.message);del.disabled=false;del.textContent='Hapus';}return;}const button=e.target.closest('.warehouse-photo-action');if(!button)return;warehousePhotoTarget=button.getAttribute('data-product-code')||'';showWarehousePhotoSourcePicker();});
+ $('warehouseBody').addEventListener('click',async e=>{const photo=e.target.closest('[data-photo-view]');if(photo){openWarehousePhoto(photo.getAttribute('data-photo-view'));return;}const del=e.target.closest('.warehouse-photo-delete');if(del){const code=del.getAttribute('data-product-code')||'';if(!code||!confirm('Hapus foto display untuk Product Code '+code+'? Foto akan dihapus dari Google Drive dan tidak tampil pada semua alamat produk ini.'))return;del.disabled=true;del.textContent='Menghapus...';try{await deleteWarehousePhoto(code);updateWarehousePhotoProgress();renderWarehouseRows();alert('Foto display berhasil dihapus.');}catch(error){alert('Foto belum terhapus: '+error.message);del.disabled=false;del.textContent='Hapus';}return;}const button=e.target.closest('.warehouse-photo-action');if(!button)return;warehousePhotoTarget=button.getAttribute('data-product-code')||'';warehouseLastProductCode=warehousePhotoTarget;saveWarehouseUiState();showWarehousePhotoSourcePicker();});
  const handleWarehousePhotoChange=async e=>{const file=e.target.files&&e.target.files[0],code=warehousePhotoTarget;if(!file||!code)return;const button=$('warehouseBody').querySelector('.warehouse-photo-action[data-product-code="'+CSS.escape(code)+'"]');if(button){button.disabled=true;button.textContent='Mengunggah...';}try{
   await uploadWarehousePhoto(file,code);
+  warehouseLastProductCode=code;saveWarehouseUiState();
   updateWarehousePhotoProgress();
   renderWarehouseRows();
   alert('Foto berhasil diupload');
@@ -930,7 +948,9 @@ $('download').onclick=()=>{
  link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
  link.download='AST_Category_Summary_HASIL.csv';link.click();URL.revokeObjectURL(link.href);
 };
-const initialView=new URLSearchParams(location.search).get('view');
+const requestedView=new URLSearchParams(location.search).get('view');
+const initialView=requestedView||((warehouseRestoreState&&warehouseRestoreState.view==='warehouse')?'warehouse':'');
 if(initialView==='sector'||initialView==='warehouse')switchView(initialView);
+if(initialView==='warehouse'&&warehouseRestoreState&&warehouseRestoreState.dataRequested){warehouseDataRequested=true;requestWarehouseData(false);}
 load();setInterval(()=>{load();if(astLoaded)loadAstData()},60000);
 </script></body></html>
