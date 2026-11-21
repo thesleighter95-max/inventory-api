@@ -1,5 +1,5 @@
 // PDA Mini API — signed short-lived session bridge for Report Absensi
-import { createHmac, createSign, timingSafeEqual } from "node:crypto";
+import { createHmac, createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { put as vercelBlobPut, list as vercelBlobList } from "@vercel/blob";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "00000";
@@ -316,17 +316,36 @@ export default async function handler(req, res) {
   const send = (data, status = 200) => res.status(status).json(data);
 
   try {
+const WAREHOUSE_GOOGLE_TOKEN_KEY = "pda-mini-warehouse-google-oauth-token.json";
+function warehouseOAuthRedirectUri(){
+  return process.env.GOOGLE_OAUTH_REDIRECT_URI || "https://pda-mini-mataram.vercel.app/api/warehouse-google-oauth/callback";
+}
+function warehouseOAuthEncryptionKey(){
+  const secret=process.env.GOOGLE_OAUTH_TOKEN_ENCRYPTION_KEY||"";
+  if(secret.length<32)throw new Error("GOOGLE_OAUTH_TOKEN_ENCRYPTION_KEY belum diatur (minimal 32 karakter).");
+  return createHash("sha256").update(secret).digest();
+}
+function encryptWarehouseRefreshToken(refreshToken){
+  const iv=randomBytes(12),cipher=createCipheriv("aes-256-gcm",warehouseOAuthEncryptionKey(),iv);
+  const encrypted=Buffer.concat([cipher.update(refreshToken,"utf8"),cipher.final()]);
+  return JSON.stringify({v:1,iv:iv.toString("base64"),tag:cipher.getAuthTag().toString("base64"),data:encrypted.toString("base64")});
+}
+function decryptWarehouseRefreshToken(raw){
+  const item=JSON.parse(raw||"{}");
+  if(item.v!==1||!item.iv||!item.tag||!item.data)throw new Error("Token OAuth Google Drive belum tersimpan. Jalankan otorisasi Google terlebih dahulu.");
+  const decipher=createDecipheriv("aes-256-gcm",warehouseOAuthEncryptionKey(),Buffer.from(item.iv,"base64"));
+  decipher.setAuthTag(Buffer.from(item.tag,"base64"));
+  return Buffer.concat([decipher.update(Buffer.from(item.data,"base64")),decipher.final()]).toString("utf8");
+}
 async function getGoogleDriveAccessToken(){
-  const raw=process.env.GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON||"";
-  if(!raw)throw new Error("Google Drive belum dikonfigurasi: tambahkan GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON di Vercel.");
-  let account;try{account=JSON.parse(raw)}catch{throw new Error("GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON bukan JSON yang valid.")}
-  if(!account.client_email||!account.private_key)throw new Error("Service account Google Drive tidak memiliki client_email/private_key.");
-  const now=Math.floor(Date.now()/1000),b64=value=>Buffer.from(value).toString("base64url");
-  const unsigned=b64(JSON.stringify({alg:"RS256",typ:"JWT"}))+"."+b64(JSON.stringify({iss:account.client_email,scope:"https://www.googleapis.com/auth/drive",aud:"https://oauth2.googleapis.com/token",iat:now,exp:now+3600}));
-  const signer=createSign("RSA-SHA256");signer.update(unsigned);signer.end();
-  const assertion=unsigned+"."+signer.sign(account.private_key).toString("base64url");
-  const response=await fetch("https://oauth2.googleapis.com/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({grant_type:"urn:ietf:params:oauth:grant-type:jwt-bearer",assertion})});
-  const data=await response.json();if(!response.ok||!data.access_token)throw new Error(data.error_description||data.error||"Gagal autentikasi ke Google Drive.");
+  const clientId=process.env.GOOGLE_OAUTH_CLIENT_ID||"",clientSecret=process.env.GOOGLE_OAUTH_CLIENT_SECRET||"";
+  if(!clientId||!clientSecret)throw new Error("GOOGLE_OAUTH_CLIENT_ID dan GOOGLE_OAUTH_CLIENT_SECRET belum diatur di Vercel.");
+  const encrypted=await vbFetch(WAREHOUSE_GOOGLE_TOKEN_KEY);
+  if(!encrypted)throw new Error("Google Drive belum dihubungkan. Buka /api/warehouse-google-oauth/start untuk menghubungkan akun Gmail.");
+  const refreshToken=decryptWarehouseRefreshToken(encrypted);
+  const response=await fetch("https://oauth2.googleapis.com/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({client_id:clientId,client_secret:clientSecret,refresh_token:refreshToken,grant_type:"refresh_token"})});
+  const data=await response.json();
+  if(!response.ok||!data.access_token)throw new Error(data.error_description||data.error||"Gagal memperbarui akses Google Drive. Hubungkan ulang akun Google.");
   return data.access_token;
 }
 async function readWarehousePhotoIndex(){
@@ -340,6 +359,47 @@ async function driveApi(accessToken,url,options={}){
   if(!response.ok)throw new Error(data.error&&data.error.message?data.error.message:"Google Drive API gagal (HTTP "+response.status+").");
   return data;
 }
+    // Google OAuth connection for Warehouse photo storage.
+    if(path==="/warehouse-google-oauth/start"&&method==="GET"){
+      const clientId=process.env.GOOGLE_OAUTH_CLIENT_ID||"",clientSecret=process.env.GOOGLE_OAUTH_CLIENT_SECRET||"";
+      if(!clientId||!clientSecret)return send({success:false,message:"Client ID atau Client Secret OAuth belum diatur di Vercel."},503);
+      if(!PDA_SESSION_SECRET||PDA_SESSION_SECRET.length<32)return send({success:false,message:"SESSION_SECRET belum siap untuk mengamankan proses OAuth."},503);
+      const statePayload=Buffer.from(JSON.stringify({iat:Date.now()})).toString("base64url");
+      const stateSig=createHmac("sha256",PDA_SESSION_SECRET).update(statePayload).digest("base64url");
+      const state=statePayload+"."+stateSig;
+      const authUrl=new URL("https://accounts.google.com/o/oauth2/v2/auth");
+      authUrl.searchParams.set("client_id",clientId);
+      authUrl.searchParams.set("redirect_uri",warehouseOAuthRedirectUri());
+      authUrl.searchParams.set("response_type","code");
+      authUrl.searchParams.set("scope","https://www.googleapis.com/auth/drive");
+      authUrl.searchParams.set("access_type","offline");
+      authUrl.searchParams.set("prompt","consent");
+      authUrl.searchParams.set("include_granted_scopes","true");
+      authUrl.searchParams.set("state",state);
+      res.statusCode=302;res.setHeader("Location",authUrl.toString());res.end();return;
+    }
+    if(path==="/warehouse-google-oauth/callback"&&method==="GET"){
+      if(query.error)return send({success:false,message:"Otorisasi Google dibatalkan: "+String(query.error)},400);
+      const parts=String(query.state||"").split(".");
+      if(parts.length!==2)return send({success:false,message:"State OAuth tidak valid."},400);
+      const expected=createHmac("sha256",PDA_SESSION_SECRET).update(parts[0]).digest();
+      const supplied=Buffer.from(parts[1],"base64url");
+      if(supplied.length!==expected.length||!timingSafeEqual(supplied,expected))return send({success:false,message:"Verifikasi keamanan OAuth gagal."},400);
+      let stateData;try{stateData=JSON.parse(Buffer.from(parts[0],"base64url").toString("utf8"))}catch{return send({success:false,message:"State OAuth rusak."},400)}
+      if(!stateData.iat||Date.now()-stateData.iat>10*60*1000||stateData.iat>Date.now()+60000)return send({success:false,message:"Sesi otorisasi kedaluwarsa. Silakan mulai ulang."},400);
+      if(!query.code)return send({success:false,message:"Google tidak mengirim kode otorisasi."},400);
+      const clientId=process.env.GOOGLE_OAUTH_CLIENT_ID||"",clientSecret=process.env.GOOGLE_OAUTH_CLIENT_SECRET||"";
+      if(!clientId||!clientSecret)return send({success:false,message:"Client OAuth belum diatur di Vercel."},503);
+      const tokenResponse=await fetch("https://oauth2.googleapis.com/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({code:String(query.code),client_id:clientId,client_secret:clientSecret,redirect_uri:warehouseOAuthRedirectUri(),grant_type:"authorization_code"})});
+      const tokenData=await tokenResponse.json();
+      if(!tokenResponse.ok)throw new Error(tokenData.error_description||tokenData.error||"Google gagal memberikan token.");
+      if(!tokenData.refresh_token)throw new Error("Google tidak memberikan refresh token. Ulangi proses dengan akses consent dan pastikan akun Gmail yang benar dipilih.");
+      const encryptedToken=encryptWarehouseRefreshToken(String(tokenData.refresh_token));
+      await vbPut(WAREHOUSE_GOOGLE_TOKEN_KEY,encryptedToken);
+      res.setHeader("Content-Type","text/html; charset=utf-8");
+      return res.status(200).send("<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'></head><body style='font-family:Arial;padding:32px;text-align:center'><h2>Google Drive berhasil dihubungkan!</h2><p>Akun Gmail sudah terhubung untuk penyimpanan foto PDA Mini Warehouse.</p><p>Silakan kembali ke PDA Mini.</p></body></html>");
+    }
+
     // Shared Warehouse Only display status. Visible and editable by signed-in PDA Mini users.
     if (path === "/warehouse-status" && (method === "GET" || method === "POST")) {
       const auth = String(req.headers.authorization || "");
