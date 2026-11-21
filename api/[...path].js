@@ -364,12 +364,20 @@ async function driveApi(accessToken,url,options={}){
     }
 
     // One Google Drive display photo per Product Code.
-    if(path==="/warehouse-photos"&&(method==="GET"||method==="POST")){
+    if(path==="/warehouse-photos"&&(method==="GET"||method==="POST"||method==="DELETE")){
       const auth=String(req.headers.authorization||"");const token=auth.startsWith("Bearer ")?auth.slice(7):"";
       const session=verifyPdaSession(token);if(!session)return send({success:false,message:"Sesi PDA Mini tidak valid atau sudah berakhir. Silakan login kembali."},401);
       if(method==="GET")return send({success:true,photos:await readWarehousePhotoIndex(),storage:"google-drive"});
       const productCode=String(body.productCode||"").trim(),mimeType=String(body.mimeType||"").toLowerCase(),imageBase64=String(body.imageBase64||"").replace(/^data:[^;]+;base64,/,"");
       if(!productCode)return send({success:false,message:"Product Code wajib diisi."},400);
+      if(method==="DELETE"){
+        const photos=await readWarehousePhotoIndex(),previous=photos[productCode];
+        if(!previous||!previous.fileId)return send({success:false,message:"Foto untuk Product Code ini tidak ditemukan."},404);
+        const accessToken=await getGoogleDriveAccessToken();
+        await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(previous.fileId),{method:"DELETE"});
+        delete photos[productCode];await writeWarehousePhotoIndex(photos);
+        return send({success:true,productCode,deleted:true,storage:"google-drive"});
+      }
       if(!["image/jpeg","image/png","image/webp"].includes(mimeType))return send({success:false,message:"Format foto harus JPG, PNG, atau WEBP."},400);
       if(!imageBase64||imageBase64.length>4_000_000)return send({success:false,message:"Ukuran foto terlalu besar. Maksimal sekitar 3 MB setelah kompresi."},413);
       const bytes=Buffer.from(imageBase64,"base64");if(!bytes.length||bytes.length>3_000_000)return send({success:false,message:"Ukuran foto maksimal 3 MB."},413);
