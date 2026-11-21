@@ -430,6 +430,27 @@ async function driveApi(accessToken,url,options={}){
       return send({ success: true, productCode, status: statuses[productCode] || null, storage: "netlify-blob" });
     }
 
+    // Recover Ter-display status from the Google Drive photo index without reading blocked Vercel Blob.
+    // Safe merge: preserve any existing Netlify status entries and mark photo-backed product codes as displayed.
+    if(path==="/warehouse-status/recover-from-photos"&&method==="POST"){
+      const auth=String(req.headers.authorization||"");const token=auth.startsWith("Bearer ")?auth.slice(7):"";
+      const session=verifyPdaSession(token);if(!session)return send({success:false,message:"Sesi PDA Mini tidak valid atau sudah berakhir. Silakan login kembali."},401);
+      const photos=await readWarehousePhotoIndex();
+      const productCodes=Object.keys(photos).filter(code=>photos[code]&&photos[code].fileId);
+      if(!productCodes.length)return send({success:false,message:"Indeks foto Google Drive kosong atau tidak dapat dibaca. Tidak ada status yang diubah."},409);
+      const existing=await readWarehouseDisplayFromNetlifyKey(WAREHOUSE_DISPLAY_NETLIFY_KEY);
+      const statuses=existing===null?{}:validateWarehouseStatuses(existing,"Netlify Blob");
+      let restored=0;
+      for(const productCode of productCodes){
+        if(!statuses[productCode]||statuses[productCode].displayed!==true){
+          statuses[productCode]={displayed:true,updatedAt:new Date().toISOString(),updatedBy:"Pemulihan dari foto Google Drive"};
+          restored++;
+        }
+      }
+      await writeWarehouseDisplayToNetlify(statuses);
+      return send({success:true,message:"Pemulihan status dari foto berhasil.",photoProductCount:productCodes.length,restoredCount:restored,totalDisplayed:Object.values(statuses).filter(item=>item&&item.displayed===true).length,storage:"netlify-blob"});
+    }
+
     // One Google Drive display photo per Product Code.
     if(path==="/warehouse-photos"&&(method==="GET"||method==="POST"||method==="DELETE")){
       const auth=String(req.headers.authorization||"");const token=auth.startsWith("Bearer ")?auth.slice(7):"";
