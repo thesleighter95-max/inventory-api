@@ -12,6 +12,13 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
+/* Warehouse photo status shortcuts */
+#warehouseView .photo-filter-card{appearance:none;-webkit-appearance:none;text-align:left;width:100%;font-family:inherit;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s}
+#warehouseView .photo-filter-card:hover{border-color:#b8cdfb;background:#f7faff}
+#warehouseView .photo-filter-card.active{border-color:#326cf4;background:#edf4ff;box-shadow:0 0 0 2px #326cf41a}
+#warehouseView .photo-filter-card:focus-visible{outline:3px solid #326cf455;outline-offset:2px}
+#warehouseView .photo-filter-card:disabled{cursor:not-allowed;opacity:.65}
+
 :root{--bg:#f3f6fb;--panel:#fff;--ink:#172235;--muted:#718096;--line:#e7edf5;--nav:#101827;--blue:#326cf4;--cyan:#18b6c9;--green:#16a36a;--orange:#ee9b32;--red:#e05252;--shadow:0 8px 28px #1b2b4810}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif}.shell{display:grid;grid-template-columns:245px 1fr;min-height:100vh}.sidebar{background:var(--nav);color:#fff;padding:26px 18px;display:flex;flex-direction:column;gap:30px}.brand{display:flex;align-items:center;gap:12px;padding:0 8px}.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#3677ff,#18c6cf);display:grid;place-items:center;font-weight:800;font-size:17px}.brand strong{font:800 17px Manrope}.brand small{display:block;color:#93a2b8;font-size:11px;margin-top:3px}.nav-label{color:#71829b;font-size:10px;font-weight:800;letter-spacing:1.5px;padding:0 12px}.nav-item{padding:12px 13px;border-radius:10px;color:#b8c4d6;font-size:13px;display:flex;gap:12px;align-items:center;margin-top:5px}.nav-item.active{background:#25334b;color:white}.nav-item span:first-child{font-size:16px;width:18px;text-align:center}.side-foot{margin-top:auto;color:#71829b;font-size:11px;line-height:1.7;padding:0 10px}.main{padding:28px 34px;max-width:1600px;width:100%;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:28px}.eyebrow{font-size:11px;color:var(--blue);font-weight:800;letter-spacing:1.3px;text-transform:uppercase}.top h1{font:800 27px Manrope;margin:5px 0}.sub{color:var(--muted);font-size:13px}.actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;padding:10px 14px;border-radius:10px;font:600 12px 'DM Sans';color:var(--ink);cursor:pointer}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.status{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:7px}.dot{width:7px;height:7px;border-radius:50%;background:var(--green)}.banner{background:linear-gradient(110deg,#173b83,#326cf4 65%,#21aebc);color:white;border-radius:16px;padding:21px 24px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;box-shadow:0 12px 28px #326cf426}.banner h2{font:800 18px Manrope;margin:0 0 5px}.banner p{margin:0;color:#dce8ff;font-size:12px}.banner .big{font:800 32px Manrope}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow)}.metric{padding:18px}.metric-head{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px}.metric-icon{width:34px;height:34px;border-radius:10px;background:#edf3ff;color:var(--blue);display:grid;place-items:center;font-size:16px}.metric-value{font:800 26px Manrope;margin:14px 0 4px}.metric-note{font-size:11px;color:var(--muted)}.grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-bottom:18px}.panel{padding:19px}.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px}.panel h3{font:800 14px Manrope;margin:0}.panel-head small{color:var(--muted);font-size:11px}.chart-wrap{height:240px;position:relative}.lower{display:grid;grid-template-columns:1fr;gap:16px}.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}.filters input,.filters select{border:1px solid var(--line);background:#fbfcfe;border-radius:9px;padding:10px 12px;font:12px 'DM Sans';outline:none}.filters input{min-width:220px;flex:1}.table-wrap{overflow:auto;max-height:430px}table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:12px}th{text-align:left;color:#7b8799;background:#f8fafd;position:sticky;top:0;z-index:1;font-size:10px;text-transform:uppercase;letter-spacing:.5px}td,th{padding:12px 13px;border-bottom:1px solid #edf1f6}td{color:#344256}tr:hover td{background:#fbfcff}.pill{padding:4px 8px;border-radius:20px;font-size:10px;font-weight:700;background:#e9f8f1;color:#138454}.pill.warn{background:#fff4e4;color:#b7791f}.pill.bad{background:#ffeded;color:#c24141}.empty{padding:34px;text-align:center;color:var(--muted);font-size:12px}.loading{padding:20px;color:var(--muted);font-size:12px}.error{color:#c24141;background:#fff1f1;border:1px solid #ffdada;padding:12px;border-radius:10px;font-size:12px;margin-bottom:15px;display:none}.footnote{font-size:10px;color:#8793a5;margin-top:12px}.progress-line{height:8px;border-radius:10px;background:#edf1f7;overflow:hidden;margin-top:12px}.progress-line i{display:block;height:100%;background:linear-gradient(90deg,#326cf4,#20bec4);border-radius:10px;width:0}.mobile-menu{display:none}
 @media(max-width:1050px){.cards{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.shell{grid-template-columns:205px 1fr}.main{padding:24px}}
@@ -368,7 +375,8 @@
    <div class="sector-kpis">
     <div class="sector-kpi"><span>ARTIKEL HANYA DI GUDANG</span><strong id="warehouseSkuCount">0</strong></div>
     <div class="sector-kpi"><span>TOTAL QTY GUDANG</span><strong id="warehouseQty">0</strong></div>
-    <div class="sector-kpi"><span>SUDAH FOTO</span><strong id="warehousePhotoCount">0</strong><small id="warehousePhotoProgress" style="display:block;color:var(--muted);font-size:10px;margin-top:4px">0% dari artikel gudang</small></div>
+    <button class="sector-kpi photo-filter-card" id="warehouseShowPhotographed" type="button" data-photo-filter="photographed" aria-pressed="false" disabled><span>SUDAH FOTO</span><strong id="warehousePhotoCount">0</strong><small id="warehousePhotoProgress" style="display:block;color:var(--muted);font-size:10px;margin-top:4px">0% dari artikel gudang</small><small style="display:block;color:var(--blue);font-size:10px;margin-top:6px">Klik untuk melihat artikel</small></button>
+     <button class="sector-kpi photo-filter-card" id="warehouseShowUnphotographed" type="button" data-photo-filter="unphotographed" aria-pressed="false" disabled><span>BELUM FOTO</span><strong id="warehouseUnphotographedCount">0</strong><small id="warehouseUnphotographedProgress" style="display:block;color:var(--muted);font-size:10px;margin-top:4px">Artikel belum memiliki foto</small><small style="display:block;color:var(--blue);font-size:10px;margin-top:6px">Klik untuk melihat artikel</small></button>
    </div>
    <div class="detail-filters">
     <input id="warehouseSearch" type="search" placeholder="Cari kode produk, nama artikel, barcode, atau alamat..." disabled>
@@ -597,7 +605,7 @@ function renderAstSummary(){
  }
 }
 
-let warehouseProducts=[],warehouseDataRequested=false,warehousePage=1;
+let warehouseProducts=[],warehouseDataRequested=false,warehousePage=1,warehousePhotoFilter='all';
 const WAREHOUSE_STATE_KEY='pda_mini_warehouse_ui_v1';
 let warehouseRestoreState=null,warehouseLastProductCode='';
 try{warehouseRestoreState=JSON.parse(localStorage.getItem(WAREHOUSE_STATE_KEY)||'null')}catch(e){warehouseRestoreState=null}
@@ -627,11 +635,32 @@ async function deleteWarehousePhoto(productCode){const token=warehouseSessionTok
  const WAREHOUSE_PAGE_SIZE=10;
 function warehouseSessionToken(){try{const raw=localStorage.getItem('inv_sess_v1');if(!raw)return '';const session=JSON.parse(decodeURIComponent(escape(atob(raw))));return session&&session.exp>Date.now()?String(session.t||''):''}catch(e){return ''}}
 function updateWarehousePhotoProgress(){
- const total=warehouseProducts.length;
- const photographed=warehouseProducts.filter(p=>warehousePhotos[p.code]&&warehousePhotos[p.code].viewUrl).length;
+ const cat=$('warehouseCategory')?.value||'';
+ const scoped=warehouseProducts.filter(p=>!cat||p.cat===cat);
+ const total=scoped.length;
+ const photographed=scoped.filter(p=>warehousePhotos[p.code]&&warehousePhotos[p.code].viewUrl).length;
+ const unphotographed=total-photographed;
  const percent=total?Math.round(photographed/total*100):0;
  $('warehousePhotoCount').textContent=fmt(photographed);
- $('warehousePhotoProgress').textContent=percent+'% dari '+fmt(total)+' artikel gudang';
+ $('warehousePhotoProgress').textContent=percent+'% dari '+fmt(total)+' artikel sesuai kategori';
+ $('warehouseUnphotographedCount').textContent=fmt(unphotographed);
+ $('warehouseUnphotographedProgress').textContent=total?fmt(unphotographed)+' dari '+fmt(total)+' artikel sesuai kategori':'Tidak ada artikel pada kategori ini';
+ const ready=warehouseDataRequested&&warehouseProducts.length>0;
+ ['warehouseShowPhotographed','warehouseShowUnphotographed'].forEach(id=>{const button=$(id);if(button)button.disabled=!ready;});
+ updateWarehousePhotoFilterButtons();
+}
+function updateWarehousePhotoFilterButtons(){
+ [['warehouseShowPhotographed','photographed'],['warehouseShowUnphotographed','unphotographed']].forEach(([id,mode])=>{
+  const button=$(id);if(!button)return;
+  button.classList.toggle('active',warehousePhotoFilter===mode);
+  button.setAttribute('aria-pressed',String(warehousePhotoFilter===mode));
+ });
+}
+function selectWarehousePhotoFilter(mode){
+ warehousePhotoFilter=mode;warehousePage=1;updateWarehousePhotoFilterButtons();
+ if(!warehouseDataRequested){requestWarehouseData(false);return;}
+ $('warehouseTableWrap').style.display='block';$('warehouseMeta').style.display='flex';
+ renderWarehouseRows();$('warehouseTableWrap').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function warehouseHead(address){return String(address??'').trim().replace(/[^0-9]/g,'').charAt(0)}
 async function renderWarehouseOnly(){
@@ -686,7 +715,11 @@ async function renderWarehouseOnly(){
 function getWarehouseFilteredRows(){
  const q=$('warehouseSearch').value.trim().toLocaleLowerCase('id-ID');
  const cat=$('warehouseCategory').value;
- return warehouseProducts.filter(p=>(!cat||p.cat===cat)&&[p.code,p.name,p.barcode,p.cat,p.category,...p.addresses].join(' ').toLocaleLowerCase('id-ID').includes(q));
+ return warehouseProducts.filter(p=>{
+  const hasPhoto=!!(warehousePhotos[p.code]&&warehousePhotos[p.code].viewUrl);
+  const photoMatch=warehousePhotoFilter==='all'||(warehousePhotoFilter==='photographed'&&hasPhoto)||(warehousePhotoFilter==='unphotographed'&&!hasPhoto);
+  return photoMatch&&(!cat||p.cat===cat)&&[p.code,p.name,p.barcode,p.cat,p.category,...p.addresses].join(' ').toLocaleLowerCase('id-ID').includes(q);
+ });
 }
 function exportWarehouseExcel(){
  if(!warehouseDataRequested||!warehouseProducts.length){alert('Tampilkan data Warehouse Only terlebih dahulu.');return;}
@@ -744,8 +777,10 @@ $('exportWarehouseExcel').addEventListener('click',exportWarehouseExcel);
 $('warehouseShowData').addEventListener('click',()=>requestWarehouseData(false));
 $('refreshWarehouse').addEventListener('click',()=>requestWarehouseData(true));
 $('warehouseSearch').addEventListener('input',()=>{warehousePage=1;renderWarehouseRows();saveWarehouseUiState()});
-$('warehouseCategory').addEventListener('change',()=>{warehousePage=1;renderWarehouseRows();saveWarehouseUiState()});
-$('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';$('warehouseCategory').value='';warehousePage=1;warehouseLastProductCode='';if(warehouseDataRequested)renderWarehouseRows();saveWarehouseUiState()});
+$('warehouseCategory').addEventListener('change',()=>{warehousePage=1;updateWarehousePhotoProgress();renderWarehouseRows();saveWarehouseUiState()});
+$('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';$('warehouseCategory').value='';warehousePhotoFilter='all';warehousePage=1;warehouseLastProductCode='';updateWarehousePhotoProgress();if(warehouseDataRequested)renderWarehouseRows();saveWarehouseUiState()});
+$('warehouseShowPhotographed').addEventListener('click',()=>selectWarehousePhotoFilter('photographed'));
+$('warehouseShowUnphotographed').addEventListener('click',()=>selectWarehousePhotoFilter('unphotographed'));
 $('warehousePrev').addEventListener('click',()=>{warehousePage--;renderWarehouseRows();saveWarehouseUiState()});
 $('warehouseNext').addEventListener('click',()=>{warehousePage++;renderWarehouseRows();saveWarehouseUiState()});
  function showWarehousePhotoSourcePicker(){const overlay=document.createElement('div');overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(10,18,32,.62);display:flex;align-items:center;justify-content:center;padding:20px';overlay.innerHTML='<div role="dialog" aria-modal="true" style="width:min(100%,360px);background:#fff;border-radius:18px;padding:22px;box-shadow:0 18px 55px rgba(0,0,0,.28);font-family:inherit"><div style="font-size:18px;font-weight:800;color:#172033;margin-bottom:6px">Pilih Sumber Foto</div><div style="font-size:13px;color:#64748b;margin-bottom:18px">Ambil foto langsung atau pilih dari galeri.</div><div style="display:flex;gap:10px"><button type="button" data-photo-source="camera" style="flex:1;border:0;border-radius:12px;padding:14px 8px;background:#0f766e;color:white;font-weight:700;font-size:14px">📷 Kamera</button><button type="button" data-photo-source="gallery" style="flex:1;border:0;border-radius:12px;padding:14px 8px;background:#e8eef5;color:#172033;font-weight:700;font-size:14px">🖼️ Galeri</button></div><button type="button" data-photo-cancel style="width:100%;margin-top:12px;border:0;background:transparent;padding:9px;color:#64748b;font-weight:600">Batal</button></div>';document.body.appendChild(overlay);overlay.addEventListener('click',ev=>{if(ev.target===overlay||ev.target.closest('[data-photo-cancel]')){overlay.remove();return;}const choice=ev.target.closest('[data-photo-source]');if(!choice)return;const picker=$(choice.getAttribute('data-photo-source')==='camera'?'warehousePhotoCamera':'warehousePhotoGallery');overlay.remove();picker.value='';picker.click();});}
