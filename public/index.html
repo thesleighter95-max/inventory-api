@@ -5717,7 +5717,7 @@ function whLoadInventoryCatalog(){
   return whInventoryCatalogRows;
  });
 }
-function whNormalizeProductCode(value){return String(value||'').replace(/[^0-9]/g,'').replace(/^0+(?=\\d)/,'');}
+function whNormalizeProductCode(value){return String(value||'').replace(/[^0-9]/g,'').replace(/^0+(?=\d)/,'');}
 function whSearchInventoryMaster(){
  var box=document.getElementById("whInventoryResults"),input=document.getElementById("whInventorySearch");
  if(whInventorySearchTimer)clearTimeout(whInventorySearchTimer);
@@ -5744,7 +5744,7 @@ function whRunInventorySearch(query){
   }).join("")||"<div class='wh-muted' style='padding:10px'>Artikel tidak ditemukan di Master Inventory.</div>";
   if(found.length===1){
    var one=found[0],oneLocs=Array.from(new Set(whState.master.filter(function(m){return whNormalizeProductCode(m.productCode)===whNormalizeProductCode(one.productCode);}).map(function(m){return String(m.sector);})));
-   if(oneLocs.length===1){document.getElementById("whSectorSearch").value=oneLocs[0];document.getElementById("whSectorSelect").value=oneLocs[0];whRenderAddress();whChooseInventoryArticle(0);}
+   if(!whSelectedSector()&&oneLocs.length===1){document.getElementById("whSectorSearch").value=oneLocs[0];document.getElementById("whSectorSelect").value=oneLocs[0];whRenderAddress();whChooseInventoryArticle(0);}
   }
  }).catch(function(e){
   if(seq!==whInventorySearchSeq)return;
