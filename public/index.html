@@ -5734,7 +5734,18 @@ function whRunInventorySearch(query){
  var timeout=new Promise(function(_,reject){setTimeout(function(){reject(new Error("Pemuatan Inventory melewati 25 detik. Coba ulangi; koneksi spreadsheet mungkin sedang lambat."));},25000);});
  Promise.race([load,timeout]).then(function(rows){
   if(seq!==whInventorySearchSeq||String(document.getElementById("whInventorySearch").value||"").trim()!==query)return;
-  var q=query.toLowerCase(),found=rows.filter(function(x){return [x.productCode,x.barcode,x.productName].join(" ").toLowerCase().indexOf(q)>=0;}).slice(0,30);
+  var q=query.toLowerCase().trim(),tokens=q.split(/\\s+/).filter(Boolean);
+  function editDistance(a,b){var prev=Array.from({length:b.length+1},function(_,i){return i;});for(var ai=1;ai<=a.length;ai++){var cur=[ai];for(var bi=1;bi<=b.length;bi++)cur[bi]=Math.min(cur[bi-1]+1,prev[bi]+1,prev[bi-1]+(a[ai-1]===b[bi-1]?0:1));prev=cur;}return prev[b.length];}
+  var ranked=rows.map(function(x){
+   var name=String(x.productName||"").toLowerCase(),code=String(x.productCode||"").toLowerCase(),barcode=String(x.barcode||"").toLowerCase(),all=name+" "+code+" "+barcode,score=0,matched=0;
+   tokens.forEach(function(t){
+    if(all.indexOf(t)>=0){matched++;score+=name.indexOf(t)>=0?12:code.indexOf(t)>=0?9:6;return;}
+    if(t.length>=4){var words=name.split(/[^a-z0-9]+/);if(words.some(function(w){return w.length>=4&&editDistance(t,w)<=1;})){matched++;score+=4;}}
+   });
+   if(all.indexOf(q)>=0)score+=20;
+   return {item:x,score:score,matched:matched};
+  }).filter(function(v){return v.score>0&&v.matched>0;}).sort(function(a,b){return b.score-a.score||a.item.productName.localeCompare(b.item.productName);});
+  var found=ranked.slice(0,30).map(function(v){return v.item;});
   box._matches=found;
   box.innerHTML=found.map(function(x,i){
    var locs=Array.from(new Set(whState.master.filter(function(m){return whNormalizeProductCode(m.productCode)===whNormalizeProductCode(x.productCode);}).map(function(m){return String(m.sector);}))).sort();
