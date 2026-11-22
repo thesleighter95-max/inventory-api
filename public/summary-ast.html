@@ -283,6 +283,10 @@
 .ast-article-wrap table{min-width:980px}
 .ast-article-wrap th,.ast-article-wrap td{white-space:nowrap}
 .ast-article-wrap td:nth-child(3){white-space:normal;min-width:220px}
+
+/* Four warehouse KPI cards: compact 2x2 layout on phones */
+#warehouseView .sector-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:700px){#warehouseView .sector-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#warehouseView .sector-kpi{min-width:0;padding:10px}}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style id="ast-clean-layout-v1">
