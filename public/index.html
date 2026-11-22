@@ -5675,6 +5675,18 @@ function whShowPage(page){
  var ids=["whDashboardStats","whDashboardWelcome","whDashboardSummary","whAddressCard","whItemsCard","whTransactionCard","whManualCard","whHistoryCard","whReportCard"];
  whState.currentPage=page;
  whState.selectedKey=null;whState.pendingItem=null;
+ // Bersihkan state pencarian dan form sementara setiap kali submenu diganti.
+ if(whInventorySearchTimer){clearTimeout(whInventorySearchTimer);whInventorySearchTimer=null;}
+ whInventorySearchSeq++;
+ var inventoryInput=document.getElementById("whInventorySearch"),inventoryResults=document.getElementById("whInventoryResults"),addressFilter=document.getElementById("whSearch");
+ if(inventoryInput)inventoryInput.value="";
+ if(inventoryResults){inventoryResults.innerHTML="";inventoryResults._matches=[];}
+ if(addressFilter)addressFilter.value="";
+ var scanBox=document.getElementById("whScanBox");
+ if(scanBox)scanBox.style.display="none";
+ var manualCard=document.getElementById("whManualCard");
+ if(manualCard){manualCard.querySelectorAll("input").forEach(function(el){el.value="";});}
+
  var selectedInfo=document.getElementById("whSelectedInfo"),qtyField=document.getElementById("whQty"),noteField=document.getElementById("whNote"),formMessage=document.getElementById("whFormMessage");
  if(selectedInfo)selectedInfo.textContent="Belum ada barang dipilih. Pilih artikel dari tabel di atas.";
  if(qtyField)qtyField.value="";
