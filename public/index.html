@@ -5706,9 +5706,9 @@ function whShowPage(page){
  ids.forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=(visible[page]||visible.dashboard).indexOf(id)>=0?"":"none";});
  document.querySelectorAll("#whSubnav .wh-subnav-btn").forEach(function(btn){btn.classList.toggle("active",btn.getAttribute("data-page")===page);});
  var lookup=document.getElementById("whInventoryLookup"),itemsTitle=document.getElementById("whItemsTitle"),itemsHelp=document.getElementById("whItemsHelp");
- if(lookup)lookup.style.display=page==="out"?"none":"";
- if(itemsTitle)itemsTitle.innerHTML='<span class="wh-step">2</span>'+(page==="out"?"Pilih artikel dari alamat ini":"Cari artikel dari master Inventory");
- if(itemsHelp)itemsHelp.textContent=page==="out"?"Pilih langsung baris barang yang tersedia pada alamat gudang di atas. Tidak perlu mencari dari Master Inventory.":"Barang masuk hanya boleh memakai artikel yang sudah terdaftar di Inventory. Cari nama, barcode, atau ProdCode.";
+ if(lookup)lookup.style.display=page==="in"?"":"none";
+ if(itemsTitle)itemsTitle.innerHTML='<span class="wh-step">2</span>'+(page==="out"?"Pilih artikel dari alamat ini":page==="in"?"Cari artikel dari master Inventory":page==="stock"?"Daftar stok pada alamat ini":"Daftar artikel Warehouse");
+ if(itemsHelp)itemsHelp.textContent=page==="out"?"Pilih langsung baris barang yang tersedia pada alamat gudang di atas. Tidak perlu mencari dari Master Inventory.":page==="in"?"Barang masuk hanya boleh memakai artikel yang sudah terdaftar di Inventory. Cari nama, barcode, atau ProdCode.":page==="stock"?"Daftar artikel dan jumlah stok pada alamat gudang yang dipilih.":"Kelola artikel yang sudah terdaftar di Warehouse.";
  document.getElementById("whItemsCard").classList.toggle("wh-out-mode",page==="out");
  var type=document.getElementById("whChangeType");
  if(type&&(page==="in"||page==="out")){type.value=page==="in"?"IN":"OUT";type.disabled=true;}
