@@ -210,6 +210,77 @@ body:has(#employeeDashboard.active){background:linear-gradient(180deg,#eaf1fa 0,
  #employeeDashboard .dash-chip{font-size:9px!important;padding:8px!important}
 }
 
+
+/* DSH Login Studio — premium motion refresh; presentation only */
+:root{--login-ink:#102846;--login-muted:#718198;--login-line:#e2eaf4;--login-blue:#1769dc;--login-cyan:#59c9ff}
+body:not(:has(#employeeDashboard.active)){background:#f2f6fc}
+body:not(:has(#employeeDashboard.active)) .shell{position:relative;isolation:isolate;max-width:1240px;min-height:100svh;gap:clamp(18px,3vw,34px);padding:clamp(14px,3vw,34px);align-items:stretch}
+body:not(:has(#employeeDashboard.active)) .brand{min-height:calc(100svh - clamp(28px,6vw,68px));border:1px solid #244a75;border-radius:30px;padding:clamp(26px,4vw,46px);background:radial-gradient(ellipse at 88% 12%,#3186d34a 0,transparent 34%),linear-gradient(145deg,#071a32 0%,#0d2c50 52%,#1b568b 100%);box-shadow:0 26px 70px #0b27451c;animation:loginPanelIn .8s cubic-bezier(.2,.8,.2,1) both}
+body:not(:has(#employeeDashboard.active)) .brand:before{content:"";position:absolute;z-index:0;width:330px;height:330px;right:-120px;top:18%;border:1px solid #a9dfff2c;border-radius:50%;box-shadow:0 0 0 28px #ffffff08,0 0 0 58px #ffffff06,0 0 0 90px #ffffff04;animation:loginOrbit 24s linear infinite}
+body:not(:has(#employeeDashboard.active)) .brand:after{width:430px;height:430px;right:-180px;bottom:-190px;border-color:#8fd8ff30;box-shadow:0 0 0 35px #ffffff08,0 0 0 76px #ffffff05}
+body:not(:has(#employeeDashboard.active)) .logo,body:not(:has(#employeeDashboard.active)) .brandcopy,body:not(:has(#employeeDashboard.active)) .foot{z-index:2}
+body:not(:has(#employeeDashboard.active)) .mark{width:54px;height:54px;border-radius:17px;background:linear-gradient(145deg,#6bd6ff,#2674e8);box-shadow:0 12px 30px #1477d755,inset 0 1px 0 #ffffff70;animation:markFloat 5s ease-in-out infinite}
+body:not(:has(#employeeDashboard.active)) .logo b{font-size:19px;letter-spacing:2.3px}
+body:not(:has(#employeeDashboard.active)) .brandcopy{max-width:520px;margin:40px 0}
+body:not(:has(#employeeDashboard.active)) .brand h1{font-size:clamp(38px,4.3vw,58px);letter-spacing:-1.8px;line-height:1.04;margin:17px 0}
+body:not(:has(#employeeDashboard.active)) .brand p{font-size:14px;max-width:390px;color:#d0e0f3}
+body:not(:has(#employeeDashboard.active)) .feature{font-size:13px}
+body:not(:has(#employeeDashboard.active)) .feature i{width:32px;height:32px;border:1px solid #ffffff18;border-radius:11px;background:#ffffff12}
+body:not(:has(#employeeDashboard.active)) .panel{position:relative;isolation:isolate;overflow:hidden;min-height:calc(100svh - clamp(28px,6vw,68px));padding:clamp(24px,4vw,52px);border:1px solid #e4ebf4;border-radius:30px;background:linear-gradient(155deg,#ffffff 0%,#fbfdff 100%);box-shadow:0 24px 70px #18365a0d;animation:loginPanelIn .8s .08s cubic-bezier(.2,.8,.2,1) both}
+body:not(:has(#employeeDashboard.active)) .panel:before,body:not(:has(#employeeDashboard.active)) .panel:after{content:"";position:absolute;z-index:-1;pointer-events:none;border-radius:50%;filter:blur(1px)}
+body:not(:has(#employeeDashboard.active)) .panel:before{width:260px;height:260px;right:-150px;top:-130px;background:radial-gradient(circle,#dcecff 0,transparent 70%)}
+body:not(:has(#employeeDashboard.active)) .panel:after{width:240px;height:240px;left:-150px;bottom:-130px;background:radial-gradient(circle,#e5f5ff 0,transparent 70%)}
+body:not(:has(#employeeDashboard.active)) .panelinner{position:relative;z-index:1;max-width:410px}
+body:not(:has(#employeeDashboard.active)) .heading h2{font-size:clamp(27px,3vw,34px);font-weight:850;letter-spacing:-1px;color:#102846}
+body:not(:has(#employeeDashboard.active)) .heading p{font-size:13px;color:#78879b;margin-bottom:25px}
+body:not(:has(#employeeDashboard.active)) .tabs{padding:5px;border:1px solid #e7edf6;border-radius:15px;background:#f1f5fb;gap:4px}
+body:not(:has(#employeeDashboard.active)) .tab{padding:12px 10px;border-radius:11px;transition:background .22s ease,color .22s ease,box-shadow .22s ease,transform .22s ease}
+body:not(:has(#employeeDashboard.active)) .tab.active{background:#fff;color:#12345a;box-shadow:0 4px 14px #18365a12;transform:translateY(-1px)}
+body:not(:has(#employeeDashboard.active)) .field{margin:15px 0}
+body:not(:has(#employeeDashboard.active)) .field label{font-size:12px;color:#31445e;letter-spacing:.1px}
+body:not(:has(#employeeDashboard.active)) .field input,body:not(:has(#employeeDashboard.active)) .field select{min-height:49px;border:1px solid #dfe7f1;border-radius:13px;padding:13px 15px;background:#fbfdff;transition:border-color .2s ease,box-shadow .2s ease,background .2s ease}
+body:not(:has(#employeeDashboard.active)) .field input:focus,body:not(:has(#employeeDashboard.active)) .field select:focus{background:#fff;border-color:#5a9be9;box-shadow:0 0 0 4px #287be51b}
+body:not(:has(#employeeDashboard.active)) .btn{position:relative;isolation:isolate;overflow:hidden;min-height:52px;margin-top:15px;border-radius:14px;background:linear-gradient(105deg,#145fc9 0%,#2379e5 48%,#2996ed 100%);box-shadow:0 10px 24px #176bd638,inset 0 1px 0 #ffffff30;letter-spacing:.5px;transition:transform .2s ease,box-shadow .2s ease,filter .2s ease}
+body:not(:has(#employeeDashboard.active)) .btn:before{content:"";position:absolute;z-index:-1;top:-70%;left:-45%;width:35%;height:240%;transform:rotate(25deg);background:linear-gradient(90deg,transparent,#ffffff42,transparent);animation:loginShimmer 5.5s ease-in-out infinite}
+body:not(:has(#employeeDashboard.active)) .btn:active{transform:translateY(1px) scale(.995);box-shadow:0 5px 13px #176bd62b}
+body:not(:has(#employeeDashboard.active)) .linkrow{align-items:center;font-size:12px;color:#52647c;margin-top:18px}
+body:not(:has(#employeeDashboard.active)) .link{font-size:12px}
+body:not(:has(#employeeDashboard.active)) .status{border:1px solid transparent;border-radius:12px}
+body:not(:has(#employeeDashboard.active)) .status.error{border-color:#f4d5da}
+body:not(:has(#employeeDashboard.active)) .status.success{border-color:#ccebdc}
+body:not(:has(#employeeDashboard.active)) .form.active{animation:loginFormIn .38s ease both}
+body:not(:has(#employeeDashboard.active)) #googleLoginButton,body:not(:has(#employeeDashboard.active)) #googleRegisterButton{min-height:46px}
+@keyframes loginPanelIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes loginFormIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@keyframes loginOrbit{to{transform:rotate(360deg)}}
+@keyframes markFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes loginShimmer{0%,65%{left:-48%}85%,100%{left:130%}}
+@media(max-width:760px){
+ body:not(:has(#employeeDashboard.active)){background:linear-gradient(160deg,#eaf2fc 0,#f6f8fc 35%,#f3f6fb 100%)}
+ body:not(:has(#employeeDashboard.active)) .shell{max-width:560px;min-height:100svh;padding:0;display:block}
+ body:not(:has(#employeeDashboard.active)) .panel{min-height:100svh;display:flex;align-items:flex-start;justify-content:center;padding:clamp(28px,7vh,66px) 22px 34px;border:0;border-radius:0;background:transparent;box-shadow:none}
+ body:not(:has(#employeeDashboard.active)) .panelinner{max-width:430px;width:100%;margin:0 auto}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand{display:flex;position:relative;align-items:center;gap:12px;margin:0 0 clamp(42px,8vh,72px);animation:loginPanelIn .65s ease both}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand .mark{width:52px;height:52px;border-radius:17px;font-size:23px}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand b{font-size:16px;letter-spacing:1.8px;color:#102846}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand small{font-size:9px;letter-spacing:1.8px;color:#7b8aa0}
+ body:not(:has(#employeeDashboard.active)) .heading h2{font-size:clamp(30px,8vw,36px);margin-bottom:8px}
+ body:not(:has(#employeeDashboard.active)) .heading p{font-size:13px;line-height:1.65;margin-bottom:27px}
+ body:not(:has(#employeeDashboard.active)) .tabs{margin-bottom:24px}
+ body:not(:has(#employeeDashboard.active)) .field input,body:not(:has(#employeeDashboard.active)) .field select{min-height:54px;font-size:15px}
+ body:not(:has(#employeeDashboard.active)) .btn{min-height:56px;font-size:14px}
+ body:not(:has(#employeeDashboard.active)) .linkrow{font-size:12px}
+ body:not(:has(#employeeDashboard.active)) .status{font-size:12px}
+}
+@media(max-width:380px){
+ body:not(:has(#employeeDashboard.active)) .panel{padding-left:17px;padding-right:17px}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand{margin-bottom:38px}
+ body:not(:has(#employeeDashboard.active)) .linkrow{gap:7px}
+}
+@media(prefers-reduced-motion:reduce){
+ body:not(:has(#employeeDashboard.active)) *,body:not(:has(#employeeDashboard.active)) *:before,body:not(:has(#employeeDashboard.active)) *:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
+}
+
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
