@@ -179,8 +179,13 @@
         <button class="dash-btn" id="saveProfileBtn">SIMPAN DATA PROFIL</button><div class="dash-muted" id="profileMessage" aria-live="polite"></div>
         <details class="profile-password"><summary>Reset password</summary><div class="dash-muted" style="margin-top:8px">OTP akan dikirim ke email akun yang terdaftar.</div>
           <button class="dash-btn secondary" id="profileRequestOtpBtn">KIRIM OTP RESET PASSWORD</button>
-          <div class="profile-grid"><div><label class="dash-muted">Kode OTP</label><input class="dash-input" id="profileResetOtp" inputmode="numeric" maxlength="6" placeholder="6 digit OTP"></div><div><label class="dash-muted">Password baru</label><input class="dash-input" id="profileNewPassword" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter"></div></div>
-          <button class="dash-btn" id="profileResetBtn">SIMPAN PASSWORD BARU</button><div class="dash-muted" id="profilePasswordMessage" aria-live="polite"></div>
+          <div class="profile-grid"><div><label class="dash-muted">Kode OTP</label><input class="dash-input" id="profileResetOtp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6 digit OTP"></div></div>
+          <button class="dash-btn secondary" id="profileVerifyOtpBtn">CEK OTP</button>
+          <div id="profilePasswordFields" class="hidden">
+            <div class="profile-grid"><div><label class="dash-muted">Password baru</label><input class="dash-input" id="profileNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Minimal 8 karakter"></div><div><label class="dash-muted">Konfirmasi password baru</label><input class="dash-input" id="profileConfirmPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Ulangi password baru"></div></div>
+            <button class="dash-btn" id="profileResetBtn">SIMPAN PASSWORD BARU</button>
+          </div>
+          <div class="dash-muted" id="profilePasswordMessage" aria-live="polite"></div>
         </details>
       </div>
     </div>
@@ -437,12 +442,34 @@
     const r=await api('updateProfile',payload);$('profileMessage').textContent=r.message;sessionStorage.setItem('dsh_user',JSON.stringify(r.user||{}));
     $('dashMeta').textContent=[r.user.department,r.user.brand,r.user.email].filter(Boolean).join(' · ');await loadProfile();
   }catch(err){$('profileMessage').textContent=err.message;}finally{b.disabled=false;}});
+  let profileResetOtpVerified=false;
+  function clearProfileResetVerification(){
+    profileResetOtpVerified=false;
+    $('profilePasswordFields').classList.add('hidden');
+    $('profileNewPassword').value='';$('profileConfirmPassword').value='';
+  }
+  $('profileResetOtp').addEventListener('input',clearProfileResetVerification);
   $('profileRequestOtpBtn').addEventListener('click',async()=>{const b=$('profileRequestOtpBtn');b.disabled=true;try{
-    const r=await api('requestResetOtp',{email:val('profileEmail')});$('profilePasswordMessage').textContent=r.message||'Jika email aktif, OTP dikirim.';
+    const r=await api('requestResetOtp',{email:val('profileEmail')});
+    $('profileResetOtp').value='';clearProfileResetVerification();
+    $('profilePasswordMessage').textContent=r.message||'Jika email aktif, OTP dikirim.';
   }catch(err){$('profilePasswordMessage').textContent=err.message;}finally{b.disabled=false;}});
+  $('profileVerifyOtpBtn').addEventListener('click',async()=>{const b=$('profileVerifyOtpBtn');b.disabled=true;b.textContent='MEMERIKSA OTP…';try{
+    if(!/^\\d{6}$/.test(val('profileResetOtp')))throw new Error('Masukkan OTP 6 digit.');
+    const r=await api('verifyResetOtp',{email:val('profileEmail'),otp:val('profileResetOtp')});
+    profileResetOtpVerified=!!r.verified;
+    if(!profileResetOtpVerified)throw new Error('OTP belum berhasil diverifikasi.');
+    $('profilePasswordFields').classList.remove('hidden');
+    $('profileNewPassword').focus();
+    $('profilePasswordMessage').textContent=r.message||'OTP benar. Silakan buat password baru.';
+  }catch(err){clearProfileResetVerification();$('profilePasswordMessage').textContent=err.message;}finally{b.disabled=false;b.textContent='CEK OTP';}});
   $('profileResetBtn').addEventListener('click',async()=>{const b=$('profileResetBtn');b.disabled=true;try{
-    const r=await api('resetPassword',{email:val('profileEmail'),otp:val('profileResetOtp'),newPassword:$('profileNewPassword').value});
-    $('profilePasswordMessage').textContent=r.message;$('profileResetOtp').value='';$('profileNewPassword').value='';
+    if(!profileResetOtpVerified)throw new Error('Periksa OTP terlebih dahulu.');
+    const password=$('profileNewPassword').value,confirm=$('profileConfirmPassword').value;
+    if(password.length<8)throw new Error('Password minimal 8 karakter.');
+    if(password!==confirm)throw new Error('Konfirmasi password tidak sama.');
+    const r=await api('resetPassword',{email:val('profileEmail'),otp:val('profileResetOtp'),newPassword:password});
+    $('profilePasswordMessage').textContent=r.message;$('profileResetOtp').value='';clearProfileResetVerification();
   }catch(err){$('profilePasswordMessage').textContent=err.message;}finally{b.disabled=false;}});
 
   $('logoutBtn').addEventListener('click',async()=>{try{await api('logout',{token:sessionStorage.getItem('dsh_token')});}catch(e){}showAuth();});
