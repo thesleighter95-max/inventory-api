@@ -1315,10 +1315,12 @@ loadStatus();
 
     // DS Warehouse admin test module. Isolated Netlify Blob key; does not modify existing app datasets.
     if (path === "/warehouse-admin" && (method === "GET" || method === "POST")) {
-      // Keep the existing PDA Mini admin-password gate, then forward privately to Apps Script.
-      const adminPassword = method === "GET" ? query.adminPassword : body.adminPassword;
-      if (adminPassword !== ADMIN_PASSWORD) {
-        return send({ success: false, message: "Unauthorized" }, 403);
+      // Require a valid signed-in PDA Mini session. All authenticated users may use DS Warehouse.
+      const auth = String(req.headers.authorization || "");
+      const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+      const session = verifyPdaSession(token);
+      if (!session) {
+        return send({ success: false, message: "Sesi PDA Mini tidak valid atau sudah berakhir. Silakan login kembali." }, 401);
       }
 
       const scriptUrl = process.env.DS_WAREHOUSE_SCRIPT_URL;
