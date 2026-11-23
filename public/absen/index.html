@@ -455,7 +455,7 @@
     $('profilePasswordMessage').textContent=r.message||'Jika email aktif, OTP dikirim.';
   }catch(err){$('profilePasswordMessage').textContent=err.message;}finally{b.disabled=false;}});
   $('profileVerifyOtpBtn').addEventListener('click',async()=>{const b=$('profileVerifyOtpBtn');b.disabled=true;b.textContent='MEMERIKSA OTP…';try{
-    if(!/^\\d{6}$/.test(val('profileResetOtp')))throw new Error('Masukkan OTP 6 digit.');
+    if(!/^\d{6}$/.test(val('profileResetOtp')))throw new Error('Masukkan OTP 6 digit.');
     const r=await api('verifyResetOtp',{email:val('profileEmail'),otp:val('profileResetOtp')});
     profileResetOtpVerified=!!r.verified;
     if(!profileResetOtpVerified)throw new Error('OTP belum berhasil diverifikasi.');
@@ -559,7 +559,7 @@
   $('verifyResetOtpBtn').addEventListener('click',async e=>{
     const b=e.currentTarget;busy(b,true,'MEMERIKSA OTP');
     try{
-      if(!/^\\d{6}$/.test(val('resetOtp')))throw new Error('Masukkan OTP 6 digit.');
+      if(!/^\d{6}$/.test(val('resetOtp')))throw new Error('Masukkan OTP 6 digit.');
       const r=await api('verifyResetOtp',{email:pendingResetEmail,otp:val('resetOtp')});
       resetOtpVerified=!!r.verified;
       if(!resetOtpVerified)throw new Error('OTP belum berhasil diverifikasi.');
