@@ -332,7 +332,7 @@
     const dateText=new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',day:'2-digit',month:'2-digit',year:'numeric'}).format(stampDate);
     const timeText=new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(stampDate);
     const gpsText=`GPS ${Number(gps.latitude).toFixed(6)}, ${Number(gps.longitude).toFixed(6)}  |  Akurasi ±${Math.round(gps.accuracy)} m`;
-    const fontSize=Math.max(17,Math.round(canvas.width*0.018));
+    const fontSize=Math.max(20,Math.round(canvas.width*0.024));
     const smallSize=Math.max(15,Math.round(fontSize*0.78));
     const pad=Math.round(fontSize*0.85);
     const lineHeight=Math.round(fontSize*1.32);
@@ -360,7 +360,7 @@
       {text:store,size:fontSize,weight:800,color:'#ffffff',height:lineHeight},
       ...addressRows.map(text=>({text,size:smallSize,weight:600,color:'#e6edf7',height:smallLineHeight})),
       {text:`${dateText}  •  ${timeText} WITA`,size:smallSize,weight:700,color:'#ffffff',height:smallLineHeight},
-      {text:gpsText,size:smallSize,weight:600,color:'#ffffff',height:smallLineHeight}
+      ...wrapText(gpsText,`600 ${smallSize}px Arial, sans-serif`).map(text=>({text,size:smallSize,weight:600,color:'#ffffff',height:smallLineHeight}))
     ];
     const headingHeight=lineHeight;
     const gap=Math.round(fontSize*0.25);
