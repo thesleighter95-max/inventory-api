@@ -109,9 +109,13 @@
     </section>
 
     <section class="form" id="reset">
-      <div class="field"><label>Kode OTP</label><input id="resetOtp" inputmode="numeric" maxlength="6" placeholder="6 digit OTP"></div>
-      <div class="field"><label>Password baru</label><input id="newPassword" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter"></div>
-      <button class="btn" id="resetBtn">SIMPAN PASSWORD BARU</button>
+      <div class="field"><label>Kode OTP</label><input id="resetOtp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="Masukkan 6 digit OTP"></div>
+      <button class="btn" id="verifyResetOtpBtn">CEK OTP</button>
+      <div id="resetPasswordFields" class="hidden">
+        <div class="field"><label>Password baru</label><input id="newPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Minimal 8 karakter"></div>
+        <div class="field"><label>Konfirmasi password baru</label><input id="confirmNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Ulangi password baru"></div>
+        <button class="btn" id="resetBtn">SIMPAN PASSWORD BARU</button>
+      </div>
       <div class="linkrow"><button class="link" data-go="login">Kembali login</button></div>
     </section>
 
@@ -505,23 +509,52 @@
     finally{busy(b,false,'VERIFIKASI & AKTIFKAN AKUN');}
   });
 
+  let resetOtpVerified=false;
+  function clearResetVerification(){
+    resetOtpVerified=false;
+    $('resetPasswordFields').classList.add('hidden');
+    $('newPassword').value='';$('confirmNewPassword').value='';
+  }
+  $('resetOtp').addEventListener('input',clearResetVerification);
+
   $('sendResetOtpBtn').addEventListener('click',async e=>{
     const b=e.currentTarget; busy(b,true,'KIRIM OTP RESET');
     try {
       pendingResetEmail=val('forgotEmail');
+      if(!pendingResetEmail || !$('forgotEmail').checkValidity())throw new Error('Masukkan alamat email yang valid.');
       const r=await api('requestResetOtp',{email:pendingResetEmail});
+      $('resetOtp').value='';clearResetVerification();
       view('reset'); message(r.message||'Jika email terdaftar, OTP akan dikirim.','success');
     } catch(err){message(err.message,'error');}
     finally{busy(b,false,'KIRIM OTP RESET');}
   });
 
+  $('verifyResetOtpBtn').addEventListener('click',async e=>{
+    const b=e.currentTarget;busy(b,true,'MEMERIKSA OTP');
+    try{
+      if(!/^\\d{6}$/.test(val('resetOtp')))throw new Error('Masukkan OTP 6 digit.');
+      const r=await api('verifyResetOtp',{email:pendingResetEmail,otp:val('resetOtp')});
+      resetOtpVerified=!!r.verified;
+      if(!resetOtpVerified)throw new Error('OTP belum berhasil diverifikasi.');
+      $('resetPasswordFields').classList.remove('hidden');
+      $('newPassword').focus();
+      message(r.message||'OTP benar. Silakan buat password baru.','success');
+    }catch(err){clearResetVerification();message(err.message,'error');}
+    finally{busy(b,false,'CEK OTP');}
+  });
+
   $('resetBtn').addEventListener('click',async e=>{
-    const b=e.currentTarget; busy(b,true,'SIMPAN PASSWORD BARU');
-    try {
-      const r=await api('resetPassword',{email:pendingResetEmail,otp:val('resetOtp'),newPassword:$('newPassword').value});
-      view('login'); $('loginEmail').value=pendingResetEmail; $('loginPassword').value='';
+    const b=e.currentTarget;busy(b,true,'SIMPAN PASSWORD BARU');
+    try{
+      if(!resetOtpVerified)throw new Error('Periksa OTP terlebih dahulu.');
+      const password=$('newPassword').value,confirm=$('confirmNewPassword').value;
+      if(password.length<8)throw new Error('Password minimal 8 karakter.');
+      if(password!==confirm)throw new Error('Konfirmasi password tidak sama.');
+      const r=await api('resetPassword',{email:pendingResetEmail,otp:val('resetOtp'),newPassword:password});
+      $('resetOtp').value='';clearResetVerification();
+      view('login');$('loginEmail').value=pendingResetEmail;$('loginPassword').value='';
       message(r.message||'Password berhasil diperbarui.','success');
-    } catch(err){message(err.message,'error');}
+    }catch(err){message(err.message,'error');}
     finally{busy(b,false,'SIMPAN PASSWORD BARU');}
   });
 })();
