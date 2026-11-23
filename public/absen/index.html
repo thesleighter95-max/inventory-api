@@ -281,6 +281,41 @@ body:not(:has(#employeeDashboard.active)) #googleLoginButton,body:not(:has(#empl
  body:not(:has(#employeeDashboard.active)) *,body:not(:has(#employeeDashboard.active)) *:before,body:not(:has(#employeeDashboard.active)) *:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
 }
 
+
+/* DSH Login Experience V2 — stronger mobile composition */
+@media(max-width:760px){
+ body:not(:has(#employeeDashboard.active)){background:radial-gradient(ellipse at 85% 0%,#d7eaff 0,transparent 36%),linear-gradient(160deg,#edf3fb 0%,#f7f9fc 55%,#eaf0f8 100%)}
+ body:not(:has(#employeeDashboard.active)) .shell{max-width:560px;padding:18px 14px 28px;min-height:100svh}
+ body:not(:has(#employeeDashboard.active)) .panel{min-height:calc(100svh - 46px);padding:18px 15px 24px;border:1px solid #e1e9f4;border-radius:28px;background:rgba(255,255,255,.88);box-shadow:0 22px 65px #17385d18;backdrop-filter:blur(14px);align-items:flex-start}
+ body:not(:has(#employeeDashboard.active)) .panelinner{max-width:460px;width:100%;margin:0 auto}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand{isolation:isolate;overflow:hidden;min-height:142px;margin:0 0 28px;padding:24px 20px;border-radius:22px;background:radial-gradient(circle at 90% 12%,#3d8fce66 0,transparent 38%),linear-gradient(125deg,#071a32 0%,#10365f 58%,#1b568b 100%);box-shadow:0 14px 32px #0d2b4c24}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand:after{content:"";position:absolute;z-index:-1;width:190px;height:190px;right:-66px;bottom:-124px;border:1px solid #ffffff35;border-radius:50%;box-shadow:0 0 0 22px #ffffff0d,0 0 0 48px #ffffff08}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand .mark{width:54px;height:54px;flex:0 0 54px;border:1px solid #ffffff45;border-radius:17px;background:linear-gradient(145deg,#73d9ff,#2678e8);color:#08294b;box-shadow:0 8px 24px #0003}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand b{font-size:15px;letter-spacing:1.5px;color:#fff}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand small{font-size:9px;letter-spacing:1.7px;color:#b8d7f5}
+ body:not(:has(#employeeDashboard.active)) .heading{padding:0 5px}
+ body:not(:has(#employeeDashboard.active)) .heading h2{font-size:clamp(30px,8vw,37px);letter-spacing:-1.3px;color:#102846}
+ body:not(:has(#employeeDashboard.active)) .heading p{font-size:13px;color:#73839a;line-height:1.65;margin-bottom:22px}
+ body:not(:has(#employeeDashboard.active)) #status{margin-left:4px;margin-right:4px}
+ body:not(:has(#employeeDashboard.active)) .tabs{margin:0 2px 21px;padding:5px;border:1px solid #e5ecf5;border-radius:14px;background:#edf2f9}
+ body:not(:has(#employeeDashboard.active)) .tab{min-height:44px;font-size:12px}
+ body:not(:has(#employeeDashboard.active)) .form{padding:0 3px}
+ body:not(:has(#employeeDashboard.active)) #googleLoginButton{margin-bottom:12px!important}
+ body:not(:has(#employeeDashboard.active)) .form .hint{text-align:left!important;padding:0 4px;color:#8290a4}
+ body:not(:has(#employeeDashboard.active)) .field{margin:16px 0}
+ body:not(:has(#employeeDashboard.active)) .field label{font-size:12px;font-weight:800;color:#344b68}
+ body:not(:has(#employeeDashboard.active)) .field input{min-height:55px;border-radius:14px;background:#f9fbfe;border-color:#dfe7f1;font-size:15px}
+ body:not(:has(#employeeDashboard.active)) .btn{min-height:57px;border-radius:15px;font-size:14px;letter-spacing:.8px}
+ body:not(:has(#employeeDashboard.active)) .linkrow{padding:0 3px;margin-top:17px;font-size:12px}
+ body:not(:has(#employeeDashboard.active)) .link{font-size:12px}
+ body:not(:has(#employeeDashboard.active)) .panelinner>.foot{margin-top:27px!important;padding-top:17px;border-top:1px solid #e9eef5;font-size:10px!important;letter-spacing:.2px}
+}
+@media(min-width:761px){
+ body:not(:has(#employeeDashboard.active)) .mobilebrand{display:none!important}
+ body:not(:has(#employeeDashboard.active)) .heading h2{font-size:36px}
+ body:not(:has(#employeeDashboard.active)) .panelinner{max-width:430px}
+}
+
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -493,7 +528,7 @@ body:not(:has(#employeeDashboard.active)) #googleLoginButton,body:not(:has(#empl
       auto_select: false,
       cancel_on_tap_outside: true
     });
-    const opts = {theme:'outline',size:'large',shape:'rectangular',text:'continue_with',width:320,logo_alignment:'left'};
+    const opts = {theme:'outline',size:'large',shape:'rectangular',text:'signin_with',width:320,logo_alignment:'left'};
     if ($('googleLoginButton')) google.accounts.id.renderButton($('googleLoginButton'), opts);
     if ($('googleRegisterButton')) google.accounts.id.renderButton($('googleRegisterButton'), opts);
     return true;
