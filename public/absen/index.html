@@ -311,31 +311,83 @@
   }
   async function compressImage(file, attendanceType, gps, stampDate = new Date()) {
     if(!file || !file.type.startsWith('image/')) throw new Error('Pilih file foto yang valid.');
-    const image = await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('Foto tidak bisa dibaca.'));img.src=URL.createObjectURL(file);});
-    const scale=Math.min(1,1600/Math.max(image.width,image.height));
-    const canvas=document.createElement('canvas');canvas.width=Math.round(image.width*scale);canvas.height=Math.round(image.height*scale);
+    const imageUrl=URL.createObjectURL(file);
+    const image=await new Promise((resolve,reject)=>{
+      const img=new Image();
+      img.onload=()=>{URL.revokeObjectURL(imageUrl);resolve(img);};
+      img.onerror=()=>{URL.revokeObjectURL(imageUrl);reject(new Error('Foto tidak bisa dibaca.'));};
+      img.src=imageUrl;
+    });
+    // Resolusi dipertahankan sampai 1920 px agar foto dan watermark lebih tajam.
+    const scale=Math.min(1,1920/Math.max(image.width,image.height));
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.round(image.width*scale);
+    canvas.height=Math.round(image.height*scale);
     const ctx=canvas.getContext('2d');
+    ctx.imageSmoothingEnabled=true;
+    ctx.imageSmoothingQuality='high';
     ctx.drawImage(image,0,0,canvas.width,canvas.height);
 
-    // Watermark dibakar ke dalam file foto: waktu WITA, jenis absensi, dan GPS.
-    const now=new Date();
-    const dateText=new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',day:'2-digit',month:'2-digit',year:'numeric'}).format(now);
-    const timeText=new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(now);
-    const gpsText=`GPS ${Number(gps.latitude).toFixed(6)}, ${Number(gps.longitude).toFixed(6)} | Akurasi ±${Math.round(gps.accuracy)} m`;
-    const lines=[`DSH ATTENDANCE • ${attendanceType}`,`${dateText} ${timeText} WITA`,gpsText];
-    const fontSize=Math.max(16,Math.round(canvas.width*0.022));
-    const lineHeight=Math.round(fontSize*1.35);
-    const pad=Math.round(fontSize*0.75);
-    const bandHeight=pad*2+lineHeight*lines.length;
+    // Watermark permanen: identitas toko, alamat, jenis absensi, waktu WITA, dan GPS.
+    const dateText=new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',day:'2-digit',month:'2-digit',year:'numeric'}).format(stampDate);
+    const timeText=new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(stampDate);
+    const gpsText=`GPS ${Number(gps.latitude).toFixed(6)}, ${Number(gps.longitude).toFixed(6)}  |  Akurasi ±${Math.round(gps.accuracy)} m`;
+    const fontSize=Math.max(17,Math.round(canvas.width*0.018));
+    const smallSize=Math.max(15,Math.round(fontSize*0.78));
+    const pad=Math.round(fontSize*0.85);
+    const lineHeight=Math.round(fontSize*1.32);
+    const smallLineHeight=Math.round(smallSize*1.35);
+    const maxTextWidth=canvas.width-pad*2;
+    const wrapText=(value,font)=>{
+      ctx.font=font;
+      const words=String(value).split(' ');
+      const rows=[];let row='';
+      for(const word of words){
+        const candidate=row?row+' '+word:word;
+        if(row&&ctx.measureText(candidate).width>maxTextWidth){rows.push(row);row=word;}
+        else row=candidate;
+      }
+      if(row)rows.push(row);
+      return rows;
+    };
+    const heading=`DSH ATTENDANCE  •  ${attendanceType}`;
+    const store='LOTTE MART WHOLESALE MATARAM';
+    const addressRows=[
+      ...wrapText('Jl. Abian Tubuh Baru, Kec. Sandubaya',`600 ${smallSize}px Arial, sans-serif`),
+      ...wrapText('Kota Mataram, Nusa Tenggara Barat 83232',`600 ${smallSize}px Arial, sans-serif`)
+    ];
+    const rows=[
+      {text:store,size:fontSize,weight:800,color:'#ffffff',height:lineHeight},
+      ...addressRows.map(text=>({text,size:smallSize,weight:600,color:'#e6edf7',height:smallLineHeight})),
+      {text:`${dateText}  •  ${timeText} WITA`,size:smallSize,weight:700,color:'#ffffff',height:smallLineHeight},
+      {text:gpsText,size:smallSize,weight:600,color:'#ffffff',height:smallLineHeight}
+    ];
+    const headingHeight=lineHeight;
+    const gap=Math.round(fontSize*0.25);
+    const bandHeight=pad*2+headingHeight+gap+rows.reduce((sum,row)=>sum+row.height,0)+gap;
+    const top=canvas.height-bandHeight;
     ctx.save();
-    ctx.fillStyle='rgba(0,0,0,0.68)';
-    ctx.fillRect(0,canvas.height-bandHeight,canvas.width,bandHeight);
-    ctx.font=`600 ${fontSize}px Arial, sans-serif`;
+    const gradient=ctx.createLinearGradient(0,top,0,canvas.height);
+    gradient.addColorStop(0,'rgba(5,16,32,0.82)');
+    gradient.addColorStop(1,'rgba(3,10,22,0.94)');
+    ctx.fillStyle=gradient;
+    ctx.fillRect(0,top,canvas.width,bandHeight);
+    ctx.fillStyle='#e3b34c';
+    ctx.fillRect(0,top,Math.max(5,Math.round(canvas.width*0.006)),bandHeight);
+    let y=top+pad;
     ctx.textBaseline='top';
-    ctx.fillStyle='#ffffff';
-    lines.forEach((line,i)=>ctx.fillText(line,pad,canvas.height-bandHeight+pad+i*lineHeight,canvas.width-pad*2));
+    ctx.font=`800 ${fontSize}px Arial, sans-serif`;
+    ctx.fillStyle='#f3c969';
+    ctx.fillText(heading,pad,y,maxTextWidth);
+    y+=headingHeight+gap;
+    for(const row of rows){
+      ctx.font=`${row.weight} ${row.size}px Arial, sans-serif`;
+      ctx.fillStyle=row.color;
+      ctx.fillText(row.text,pad,y,maxTextWidth);
+      y+=row.height;
+    }
     ctx.restore();
-    return canvas.toDataURL('image/jpeg',0.82);
+    return canvas.toDataURL('image/jpeg',0.88);
   }
   function previewFile(inputId,previewId) {
     $(inputId).addEventListener('change',()=>{
