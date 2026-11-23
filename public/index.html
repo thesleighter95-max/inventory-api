@@ -5700,8 +5700,32 @@ function whRenderAddress(){
 
 function whSelectArticle(key){whState.pendingItem=null;whState.selectedKey=key;var item=whSelectedItem();if(!item)return;document.getElementById("whSelectedInfo").textContent=item.productCode+" — "+item.productName+" | "+item.sector+" | Stok saat ini: "+whFmt(item.stockQty);var qtyInput=document.getElementById("whQty");qtyInput.value="";whRenderAddress();document.getElementById("whFormMessage").textContent="Artikel dipilih. Silakan langsung masukkan jumlah barang.";setTimeout(function(){qtyInput.focus();},80);}
 function whAllAddressCodes(){var codes=(whState.addresses||[]).map(function(x){return String(x.code||"").trim();});(whState.master||[]).forEach(function(x){var c=String(x.sector||"").trim();if(c)codes.push(c);});return Array.from(new Set(codes)).filter(Boolean);}
-function whAddressTyping(){var input=document.getElementById("whSectorSearch"),v=String(input.value||"").replace(/\D/g,"").slice(0,6);if(input.value!==v)input.value=v;var matches=whAllAddressCodes().filter(function(x){return x.indexOf(v)===0;});var dl=document.getElementById("whSectorOptions");if(dl)dl.innerHTML=matches.slice(0,80).map(function(x){return '<option value="'+whEsc(x)+'"></option>';}).join("");if(v.length===6&&matches.indexOf(v)>=0){document.getElementById("whSectorSelect").value=v;whRenderAddress();}else{document.getElementById("whSectorSelect").value="";whState.selectedKey=null;whRenderAddress();}}
-function whAddressCommit(){var input=document.getElementById("whSectorSearch"),v=String(input.value||"").trim(),all=whAllAddressCodes();if(all.indexOf(v)>=0){document.getElementById("whSectorSelect").value=v;whRenderAddress();return;}if(v){var summary=document.getElementById("whAddressSummary");if(summary)summary.textContent="Alamat "+v+" belum terdaftar. Tambahkan melalui menu Master Alamat terlebih dahulu.";}}
+function whResetAddressContext(){
+ whState.selectedKey=null;whState.pendingItem=null;whState.editKey=null;whState.deleteKey=null;
+ var filter=document.getElementById("whSearch"),qty=document.getElementById("whQty"),note=document.getElementById("whNote");
+ var info=document.getElementById("whSelectedInfo"),status=document.getElementById("whFormMessage");
+ if(filter)filter.value="";if(qty)qty.value="";if(note)note.value="";
+ if(info)info.textContent="Belum ada barang dipilih. Pilih artikel dari tabel di atas.";
+ if(status)status.textContent="Pilih alamat dan artikel untuk mencatat perubahan stok.";
+}
+function whAddressTyping(){
+ var input=document.getElementById("whSectorSearch"),select=document.getElementById("whSectorSelect"),previous=select.value;
+ var v=String(input.value||"").replace(/\D/g,"").slice(0,6);if(input.value!==v)input.value=v;
+ var matches=whAllAddressCodes().filter(function(x){return x.indexOf(v)===0;});
+ var dl=document.getElementById("whSectorOptions");if(dl)dl.innerHTML=matches.slice(0,80).map(function(x){return '<option value="'+whEsc(x)+'"></option>';}).join("");
+ var next=(v.length===6&&matches.indexOf(v)>=0)?v:"";
+ if(previous!==next)whResetAddressContext();
+ select.value=next;
+ whRenderAddress();
+}
+function whAddressCommit(){
+ var input=document.getElementById("whSectorSearch"),select=document.getElementById("whSectorSelect");
+ var v=String(input.value||"").replace(/\D/g,"").trim().slice(0,6),all=whAllAddressCodes();
+ if(input.value!==v)input.value=v;
+ if(all.indexOf(v)>=0){if(select.value!==v)whResetAddressContext();select.value=v;whRenderAddress();return;}
+ whResetAddressContext();select.value="";whRenderAddress();
+ if(v){var summary=document.getElementById("whAddressSummary");if(summary)summary.textContent="Alamat "+v+" belum terdaftar. Tambahkan melalui menu Master Alamat terlebih dahulu.";}
+}
 function whPopulateSectors(){var el=document.getElementById("whSectorSelect"),input=document.getElementById("whSectorSearch"),current=el.value||input.value,sectors=whAllAddressCodes().sort(function(a,b){return a.localeCompare(b);}),names={};(whState.addresses||[]).forEach(function(x){names[String(x.code)]=String(x.name||"");});el.innerHTML='<option value="">Pilih alamat terlebih dahulu...</option>'+sectors.map(function(x){var label=x+(names[x]?" — "+names[x]:"");return '<option value="'+whEsc(x)+'">'+whEsc(label)+'</option>';}).join("");var dl=document.getElementById("whSectorOptions");if(dl)dl.innerHTML=sectors.map(function(x){return '<option value="'+whEsc(x)+'"></option>';}).join("");if(sectors.includes(current)){el.value=current;input.value=current;}else{el.value="";}whRenderAddress();}
 function whRenderTransactions(){var body=document.getElementById("whTxBody");body.innerHTML=(whState.transactions||[]).slice(0,100).map(function(x){var labels={IN:"BARANG MASUK",OUT:"BARANG KELUAR",ADJ_PLUS:"KOREKSI +",ADJ_MINUS:"KOREKSI −",STOCKTAKE:"UPDATE QTY",MANUAL_ADD:"TAMBAH MANUAL"};return '<tr><td>'+whEsc(new Date(x.createdAt).toLocaleString("id-ID"))+'</td><td>'+whEsc(x.id)+'</td><td>'+whEsc(labels[x.type]||x.type)+'</td><td>'+whEsc(x.productCode+" — "+x.productName)+'</td><td>'+whEsc(x.sector)+'</td><td>'+whFmt(x.qty)+'</td><td>'+whFmt(x.before)+' → '+whFmt(x.after)+'</td><td>'+whEsc(x.note)+'</td></tr>';}).join("")||'<tr><td colspan="8">Belum ada perubahan.</td></tr>';}
 function whUpdateKpis(){var total=whState.master.reduce(function(a,x){return a+Number(x.stockQty||0);},0),sectors=new Set(whAllAddressCodes());var skuCount=new Set(whState.master.map(function(x){return String(x.productCode||"");}));var set=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};set("whSkuCount",skuCount.size.toLocaleString("id-ID"));set("whStockTotal",whFmt(total));set("whSectorCount",sectors.size.toLocaleString("id-ID"));set("whTxCount",(whState.transactions||[]).length.toLocaleString("id-ID"));}
