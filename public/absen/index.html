@@ -54,6 +54,84 @@
 .profile-modal{position:fixed;inset:0;z-index:1000;background:rgba(5,18,38,.62);display:flex;align-items:center;justify-content:center;padding:16px}.profile-modal.hidden{display:none}.profile-modal-panel{background:#fff;width:min(100%,620px);max-height:90vh;overflow:auto;border-radius:20px;padding:20px;box-shadow:0 24px 80px #0003}.profile-modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}.profile-modal-head h3{margin:0 0 4px;color:var(--navy)}.profile-close{border:0;background:#edf2f8;border-radius:10px;width:36px;height:36px;font-size:18px;color:var(--navy)}.profile-photo-section{display:flex;align-items:center;gap:14px;padding:14px;background:#f5f8fc;border:1px solid var(--line);border-radius:14px}.profile-photo-controls{flex:1;min-width:0}.profile-photo-controls .dash-input{background:#fff}.profile-divider{height:1px;background:var(--line);margin:18px 0}.profile-password{border-top:1px solid var(--line);margin-top:18px;padding-top:14px}.profile-password summary{cursor:pointer;font-weight:800;color:var(--navy)}@media(max-width:480px){.profile-modal{padding:8px;align-items:flex-end}.profile-modal-panel{max-height:92vh;border-radius:18px 18px 10px 10px;padding:16px}.profile-photo-section{align-items:flex-start}.profile-photo-section .profile-avatar{flex:0 0 56px;width:56px;height:56px}.profile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .history-photo-button{display:block;padding:0;border:0;background:transparent;cursor:zoom-in;margin-top:8px}.history-photo-button .history-photo{margin:0}.photo-lightbox{position:fixed;inset:0;z-index:1200;background:rgba(4,13,27,.88);display:flex;align-items:center;justify-content:center;padding:16px}.photo-lightbox.hidden{display:none}.photo-lightbox img{max-width:min(100%,900px);max-height:85vh;object-fit:contain;border-radius:12px}.photo-lightbox-close{position:absolute;top:16px;right:16px;border:0;border-radius:50%;width:42px;height:42px;background:#fff;color:#14243a;font-size:22px;font-weight:800}
+
+/* DSH Workforce Premium dashboard refresh — visual only */
+:root{--bg:#f4f7fc;--line:#e6ecf4;--navy:#10294a;--blue:#246fe5;--muted:#728198}
+body:has(#employeeDashboard.active){background:#f3f6fb}
+.shell:has(#employeeDashboard.active){display:block;max-width:none;width:100%;min-height:100vh;padding:0;background:#f3f6fb}
+.shell:has(#employeeDashboard.active)>.brand,.shell:has(#employeeDashboard.active)>.panel{display:none!important}
+#employeeDashboard.dashboard.active{display:block;width:min(100%,1080px)!important;max-width:1080px;margin:0 auto!important;padding:clamp(14px,3vw,30px) clamp(12px,3vw,28px) 44px}
+#employeeDashboard .dash-top{position:relative;isolation:isolate;overflow:hidden;border:1px solid #244c7b;border-radius:24px;padding:clamp(20px,4vw,32px);margin-bottom:18px;background:radial-gradient(circle at 88% 8%,#3984d755 0,transparent 32%),linear-gradient(125deg,#081b35 0%,#10345d 58%,#1c548a 100%);box-shadow:0 18px 42px #10294a20}
+#employeeDashboard .dash-top:after{content:"";position:absolute;z-index:-1;width:260px;height:260px;right:-95px;bottom:-170px;border:1px solid #ffffff26;border-radius:50%;box-shadow:0 0 0 28px #ffffff08,0 0 0 58px #ffffff06}
+#employeeDashboard .eyebrow{font-size:10px;letter-spacing:3px;color:#8ddcff}
+#employeeDashboard .dash-top h2{font-size:clamp(24px,4vw,32px);letter-spacing:-.6px;margin:8px 0 5px}
+#employeeDashboard .dash-top p{font-size:13px;color:#c5dcf4}
+#employeeDashboard .dash-user{margin-top:22px;padding-top:17px;border-top:1px solid #ffffff22}
+#employeeDashboard #dashName{font-size:18px}
+#employeeDashboard #dashMeta{font-size:11px;margin-top:4px;max-width:100%;overflow-wrap:anywhere}
+#employeeDashboard .dash-chip{padding:9px 13px;border-radius:13px;background:#ffffff16;border-color:#ffffff28;color:#e7f4ff;font-weight:650}
+#employeeDashboard .dash-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#employeeDashboard .dash-card{min-width:0;padding:19px;border:1px solid #e4eaf3;border-radius:19px;background:#fff;box-shadow:0 7px 24px #18365a08}
+#employeeDashboard .dash-card h3{font-size:15px;letter-spacing:-.15px;margin-bottom:12px}
+#employeeDashboard #profileCard{padding:17px 19px}
+#employeeDashboard #profileCard>div{min-height:68px}
+#employeeDashboard .profile-avatar{width:58px;height:58px;border:3px solid #edf3fb;box-shadow:0 2px 8px #17385c12}
+#employeeDashboard #openProfileBtn{width:auto;padding:11px 15px;border-radius:12px;font-size:11px;letter-spacing:.25px}
+#employeeDashboard .dash-stat{font-size:25px;letter-spacing:-.5px;margin:7px 0 3px}
+#employeeDashboard .dash-muted{font-size:12px;line-height:1.55}
+#employeeDashboard .dash-card:has(#locateBtn){background:linear-gradient(180deg,#fff,#fbfdff);border-color:#dce7f6}
+#employeeDashboard #locateBtn{margin:15px 0 8px;min-height:46px;background:#edf4ff;color:#1e5cae;border:1px solid #dce9fb}
+#employeeDashboard #gpsInfo{padding:9px 11px;border-radius:10px;background:#f5f8fc;margin-bottom:12px}
+#employeeDashboard .field{margin:12px 0}
+#employeeDashboard .dash-input{padding:12px 13px;border-radius:11px;background:#fff;border-color:#dce5f0}
+#employeeDashboard input[type=file].dash-input{font-size:12px}
+#employeeDashboard .photo-preview{max-height:260px;object-fit:contain;background:#0c1c31;border-radius:14px}
+#employeeDashboard .dash-actions{gap:10px;margin-top:14px}
+#employeeDashboard .dash-actions .dash-btn{min-height:48px;margin:0;border-radius:12px;letter-spacing:.35px}
+#employeeDashboard #checkinBtn{background:linear-gradient(110deg,#1267d7,#2788f2);box-shadow:0 7px 16px #2675e82b}
+#employeeDashboard #checkoutBtn{background:linear-gradient(110deg,#102b4d,#24517d);box-shadow:0 7px 16px #10294a20}
+#employeeDashboard #attendanceMessage{margin-top:10px}
+#employeeDashboard #historyList{margin-top:8px}
+#employeeDashboard .history-row{position:relative;align-items:flex-start!important;gap:14px;padding:15px 0;border-bottom:1px solid #edf1f6;font-size:13px}
+#employeeDashboard .history-row b{display:inline-block;color:#18395f;font-size:13px;margin:0 0 3px}
+#employeeDashboard .history-row>div:last-child{color:#18395f;font-weight:750;font-size:14px}
+#employeeDashboard .history-photo{width:92px;height:92px;border-radius:13px;border:1px solid #e2e8f0;box-shadow:0 3px 10px #15243a10}
+#employeeDashboard .history-actions{gap:7px;margin-top:9px}
+#employeeDashboard .history-actions button{padding:8px 11px;border-radius:9px}
+#employeeDashboard #refreshHistoryBtn{font-size:12px;padding:7px 10px;border-radius:9px;background:#eff5ff}
+#employeeDashboard #logoutBtn{background:#fff1f1;color:#b42336;border:1px solid #f5d8dc;box-shadow:none}
+#employeeDashboard .profile-modal-panel{border:1px solid #e5ebf3;box-shadow:0 24px 80px #071a3540}
+#employeeDashboard .profile-modal-head h3{font-size:20px}
+@media(max-width:640px){
+ #employeeDashboard.dashboard.active{padding:12px 12px 30px}
+ #employeeDashboard .dash-top{border-radius:19px;padding:20px 18px;margin-bottom:13px}
+ #employeeDashboard .dash-user{align-items:flex-start;flex-direction:column;gap:12px;margin-top:17px}
+ #employeeDashboard .dash-chip{align-self:flex-start}
+ #employeeDashboard .dash-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ #employeeDashboard .dash-card{padding:14px;border-radius:16px}
+ #employeeDashboard #profileCard,#employeeDashboard .dash-card:has(#locateBtn),#employeeDashboard .dash-card:has(#historyList),#employeeDashboard .dash-card:has(#logoutBtn){grid-column:1/-1}
+ #employeeDashboard #profileCard{padding:13px}
+ #employeeDashboard #profileCard>div{gap:8px!important}
+ #employeeDashboard #profileCard>div>div{gap:9px!important}
+ #employeeDashboard #profileCard .dash-muted{font-size:11px}
+ #employeeDashboard #openProfileBtn{padding:10px 11px;font-size:10px}
+ #employeeDashboard .profile-avatar{width:50px;height:50px}
+ #employeeDashboard .dash-stat{font-size:21px}
+ #employeeDashboard .dash-card h3{font-size:14px}
+ #employeeDashboard .dash-card:has(#locateBtn){padding:16px}
+ #employeeDashboard .dash-actions .dash-btn{font-size:12px;padding:12px 8px}
+ #employeeDashboard .history-row{gap:8px;padding:13px 0}
+ #employeeDashboard .history-photo{width:82px;height:82px}
+ #employeeDashboard .history-row>div:last-child{font-size:12px}
+ #employeeDashboard .history-row>div:last-child .dash-muted{font-size:10px}
+}
+@media(max-width:360px){
+ #employeeDashboard .dash-grid{gap:8px}
+ #employeeDashboard .dash-card{padding:11px}
+ #employeeDashboard .dash-stat{font-size:19px}
+ #employeeDashboard #profileCard>div{align-items:flex-start!important;flex-wrap:wrap}
+}
+
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
