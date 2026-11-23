@@ -2504,17 +2504,42 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
       </div>
       <div id="whReportCard" class="wh-card" style="display:none;margin-bottom:13px">
         <div class="wh-section-title">Master Alamat</div>
-        <div class="wh-muted" style="margin:5px 0 12px">Daftar alamat tersimpan di MASTER_ALAMAT DS Warehouse. Alamat baru tidak mengubah stok awal AST.</div>
-        <div class="wh-action-card" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:9px;margin-bottom:13px">
+        <div class="wh-muted" style="margin:5px 0 12px">Kelola alamat gudang. Penambahan alamat hanya tersimpan di MASTER_ALAMAT DS Warehouse dan tidak mengubah stok awal AST.</div>
+        <div class="wh-action-card" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:9px;margin-bottom:12px">
           <div><label for="whNewAddressCode">KODE ALAMAT</label><input id="whNewAddressCode" inputmode="numeric" maxlength="6" placeholder="Contoh: 402202" autocomplete="off"></div>
           <div><label for="whNewAddressName">NAMA ALAMAT</label><input id="whNewAddressName" maxlength="100" placeholder="Contoh: AREA DISPLAY" autocomplete="off"></div>
           <div style="display:flex;align-items:end"><button type="button" class="wh-btn primary" id="whAddAddressBtn" onclick="whAddAddress()" style="width:100%">＋ Tambah Alamat</button></div>
         </div>
-        <div id="whAddressMessage" class="wh-muted" style="margin:0 0 10px" role="status"></div>
-        <div class="wh-table-wrap"><table><thead><tr><th>KODE ALAMAT</th><th>NAMA ALAMAT</th><th>JUMLAH ARTIKEL</th><th>TOTAL QTY</th></tr></thead><tbody id="whReportBody"><tr><td colspan="4">Memuat daftar alamat...</td></tr></tbody></table></div>
+        <div id="whAddressMessage" class="wh-muted" style="margin:0 0 9px" role="status"></div>
+        <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:9px">
+          <input id="whAddressSearch" type="search" placeholder="Cari kode atau nama alamat..." oninput="whRenderAddressList()" style="max-width:360px;width:100%">
+          <span id="whAddressCount" class="wh-muted"></span>
+        </div>
+        <div id="whAddressList" class="wh-address-grid"><div class="wh-muted">Memuat daftar alamat...</div></div>
+        <div style="display:flex;justify-content:center;margin-top:10px"><button type="button" class="wh-btn" id="whAddressMoreBtn" onclick="whShowMoreAddresses()" style="display:none">Tampilkan alamat lainnya</button></div>
+      </div>
+      <div id="whStockReportCard" class="wh-card" style="display:none;margin-bottom:13px">
+        <div class="wh-section-title">Laporan Stok</div>
+        <div class="wh-muted" style="margin:5px 0 12px">Ringkasan stok per alamat berdasarkan data DS Warehouse saat ini.</div>
+        <div class="wh-report-kpis">
+          <div><strong id="whReportAddressTotal">0</strong><span>Alamat</span></div>
+          <div><strong id="whReportArticleTotal">0</strong><span>Artikel-alamat</span></div>
+          <div><strong id="whReportQtyTotal">0</strong><span>Total qty</span></div>
+        </div>
+        <input id="whStockReportSearch" type="search" placeholder="Cari alamat..." oninput="whRenderStockReport()" style="max-width:360px;width:100%;margin:12px 0">
+        <div class="wh-table-wrap"><table><thead><tr><th>KODE ALAMAT</th><th>NAMA ALAMAT</th><th>JUMLAH ARTIKEL</th><th>TOTAL QTY</th></tr></thead><tbody id="whStockReportBody"><tr><td colspan="4">Memuat laporan stok...</td></tr></tbody></table></div>
       </div>
       <style>
         #warehouseAdminPanel .wh-out-mode thead th:last-child,#warehouseAdminPanel .wh-out-mode tbody td:last-child{display:none!important}#warehouseAdminPanel .wh-inv-search{display:flex;gap:8px;align-items:center}#warehouseAdminPanel .wh-inv-search input{flex:1;min-width:0}#warehouseAdminPanel .wh-inventory-results{display:grid;gap:5px;max-height:260px;overflow:auto;margin-top:7px}#warehouseAdminPanel .wh-inventory-result{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:10px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;color:#334155;cursor:pointer}#warehouseAdminPanel .wh-inventory-result strong{font-size:11px}#warehouseAdminPanel .wh-inventory-result span{font-size:10px;color:#64748b}@media(max-width:520px){#warehouseAdminPanel .wh-inv-search{align-items:stretch;flex-direction:column}}
+        #warehouseAdminPanel .wh-address-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:330px;overflow:auto;padding:2px}
+        #warehouseAdminPanel .wh-address-chip{display:flex;align-items:center;gap:10px;min-width:0;padding:9px 11px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}
+        #warehouseAdminPanel .wh-address-code{flex:0 0 auto;font-size:10px;font-weight:900;color:#3730a3;background:#eef2ff;border-radius:7px;padding:5px 7px}
+        #warehouseAdminPanel .wh-address-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:700;color:#334155}
+        #warehouseAdminPanel .wh-report-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+        #warehouseAdminPanel .wh-report-kpis>div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:11px;padding:12px}
+        #warehouseAdminPanel .wh-report-kpis strong{display:block;font-size:18px;font-weight:900;color:#1e293b}
+        #warehouseAdminPanel .wh-report-kpis span{font-size:9px;color:#64748b;font-weight:800;text-transform:uppercase}
+        @media(max-width:520px){#warehouseAdminPanel .wh-address-grid{grid-template-columns:1fr 1fr}#warehouseAdminPanel .wh-report-kpis{gap:5px}#warehouseAdminPanel .wh-report-kpis>div{padding:9px}#warehouseAdminPanel .wh-report-kpis strong{font-size:15px}}
         #warehouseAdminPanel .wh-subnav{display:flex;gap:7px;overflow-x:auto;padding:5px 2px 13px;margin:0 0 12px;scrollbar-width:thin}
         #warehouseAdminPanel .wh-subnav-btn{flex:0 0 auto;border:1px solid #dce4ef;background:#fff;color:#64748b;border-radius:10px;padding:10px 13px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer}
         #warehouseAdminPanel .wh-subnav-btn.active{background:#172554;border-color:#172554;color:#fff;box-shadow:0 4px 12px rgba(23,37,84,.16)}
@@ -5645,6 +5670,7 @@ function showWarehousePdaLeavePrompt(tab){
 }
 
 var whState={master:[],addresses:[],transactions:[],logs:[],archived:[],selectedKey:null,editKey:null,deleteKey:null,pendingItem:null,currentPage:"dashboard"};
+var whAddressLimit=18;
 function whEsc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function whFmt(v){return Number(v||0).toLocaleString("id-ID",{maximumFractionDigits:3});}
 function whSelectedSector(){return document.getElementById("whSectorSelect").value;}
@@ -5681,13 +5707,15 @@ function whRenderTransactions(){var body=document.getElementById("whTxBody");bod
 function whUpdateKpis(){var total=whState.master.reduce(function(a,x){return a+Number(x.stockQty||0);},0),sectors=new Set(whAllAddressCodes());var skuCount=new Set(whState.master.map(function(x){return String(x.productCode||"");}));var set=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};set("whSkuCount",skuCount.size.toLocaleString("id-ID"));set("whStockTotal",whFmt(total));set("whSectorCount",sectors.size.toLocaleString("id-ID"));set("whTxCount",(whState.transactions||[]).length.toLocaleString("id-ID"));}
 
 function whShowPage(page){
- var ids=["whDashboardStats","whDashboardWelcome","whDashboardSummary","whAddressCard","whItemsCard","whTransactionCard","whManualCard","whHistoryCard","whReportCard"];
+ var ids=["whDashboardStats","whDashboardWelcome","whDashboardSummary","whAddressCard","whItemsCard","whTransactionCard","whManualCard","whHistoryCard","whReportCard","whStockReportCard"];
  whState.currentPage=page;
  whState.selectedKey=null;whState.pendingItem=null;
  // Bersihkan state pencarian dan form sementara setiap kali submenu diganti.
  if(whInventorySearchTimer){clearTimeout(whInventorySearchTimer);whInventorySearchTimer=null;}
  whInventorySearchSeq++;
  var inventoryInput=document.getElementById("whInventorySearch"),inventoryResults=document.getElementById("whInventoryResults"),addressFilter=document.getElementById("whSearch");
+ var sectorSearch=document.getElementById("whSectorSearch"),sectorSelect=document.getElementById("whSectorSelect");
+ if(sectorSearch)sectorSearch.value="";if(sectorSelect)sectorSelect.value="";
  if(inventoryInput)inventoryInput.value="";
  if(inventoryResults){inventoryResults.innerHTML="";inventoryResults._matches=[];}
  if(addressFilter)addressFilter.value="";
@@ -5708,8 +5736,8 @@ function whShowPage(page){
   in:["whAddressCard","whItemsCard","whTransactionCard"],
   out:["whAddressCard","whItemsCard","whTransactionCard"],
   master:["whAddressCard","whItemsCard","whManualCard"],
-  addresses:["whAddressCard","whReportCard"],
-  reports:["whReportCard"],
+  addresses:["whReportCard"],
+  reports:["whStockReportCard"],
   history:["whHistoryCard"]
  };
  ids.forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=(visible[page]||visible.dashboard).indexOf(id)>=0?"":"none";});
@@ -5723,8 +5751,8 @@ function whShowPage(page){
  if(type&&(page==="in"||page==="out")){type.value=page==="in"?"IN":"OUT";type.disabled=true;}
  else if(type){type.disabled=false;}
  if(page==="dashboard")whRenderDashboard();
- if(page==="addresses")whRenderAddressList();
- if(page==="reports")whRenderStockReport();
+ if(page==="addresses"){whAddressLimit=18;var addressSearch=document.getElementById("whAddressSearch");if(addressSearch)addressSearch.value="";whRenderAddressList();}
+ if(page==="reports"){var reportSearch=document.getElementById("whStockReportSearch");if(reportSearch)reportSearch.value="";whRenderStockReport();}
 }
 function whRenderDashboard(){
  var master=whState.master||[],tx=whState.transactions||[],sectors=new Set(whAllAddressCodes());
@@ -5733,15 +5761,22 @@ function whRenderDashboard(){
  var activity=document.getElementById("whDashboardActivity");
  if(activity){var recent=tx.slice(0,5);activity.innerHTML=recent.length?recent.map(function(x){return '<div style="padding:6px 0;border-bottom:1px solid #edf1f6"><strong style="color:#334155">'+whEsc(x.type||"AKTIVITAS")+'</strong> · '+whEsc(x.productCode||"")+'<br><span style="color:#94a3b8">'+whEsc(x.sector||"")+' · '+whEsc(new Date(x.createdAt).toLocaleString("id-ID"))+'</span></div>';}).join(""):"Belum ada aktivitas transaksi.";}
 }
-function whRenderAddressList(){
- var body=document.getElementById("whReportBody");if(!body)return;
- var stats={};(whState.master||[]).forEach(function(x){var c=String(x.sector||"");if(!stats[c])stats[c]={count:0,qty:0};stats[c].count++;stats[c].qty+=Number(x.stockQty||0);});
- var addresses=(whState.addresses||[]).slice();var seen={};addresses.forEach(function(a){seen[String(a.code)]=true;});
- Object.keys(stats).forEach(function(code){if(!seen[code])addresses.push({code:code,name:""});});
- addresses.sort(function(a,b){return String(a.code).localeCompare(String(b.code));});
- var rows=addresses.map(function(a){var code=String(a.code||""),st=stats[code]||{count:0,qty:0};return '<tr><td><strong>'+whEsc(code)+'</strong></td><td>'+whEsc(a.name||"—")+'</td><td>'+st.count.toLocaleString("id-ID")+'</td><td>'+whFmt(st.qty)+'</td></tr>';});
- body.innerHTML=rows.join("")||'<tr><td colspan="4">Belum ada alamat di database.</td></tr>';
+function whGetAddressRows(){
+ var rows=(whState.addresses||[]).map(function(a){return {code:String(a.code||""),name:String(a.name||"")};});
+ var seen={};rows.forEach(function(a){seen[a.code]=true;});
+ (whState.master||[]).forEach(function(x){var code=String(x.sector||"");if(code&&!seen[code]){rows.push({code:code,name:""});seen[code]=true;}});
+ return rows.filter(function(a){return a.code;}).sort(function(a,b){return a.code.localeCompare(b.code);});
 }
+function whRenderAddressList(){
+ var box=document.getElementById("whAddressList");if(!box)return;
+ var q=String(document.getElementById("whAddressSearch")&&document.getElementById("whAddressSearch").value||"").toLowerCase().trim();
+ var all=whGetAddressRows(),filtered=all.filter(function(a){return (a.code+" "+a.name).toLowerCase().includes(q);});
+ var shown=filtered.slice(0,whAddressLimit);
+ box.innerHTML=shown.map(function(a){return '<div class="wh-address-chip"><span class="wh-address-code">'+whEsc(a.code)+'</span><span class="wh-address-name" title="'+whEsc(a.name||"Nama alamat belum diisi")+'">'+whEsc(a.name||"Nama belum diisi")+'</span></div>';}).join("")||'<div class="wh-muted" style="padding:12px">Alamat tidak ditemukan.</div>';
+ var count=document.getElementById("whAddressCount");if(count)count.textContent=filtered.length.toLocaleString("id-ID")+" alamat";
+ var more=document.getElementById("whAddressMoreBtn");if(more)more.style.display=filtered.length>shown.length?"":"none";
+}
+function whShowMoreAddresses(){whAddressLimit+=18;whRenderAddressList();}
 function whAddAddress(){
  var codeEl=document.getElementById("whNewAddressCode"),nameEl=document.getElementById("whNewAddressName"),btn=document.getElementById("whAddAddressBtn"),msg=document.getElementById("whAddressMessage");
  var code=String(codeEl&&codeEl.value||"").trim(),name=String(nameEl&&nameEl.value||"").trim();
@@ -5756,7 +5791,16 @@ function whAddAddress(){
    return whLoadData();
  }).catch(function(error){if(msg)msg.textContent="Gagal menambahkan alamat: "+error.message;}).finally(function(){if(btn){btn.disabled=false;btn.textContent="＋ Tambah Alamat";}});
 }
-function whRenderStockReport(){whRenderAddressList();}
+function whRenderStockReport(){
+ var body=document.getElementById("whStockReportBody");if(!body)return;
+ var stats={};(whState.master||[]).forEach(function(x){var c=String(x.sector||"");if(!stats[c])stats[c]={count:0,qty:0};stats[c].count++;stats[c].qty+=Number(x.stockQty||0);});
+ var addresses=whGetAddressRows(),totalQty=(whState.master||[]).reduce(function(a,x){return a+Number(x.stockQty||0);},0);
+ var set=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+ set("whReportAddressTotal",addresses.length.toLocaleString("id-ID"));set("whReportArticleTotal",(whState.master||[]).length.toLocaleString("id-ID"));set("whReportQtyTotal",whFmt(totalQty));
+ var q=String(document.getElementById("whStockReportSearch")&&document.getElementById("whStockReportSearch").value||"").toLowerCase().trim();
+ var rows=addresses.filter(function(a){return (a.code+" "+a.name).toLowerCase().includes(q);}).map(function(a){var st=stats[a.code]||{count:0,qty:0};return '<tr><td><strong>'+whEsc(a.code)+'</strong></td><td>'+whEsc(a.name||"—")+'</td><td>'+st.count.toLocaleString("id-ID")+'</td><td>'+whFmt(st.qty)+'</td></tr>';});
+ body.innerHTML=rows.join("")||'<tr><td colspan="4">Tidak ada data alamat yang cocok.</td></tr>';
+}
 
 var whInventoryCatalogRows=null,whScanReader=null,whInventorySearchTimer=null,whInventorySearchSeq=0;
 function whLoadInventoryCatalog(){
@@ -5842,7 +5886,7 @@ function whStopBarcodeScan(){if(whScanReader){var x=whScanReader;whScanReader=nu
 function whLoadData(){var status=document.getElementById("whFormMessage");if(status)status.textContent="Memuat database warehouse...";return fetch(whAdminUrl(),{headers:{Authorization:"Bearer "+whSessionToken()},cache:"no-store"}).then(function(r){return r.json().then(function(d){if(!r.ok||!d.success)throw new Error(d.message||"Gagal memuat warehouse.");return d;});}).then(function(d){whState.master=Array.isArray(d.data.master)?d.data.master:[];whState.addresses=Array.isArray(d.data.addresses)?d.data.addresses:[];whState.transactions=Array.isArray(d.data.transactions)?d.data.transactions:[];whState.logs=Array.isArray(d.data.logs)?d.data.logs:[];whState.archived=Array.isArray(d.data.archived)?d.data.archived:[];whUpdateKpis();whPopulateSectors();whRenderAddressList();whRenderTransactions();whRenderAuditLogs();whRenderDashboard();if(status)status.textContent=d.data.importedAt?"Salinan AST terakhir: "+new Date(d.data.importedAt).toLocaleString("id-ID"):"Belum ada salinan AST. Tekan Salin Data AST.";}).catch(function(e){if(status)status.textContent="Gagal memuat: "+e.message;});}
 function whImportAst(){var btn=document.getElementById("whImportBtn"),status=document.getElementById("whFormMessage");if(btn){btn.disabled=true;btn.textContent="⏳ Menyalin...";}if(status)status.textContent="Membuat / memperbarui salinan master dari AST...";fetch(whAdminUrl(),{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+whSessionToken()},body:JSON.stringify({action:"importAst"})}).then(function(r){return r.json().then(function(d){if(!r.ok||!d.success)throw new Error(d.message||"Salin AST gagal.");return d;});}).then(function(d){if(status)status.textContent="Salinan AST selesai: "+d.imported.toLocaleString("id-ID")+" artikel-alamat pada "+d.sectors.toLocaleString("id-ID")+" alamat. Qty Warehouse tetap dipertahankan.";return whLoadData();}).catch(function(e){if(status)status.textContent="Gagal salin AST: "+e.message;}).finally(function(){if(btn){btn.disabled=false;btn.textContent="⇩ Salin Data AST";}});}
 function whPost(payload){payload.operator=typeof currentUserNameInv!=="undefined"&&currentUserNameInv?currentUserNameInv:"User";return fetch(whAdminUrl(),{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+whSessionToken()},body:JSON.stringify(payload)}).then(function(r){return r.json().then(function(d){if(!r.ok||!d.success)throw new Error(d.message||"Permintaan gagal.");return d;});});}
-function whSubmitTransaction(){var item=whSelectedItem(),rawQty=document.getElementById("whQty").value,type=document.getElementById("whChangeType").value,note=String(document.getElementById("whNote").value||"").trim(),status=document.getElementById("whFormMessage"),btn=document.getElementById("whSubmitBtn");if(!item){status.textContent="Pilih artikel terlebih dahulu.";return;}if(rawQty===""||!Number.isFinite(Number(rawQty))||(type==="SET"?Number(rawQty)<0:Number(rawQty)<=0)){status.textContent=type==="SET"?"Masukkan qty aktual nol atau lebih.":"Masukkan jumlah lebih besar dari nol.";return;}var qty=Number(rawQty);if(type==="OUT"&&qty>Number(item.stockQty||0)){status.textContent="Qty barang keluar melebihi stok tersedia ("+whFmt(item.stockQty)+").";return;}if(!note){status.textContent="Keterangan wajib diisi.";return;}btn.disabled=true;btn.textContent="Menyimpan...";status.textContent="Menyimpan transaksi ke database...";var pending=!!item.isPending;var prepare=pending?whPost({action:"addArticle",sector:item.sector,productCode:item.productCode,barcode:item.barcode,productName:item.productName,qty:0,note:"Registrasi otomatis saat transaksi pertama"}):Promise.resolve();prepare.then(function(){var payload=type==="SET"?{action:"setQty",productCode:item.productCode,sector:item.sector,qty:qty,note:note}:{action:"transaction",type:type,productCode:item.productCode,sector:item.sector,qty:qty,note:note};return whPost(payload);}).then(function(d){var newQty=Number(d.stockQty);if(!Number.isFinite(newQty))newQty=Number(item.stockQty||0)+(type==="OUT"?-qty:qty);var key=item.key,existing=whState.master.find(function(m){return m.key===key||m.sector===item.sector&&m.productCode===item.productCode;});if(existing)existing.stockQty=newQty;else whState.master.push({key:key,productCode:item.productCode,productName:item.productName,barcode:item.barcode||"",sector:item.sector,stockQty:newQty,baselineQty:0,source:"MANUAL"});whState.pendingItem=null;whState.selectedKey=null;document.getElementById("whQty").value="";document.getElementById("whNote").value="";document.getElementById("whSelectedInfo").textContent="Transaksi tersimpan. Pilih artikel lain jika masih ada barang yang akan diproses.";whUpdateKpis();whRenderAddress();whRenderTransactions();whRenderDashboard();status.textContent="Transaksi berhasil disimpan. Qty terbaru: "+whFmt(newQty)+". Artikel dengan stok 0 otomatis tidak ditampilkan di Barang Keluar.";}).catch(function(e){status.textContent="Gagal menyimpan: "+e.message;}).finally(function(){btn.disabled=false;btn.textContent="Simpan Perubahan";whLoadData();});}
+function whSubmitTransaction(){var item=whSelectedItem(),rawQty=document.getElementById("whQty").value,type=document.getElementById("whChangeType").value,note=String(document.getElementById("whNote").value||"").trim(),status=document.getElementById("whFormMessage"),btn=document.getElementById("whSubmitBtn");if(!item){status.textContent="Pilih artikel terlebih dahulu.";return;}if(rawQty===""||!Number.isFinite(Number(rawQty))||(type==="SET"?Number(rawQty)<0:Number(rawQty)<=0)){status.textContent=type==="SET"?"Masukkan qty aktual nol atau lebih.":"Masukkan jumlah lebih besar dari nol.";return;}var qty=Number(rawQty);if(type==="OUT"&&qty>Number(item.stockQty||0)){status.textContent="Qty barang keluar melebihi stok tersedia ("+whFmt(item.stockQty)+").";return;}if(!note){status.textContent="Keterangan wajib diisi.";return;}btn.disabled=true;btn.textContent="Menyimpan...";status.textContent="Menyimpan transaksi ke database...";var pending=!!item.isPending;var prepare=pending?whPost({action:"addArticle",sector:item.sector,productCode:item.productCode,barcode:item.barcode,productName:item.productName,qty:0,note:"Registrasi otomatis saat transaksi pertama"}):Promise.resolve();prepare.then(function(){var payload=type==="SET"?{action:"setQty",productCode:item.productCode,sector:item.sector,qty:qty,note:note}:{action:"transaction",type:type,productCode:item.productCode,sector:item.sector,qty:qty,note:note};return whPost(payload);}).then(function(d){var newQty=Number(d.stockQty);if(!Number.isFinite(newQty))newQty=Number(item.stockQty||0)+(type==="OUT"?-qty:qty);var key=item.key,existing=whState.master.find(function(m){return m.key===key||m.sector===item.sector&&m.productCode===item.productCode;});if(existing)existing.stockQty=newQty;else whState.master.push({key:key,productCode:item.productCode,productName:item.productName,barcode:item.barcode||"",sector:item.sector,stockQty:newQty,baselineQty:0,source:"MANUAL"});whState.pendingItem=null;whState.selectedKey=null;document.getElementById("whQty").value="";document.getElementById("whNote").value="";document.getElementById("whSelectedInfo").textContent="Transaksi tersimpan. Pilih artikel lain jika masih ada barang yang akan diproses.";whUpdateKpis();whRenderAddress();whRenderTransactions();whRenderDashboard();status.textContent="Transaksi berhasil disimpan. Qty terbaru: "+whFmt(newQty)+". Artikel dengan stok 0 otomatis tidak ditampilkan di Barang Keluar.";}).catch(function(e){status.textContent="Gagal menyimpan: "+e.message;}).finally(function(){btn.disabled=false;btn.textContent="Simpan Perubahan";});}
 function whOpenInlineEdit(encodedKey){whState.editKey=decodeURIComponent(encodedKey);whState.deleteKey=null;whRenderAddress();setTimeout(function(){var q=document.getElementById("whInlineQty");if(q){q.focus();q.select();}},30);}
 function whOpenInlineDelete(encodedKey){whState.deleteKey=decodeURIComponent(encodedKey);whState.editKey=null;whRenderAddress();var r=document.getElementById("whInlineDeleteReason");if(r)r.focus();}
 function whCloseInlineAction(){whState.editKey=null;whState.deleteKey=null;whRenderAddress();}
