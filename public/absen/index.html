@@ -133,6 +133,83 @@ body:has(#employeeDashboard.active){background:#f3f6fb}
  #employeeDashboard #profileCard>div{align-items:flex-start!important;flex-wrap:wrap}
 }
 
+
+/* DSH Workforce Signature UI — visual-only redesign */
+:root{--dsh-ink:#10243d;--dsh-muted:#718096;--dsh-border:#e3eaf3;--dsh-blue:#1769d2;--dsh-cyan:#61c8f2}
+body:has(#employeeDashboard.active){background:linear-gradient(180deg,#eaf1fa 0,#f5f7fb 340px,#f5f7fb 100%);color:var(--dsh-ink)}
+#employeeDashboard.dashboard.active{max-width:1160px!important;padding:24px clamp(14px,3vw,34px) 56px!important}
+#employeeDashboard .dash-top{display:grid;grid-template-columns:1fr auto;align-items:end;gap:10px 24px;min-height:190px;padding:30px 34px!important;border:1px solid #28517c!important;border-radius:26px!important;background:linear-gradient(118deg,#071a32 0%,#10365f 58%,#17649a 100%)!important;box-shadow:0 18px 48px #0c2b4b26!important}
+#employeeDashboard .dash-top .eyebrow{grid-column:1/-1;letter-spacing:3.6px;font-size:10px;color:#80d7ff}
+#employeeDashboard .dash-top h2{font-size:clamp(27px,4vw,36px)!important;font-weight:800;letter-spacing:-1px;margin:0!important}
+#employeeDashboard .dash-top>p{grid-column:1/-1;grid-row:3;margin:-5px 0 0!important;font-size:13px!important;color:#c5ddf4!important}
+#employeeDashboard .dash-user{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;margin:14px 0 0!important;padding-top:16px;border-top:1px solid #ffffff24}
+#employeeDashboard #dashName{font-size:17px;font-weight:800}
+#employeeDashboard #dashMeta{font-size:12px!important;color:#c5d9ef!important}
+#employeeDashboard .dash-chip{background:#ffffff16!important;border:1px solid #ffffff32!important;border-radius:12px!important;padding:10px 14px!important;font-size:12px!important}
+#employeeDashboard .dash-grid{grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:16px!important}
+#employeeDashboard .dash-card{grid-column:span 6;padding:21px!important;border:1px solid var(--dsh-border)!important;border-radius:20px!important;box-shadow:0 9px 28px #18365a0a!important}
+#employeeDashboard #profileCard{grid-column:span 12;background:linear-gradient(105deg,#fff,#f8fbff)!important}
+#employeeDashboard #profileCard>div{min-height:72px}
+#employeeDashboard #profileCard h3{font-size:16px!important}
+#employeeDashboard #openProfileBtn{background:#eaf2fd!important;color:#1b5da9!important;border:1px solid #dbe8f8!important}
+#employeeDashboard .dash-card:has(#locateBtn){grid-column:span 7;background:#fff!important}
+#employeeDashboard .dash-card:has(#historyList){grid-column:span 5}
+#employeeDashboard .dash-card:has(#logoutBtn){grid-column:span 12}
+#employeeDashboard .dash-grid>.dash-card:nth-child(2),
+#employeeDashboard .dash-grid>.dash-card:nth-child(3){position:relative;overflow:hidden;min-height:132px;padding:20px 22px!important}
+#employeeDashboard .dash-grid>.dash-card:nth-child(2):before,
+#employeeDashboard .dash-grid>.dash-card:nth-child(3):before{content:"";position:absolute;right:-28px;top:-38px;width:112px;height:112px;border-radius:50%;background:#eaf3ff}
+#employeeDashboard .dash-grid>.dash-card:nth-child(2):after{content:"IN";position:absolute;right:17px;top:17px;color:#2675d5;font-size:10px;font-weight:900;letter-spacing:1px}
+#employeeDashboard .dash-grid>.dash-card:nth-child(3):after{content:"OUT";position:absolute;right:17px;top:17px;color:#16845b;font-size:10px;font-weight:900;letter-spacing:1px}
+#employeeDashboard .dash-grid>.dash-card:nth-child(2) .dash-stat,
+#employeeDashboard .dash-grid>.dash-card:nth-child(3) .dash-stat{position:relative;z-index:1;font-size:26px!important;margin:10px 0 4px}
+#employeeDashboard .dash-grid>.dash-card:nth-child(2) .dash-stat{color:#1769d2!important}
+#employeeDashboard .dash-grid>.dash-card:nth-child(3) .dash-stat{color:#16845b!important}
+#employeeDashboard .dash-card:has(#locateBtn) h3{font-size:17px!important;margin-bottom:8px!important}
+#employeeDashboard #locateBtn{min-height:48px;border-radius:13px!important;font-weight:800}
+#employeeDashboard #gpsInfo{border:1px solid #edf1f6;background:#f7f9fc!important;padding:12px!important}
+#employeeDashboard .dash-input{min-height:46px;border-radius:12px!important}
+#employeeDashboard .dash-actions{display:grid!important;grid-template-columns:1fr 1fr;gap:10px!important}
+#employeeDashboard .dash-actions .dash-btn{min-height:54px!important;border-radius:14px!important;font-size:13px!important}
+#employeeDashboard #historyList{display:grid;gap:10px;margin-top:14px!important}
+#employeeDashboard .history-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:8px 10px!important;padding:13px!important;border:1px solid #e9eef5!important;border-radius:14px!important;background:#fbfcfe!important}
+#employeeDashboard .history-row>div:first-child{min-width:0}
+#employeeDashboard .history-row b{font-size:13px!important}
+#employeeDashboard .history-photo{width:72px!important;height:72px!important;border-radius:11px!important}
+#employeeDashboard .history-row>div:last-child{font-size:13px!important}
+#employeeDashboard #refreshHistoryBtn{background:#edf4ff!important;border-radius:10px!important;padding:9px 12px!important}
+#employeeDashboard #logoutBtn{min-height:48px;border-radius:13px!important;font-weight:800}
+#employeeDashboard .profile-modal-panel{border-radius:22px!important}
+@media(max-width:760px){
+ #employeeDashboard.dashboard.active{padding:12px 12px 34px!important}
+ #employeeDashboard .dash-top{display:block;min-height:0;padding:22px 20px!important;border-radius:22px!important;margin-bottom:13px!important}
+ #employeeDashboard .dash-top h2{font-size:27px!important;margin:8px 0 5px!important}
+ #employeeDashboard .dash-top>p{margin:0!important}
+ #employeeDashboard .dash-user{margin-top:18px!important;padding-top:14px!important;align-items:center!important;flex-direction:row!important}
+ #employeeDashboard .dash-chip{font-size:10px!important;max-width:44%;text-align:center}
+ #employeeDashboard .dash-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ #employeeDashboard .dash-card{grid-column:span 1;padding:14px!important;border-radius:17px!important}
+ #employeeDashboard #profileCard,#employeeDashboard .dash-card:has(#locateBtn),#employeeDashboard .dash-card:has(#historyList),#employeeDashboard .dash-card:has(#logoutBtn){grid-column:1/-1}
+ #employeeDashboard #profileCard>div{min-height:58px}
+ #employeeDashboard #profileCard>div>div{min-width:0}
+ #employeeDashboard #profileCard .dash-muted{max-width:210px}
+ #employeeDashboard #openProfileBtn{font-size:10px!important;padding:10px 11px!important}
+ #employeeDashboard .dash-grid>.dash-card:nth-child(2),#employeeDashboard .dash-grid>.dash-card:nth-child(3){min-height:118px;padding:15px!important}
+ #employeeDashboard .dash-grid>.dash-card:nth-child(2):after,#employeeDashboard .dash-grid>.dash-card:nth-child(3):after{right:13px;top:13px}
+ #employeeDashboard .dash-stat{font-size:21px!important}
+ #employeeDashboard .dash-card:has(#locateBtn){padding:17px!important}
+ #employeeDashboard .dash-actions .dash-btn{font-size:12px!important;min-height:50px!important}
+ #employeeDashboard .dash-card:has(#historyList){padding:16px!important}
+ #employeeDashboard .history-row{padding:12px!important}
+ #employeeDashboard .history-photo{width:68px!important;height:68px!important}
+}
+@media(max-width:380px){
+ #employeeDashboard #profileCard>div{align-items:flex-start!important}
+ #employeeDashboard #profileCard>div>div{align-items:flex-start!important}
+ #employeeDashboard #openProfileBtn{white-space:normal!important;max-width:108px}
+ #employeeDashboard .dash-chip{font-size:9px!important;padding:8px!important}
+}
+
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
