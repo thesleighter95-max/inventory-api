@@ -166,3 +166,96 @@ body:not(:has(#employeeDashboard.active)) #googleLoginButton,body:not(:has(#empl
 @media(prefers-reduced-motion:reduce){
  body:not(:has(#employeeDashboard.active)) .panel,body:not(:has(#employeeDashboard.active)) .mobilebrand .mark{animation:none!important}
 }
+
+
+/* DSH Login Studio V3 — readable contrast + link-driven auth transition */
+@keyframes dshAuthEnter{
+  from{opacity:0;transform:translate3d(22px,0,0);filter:blur(3px)}
+  to{opacity:1;transform:translate3d(0,0,0);filter:blur(0)}
+}
+@keyframes dshAuthExit{
+  from{opacity:1;transform:translate3d(0,0,0)}
+  to{opacity:0;transform:translate3d(-14px,0,0)}
+}
+body:not(:has(#employeeDashboard.active)){
+  background:radial-gradient(ellipse at 80% 8%,#123b5a 0,transparent 38%),linear-gradient(145deg,#050d18 0%,#081727 52%,#0a2034 100%)!important;
+  color:#edf6ff;
+}
+body:not(:has(#employeeDashboard.active)) .shell{gap:22px}
+body:not(:has(#employeeDashboard.active)) .brand{
+  background:radial-gradient(ellipse at 80% 18%,#15506b 0,transparent 42%),linear-gradient(145deg,#081727,#0b2941 70%,#103b58)!important;
+  border:1px solid #1c526b!important;
+  box-shadow:0 24px 70px #0005!important;
+}
+body:not(:has(#employeeDashboard.active)) .panel{
+  background:linear-gradient(155deg,#10283c 0%,#0b1d2e 60%,#091827 100%)!important;
+  border:1px solid #24516a!important;
+  border-radius:28px!important;
+  box-shadow:0 24px 70px #0006,0 0 0 1px #00d9ff0b!important;
+  animation:loginPanelIn .65s cubic-bezier(.2,.8,.2,1) both!important;
+}
+body:not(:has(#employeeDashboard.active)) .panel:before{
+  inset:0!important;border-radius:inherit!important;
+  background:radial-gradient(ellipse at 100% 0%,#15506a55 0,transparent 42%)!important;
+}
+body:not(:has(#employeeDashboard.active)) .panel:after{display:none!important}
+body:not(:has(#employeeDashboard.active)) .panelinner{color:#edf6ff!important}
+body:not(:has(#employeeDashboard.active)) .heading h2{color:#f4f9ff!important}
+body:not(:has(#employeeDashboard.active)) .heading p{color:#b8c9d9!important}
+body:not(:has(#employeeDashboard.active)) .mobilebrand{
+  background:linear-gradient(115deg,#102c43,#123b56)!important;
+  border:1px solid #28617a!important;
+  box-shadow:0 12px 28px #0004!important;
+}
+body:not(:has(#employeeDashboard.active)) .mobilebrand b{color:#f2f9ff!important}
+body:not(:has(#employeeDashboard.active)) .mobilebrand small{color:#9bbbd0!important}
+body:not(:has(#employeeDashboard.active)) .field label{color:#d6e4f0!important}
+body:not(:has(#employeeDashboard.active)) .field input,
+body:not(:has(#employeeDashboard.active)) .field select{
+  color:#f4f9ff!important;background:#071522!important;
+  border:1px solid #31536a!important;border-radius:13px!important;
+}
+body:not(:has(#employeeDashboard.active)) .field input::placeholder{color:#91a7b9!important;opacity:1}
+body:not(:has(#employeeDashboard.active)) .field input:focus,
+body:not(:has(#employeeDashboard.active)) .field select:focus{
+  border-color:#45c9e8!important;box-shadow:0 0 0 3px #45c9e82b!important;
+}
+body:not(:has(#employeeDashboard.active)) .hint{color:#b4c7d7!important}
+body:not(:has(#employeeDashboard.active)) .linkrow{color:#c3d2df!important}
+body:not(:has(#employeeDashboard.active)) .link{
+  color:#65d9f2!important;font-weight:750!important;
+  text-decoration:underline;text-decoration-color:#65d9f255;text-underline-offset:4px;
+}
+body:not(:has(#employeeDashboard.active)) .btn{
+  color:#fff!important;background:linear-gradient(105deg,#087f9e,#087fbd 58%,#1769c5)!important;
+  border:1px solid #50d9ee80!important;box-shadow:0 10px 26px #007da944!important;
+}
+body:not(:has(#employeeDashboard.active)) .status{color:#f2f8ff!important}
+body:not(:has(#employeeDashboard.active)) .panelinner>.foot{
+  color:#9bb3c5!important;border-color:#29475d!important;
+}
+/* Keep the existing tab element for JS compatibility, but use the links below the form. */
+body:not(:has(#employeeDashboard.active)) #tabs{display:none!important}
+body:not(:has(#employeeDashboard.active)) .form{display:none}
+body:not(:has(#employeeDashboard.active)) .form.active{
+  display:block;
+  animation:dshAuthEnter .42s cubic-bezier(.2,.8,.2,1) both!important;
+}
+@media(max-width:760px){
+  body:not(:has(#employeeDashboard.active)){background:radial-gradient(ellipse at 80% 0%,#123b5a 0,transparent 38%),linear-gradient(155deg,#050d18,#081727 65%,#0a2034)!important}
+  body:not(:has(#employeeDashboard.active)) .shell{padding:14px 12px 24px!important}
+  body:not(:has(#employeeDashboard.active)) .panel{
+    min-height:calc(100svh - 38px)!important;padding:2px!important;
+    background:linear-gradient(155deg,#10283c,#091827)!important;
+    border:1px solid #24516a!important;border-radius:25px!important;
+  }
+  body:not(:has(#employeeDashboard.active)) .panelinner{padding:22px 17px 26px!important}
+  body:not(:has(#employeeDashboard.active)) .heading h2{font-size:29px!important;letter-spacing:-.5px!important;text-transform:none!important}
+  body:not(:has(#employeeDashboard.active)) .heading p{font-size:13px!important;color:#b8c9d9!important}
+  body:not(:has(#employeeDashboard.active)) .form .hint{color:#b4c7d7!important}
+  body:not(:has(#employeeDashboard.active)) .linkrow{font-size:12px!important}
+  body:not(:has(#employeeDashboard.active)) .link{font-size:12px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  body:not(:has(#employeeDashboard.active)) .form.active{animation:none!important}
+}
