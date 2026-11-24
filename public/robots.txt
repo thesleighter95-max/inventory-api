@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin-dashboard-kpi.html
+Disallow: /dashboard-kpi.html
+
+Sitemap: https://pda-mini-mataram.vercel.app/sitemap.xml
