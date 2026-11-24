@@ -1,37 +1,74 @@
 <!doctype html>
 <html lang="id">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kebijakan Privasi – DSH Attendance</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="index,follow">
+<meta name="description" content="Kebijakan Privasi PDA Mini Mataram / DSH Digital System Hybrid. Informasi tentang data akun, inventori, aktivitas, lokasi, foto, dan layanan pihak ketiga.">
+<link rel="canonical" href="https://pda-mini-mataram.vercel.app/privacy/">
+<title>Kebijakan Privasi – PDA Mini Mataram</title>
 <style>
-body{font-family:Arial,sans-serif;line-height:1.65;color:#243044;background:#f5f7fb;margin:0;padding:24px}
-main{max-width:850px;margin:30px auto;background:#fff;padding:28px;border-radius:16px;box-shadow:0 8px 30px #14213d12}
-h1,h2{color:#173b69}small{color:#667085}.notice{background:#eef5ff;padding:14px;border-radius:10px}
-</style></head><body><main>
-<h1>Kebijakan Privasi DSH Attendance</h1>
-<small>Terakhir diperbarui: 19 November 2026</small>
-<p>Kebijakan ini menjelaskan bagaimana DSH Attendance mengumpulkan, menggunakan, menyimpan, dan melindungi informasi saat karyawan menggunakan layanan absensi.</p>
-<h2>1. Informasi yang dikumpulkan</h2>
+:root{color-scheme:light;--ink:#172033;--muted:#64748b;--line:#e2e8f0;--blue:#3157a4;--bg:#f3f6fb}
+*{box-sizing:border-box}body{margin:0;padding:24px;background:var(--bg);color:var(--ink);font:15px/1.75 Arial,sans-serif}
+main{max-width:900px;margin:24px auto;background:#fff;padding:clamp(22px,5vw,44px);border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 36px #14213d0d}
+header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:24px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--blue);text-transform:uppercase}
+h1{font-size:clamp(26px,5vw,36px);line-height:1.2;margin:8px 0;color:#142b52}
+h2{font-size:19px;margin:28px 0 8px;color:#1e3a67}
+p{margin:9px 0}li{margin:7px 0}small,.muted{color:var(--muted)}
+.note{margin-top:22px;padding:14px 16px;background:#f1f5f9;border-left:4px solid #64748b;border-radius:8px;font-size:13px}
+nav{display:flex;gap:16px;flex-wrap:wrap;margin-top:20px}a{color:var(--blue);font-weight:600;text-decoration:none}a:hover{text-decoration:underline}
+footer{border-top:1px solid var(--line);margin-top:30px;padding-top:18px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="eyebrow">PDA Mini Mataram · DSH Digital System Hybrid</div>
+<h1>Kebijakan Privasi</h1>
+<p class="muted">Terakhir diperbarui: 24 November 2026</p>
+<p>Kebijakan ini menjelaskan bagaimana pengelola PDA Mini Mataram / DSH Digital System Hybrid memproses informasi ketika pengguna mengakses fitur inventori, pemindaian barcode, pencatatan stok, pemantauan barang, dan pengelolaan gudang.</p>
+</header>
+
+<h2>1. Informasi yang dapat diproses</h2>
 <ul>
-<li>Data identitas dan akun: nama lengkap, departemen, brand, nomor telepon, dan alamat email.</li>
-<li>Data autentikasi: informasi verifikasi akun dan data teknis yang diperlukan untuk menjaga keamanan akun. Password disimpan dalam bentuk hash, bukan teks biasa.</li>
-<li>Data absensi: waktu dan tanggal absensi, jenis absensi, koordinat GPS, akurasi lokasi, serta perkiraan jarak dari lokasi kerja.</li>
-<li>Foto: selfie dan foto area/lokasi yang dikirim saat proses absensi, jika fitur tersebut digunakan.</li>
-<li>Informasi dari Google Sign-In: alamat email terverifikasi dan informasi profil dasar yang diberikan Google untuk proses masuk.</li>
+<li><strong>Data akun:</strong> username, nama pengguna, informasi akun, kredensial autentikasi, dan status atau hak akses yang diperlukan untuk login.</li>
+<li><strong>Data inventori:</strong> kode atau barcode produk, nama dan kategori barang, satuan, harga atau informasi produk lain yang tersedia pada master data, serta catatan stok.</li>
+<li><strong>Data aktivitas:</strong> waktu aktivitas, jenis aktivitas, username, dan informasi teknis perangkat atau browser yang dikirim saat pencatatan aktivitas.</li>
+<li><strong>Data stok opname dan foto:</strong> jumlah hasil perhitungan, foto pendukung, serta informasi lokasi atau koordinat apabila fitur terkait digunakan dan izin perangkat diberikan.</li>
+<li><strong>Data gudang:</strong> alamat atau lokasi penyimpanan, artikel, jumlah barang masuk dan keluar, riwayat perubahan, serta data laporan operasional.</li>
+<li><strong>Data teknis:</strong> informasi yang diperlukan untuk menjalankan aplikasi, menjaga sesi login, mendiagnosis gangguan, dan melindungi sistem.</li>
 </ul>
-<h2>2. Tujuan penggunaan</h2>
-<p>Informasi digunakan untuk membuat dan mengelola akun karyawan, memverifikasi identitas, mencatat kehadiran, memeriksa kesesuaian lokasi absensi, membuat laporan operasional, serta menjaga keamanan dan mencegah penyalahgunaan layanan.</p>
-<h2>3. Penyimpanan dan layanan pihak ketiga</h2>
-<p>Data operasional DSH Attendance disimpan menggunakan layanan Google Sheets dan Google Drive yang terhubung ke akun pengelola. Proses masuk Google menggunakan Google Identity Services. Penggunaan layanan Google juga tunduk pada kebijakan privasi Google.</p>
+<p>Data yang benar-benar diproses bergantung pada fitur yang digunakan, izin perangkat, dan konfigurasi sistem yang berlaku.</p>
+
+<h2>2. Tujuan penggunaan data</h2>
+<p>Data digunakan untuk mengautentikasi pengguna, mengatur hak akses, menampilkan master produk, mencari atau memindai barcode, mencatat dan memantau stok, memproses stok opname, mengelola pergerakan barang gudang, menyusun laporan, mencatat aktivitas, serta menjaga keamanan dan keandalan aplikasi.</p>
+
+<h2>3. Sumber data dan layanan pendukung</h2>
+<p>Aplikasi dapat mengambil atau mengirim data melalui layanan pendukung yang dikonfigurasi pengelola, termasuk API aplikasi, Google Sheets atau Google Apps Script, serta layanan penyimpanan atau pemrosesan file dan foto. Sebagian data master dapat bersumber dari spreadsheet yang terhubung. Layanan pihak ketiga memproses data sesuai fungsi dan kebijakan masing-masing.</p>
+<p>Pengelola dapat mengubah penyedia layanan atau konfigurasi teknis. Perubahan yang memengaruhi pemrosesan data akan tercermin dalam pembaruan kebijakan ini jika diperlukan.</p>
+
 <h2>4. Akses dan pengungkapan</h2>
-<p>Akses data dibatasi untuk pengelola atau personel yang diberi wewenang untuk kebutuhan administrasi dan operasional. Data tidak dimaksudkan untuk dijual. Data dapat diungkapkan apabila diwajibkan oleh hukum atau diperlukan untuk menangani insiden keamanan.</p>
-<h2>5. Keamanan dan masa penyimpanan</h2>
-<p>Pengelola menerapkan langkah pengamanan yang wajar, termasuk pembatasan akses dan perlindungan kredensial. Data disimpan selama diperlukan untuk administrasi absensi, kepatuhan, dan kebutuhan operasional, kemudian dapat dihapus atau diarsipkan sesuai kebijakan pengelola dan ketentuan yang berlaku.</p>
-<h2>6. Hak dan permintaan pengguna</h2>
-<p>Karyawan dapat menghubungi pengelola untuk meminta akses, koreksi, atau penghapusan data pribadi, dengan tetap memperhatikan kewajiban pencatatan absensi dan ketentuan hukum yang berlaku.</p>
-<h2>7. Perubahan kebijakan</h2>
-<p>Kebijakan ini dapat diperbarui jika fitur atau proses pengelolaan data berubah. Versi terbaru akan ditampilkan pada halaman ini.</p>
-<h2>8. Kontak</h2>
-<p>Untuk pertanyaan atau permintaan terkait privasi, hubungi administrator DSH Attendance melalui kontak resmi pengelola di tempat kerja.</p>
-<div class="notice"><b>Catatan pengelola:</b> Sebelum dipublikasikan, pastikan uraian penyimpanan, akses, masa retensi, dan kontak sesuai dengan praktik nyata DSH Attendance.</div>
-</main></body></html>
+<p>Akses terhadap data dibatasi berdasarkan kebutuhan operasional dan hak akses yang diberikan pengelola. Data dapat diakses oleh administrator atau personel yang berwenang untuk menjalankan inventori, stok opname, pengelolaan gudang, audit, dan dukungan teknis. Data dapat diungkapkan apabila diwajibkan oleh hukum atau diperlukan untuk menangani insiden keamanan.</p>
+
+<h2>5. Penyimpanan dan masa retensi</h2>
+<p>Data dapat tersimpan pada server aplikasi dan layanan pendukung yang terhubung, seperti spreadsheet atau penyimpanan file. Lama penyimpanan mengikuti kebutuhan operasional, kebijakan pengelola, kebutuhan audit, dan kewajiban hukum yang berlaku. Kebijakan retensi dan penghapusan dapat berbeda untuk data akun, transaksi stok, log aktivitas, dan file foto.</p>
+
+<h2>6. Keamanan</h2>
+<p>Pengelola menerapkan langkah pengamanan yang wajar, termasuk autentikasi, pembatasan akses, dan pengelolaan sesi. Pengguna juga wajib menjaga kerahasiaan kredensial dan tidak membagikan akses kepada pihak yang tidak berwenang. Tidak ada sistem elektronik yang dapat dijamin sepenuhnya bebas dari risiko.</p>
+
+<h2>7. Hak dan permintaan pengguna</h2>
+<p>Pengguna dapat menghubungi administrator atau pengelola untuk meminta informasi, koreksi, atau penanganan data yang berkaitan dengan akunnya. Permintaan akan ditinjau dengan mempertimbangkan hak akses, kebutuhan pencatatan operasional, keamanan, dan kewajiban hukum.</p>
+
+<h2>8. Perubahan kebijakan</h2>
+<p>Kebijakan ini dapat diperbarui apabila fitur, sumber data, penyedia layanan, atau cara pengelolaan informasi berubah. Versi terbaru akan dipublikasikan pada halaman ini.</p>
+
+<h2>9. Kontak</h2>
+<p>Untuk pertanyaan atau permintaan terkait privasi, hubungi administrator PDA Mini Mataram / DSH melalui saluran komunikasi resmi yang disediakan pengelola di tempat kerja.</p>
+
+<div class="note"><strong>Catatan:</strong> Kebijakan ini disusun berdasarkan fitur dan integrasi yang tampak pada aplikasi. Pengelola perlu memastikan rincian penyimpanan, akses personel, masa retensi, serta kontak resmi sesuai dengan praktik operasional yang sebenarnya sebelum menjadikannya kebijakan final.</div>
+<nav><a href="/">Kembali ke halaman utama</a><a href="/terms/">Ketentuan Layanan</a></nav>
+<footer>© 2026 PDA Mini Mataram · DSH Digital System Hybrid</footer>
+</main>
+</body>
+</html>
