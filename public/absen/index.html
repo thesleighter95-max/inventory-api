@@ -316,6 +316,70 @@ body:not(:has(#employeeDashboard.active)) #googleLoginButton,body:not(:has(#empl
  body:not(:has(#employeeDashboard.active)) .panelinner{max-width:430px}
 }
 
+
+/* DSH NEON ACCESS — inspired by the supplied reference; auth behavior unchanged */
+@keyframes dshNeonSpin{to{transform:rotate(360deg)}}
+@keyframes dshNeonPulse{0%,100%{opacity:.58;filter:blur(13px)}50%{opacity:1;filter:blur(19px)}}
+@keyframes dshFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@media(min-width:761px){
+ body:not(:has(#employeeDashboard.active)){background:#050b16}
+ body:not(:has(#employeeDashboard.active)) .shell{max-width:1160px;min-height:100svh;padding:28px;gap:22px}
+ body:not(:has(#employeeDashboard.active)) .brand{background:radial-gradient(ellipse at 75% 25%,#073d58 0,transparent 45%),linear-gradient(145deg,#07111f,#091a2c 60%,#102b42);border:1px solid #123e53;box-shadow:0 20px 70px #00d9ff12}
+ body:not(:has(#employeeDashboard.active)) .brand:before{border-color:#12d9ed55;box-shadow:0 0 30px #00d9ff18,0 0 0 32px #ff25cf0b,0 0 0 68px #00d9ff08;animation:loginOrbit 22s linear infinite}
+ body:not(:has(#employeeDashboard.active)) .panel{position:relative;isolation:isolate;overflow:hidden;padding:2px;border:0;border-radius:30px;background:conic-gradient(from 0deg,#00eaff,#155bff,#ff2bd6,#00eaff);box-shadow:0 0 22px #00d9ff28,0 0 48px #e82bd51a;animation:dshNeonPulse 5s ease-in-out infinite}
+ body:not(:has(#employeeDashboard.active)) .panel:before{content:"";position:absolute;inset:2px;z-index:-1;border-radius:28px;background:radial-gradient(ellipse at 50% 0%,#102a43 0,#081421 55%,#07111d 100%)}
+ body:not(:has(#employeeDashboard.active)) .panel:after{display:none}
+ body:not(:has(#employeeDashboard.active)) .panelinner{max-width:440px;padding:34px 32px;color:#e9f7ff}
+ body:not(:has(#employeeDashboard.active)) .heading h2{color:#f1fbff;letter-spacing:1px;text-transform:uppercase;font-size:28px}
+ body:not(:has(#employeeDashboard.active)) .heading p{color:#8fa9bd}
+ body:not(:has(#employeeDashboard.active)) .tabs{background:#0c1d2c;border:1px solid #174256;border-radius:14px}
+ body:not(:has(#employeeDashboard.active)) .tab{color:#8ba5b8}
+ body:not(:has(#employeeDashboard.active)) .tab.active{background:linear-gradient(120deg,#073e4a,#123b5b);color:#9ff8ff;box-shadow:inset 0 0 0 1px #00dff055,0 0 18px #00dff01b}
+ body:not(:has(#employeeDashboard.active)) .field label{color:#b9d3e3}
+ body:not(:has(#employeeDashboard.active)) .field input,body:not(:has(#employeeDashboard.active)) .field select{color:#e9f8ff;background:#071522;border:1px solid #1b4053;border-radius:12px}
+ body:not(:has(#employeeDashboard.active)) .field input::placeholder{color:#587184}
+ body:not(:has(#employeeDashboard.active)) .field input:focus,body:not(:has(#employeeDashboard.active)) .field select:focus{border-color:#00dff0;box-shadow:0 0 0 3px #00dff01a,0 0 16px #00dff018}
+ body:not(:has(#employeeDashboard.active)) .btn{background:linear-gradient(100deg,#006b85,#087fba 55%,#1765c5);border:1px solid #35eaff70;box-shadow:0 0 18px #00d9ff2c,inset 0 1px #ffffff30;color:#f4fdff}
+ body:not(:has(#employeeDashboard.active)) .linkrow{color:#8da7ba}
+ body:not(:has(#employeeDashboard.active)) .link{color:#55e8f5}
+ body:not(:has(#employeeDashboard.active)) .hint{color:#7896aa}
+ body:not(:has(#employeeDashboard.active)) .panelinner>.foot{color:#66849a!important;border-color:#173448!important}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand{display:none!important}
+ body:not(:has(#employeeDashboard.active)) #googleLoginButton,body:not(:has(#employeeDashboard.active)) #googleRegisterButton{filter:drop-shadow(0 3px 10px #0005)}
+}
+@media(max-width:760px){
+ body:not(:has(#employeeDashboard.active)){background:radial-gradient(ellipse at 50% 0%,#103e59 0,#071522 44%,#050b14 100%)}
+ body:not(:has(#employeeDashboard.active)) .shell{padding:14px 12px 24px;min-height:100svh}
+ body:not(:has(#employeeDashboard.active)) .panel{position:relative;isolation:isolate;overflow:hidden;min-height:calc(100svh - 38px);padding:2px;border:0;border-radius:25px;background:conic-gradient(from 0deg,#00eaff,#175fff,#ff2bd6,#00eaff);box-shadow:0 0 22px #00d9ff25,0 0 42px #e82bd51a;animation:dshNeonPulse 5s ease-in-out infinite}
+ body:not(:has(#employeeDashboard.active)) .panel:before{content:"";position:absolute;z-index:-1;inset:2px;border-radius:23px;background:radial-gradient(ellipse at 50% 0%,#102a43 0,#081421 56%,#07111d 100%)}
+ body:not(:has(#employeeDashboard.active)) .panel:after{display:none}
+ body:not(:has(#employeeDashboard.active)) .panelinner{width:100%;max-width:470px;margin:auto;padding:22px 17px 26px;color:#e9f7ff}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand{display:flex;align-items:center;gap:11px;margin:0 0 25px;padding:13px 14px;border:1px solid #1c5267;border-radius:16px;background:linear-gradient(110deg,#0c2538,#102d45);box-shadow:0 8px 26px #0003}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand .mark{width:44px;height:44px;flex:0 0 44px;border-radius:13px;background:linear-gradient(145deg,#19d8ee,#1765c5);color:#041522;box-shadow:0 0 20px #00d9ff45;animation:dshFloat 4s ease-in-out infinite}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand b{color:#eaffff;font-size:13px;letter-spacing:1.4px}
+ body:not(:has(#employeeDashboard.active)) .mobilebrand small{color:#7daabd;font-size:8px;letter-spacing:1.5px}
+ body:not(:has(#employeeDashboard.active)) .heading{padding:0 3px}
+ body:not(:has(#employeeDashboard.active)) .heading h2{color:#f0fcff;font-size:27px;letter-spacing:1.1px;text-transform:uppercase}
+ body:not(:has(#employeeDashboard.active)) .heading p{color:#8ca9bc;font-size:12px;margin-bottom:20px}
+ body:not(:has(#employeeDashboard.active)) .tabs{background:#0c1d2c;border:1px solid #174256;border-radius:13px}
+ body:not(:has(#employeeDashboard.active)) .tab{color:#8ba5b8;min-height:42px}
+ body:not(:has(#employeeDashboard.active)) .tab.active{background:linear-gradient(120deg,#073e4a,#123b5b);color:#9ff8ff;box-shadow:inset 0 0 0 1px #00dff055,0 0 16px #00dff018}
+ body:not(:has(#employeeDashboard.active)) .form{padding:0 2px}
+ body:not(:has(#employeeDashboard.active)) .field label{color:#b9d3e3}
+ body:not(:has(#employeeDashboard.active)) .field input,body:not(:has(#employeeDashboard.active)) .field select{min-height:49px;color:#e9f8ff;background:#071522;border:1px solid #1b4053;border-radius:12px;font-size:14px}
+ body:not(:has(#employeeDashboard.active)) .field input::placeholder{color:#587184}
+ body:not(:has(#employeeDashboard.active)) .field input:focus,body:not(:has(#employeeDashboard.active)) .field select:focus{border-color:#00dff0;box-shadow:0 0 0 3px #00dff01a,0 0 16px #00dff018}
+ body:not(:has(#employeeDashboard.active)) .btn{min-height:51px;background:linear-gradient(100deg,#006b85,#087fba 55%,#1765c5);border:1px solid #35eaff70;border-radius:13px;box-shadow:0 0 18px #00d9ff2c;color:#f4fdff}
+ body:not(:has(#employeeDashboard.active)) .linkrow{color:#8da7ba;font-size:11px}
+ body:not(:has(#employeeDashboard.active)) .link{color:#55e8f5;font-size:11px}
+ body:not(:has(#employeeDashboard.active)) .hint{color:#7896aa}
+ body:not(:has(#employeeDashboard.active)) .panelinner>.foot{color:#66849a!important;border-color:#173448!important;margin-top:22px!important}
+ body:not(:has(#employeeDashboard.active)) #googleLoginButton,body:not(:has(#employeeDashboard.active)) #googleRegisterButton{filter:drop-shadow(0 3px 10px #0005)}
+}
+@media(prefers-reduced-motion:reduce){
+ body:not(:has(#employeeDashboard.active)) .panel,body:not(:has(#employeeDashboard.active)) .mobilebrand .mark{animation:none!important}
+}
+
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
