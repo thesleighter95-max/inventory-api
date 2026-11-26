@@ -12043,36 +12043,6 @@ body:has(#mainApp > .dsh-embedded-panel.active) {
 <h3>${escapeHtml(fileTitle || "Dashboard")}</h3>
 <p>Export dari Dashboard KPI — ${stamp}</p>
 ${tableHtml}
-<script>
-/* Login button safety handler: keep the existing authentication flow unchanged. */
-(function () {
-  function bindLoginButton() {
-    var btn = document.getElementById("btnLogin");
-    if (!btn || btn.dataset.loginSafetyBound === "1") return;
-    btn.dataset.loginSafetyBound = "1";
-    btn.addEventListener("click", function (event) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      var errorEl = document.getElementById("loginError");
-      try {
-        if (typeof window.login !== "function") {
-          throw new Error("Fungsi login belum dimuat. Muat ulang halaman.");
-        }
-        window.login.call(window);
-      } catch (err) {
-        if (errorEl) errorEl.textContent = "Login gagal dijalankan: " + (err && err.message ? err.message : "Kesalahan tidak diketahui");
-        console.error("[DSH Login]", err);
-      }
-    }, true);
-  }
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bindLoginButton);
-  } else {
-    bindLoginButton();
-  }
-})();
-</script>
-
 </body>
 </html>`;
 
