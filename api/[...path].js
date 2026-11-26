@@ -456,21 +456,13 @@ async function driveApi(accessToken,url,options={}){
       const auth=String(req.headers.authorization||"");const token=auth.startsWith("Bearer ")?auth.slice(7):"";
       const session=verifyPdaSession(token);if(!session)return send({success:false,message:"Sesi PDA Mini tidak valid atau sudah berakhir. Silakan login kembali."},401);
       const accessToken=await getGoogleDriveAccessToken();
-      const folderKey="pda-mini-seasonal-drive-folder.json";
       const getSeasonalFolder=async()=>{
-        const raw=await vbFetch(folderKey);let folderId="";
-        if(raw){try{const saved=JSON.parse(raw);folderId=String(saved.folderId||"")}catch{throw new Error("Konfigurasi folder Seasonal rusak; penyimpanan dihentikan.");}}
-        if(folderId)return folderId;
         const q="name='DSH_SEASONAL_DISPLAY' and mimeType='application/vnd.google-apps.folder' and trashed=false";
         const found=await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files?"+new URLSearchParams({q,fields:"files(id,name)",pageSize:"10"}).toString());
-        if(found.files&&found.files.length)folderId=found.files[0].id;
-        else{
-          const created=await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files?fields=id,name",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"DSH_SEASONAL_DISPLAY",mimeType:"application/vnd.google-apps.folder",description:"DSH Seasonal Dashboard • Display photos"})});
-          folderId=created.id;
-        }
-        if(!folderId)throw new Error("Folder Google Drive Seasonal tidak berhasil dibuat.");
-        await vbPut(folderKey,JSON.stringify({folderId,folderName:"DSH_SEASONAL_DISPLAY",createdAt:new Date().toISOString()}));
-        return folderId;
+        if(found.files&&found.files.length)return found.files[0].id;
+        const created=await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files?fields=id,name",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"DSH_SEASONAL_DISPLAY",mimeType:"application/vnd.google-apps.folder",description:"DSH Seasonal Dashboard • Display photos"})});
+        if(!created.id)throw new Error("Folder Google Drive Seasonal tidak berhasil dibuat.");
+        return created.id;
       };
       const folderId=await getSeasonalFolder();
       const listFiles=async()=>{
