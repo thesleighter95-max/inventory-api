@@ -2418,6 +2418,9 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
   <div id="dshKpiPanel" class="panel-container dsh-embedded-panel">
     <iframe class="dsh-embedded-frame" src="/dashboard-kpi.html" title="Dashboard KPI Toko" loading="lazy"></iframe>
   </div>
+  <div id="dshSeasonalPanel" class="panel-container dsh-embedded-panel">
+    <iframe class="dsh-embedded-frame" src="/seasonal.html" title="Dashboard Seasonal" loading="lazy"></iframe>
+  </div>
   <div id="dshAstSummaryPanel" class="panel-container dsh-embedded-panel">
     <iframe class="dsh-embedded-frame" src="/summary-ast.html?view=summary" title="AST 2026 Summary" loading="lazy"></iframe>
   </div>
@@ -4477,7 +4480,11 @@ function renderUserNav(){
     '<div id="navWarehouseAdmin" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'warehouseAdmin\')"><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10l9-7 9 7v11H3zM3 10h18M9 21v-7h6v7"/></svg><span class="text-[9px] font-semibold">DS Warehouse</span></div>'+
      '<div id="navPromo" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'promo\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#dc2626;opacity:0;transform:scaleX(0);transition:all 0.3s;"></div><svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg><span class="text-[9px] font-semibold">Promo</span></div>'+
 '<div id="navPop" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'pop\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#38bdf8;opacity:0;transform:scaleX(0);transition:all .3s"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v16H4zM8 8h8v8H8zM8 2v4m8-4v4M8 18v4m8-4v4"/></svg><span class="text-[9px] font-semibold">POP</span></div>'+
-'<div id="navDashboard" class="nav-item flex-1 flex flex-col items-center cursor-pointer text-gray-500 py-1" onclick="switchMainTab(\'kpi\')"><div class="nav-indicator absolute top-0 w-12 h-1 rounded-b-full" style="background:#6a8cff;opacity:0;transform:scaleX(0);transition:all .3s;"></div><svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 01-2-2H5a2 2 0 01-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg><span class="text-[9px] font-semibold" style="color:#6a8cff;">Dashboard</span></div>'+
+'<div id="navDashboardGroup" class="nav-item ast-menu-parent flex items-center cursor-pointer text-gray-500 py-2" onclick="toggleDashboardSubmenu()"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h18v18H3z M8 8h8v8H8z M8 2v4m8-4v4"/></svg><span class="text-[10px] font-medium">Dashboard</span><svg class="ast-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg></div>'+
+    '<div id="navDashboardSubmenu" class="ast-submenu" style="display:none">' +
+    '<div id="navDashboardKpi" class="nav-item ast-subitem flex items-center cursor-pointer text-gray-500" onclick="switchMainTab(\'kpi\')"><span class="text-[9px] font-semibold">KPI</span></div>' +
+    '<div id="navDashboardSeasonal" class="nav-item ast-subitem flex items-center cursor-pointer text-gray-500" onclick="switchMainTab(\'seasonal\')"><span class="text-[9px] font-semibold">Seasonal</span></div>' +
+    '</div>' +
     '<div id="navAstGroup" class="nav-item ast-menu-parent flex items-center cursor-pointer text-gray-500 py-2" onclick="toggleAstSubmenu()"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 12h16M4 19h16"></path></svg><span class="text-[10px] font-medium">AST 2026</span><svg class="ast-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"></path></svg></div>' +
     '<div id="navAstSubmenu" class="ast-submenu" style="display:none">' +
     '<div id="navAstSummary" class="nav-item ast-subitem flex items-center cursor-pointer text-gray-500" onclick="switchMainTab(\'astSummary\')"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 12h16M4 19h16"></path></svg><span class="text-[9px] font-semibold">Summary</span></div>' +
@@ -5496,6 +5503,16 @@ function deleteBarcodeLog(barcode){
 function logout(){sessionClear();showHomePage()}
 function setMarquee(show){var m=$("marqueeBar");if(m)m.style.display=show?"flex":"none";}
 
+function toggleDashboardSubmenu(){
+  var box=document.getElementById("navDashboardSubmenu"),parent=document.getElementById("navDashboardGroup");
+  if(!box||!parent)return;
+  var opening=box.style.display==="none"||!box.style.display;
+  box.style.display=opening?"flex":"none";parent.classList.toggle("open",opening);
+}
+function openDashboardSubmenu(){
+  var box=document.getElementById("navDashboardSubmenu"),parent=document.getElementById("navDashboardGroup");
+  if(box)box.style.display="flex";if(parent)parent.classList.add("open");
+}
 function toggleAstSubmenu(){
   var box=document.getElementById("navAstSubmenu"),parent=document.getElementById("navAstGroup");
   if(!box||!parent)return;
@@ -5944,7 +5961,8 @@ function switchMainTab(tab){
   else if(tab==="cst"){$("cstPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navCst");setMarquee(false);cstInit();}
   else if(tab==="fotobblm"){$("fotoBblmPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navFotoBblm");setMarquee(false);fbLoadCategories();(function(){var _lb=document.getElementById("fbLoadBtn");if(_lb)_lb.style.display="block";var _ls=document.getElementById("fbListSection");if(_ls)_ls.style.display="none";var _fc=document.getElementById("fbListContainer");if(_fc)_fc.innerHTML="";var _ff=document.getElementById("fbFilterBar");if(_ff)_ff.innerHTML="";var _fs=document.getElementById("fbSelectBar");if(_fs)_fs.innerHTML="";var _cnt=document.getElementById("fbCount");if(_cnt)_cnt.textContent="0";})();}
   else if(tab==="absensi"){if(screen.width<768&&!isAdmin){switchMainTab('inventory');return;}document.body.classList.add("dsh-absensi-focus");$("absensiPanel").classList.add("active");/* Reset posisi halaman agar Absensi langsung tampil dari bagian atas. */window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;setTimeout(function(){window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;},80);document.body.classList.remove("light-mode");activateNav("navAbsensi");setMarquee(false);startAbsensiClock();(function(){var _td=(function(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();})();if(_absensiLastScanDate!==_td&&(new Date()).getHours()>=2){var _r=$("absensiResult");if(_r)_r.innerHTML="";var _b=$("absensiStatusBadge");if(_b)_b.style.display="none";var _m=$("absensiScanMsg");if(_m){_m.textContent="\u25BA scan ID karyawan untuk absensi";_m.style.color="#445577";}_absensiLastScanDate=_td;_absensiStatusMap={};}})();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();if(isAdmin&&$("absensiAdminSection"))$("absensiAdminSection").style.display="block";absensiRefreshEmployees();setTimeout(function(){var inp=$("absensiInput");if(inp)inp.focus();},200);}
-  else if(tab==="kpi"){$("dshKpiPanel").classList.add("active");document.body.classList.remove("light-mode");activateNav("navDashboard");setMarquee(false);}
+  else if(tab==="kpi"){$("dshKpiPanel").classList.add("active");document.body.classList.remove("light-mode");openDashboardSubmenu();activateNav("navDashboardGroup");activateNav("navDashboardKpi");setMarquee(false);}
+  else if(tab==="seasonal"){$("dshSeasonalPanel").classList.add("active");document.body.classList.remove("light-mode");openDashboardSubmenu();activateNav("navDashboardGroup");activateNav("navDashboardSeasonal");setMarquee(false);}
   else if(tab==="astSummary"){$("dshAstSummaryPanel").classList.add("active");document.body.classList.remove("light-mode");openAstSubmenu();activateNav("navAstGroup");activateNav("navAstSummary");setMarquee(false);}
   else if(tab==="astSector"){$("dshAstSectorPanel").classList.add("active");document.body.classList.remove("light-mode");openAstSubmenu();activateNav("navAstGroup");activateNav("navAstSector");setMarquee(false);}
   else if(tab==="astWarehouse"){$("dshAstWarehousePanel").classList.add("active");document.body.classList.remove("light-mode");openAstSubmenu();activateNav("navAstGroup");activateNav("navAstWarehouse");setMarquee(false);}
