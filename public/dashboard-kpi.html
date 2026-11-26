@@ -1476,6 +1476,25 @@ html, body { width:100%; max-width:100%; overflow-x:hidden !important; }
   #sales-achievement-canvas { height:260px !important; max-height:260px !important; }
 }
 </style>
+
+  <style id="hide-kpi-marked-ui-v1">
+    /* Sembunyikan hanya keterangan dekoratif yang ditandai pada Dashboard KPI. */
+    .floating-header .header-content > div:first-child > .mb-2 {
+      display: none !important;
+    }
+    .floating-header [data-template-id="dashboard-subtitle"] {
+      display: none !important;
+    }
+    /* Tombol disembunyikan dari tampilan; input dan handler upload tetap dipertahankan. */
+    .floating-header #upload-button {
+      display: none !important;
+    }
+    .sales-achievement-head > div:first-child > p,
+    #sales-achievement-meta {
+      display: none !important;
+    }
+  </style>
+
 </head>
  <body data-template-id="__page-root">
   <div class="dashboard-shell">
