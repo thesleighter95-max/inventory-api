@@ -59,6 +59,7 @@
 .sorted-th{color:var(--blue)!important;background:#edf4ff!important}
 .sortable-th::after{content:""}
 .detail-filters input,.detail-filters select{width:100%;min-width:0;border:1px solid var(--line);background:#fff;border-radius:9px;padding:11px 12px;font:12px 'DM Sans';color:var(--ink);outline:none}
+#warehouseCategory[multiple]{min-height:112px;max-height:160px;padding:6px}#warehouseCategory[multiple] option{padding:7px 9px;border-radius:5px}
 .detail-filters input:focus,.detail-filters select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #326cf418}
 .detail-results{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:10px;margin:8px 2px 10px}
 .detail-pagination{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:12px;font-size:11px;color:var(--muted)}
@@ -384,7 +385,7 @@
    </div>
    <div class="detail-filters">
     <input id="warehouseSearch" type="search" placeholder="Cari kode produk, nama artikel, barcode, atau alamat..." disabled>
-    <select id="warehouseCategory" disabled><option value="">Semua Category</option></select>
+    <select id="warehouseCategory" multiple size="4" disabled aria-label="Pilih satu atau beberapa category"><option value="">Semua Category</option></select>
     <button class="btn" id="warehouseReset" type="button">Reset</button>
    </div>
    <div style="display:flex;justify-content:center;margin:12px 0"><button class="btn" id="warehouseShowData" type="button">Tampilkan Data</button></div>
@@ -614,12 +615,12 @@ const WAREHOUSE_STATE_KEY='pda_mini_warehouse_ui_v1';
 let warehouseRestoreState=null,warehouseLastProductCode='';
 try{warehouseRestoreState=JSON.parse(localStorage.getItem(WAREHOUSE_STATE_KEY)||'null')}catch(e){warehouseRestoreState=null}
 function saveWarehouseUiState(){
- try{localStorage.setItem(WAREHOUSE_STATE_KEY,JSON.stringify({view:'warehouse',search:$('warehouseSearch')?.value||'',category:$('warehouseCategory')?.value||'',page:warehousePage,dataRequested:warehouseDataRequested,lastProductCode:warehouseLastProductCode,savedAt:Date.now()}))}catch(e){console.warn('Posisi Warehouse tidak dapat disimpan:',e)}
+ try{localStorage.setItem(WAREHOUSE_STATE_KEY,JSON.stringify({view:'warehouse',search:$('warehouseSearch')?.value||'',categories:[...($('warehouseCategory')?.selectedOptions||[])].map(o=>o.value),page:warehousePage,dataRequested:warehouseDataRequested,lastProductCode:warehouseLastProductCode,savedAt:Date.now()}))}catch(e){console.warn('Posisi Warehouse tidak dapat disimpan:',e)}
 }
 function restoreWarehouseUiState(){
  if(!warehouseRestoreState)return;
  $('warehouseSearch').value=String(warehouseRestoreState.search||'');
- $('warehouseCategory').value=String(warehouseRestoreState.category||'');
+ [...$('warehouseCategory').options].forEach(o=>o.selected=(warehouseRestoreState.categories||[warehouseRestoreState.category]).includes(o.value));
  warehouseLastProductCode=String(warehouseRestoreState.lastProductCode||'');
  warehousePage=Math.max(1,Number(warehouseRestoreState.page)||1);
 }
@@ -639,8 +640,8 @@ async function deleteWarehousePhoto(productCode){const token=warehouseSessionTok
  const WAREHOUSE_PAGE_SIZE=10;
 function warehouseSessionToken(){try{const raw=localStorage.getItem('inv_sess_v1');if(!raw)return '';const session=JSON.parse(decodeURIComponent(escape(atob(raw))));return session&&session.exp>Date.now()?String(session.t||''):''}catch(e){return ''}}
 function updateWarehousePhotoProgress(){
- const cat=$('warehouseCategory')?.value||'';
- const scoped=warehouseProducts.filter(p=>!cat||p.cat===cat);
+ const cats=[...($('warehouseCategory')?.selectedOptions||[])].map(o=>o.value).filter(Boolean);
+ const scoped=warehouseProducts.filter(p=>!cats.length||cats.includes(p.cat));
  const total=scoped.length;
  const photographed=scoped.filter(p=>warehousePhotos[p.code]&&warehousePhotos[p.code].viewUrl).length;
  const unphotographed=total-photographed;
@@ -718,11 +719,11 @@ async function renderWarehouseOnly(){
 }
 function getWarehouseFilteredRows(){
  const q=$('warehouseSearch').value.trim().toLocaleLowerCase('id-ID');
- const cat=$('warehouseCategory').value;
+ const cats=[...$('warehouseCategory').selectedOptions].map(o=>o.value).filter(Boolean);
  return warehouseProducts.filter(p=>{
   const hasPhoto=!!(warehousePhotos[p.code]&&warehousePhotos[p.code].viewUrl);
   const photoMatch=warehousePhotoFilter==='all'||(warehousePhotoFilter==='photographed'&&hasPhoto)||(warehousePhotoFilter==='unphotographed'&&!hasPhoto);
-  return photoMatch&&(!cat||p.cat===cat)&&[p.code,p.name,p.barcode,p.cat,p.category,...p.addresses].join(' ').toLocaleLowerCase('id-ID').includes(q);
+  return photoMatch&&(!cats.length||cats.includes(p.cat))&&[p.code,p.name,p.barcode,p.cat,p.category,...p.addresses].join(' ').toLocaleLowerCase('id-ID').includes(q);
  });
 }
 function exportWarehouseExcel(){
@@ -743,7 +744,7 @@ function exportWarehouseExcel(){
 }
 function renderWarehouseRows(){
  const q=$('warehouseSearch').value.trim().toLocaleLowerCase('id-ID');
- const cat=$('warehouseCategory').value;
+ const cats=[...$('warehouseCategory').selectedOptions].map(o=>o.value).filter(Boolean);
  const rows=getWarehouseFilteredRows();
  const pages=Math.max(1,Math.ceil(rows.length/WAREHOUSE_PAGE_SIZE));
  warehousePage=Math.min(Math.max(1,warehousePage),pages);
@@ -782,7 +783,7 @@ $('warehouseShowData').addEventListener('click',()=>requestWarehouseData(false))
 $('refreshWarehouse').addEventListener('click',()=>requestWarehouseData(true));
 $('warehouseSearch').addEventListener('input',()=>{warehousePage=1;renderWarehouseRows();saveWarehouseUiState()});
 $('warehouseCategory').addEventListener('change',()=>{warehousePage=1;updateWarehousePhotoProgress();renderWarehouseRows();saveWarehouseUiState()});
-$('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';$('warehouseCategory').value='';warehousePhotoFilter='all';warehousePage=1;warehouseLastProductCode='';updateWarehousePhotoProgress();if(warehouseDataRequested)renderWarehouseRows();saveWarehouseUiState()});
+$('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';[...$('warehouseCategory').options].forEach(o=>o.selected=false);warehousePhotoFilter='all';warehousePage=1;warehouseLastProductCode='';updateWarehousePhotoProgress();if(warehouseDataRequested)renderWarehouseRows();saveWarehouseUiState()});
 $('warehouseShowPhotographed').addEventListener('click',()=>selectWarehousePhotoFilter('photographed'));
 $('warehouseShowUnphotographed').addEventListener('click',()=>selectWarehousePhotoFilter('unphotographed'));
 $('warehousePrev').addEventListener('click',()=>{warehousePage--;renderWarehouseRows();saveWarehouseUiState()});
