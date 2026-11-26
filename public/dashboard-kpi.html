@@ -3196,6 +3196,20 @@ window.exportDashboardTable = async function exportDashboardTable(tableKey, file
             c[i].style.setProperty("max-width", "none", "important");
           }
         }
+
+        /* Kolom ProdCode dipersempit tanpa menghapus teks dari DOM,
+           sehingga fungsi ekspor masih dapat membaca nilai aslinya. */
+        var codeIndex = isOOS ? 1 : 2;
+        if (c[codeIndex]) {
+          c[codeIndex].style.setProperty("width", "0px", "important");
+          c[codeIndex].style.setProperty("min-width", "0px", "important");
+          c[codeIndex].style.setProperty("max-width", "0px", "important");
+          c[codeIndex].style.setProperty("padding", "0", "important");
+          c[codeIndex].style.setProperty("font-size", "0", "important");
+          c[codeIndex].style.setProperty("line-height", "0", "important");
+          c[codeIndex].style.setProperty("color", "transparent", "important");
+          c[codeIndex].style.setProperty("overflow", "hidden", "important");
+        }
       });
     });
   }
