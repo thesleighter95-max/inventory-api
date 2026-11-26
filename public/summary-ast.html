@@ -288,6 +288,18 @@
 /* Four warehouse KPI cards: compact 2x2 layout on phones */
 #warehouseView .sector-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:700px){#warehouseView .sector-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#warehouseView .sector-kpi{min-width:0;padding:10px}}
+
+
+/* Warehouse category multi-select controls: balanced on desktop and mobile */
+#warehouseView .detail-filters{grid-template-columns:minmax(0,1fr) minmax(190px,260px) 88px;align-items:stretch;}
+#warehouseView #warehouseCategory{min-height:112px;max-height:160px;}
+#warehouseView #warehouseReset{width:88px;min-width:88px;flex:none;justify-self:stretch;padding:10px 8px;}
+@media(max-width:700px){
+ #warehouseView .detail-filters{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:8px!important;}
+ #warehouseView .detail-filters input{grid-column:1/-1!important;}
+ #warehouseView .detail-filters #warehouseCategory{grid-column:1!important;min-width:0;width:100%;min-height:116px;font-size:12px;}
+ #warehouseView .detail-filters #warehouseReset{grid-column:2!important;align-self:stretch;width:100%;min-width:0;max-width:none;flex:none;padding:8px;font-size:12px;}
+}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style id="ast-clean-layout-v1">
@@ -618,9 +630,11 @@ function saveWarehouseUiState(){
  try{localStorage.setItem(WAREHOUSE_STATE_KEY,JSON.stringify({view:'warehouse',search:$('warehouseSearch')?.value||'',categories:[...($('warehouseCategory')?.selectedOptions||[])].map(o=>o.value),page:warehousePage,dataRequested:warehouseDataRequested,lastProductCode:warehouseLastProductCode,savedAt:Date.now()}))}catch(e){console.warn('Posisi Warehouse tidak dapat disimpan:',e)}
 }
 function restoreWarehouseUiState(){
- if(!warehouseRestoreState)return;
+ if(!warehouseRestoreState){const allOption=$('warehouseCategory').querySelector('option[value=""]');if(allOption)allOption.selected=true;return;}
  $('warehouseSearch').value=String(warehouseRestoreState.search||'');
- [...$('warehouseCategory').options].forEach(o=>o.selected=(warehouseRestoreState.categories||[warehouseRestoreState.category]).includes(o.value));
+ const savedCategories=warehouseRestoreState.categories||[warehouseRestoreState.category];
+ [...$('warehouseCategory').options].forEach(o=>o.selected=savedCategories.includes(o.value));
+ normalizeWarehouseCategorySelection([...$('warehouseCategory').selectedOptions].map(o=>o.value).find(v=>v==='')||'');
  warehouseLastProductCode=String(warehouseRestoreState.lastProductCode||'');
  warehousePage=Math.max(1,Number(warehouseRestoreState.page)||1);
 }
@@ -782,8 +796,9 @@ $('exportWarehouseExcel').addEventListener('click',exportWarehouseExcel);
 $('warehouseShowData').addEventListener('click',()=>requestWarehouseData(false));
 $('refreshWarehouse').addEventListener('click',()=>requestWarehouseData(true));
 $('warehouseSearch').addEventListener('input',()=>{warehousePage=1;renderWarehouseRows();saveWarehouseUiState()});
-$('warehouseCategory').addEventListener('change',()=>{warehousePage=1;updateWarehousePhotoProgress();renderWarehouseRows();saveWarehouseUiState()});
-$('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';[...$('warehouseCategory').options].forEach(o=>o.selected=false);warehousePhotoFilter='all';warehousePage=1;warehouseLastProductCode='';updateWarehousePhotoProgress();if(warehouseDataRequested)renderWarehouseRows();saveWarehouseUiState()});
+function normalizeWarehouseCategorySelection(changedValue){const select=$('warehouseCategory');const selected=[...select.selectedOptions];if(changedValue===''){[...select.options].forEach(o=>o.selected=o.value==='');}else{const allOption=select.querySelector('option[value=""]');if(allOption)allOption.selected=false;}if(![...select.selectedOptions].some(o=>o.value)){const allOption=select.querySelector('option[value=""]');if(allOption)allOption.selected=true;}}
+$('warehouseCategory').addEventListener('change',e=>{normalizeWarehouseCategorySelection(e.target.value);warehousePage=1;updateWarehousePhotoProgress();renderWarehouseRows();saveWarehouseUiState()});
+$('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';[...$('warehouseCategory').options].forEach(o=>o.selected=o.value==='');warehousePhotoFilter='all';warehousePage=1;warehouseLastProductCode='';updateWarehousePhotoProgress();if(warehouseDataRequested)renderWarehouseRows();saveWarehouseUiState()});
 $('warehouseShowPhotographed').addEventListener('click',()=>selectWarehousePhotoFilter('photographed'));
 $('warehouseShowUnphotographed').addEventListener('click',()=>selectWarehousePhotoFilter('unphotographed'));
 $('warehousePrev').addEventListener('click',()=>{warehousePage--;renderWarehouseRows();saveWarehouseUiState()});
