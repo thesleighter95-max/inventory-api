@@ -1607,7 +1607,7 @@ body:has(#mainApp > .dsh-embedded-panel.active) { padding:0 !important; }
       <div class="home-app-name">DSH (Digital System Hybrid)</div>
       <div class="home-app-sub">Manajemen stok &amp; harga terpadu</div>
     </div>
-    <button type="button" id="homeLoginBtn" class="home-login-btn" onclick="showLoginPage();return false;" style="transform:translateY(0);opacity:1;position:relative;overflow:hidden;z-index:1000;pointer-events:auto;touch-action:manipulation;">
+    <button type="button" id="homeLoginBtn" class="home-login-btn" onclick="if(typeof showLoginPage==='function'){showLoginPage();}else{var hp=document.getElementById('homePage');var lp=document.getElementById('loginPage');if(hp)hp.style.display='none';if(lp)lp.classList.remove('hidden');}return false;" style="transform:translateY(0);opacity:1;position:relative;overflow:hidden;z-index:1000;pointer-events:auto;touch-action:manipulation;">
       <div class="home-login-btn-shimmer" id="btnShimmer" style="animation:none;"></div>
       <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
       Masuk
