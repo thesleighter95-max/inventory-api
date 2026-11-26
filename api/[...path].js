@@ -451,6 +451,74 @@ async function driveApi(accessToken,url,options={}){
       return send({success:true,message:"Pemulihan status dari foto berhasil.",photoProductCount:productCodes.length,restoredCount:restored,totalDisplayed:Object.values(statuses).filter(item=>item&&item.displayed===true).length,storage:"netlify-blob"});
     }
 
+    // Seasonal photos use an isolated Google Drive folder, separate from Warehouse Only.
+    if(path==="/seasonal-photos"&&(method==="GET"||method==="POST"||method==="DELETE")){
+      const auth=String(req.headers.authorization||"");const token=auth.startsWith("Bearer ")?auth.slice(7):"";
+      const session=verifyPdaSession(token);if(!session)return send({success:false,message:"Sesi PDA Mini tidak valid atau sudah berakhir. Silakan login kembali."},401);
+      const accessToken=await getGoogleDriveAccessToken();
+      const folderKey="pda-mini-seasonal-drive-folder.json";
+      const getSeasonalFolder=async()=>{
+        const raw=await vbFetch(folderKey);let folderId="";
+        if(raw){try{const saved=JSON.parse(raw);folderId=String(saved.folderId||"")}catch{throw new Error("Konfigurasi folder Seasonal rusak; penyimpanan dihentikan.");}}
+        if(folderId)return folderId;
+        const q="name='DSH_SEASONAL_DISPLAY' and mimeType='application/vnd.google-apps.folder' and trashed=false";
+        const found=await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files?"+new URLSearchParams({q,fields:"files(id,name)",pageSize:"10"}).toString());
+        if(found.files&&found.files.length)folderId=found.files[0].id;
+        else{
+          const created=await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files?fields=id,name",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"DSH_SEASONAL_DISPLAY",mimeType:"application/vnd.google-apps.folder",description:"DSH Seasonal Dashboard • Display photos"})});
+          folderId=created.id;
+        }
+        if(!folderId)throw new Error("Folder Google Drive Seasonal tidak berhasil dibuat.");
+        await vbPut(folderKey,JSON.stringify({folderId,folderName:"DSH_SEASONAL_DISPLAY",createdAt:new Date().toISOString()}));
+        return folderId;
+      };
+      const folderId=await getSeasonalFolder();
+      const listFiles=async()=>{
+        const files=[];let pageToken="";
+        do{
+          const params=new URLSearchParams({q:"'"+folderId+"' in parents and trashed=false",fields:"nextPageToken,files(id,name,mimeType,appProperties,modifiedTime)",pageSize:"100"});
+          if(pageToken)params.set("pageToken",pageToken);
+          const page=await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files?"+params.toString());
+          files.push(...(page.files||[]));pageToken=page.nextPageToken||"";
+        }while(pageToken);
+        return files;
+      };
+      const codeOf=file=>String(file&&file.appProperties&&file.appProperties.productCode||"").trim();
+      if(method==="GET"){
+        const photos={},files=await listFiles();
+        for(const file of files){const code=codeOf(file);if(!code)continue;photos[code]={fileId:file.id,fileName:file.name||"",viewUrl:"https://drive.google.com/uc?export=view&id="+file.id,thumbnailUrl:"https://drive.google.com/thumbnail?id="+file.id+"&sz=w320",updatedAt:file.modifiedTime||""};}
+        return send({success:true,photos,folderName:"DSH_SEASONAL_DISPLAY",storage:"google-drive"});
+      }
+      const productCode=String(body.productCode||"").trim();
+      if(!productCode)return send({success:false,message:"Product Code wajib diisi."},400);
+      const files=await listFiles(),safeCode=productCode.replace(/[^a-zA-Z0-9._-]/g,"_");
+      const previous=files.find(f=>codeOf(f)===productCode)||files.find(f=>String(f.name||"").startsWith("SEASONAL_"+safeCode+"."));
+      if(method==="DELETE"){
+        if(!previous)return send({success:false,message:"Foto Seasonal untuk artikel ini tidak ditemukan."},404);
+        await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(previous.id),{method:"DELETE"});
+        return send({success:true,productCode,deleted:true,storage:"google-drive"});
+      }
+      const mimeType=String(body.mimeType||"").toLowerCase(),imageBase64=String(body.imageBase64||"").replace(/^data:[^;]+;base64,/,"");
+      if(!["image/jpeg","image/png","image/webp"].includes(mimeType))return send({success:false,message:"Format foto harus JPG, PNG, atau WEBP."},400);
+      if(!imageBase64||imageBase64.length>4_000_000)return send({success:false,message:"Ukuran foto terlalu besar. Maksimal sekitar 3 MB setelah kompresi."},413);
+      const bytes=Buffer.from(imageBase64,"base64");if(!bytes.length||bytes.length>3_000_000)return send({success:false,message:"Ukuran foto maksimal 3 MB."},413);
+      const extension=mimeType==="image/png"?"png":mimeType==="image/webp"?"webp":"jpg",fileName="SEASONAL_"+safeCode+"."+extension;
+      const metadata={name:fileName,mimeType,description:"DSH Seasonal Display • Product Code: "+productCode,appProperties:{productCode,source:"DSH_SEASONAL_DISPLAY"}};
+      const boundary="pdaSeasonalDrive"+Date.now()+Math.random().toString(16).slice(2);
+      const prefix=Buffer.from("--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+JSON.stringify(metadata)+"\r\n--"+boundary+"\r\nContent-Type: "+mimeType+"\r\n\r\n"),suffix=Buffer.from("\r\n--"+boundary+"--");
+      let uploaded;
+      if(previous&&previous.id){
+        uploaded=await driveApi(accessToken,"https://www.googleapis.com/upload/drive/v3/files/"+encodeURIComponent(previous.id)+"?uploadType=multipart&fields=id,name,mimeType",{method:"PATCH",headers:{"Content-Type":"multipart/related; boundary="+boundary},body:Buffer.concat([prefix,bytes,suffix])});
+      }else{
+        metadata.parents=[folderId];
+        const createPrefix=Buffer.from("--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+JSON.stringify(metadata)+"\r\n--"+boundary+"\r\nContent-Type: "+mimeType+"\r\n\r\n");
+        uploaded=await driveApi(accessToken,"https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType",{method:"POST",headers:{"Content-Type":"multipart/related; boundary="+boundary},body:Buffer.concat([createPrefix,bytes,suffix])});
+        await driveApi(accessToken,"https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(uploaded.id)+"/permissions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"anyone",role:"reader"})});
+      }
+      const photo={fileId:uploaded.id,fileName:uploaded.name||fileName,viewUrl:"https://drive.google.com/uc?export=view&id="+uploaded.id,thumbnailUrl:"https://drive.google.com/thumbnail?id="+uploaded.id+"&sz=w320",updatedAt:new Date().toISOString(),updatedBy:String(session.name||session.sub||"User")};
+      return send({success:true,productCode,photo,storage:"google-drive",folderName:"DSH_SEASONAL_DISPLAY"});
+    }
+
     // Warehouse photo metadata is read from Google Drive itself, avoiding shared-index write races.
     if(path==="/warehouse-photos"&&(method==="GET"||method==="POST"||method==="DELETE")){
       const auth=String(req.headers.authorization||"");const token=auth.startsWith("Bearer ")?auth.slice(7):"";
