@@ -1,17 +1,22 @@
 <!doctype html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dashboard Seasonal</title>
+<html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DSH · Seasonal</title>
 <style>
-*{box-sizing:border-box}body{margin:0;padding:22px;font-family:Arial,sans-serif;background:#f4f7fb;color:#183153}
-.wrap{max-width:1100px;margin:auto}.hero{padding:26px;border-radius:18px;background:linear-gradient(135deg,#fff,#eaf2ff);border:1px solid #dce7f5}
-.kicker{font-size:11px;letter-spacing:1.8px;font-weight:800;color:#4774b8}h1{margin:9px 0;color:#183b70;font-size:clamp(24px,4vw,34px)}p{color:#65758b;line-height:1.6}
-.card{margin-top:16px;padding:22px;background:#fff;border:1px solid #e1e8f0;border-radius:15px}.status{display:inline-block;margin-top:8px;padding:7px 11px;border-radius:30px;background:#fff4e5;color:#a65a00;font-size:11px;font-weight:800}
-</style>
-</head>
-<body><main class="wrap">
-<section class="hero"><div class="kicker">DSH · PERFORMANCE DASHBOARD</div><h1>Seasonal Dashboard</h1><p>Menunggu Vendor DSH beraksi</p><span class="status"></span></section>
-<section class="card"><h2>Seasonal Overview</h2><p></p></section>
-</main></body></html>
+:root{--ink:#172b4d;--muted:#64748b;--line:#e2e8f0;--bg:#f4f7fb}*{box-sizing:border-box}body{margin:0;padding:18px;font-family:Arial,sans-serif;color:var(--ink);background:var(--bg)}.wrap{max-width:1500px;margin:auto}.hero{padding:22px 24px;border:1px solid #dce7f5;border-radius:18px;background:linear-gradient(135deg,#fff,#eaf3ff);box-shadow:0 8px 24px #19417812}.kicker{font-size:11px;letter-spacing:1.7px;font-weight:800;color:#3971c8}h1{margin:8px 0 5px;font-size:clamp(24px,4vw,34px);color:#173b70}.sub{margin:0;color:var(--muted);line-height:1.5}.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:16px 0}.search{flex:1 1 260px;min-width:0;padding:13px 15px;border:1px solid #d8e1ec;border-radius:12px;background:white;font-size:14px}.search:focus{outline:2px solid #bfdbfe}button{border:0;border-radius:12px;padding:13px 18px;background:linear-gradient(135deg,#2563eb,#0ea5e9);color:white;font-weight:700;font-size:14px;cursor:pointer}button:disabled{opacity:.6;cursor:wait}.meta{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;color:var(--muted);font-size:12px}.pill{background:white;border:1px solid var(--line);padding:7px 10px;border-radius:30px}.panel{background:white;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 5px 18px #14284b0b}.panel-head{padding:15px 17px;border-bottom:1px solid var(--line);font-weight:700;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.table-wrap{width:100%;overflow:auto;max-height:72vh}table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:13px;white-space:nowrap}th,td{padding:11px 13px;border-right:1px solid #edf1f6;border-bottom:1px solid #edf1f6;text-align:left;max-width:360px;overflow:hidden;text-overflow:ellipsis}th{position:sticky;top:0;z-index:2;background:#edf4ff;color:#214575;font-weight:800}td{background:white;color:#26364d}tbody tr:nth-child(even) td{background:#f9fbfe}tbody tr:hover td{background:#eef6ff}.rownum{position:sticky;left:0;z-index:1;background:#f1f5f9!important;color:#64748b;text-align:center;min-width:48px}th.rownum{z-index:3}.state{padding:28px 18px;text-align:center;color:var(--muted);line-height:1.6}.state.error{color:#b42318}@media(max-width:640px){body{padding:10px}.hero{padding:18px}.toolbar{margin:12px 0}.table-wrap{max-height:70vh}th,td{padding:10px;font-size:12px;max-width:230px}}
+</style></head><body><main class="wrap">
+<section class="hero"><div class="kicker">DSH · DATA VIEW</div><h1>Seasonal</h1><p class="sub">Tampilan data langsung dari tab Seasonal pada Google Spreadsheet. Susunan kolom mengikuti spreadsheet sumber.</p></section>
+<div class="toolbar"><input id="search" class="search" type="search" placeholder="Cari semua kolom..."><button id="refresh" type="button">↻ Muat ulang data</button></div>
+<div class="meta"><span class="pill" id="status">Menghubungkan ke Google Spreadsheet...</span><span class="pill" id="count">0 baris</span></div>
+<section class="panel"><div class="panel-head"><span>Data Seasonal</span><span id="shown">Menunggu data</span></div><div class="table-wrap" id="table-wrap"><div class="state">Mengambil data dari spreadsheet...</div></div></section>
+</main><script>
+(function(){
+'use strict';
+const CSV_URL='https://docs.google.com/spreadsheets/d/13ZA7PhaSONe_4f437fBZVTmeNolJvislj_hTBycYTrY/gviz/tq?tqx=out:csv&gid=455253473';
+const statusEl=document.getElementById('status'),countEl=document.getElementById('count'),shownEl=document.getElementById('shown'),tableWrap=document.getElementById('table-wrap'),searchEl=document.getElementById('search'),refreshBtn=document.getElementById('refresh');
+let rows=[];
+function parseCSV(s){const out=[];let row=[],field='',quoted=false;for(let i=0;i<s.length;i++){const c=s[i],n=s[i+1];if(quoted){if(c==='"'&&n==='"'){field+='"';i++;}else if(c==='"')quoted=false;else field+=c;}else if(c==='"')quoted=true;else if(c===','){row.push(field);field='';}else if(c==='\n'){row.push(field.replace(/\r$/,''));out.push(row);row=[];field='';}else field+=c;}if(field.length||row.length){row.push(field.replace(/\r$/,''));out.push(row);}return out.filter(r=>r.some(v=>String(v).trim()!==''));}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function render(){const q=searchEl.value.trim().toLocaleLowerCase('id'),filtered=rows.slice(1).map((r,i)=>({r,i})).filter(x=>!q||x.r.some(v=>String(v??'').toLocaleLowerCase('id').includes(q)));if(!rows.length){tableWrap.innerHTML='<div class="state">Belum ada data.</div>';shownEl.textContent='0 data';return;}const heads=rows[0];let h='<table><thead><tr><th class="rownum">#</th>'+heads.map(v=>'<th>'+esc(v)+'</th>').join('')+'</tr></thead><tbody>';for(const x of filtered){h+='<tr><td class="rownum">'+(x.i+2)+'</td>';for(let c=0;c<heads.length;c++)h+='<td title="'+esc(x.r[c])+'">'+esc(x.r[c])+'</td>';h+='</tr>';}tableWrap.innerHTML=h+'</tbody></table>';shownEl.textContent='Menampilkan '+filtered.length+' dari '+(rows.length-1)+' baris';countEl.textContent=(rows.length-1)+' baris spreadsheet';}
+async function load(){refreshBtn.disabled=true;statusEl.textContent='Mengambil data...';tableWrap.innerHTML='<div class="state">Mengambil data dari Google Spreadsheet...</div>';try{const res=await fetch(CSV_URL,{cache:'no-store'});if(!res.ok)throw Error('Google Spreadsheet merespons HTTP '+res.status);const csv=await res.text();if(/^\s*<(!doctype|html)/i.test(csv))throw Error('Spreadsheet tidak mengirim CSV. Pastikan tab Seasonal dapat dibaca melalui link.');const data=parseCSV(csv);if(!data.length)throw Error('Tab Seasonal kosong atau tidak dapat dibaca.');rows=data;statusEl.textContent='Terhubung · '+new Date().toLocaleTimeString('id-ID');render();}catch(e){statusEl.textContent='Gagal memuat data';tableWrap.innerHTML='<div class="state error">'+esc(e.message)+'<br>Periksa izin akses tab Seasonal.</div>';shownEl.textContent='Data belum tersedia';}finally{refreshBtn.disabled=false;}}
+searchEl.addEventListener('input',render);refreshBtn.addEventListener('click',load);load();
+})();
+</script></body></html>
