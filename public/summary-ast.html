@@ -503,6 +503,7 @@ function switchView(view){
   $('warehouseResultCount').textContent='Data belum dimuat';
  }
  if(view==='warehouse'&&warehouseDataRequested&&astLoaded&&!warehouseProducts.length)renderWarehouseOnly();
+ if(view==='warehouse'&&warehouseProducts.length&&$('warehouseCategory').options.length>1){restoreWarehouseUiState();updateWarehousePhotoProgress();renderWarehouseRows();}
 }
 function astColumn(keys){
  return astHeaders.find(h=>keys.some(k=>norm(h)===norm(k)||norm(h).includes(norm(k))))||'';
@@ -656,9 +657,10 @@ const WAREHOUSE_STATE_KEY='pda_mini_warehouse_ui_v1';
 let warehouseRestoreState=null,warehouseLastProductCode='';
 try{warehouseRestoreState=JSON.parse(localStorage.getItem(WAREHOUSE_STATE_KEY)||'null')}catch(e){warehouseRestoreState=null}
 function saveWarehouseUiState(){
- try{localStorage.setItem(WAREHOUSE_STATE_KEY,JSON.stringify({view:'warehouse',search:$('warehouseSearch')?.value||'',categories:[...($('warehouseCategory')?.selectedOptions||[])].map(o=>o.value),page:warehousePage,dataRequested:warehouseDataRequested,lastProductCode:warehouseLastProductCode,savedAt:Date.now()}))}catch(e){console.warn('Posisi Warehouse tidak dapat disimpan:',e)}
+ try{warehouseRestoreState={view:'warehouse',search:$('warehouseSearch')?.value||'',categories:[...($('warehouseCategory')?.selectedOptions||[])].map(o=>o.value),page:warehousePage,dataRequested:warehouseDataRequested,lastProductCode:warehouseLastProductCode,savedAt:Date.now()};localStorage.setItem(WAREHOUSE_STATE_KEY,JSON.stringify(warehouseRestoreState))}catch(e){console.warn('Posisi Warehouse tidak dapat disimpan:',e)}
 }
 function restoreWarehouseUiState(){
+ try{warehouseRestoreState=JSON.parse(localStorage.getItem(WAREHOUSE_STATE_KEY)||'null')}catch(e){warehouseRestoreState=null}
  if(!warehouseRestoreState){const allOption=$('warehouseCategory').querySelector('option[value=""]');if(allOption)allOption.selected=true;return;}
  $('warehouseSearch').value=String(warehouseRestoreState.search||'');
  const savedCategories=warehouseRestoreState.categories||[warehouseRestoreState.category];
@@ -882,7 +884,7 @@ $('toggleWarehouseSummary').addEventListener('click',async()=>{
 });
 $('warehouseSearch').addEventListener('input',()=>{warehousePage=1;renderWarehouseRows();saveWarehouseUiState()});
 function normalizeWarehouseCategorySelection(){const select=$('warehouseCategory');const selected=[...select.selectedOptions];const allOption=select.querySelector('option[value=""]');const specificSelected=selected.some(o=>o.value!=='');if(specificSelected){if(allOption)allOption.selected=false;}else{[...select.options].forEach(o=>o.selected=o.value==='');}}
-$('warehouseCategory').addEventListener('change',()=>{normalizeWarehouseCategorySelection();warehousePage=1;updateWarehousePhotoProgress();renderWarehouseRows();saveWarehouseUiState()});
+$('warehouseCategory').addEventListener('change',()=>{normalizeWarehouseCategorySelection();warehousePage=1;warehouseLastProductCode='';updateWarehousePhotoProgress();renderWarehouseRows();saveWarehouseUiState()});
 /* Desktop: klik opsi kategori untuk toggle tanpa Ctrl, seperti checkbox. */
 $('warehouseCategory').addEventListener('mousedown',event=>{
  if(window.matchMedia('(max-width:700px)').matches)return;
