@@ -411,7 +411,11 @@
  </section>
  <section id="warehouseView" class="view-panel" style="display:none">
   <section class="panel summary-panel">
-   <div class="panel-head"><div><h3>Warehouse Only</h3><small id="warehouseHint" style="display:none"></small></div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="btn export-excel" id="exportWarehouseExcel" type="button" disabled>⬇ Export Excel</button><button class="btn" id="refreshWarehouse" type="button">↻ Refresh AST</button></div></div>
+   <div class="panel-head"><div><h3>Warehouse Only</h3><small id="warehouseHint" style="display:none"></small></div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="btn" id="toggleWarehouseSummary" type="button" style="font-size:11px;padding:7px 10px">▤ Summary</button><button class="btn export-excel" id="exportWarehouseExcel" type="button" disabled>⬇ Export Excel</button><button class="btn" id="refreshWarehouse" type="button">↻ Refresh AST</button></div></div>
+   <div id="warehouseCategorySummary" class="panel" style="display:none;padding:12px;margin:0 0 14px;background:#fbfcff">
+    <div class="panel-head" style="margin-bottom:10px"><h3>Summary Foto per Category</h3><small id="warehouseSummaryTotal">0 artikel</small></div>
+    <div class="table-wrap" style="overflow-x:auto"><table style="min-width:620px"><thead><tr><th>CAT</th><th style="text-align:right">TOTAL</th><th style="text-align:right">SUDAH FOTO</th><th style="text-align:right">BELUM FOTO</th><th style="text-align:right">PROGRES</th></tr></thead><tbody id="warehouseCategorySummaryBody"><tr><td class="empty" colspan="5">Tekan Summary untuk menghitung.</td></tr></tbody></table></div>
+   </div>
    <div class="sector-kpis">
     <div class="sector-kpi"><span>ARTIKEL HANYA DI GUDANG</span><strong id="warehouseSkuCount">0</strong></div>
     <div class="sector-kpi"><span>TOTAL QTY GUDANG</span><strong id="warehouseQty">0</strong></div>
@@ -676,6 +680,28 @@ async function deleteWarehousePhoto(productCode){const token=warehouseSessionTok
 
  const WAREHOUSE_PAGE_SIZE=10;
 function warehouseSessionToken(){try{const raw=localStorage.getItem('inv_sess_v1');if(!raw)return '';const session=JSON.parse(decodeURIComponent(escape(atob(raw))));return session&&session.exp>Date.now()?String(session.t||''):''}catch(e){return ''}}
+function renderWarehouseCategorySummary(){
+ const grouped=new Map();
+ warehouseProducts.forEach(product=>{
+  const cat=String(product.cat||'-').trim()||'-';
+  const name=String(product.category||'').trim();
+  if(!grouped.has(cat))grouped.set(cat,{cat,name,total:0,photographed:0});
+  const item=grouped.get(cat);item.total++;
+  if(warehousePhotos[product.code]&&warehousePhotos[product.code].viewUrl)item.photographed++;
+  if(!item.name&&name)item.name=name;
+ });
+ const rows=[...grouped.values()].sort((a,b)=>a.cat.localeCompare(b.cat,'id',{numeric:true}));
+ const total=rows.reduce((sum,item)=>sum+item.total,0);
+ const photographed=rows.reduce((sum,item)=>sum+item.photographed,0);
+ const unphotographed=total-photographed;
+ const percent=total?(photographed/total*100):0;
+ $('warehouseCategorySummaryBody').innerHTML=rows.map(item=>{
+  const missing=item.total-item.photographed;
+  const progress=item.total?(item.photographed/item.total*100):0;
+  return '<tr><td><b>'+esc(item.cat)+'</b>'+(item.name?' '+esc(item.name):'')+'</td><td style="text-align:right">'+fmt(item.total)+'</td><td style="text-align:right;color:#138454;font-weight:700">'+fmt(item.photographed)+'</td><td style="text-align:right;color:#c24141">'+fmt(missing)+'</td><td style="text-align:right;font-weight:700">'+progress.toFixed(2)+'%</td></tr>';
+ }).join('')+'<tr style="font-weight:800;background:#f8fafd"><td>TOTAL</td><td style="text-align:right">'+fmt(total)+'</td><td style="text-align:right;color:#138454">'+fmt(photographed)+'</td><td style="text-align:right;color:#c24141">'+fmt(unphotographed)+'</td><td style="text-align:right">'+percent.toFixed(2)+'%</td></tr>';
+ $('warehouseSummaryTotal').textContent=fmt(total)+' artikel';
+}
 function updateWarehousePhotoProgress(){
  const cats=[...($('warehouseCategory')?.selectedOptions||[])].map(o=>o.value).filter(Boolean);
  const scoped=warehouseProducts.filter(p=>!cats.length||cats.includes(p.cat));
@@ -823,6 +849,17 @@ async function requestWarehouseData(refresh){
 $('exportWarehouseExcel').addEventListener('click',exportWarehouseExcel);
 $('warehouseShowData').addEventListener('click',()=>requestWarehouseData(false));
 $('refreshWarehouse').addEventListener('click',()=>requestWarehouseData(true));
+$('toggleWarehouseSummary').addEventListener('click',async()=>{
+ const panel=$('warehouseCategorySummary');
+ const opening=panel.style.display==='none';
+ if(!opening){panel.style.display='none';$('toggleWarehouseSummary').textContent='▤ Summary';return;}
+ panel.style.display='block';$('toggleWarehouseSummary').textContent='Tutup Summary';
+ if(!warehouseDataRequested||!warehouseProducts.length){
+  $('warehouseCategorySummaryBody').innerHTML='<tr><td class="empty" colspan="5">Mengambil data artikel dan foto...</td></tr>';
+  await requestWarehouseData(false);
+ }
+ renderWarehouseCategorySummary();
+});
 $('warehouseSearch').addEventListener('input',()=>{warehousePage=1;renderWarehouseRows();saveWarehouseUiState()});
 function normalizeWarehouseCategorySelection(){const select=$('warehouseCategory');const selected=[...select.selectedOptions];const allOption=select.querySelector('option[value=""]');const specificSelected=selected.some(o=>o.value!=='');if(specificSelected){if(allOption)allOption.selected=false;}else{[...select.options].forEach(o=>o.selected=o.value==='');}}
 $('warehouseCategory').addEventListener('change',()=>{normalizeWarehouseCategorySelection();warehousePage=1;updateWarehousePhotoProgress();renderWarehouseRows();saveWarehouseUiState()});
