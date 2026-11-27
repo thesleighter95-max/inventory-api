@@ -705,16 +705,29 @@ function renderWarehouseCategorySummary(){
   if(!item.name&&name)item.name=name;
  });
  const rows=[...grouped.values()].sort((a,b)=>a.cat.localeCompare(b.cat,'id',{numeric:true}));
- const total=rows.reduce((sum,item)=>sum+item.total,0);
- const photographed=rows.reduce((sum,item)=>sum+item.photographed,0);
- const unphotographed=total-photographed;
- const percent=total?(photographed/total*100):0;
- $('warehouseCategorySummaryBody').innerHTML=rows.map(item=>{
-  const missing=item.total-item.photographed;
-  const progress=item.total?(item.photographed/item.total*100):0;
-  return '<tr><td><b>'+esc(item.cat)+'</b>'+(item.name?' '+esc(item.name):'')+'</td><td style="text-align:right">'+fmt(item.total)+'</td><td style="text-align:right;color:#138454;font-weight:700">'+fmt(item.photographed)+'</td><td style="text-align:right;color:#c24141">'+fmt(missing)+'</td><td style="text-align:right;font-weight:700">'+progress.toFixed(2)+'%</td></tr>';
- }).join('')+'<tr style="font-weight:800;background:#f8fafd"><td>TOTAL</td><td style="text-align:right">'+fmt(total)+'</td><td style="text-align:right;color:#138454">'+fmt(photographed)+'</td><td style="text-align:right;color:#c24141">'+fmt(unphotographed)+'</td><td style="text-align:right">'+percent.toFixed(2)+'%</td></tr>';
- $('warehouseSummaryTotal').textContent=fmt(total)+' artikel';
+ const groups=[
+  {name:'DF',cats:['11','14','17','19','21','26','27']},
+  {name:'FF',cats:['35','80']},
+  {name:'NF',cats:['13','51','57','62','71','85','87','88']}
+ ];
+ const seen=new Set(groups.flatMap(g=>g.cats));
+ const extra=rows.filter(r=>!seen.has(r.cat));
+ const fmtRow=(item,label)=>{const missing=item.total-item.photographed,progress=item.total?(item.photographed/item.total*100):0;return '<tr><td><b>'+esc(label||item.cat)+'</b>'+(label?'':' '+(item.name?esc(item.name):''))+'</td><td style="text-align:right">'+fmt(item.total)+'</td><td style="text-align:right;color:#138454;font-weight:700">'+fmt(item.photographed)+'</td><td style="text-align:right;color:#c24141">'+fmt(missing)+'</td><td style="text-align:right;font-weight:700">'+progress.toFixed(2)+'%</td></tr>';};
+ const sumRows=list=>list.reduce((a,r)=>({total:a.total+r.total,photographed:a.photographed+r.photographed}),{total:0,photographed:0});
+ const subtotal=(label,list)=>{const s=sumRows(list),missing=s.total-s.photographed,p=s.total?s.photographed/s.total*100:0;return '<tr style="font-weight:800;background:#ffe7a3"><td>TOTAL '+label+'</td><td style="text-align:right">'+fmt(s.total)+'</td><td style="text-align:right;color:#138454">'+fmt(s.photographed)+'</td><td style="text-align:right;color:#c24141">'+fmt(missing)+'</td><td style="text-align:right">'+p.toFixed(2)+'%</td></tr>';};
+ let html='';
+ groups.forEach(group=>{
+  const members=rows.filter(r=>group.cats.includes(r.cat));
+  if(!members.length)return;
+  html+='<tr style="background:#eaf1fa;font-weight:900"><td colspan="5">'+group.name+'</td></tr>';
+  html+=members.map(r=>fmtRow(r,'')).join('');
+  html+=subtotal(group.name,members);
+ });
+ if(extra.length){html+='<tr style="background:#eaf1fa;font-weight:900"><td colspan="5">LAINNYA / BELUM TERPETAKAN</td></tr>'+extra.map(r=>fmtRow(r,'')).join('')+subtotal('LAINNYA',extra);}
+ const total=sumRows(rows),missing=total.total-total.photographed,percent=total.total?total.photographed/total.total*100:0;
+ html+='<tr style="font-weight:900;background:#fff200"><td>STORE</td><td style="text-align:right">'+fmt(total.total)+'</td><td style="text-align:right;color:#138454">'+fmt(total.photographed)+'</td><td style="text-align:right;color:#c24141">'+fmt(missing)+'</td><td style="text-align:right">'+percent.toFixed(2)+'%</td></tr>';
+ $('warehouseCategorySummaryBody').innerHTML=html||'<tr><td class="empty" colspan="5">Tidak ada data kategori.</td></tr>';
+ $('warehouseSummaryTotal').textContent=fmt(total.total)+' artikel';
  const diagnosticButton=$('showWarehouseUnmapped');
  if(diagnosticButton)diagnosticButton.textContent='Cek '+fmt(warehouseUnmappedProducts.length)+' Artikel';
  const diagnosticBody=$('warehouseUnmappedBody');
