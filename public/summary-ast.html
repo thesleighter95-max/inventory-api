@@ -413,7 +413,8 @@
   <section class="panel summary-panel">
    <div class="panel-head"><div><h3>Warehouse Only</h3><small id="warehouseHint" style="display:none"></small></div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="btn" id="toggleWarehouseSummary" type="button" style="font-size:11px;padding:7px 10px">▤ Summary</button><button class="btn export-excel" id="exportWarehouseExcel" type="button" disabled>⬇ Export Excel</button><button class="btn" id="refreshWarehouse" type="button">↻ Refresh AST</button></div></div>
    <div id="warehouseCategorySummary" class="panel" style="display:none;padding:12px;margin:0 0 14px;background:#fbfcff">
-    <div class="panel-head" style="margin-bottom:10px"><h3>Summary Foto per Category</h3><small id="warehouseSummaryTotal">0 artikel</small></div>
+    <div class="panel-head" style="margin-bottom:10px;gap:8px;flex-wrap:wrap"><h3>Summary Foto per Category</h3><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><small id="warehouseSummaryTotal">0 artikel</small><button class="btn" type="button" id="showWarehouseUnmapped" style="font-size:11px;padding:6px 9px">Cek Artikel Belum Terpetakan</button></div></div>
+    <div id="warehouseUnmappedPanel" style="display:none;margin:0 0 12px"><div style="font-size:12px;font-weight:700;margin-bottom:6px">Daftar artikel yang kategori SUM-nya tidak berhasil dipetakan</div><div class="table-wrap" style="overflow-x:auto"><table style="min-width:600px"><thead><tr><th>PROD CODE AST</th><th>NAMA ARTIKEL</th><th>BARCODE</th><th>STATUS</th></tr></thead><tbody id="warehouseUnmappedBody"><tr><td colspan="4" class="empty">Belum ada data.</td></tr></tbody></table></div></div>
     <div class="table-wrap" style="overflow-x:auto"><table style="min-width:620px"><thead><tr><th>CAT</th><th style="text-align:right">TOTAL</th><th style="text-align:right">SUDAH FOTO</th><th style="text-align:right">BELUM FOTO</th><th style="text-align:right">PROGRES</th></tr></thead><tbody id="warehouseCategorySummaryBody"><tr><td class="empty" colspan="5">Tekan Summary untuk menghitung.</td></tr></tbody></table></div>
    </div>
    <div class="sector-kpis">
@@ -650,6 +651,7 @@ function renderAstSummary(){
 }
 
 let warehouseProducts=[],warehouseDataRequested=false,warehousePage=1,warehousePhotoFilter='all';
+let warehouseUnmappedProducts=[];
 const WAREHOUSE_STATE_KEY='pda_mini_warehouse_ui_v1';
 let warehouseRestoreState=null,warehouseLastProductCode='';
 try{warehouseRestoreState=JSON.parse(localStorage.getItem(WAREHOUSE_STATE_KEY)||'null')}catch(e){warehouseRestoreState=null}
@@ -701,6 +703,10 @@ function renderWarehouseCategorySummary(){
   return '<tr><td><b>'+esc(item.cat)+'</b>'+(item.name?' '+esc(item.name):'')+'</td><td style="text-align:right">'+fmt(item.total)+'</td><td style="text-align:right;color:#138454;font-weight:700">'+fmt(item.photographed)+'</td><td style="text-align:right;color:#c24141">'+fmt(missing)+'</td><td style="text-align:right;font-weight:700">'+progress.toFixed(2)+'%</td></tr>';
  }).join('')+'<tr style="font-weight:800;background:#f8fafd"><td>TOTAL</td><td style="text-align:right">'+fmt(total)+'</td><td style="text-align:right;color:#138454">'+fmt(photographed)+'</td><td style="text-align:right;color:#c24141">'+fmt(unphotographed)+'</td><td style="text-align:right">'+percent.toFixed(2)+'%</td></tr>';
  $('warehouseSummaryTotal').textContent=fmt(total)+' artikel';
+ const diagnosticButton=$('showWarehouseUnmapped');
+ if(diagnosticButton)diagnosticButton.textContent='Cek '+fmt(warehouseUnmappedProducts.length)+' Artikel';
+ const diagnosticBody=$('warehouseUnmappedBody');
+ if(diagnosticBody)diagnosticBody.innerHTML=warehouseUnmappedProducts.length?warehouseUnmappedProducts.map(p=>'<tr><td><b>'+esc(p.code||'-')+'</b></td><td>'+esc(p.name||'-')+'</td><td>'+esc(p.barcode||'-')+'</td><td style="color:#b45309;font-weight:700">'+esc(p.matchStatus)+'</td></tr>').join(''):'<tr><td class="empty" colspan="4">Tidak ada artikel yang gagal dipetakan. Semua kategori berhasil dibaca.</td></tr>';
 }
 function updateWarehousePhotoProgress(){
  const cats=[...($('warehouseCategory')?.selectedOptions||[])].map(o=>o.value).filter(Boolean);
@@ -749,11 +755,19 @@ async function renderWarehouseOnly(){
   });
  }catch(e){console.warn('Kategori SUM tidak tersedia untuk Warehouse Only:',e)}
  const grouped=new Map();
+ warehouseUnmappedProducts=[];
  astRows.forEach(row=>{
   const code=String(row[codeKey]??'').trim(),barcode=String(row[barcodeKey]??'').trim(),name=String(row[nameKey]??'').trim();
   const key=code?'P:'+code:'B:'+barcode;
   if(key==='B:')return;
-  if(!grouped.has(key)){const meta=categoryByCode.get(String(code).trim().toUpperCase().replace(/[^A-Z0-9]/g,''))||{};grouped.set(key,{code,barcode,name,cat:meta.cat||'',category:meta.category||'',addresses:[],qty:0});}
+  if(!grouped.has(key)){
+   const normalizedCode=String(code).trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+   const hasSumMatch=categoryByCode.has(normalizedCode);
+   const meta=categoryByCode.get(normalizedCode)||{};
+   const record={code,barcode,name,cat:meta.cat||'',category:meta.category||'',addresses:[],qty:0};
+   if(!String(meta.cat||'').trim())warehouseUnmappedProducts.push({...record,matchStatus:hasSumMatch?'Ada di SUM, tetapi CAT kosong':'Kode produk tidak ditemukan di SUM'});
+   grouped.set(key,record);
+  }
   const item=grouped.get(key),address=String(row[addressKey]??'').trim();
   item.addresses.push(address);
   if(warehouseHead(address)==='4')item.qty+=num(row[qtyKey]);
@@ -849,6 +863,12 @@ async function requestWarehouseData(refresh){
 $('exportWarehouseExcel').addEventListener('click',exportWarehouseExcel);
 $('warehouseShowData').addEventListener('click',()=>requestWarehouseData(false));
 $('refreshWarehouse').addEventListener('click',()=>requestWarehouseData(true));
+$('showWarehouseUnmapped').addEventListener('click',()=>{
+ const panel=$('warehouseUnmappedPanel');
+ const opening=panel.style.display==='none';
+ panel.style.display=opening?'block':'none';
+ $('showWarehouseUnmapped').textContent=opening?'Tutup Daftar Artikel':'Cek '+fmt(warehouseUnmappedProducts.length)+' Artikel';
+});
 $('toggleWarehouseSummary').addEventListener('click',async()=>{
  const panel=$('warehouseCategorySummary');
  const opening=panel.style.display==='none';
