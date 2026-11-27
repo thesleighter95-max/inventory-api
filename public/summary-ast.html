@@ -754,13 +754,18 @@ async function renderWarehouseOnly(){
  $('warehouseTableWrap').style.display='block';$('warehousePager').style.display='flex';
  renderWarehouseRows();
 }
+function getSelectedWarehouseCategories(){
+ return [...$('warehouseCategory').options].filter(o=>o.selected&&o.value!=='').map(o=>String(o.value).trim());
+}
 function getWarehouseFilteredRows(){
  const q=$('warehouseSearch').value.trim().toLocaleLowerCase('id-ID');
- const cats=[...$('warehouseCategory').selectedOptions].map(o=>o.value).filter(Boolean);
+ const cats=getSelectedWarehouseCategories();
  return warehouseProducts.filter(p=>{
   const hasPhoto=!!(warehousePhotos[p.code]&&warehousePhotos[p.code].viewUrl);
   const photoMatch=warehousePhotoFilter==='all'||(warehousePhotoFilter==='photographed'&&hasPhoto)||(warehousePhotoFilter==='unphotographed'&&!hasPhoto);
-  return photoMatch&&(!cats.length||cats.includes(p.cat))&&[p.code,p.name,p.barcode,p.cat,p.category,...p.addresses].join(' ').toLocaleLowerCase('id-ID').includes(q);
+  const categoryMatch=!cats.length||cats.includes(String(p.cat??'').trim());
+  const searchMatch=[p.code,p.name,p.barcode,p.cat,p.category,...p.addresses].join(' ').toLocaleLowerCase('id-ID').includes(q);
+  return photoMatch&&categoryMatch&&searchMatch;
  });
 }
 function exportWarehouseExcel(){
@@ -821,6 +826,23 @@ $('refreshWarehouse').addEventListener('click',()=>requestWarehouseData(true));
 $('warehouseSearch').addEventListener('input',()=>{warehousePage=1;renderWarehouseRows();saveWarehouseUiState()});
 function normalizeWarehouseCategorySelection(){const select=$('warehouseCategory');const selected=[...select.selectedOptions];const allOption=select.querySelector('option[value=""]');const specificSelected=selected.some(o=>o.value!=='');if(specificSelected){if(allOption)allOption.selected=false;}else{[...select.options].forEach(o=>o.selected=o.value==='');}}
 $('warehouseCategory').addEventListener('change',()=>{normalizeWarehouseCategorySelection();warehousePage=1;updateWarehousePhotoProgress();renderWarehouseRows();saveWarehouseUiState()});
+/* Desktop: klik opsi kategori untuk toggle tanpa Ctrl, seperti checkbox. */
+$('warehouseCategory').addEventListener('mousedown',event=>{
+ if(window.matchMedia('(max-width:700px)').matches)return;
+ const option=event.target.closest('option');
+ if(!option)return;
+ event.preventDefault();
+ const select=$('warehouseCategory');
+ if(option.value===''){
+  [...select.options].forEach(o=>o.selected=o.value==='');
+ }else{
+  option.selected=!option.selected;
+  const allOption=select.querySelector('option[value=""]');
+  if(allOption)allOption.selected=false;
+  if(!getSelectedWarehouseCategories().length&&allOption)allOption.selected=true;
+ }
+ select.dispatchEvent(new Event('change',{bubbles:true}));
+});
 $('warehouseReset').addEventListener('click',()=>{$('warehouseSearch').value='';[...$('warehouseCategory').options].forEach(o=>o.selected=o.value==='');warehousePhotoFilter='all';warehousePage=1;warehouseLastProductCode='';updateWarehousePhotoProgress();if(warehouseDataRequested)renderWarehouseRows();saveWarehouseUiState()});
 $('warehouseShowPhotographed').addEventListener('click',()=>selectWarehousePhotoFilter('photographed'));
 $('warehouseShowUnphotographed').addEventListener('click',()=>selectWarehousePhotoFilter('unphotographed'));
