@@ -45,7 +45,14 @@
      if(rows.length<3||rows[1].length!==20)throw new Error("Format CSV tidak sesuai (harus 20 kolom)");
      const header=rows[1];
      const sourceEndDate=parsePeriod(header);
-     if(sourceEndDate)reportEndDate=sourceEndDate;
+     // Periode laporan hanya maju jika Sheet sudah menerbitkan tanggal H-1 yang diharapkan.
+     const today=new Date();
+     const expectedEndDate=new Date(today.getFullYear(),today.getMonth(),today.getDate()-1);
+     if(sourceEndDate && sourceEndDate.getFullYear()===expectedEndDate.getFullYear()
+       && sourceEndDate.getMonth()===expectedEndDate.getMonth()
+       && sourceEndDate.getDate()===expectedEndDate.getDate()){
+       reportEndDate=sourceEndDate;
+     }
      table.tHead.innerHTML="<tr>"+header.map(v=>"<th>"+safeCell(v)+"</th>").join("")+"</tr>";
      const bodyRows=rows.slice(2).filter(r=>r.some(v=>v.trim()!==""));
      table.tBodies[0].innerHTML=bodyRows.map(r=>{
