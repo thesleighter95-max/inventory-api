@@ -64,7 +64,7 @@
  function parsePeriod(headers){
    const monthMap={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
    for(const value of headers){
-     const match=String(value||"").match(/(\\d{1,2})\\s*-\\s*(\\d{1,2})\\s+([A-Za-z]{3})\\s+(\\d{4})/);
+     const match=String(value||"").match(/(\d{1,2})\s*-\s*(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})/);
      if(match&&monthMap[match[3]]!==undefined){
        const end=new Date(Number(match[4]),monthMap[match[3]],Number(match[2]));
        if(!isNaN(end.getTime()))return end;
