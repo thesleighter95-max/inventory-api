@@ -25,8 +25,8 @@
 
   function applyFromTitle(){
     const heading=title.textContent.toLowerCase();
-    const isNet=/\\bnet\\b/.test(heading);
-    const isGross=/\\bgross\\b/.test(heading);
+    const isNet=/net/.test(heading);
+    const isGross=/gross/.test(heading);
     table.querySelectorAll('[data-metric="gross"]').forEach(cell=>cell.classList.toggle("hide-col",isNet));
     table.querySelectorAll('[data-metric="net"]').forEach(cell=>cell.classList.toggle("hide-col",isGross));
     // Jika judul tidak menyebut Net maupun Gross, tampilkan seluruh kolom.
@@ -45,7 +45,7 @@
   });
 
   // Pilihan awal mengikuti jenis laporan yang tertulis pada judul sumber.
-  selector.value=/\\bnet\\b/i.test(originalTitle) ? "net" : "gross";
+  selector.value=/net/i.test(originalTitle) ? "net" : "gross";
   applyFromTitle();
 })();
 </script>
