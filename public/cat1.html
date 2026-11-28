@@ -62,7 +62,8 @@
      const header=rows[1];
      const sourceEndDate=parsePeriod(header);
      // Timestamp Setting!B1 harus sudah diperbarui hari ini; periode Cat1 harus sama dengan tanggal timestamp - 1.
-     const timestampTarget=await getFreshUpdateDate();
+     let timestampTarget=null;
+     try{timestampTarget=await getFreshUpdateDate();}catch(timestampError){console.warn("Timestamp Setting belum terbaca; periode dashboard dipertahankan:",timestampError);}
      if(sourceEndDate&&timestampTarget
        &&sourceEndDate.getFullYear()===timestampTarget.getFullYear()
        &&sourceEndDate.getMonth()===timestampTarget.getMonth()
