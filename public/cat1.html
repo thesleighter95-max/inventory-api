@@ -30,11 +30,22 @@
    period.textContent=pad(d.first.getDate())+"-"+pad(d.last.getDate())+" "+month(d.last)+" "+d.year;
    title.textContent="Store 06037 "+(net?"Net_sale":"Gross sale")+" and Profit, "+current+" vs "+previous;
    const headers=table.tHead.rows[0].cells;
-   [4,5].forEach(i=>headers[i].innerHTML=(i===4?"Gross_sale_ly":"Net_sale_ly")+"<br>("+previous+")");
-   [6,7].forEach(i=>headers[i].innerHTML=(i===6?"Budget Gross":"Budget Net")+"<br>("+current+")");
-   [8,9].forEach(i=>headers[i].innerHTML=(i===8?"Gross_sale_ty":"Net_sale_ty")+"<br>("+current+")");
+   headers[4].innerHTML=(net?"Net_sale_ly":"Gross_sale_ly")+"<br>("+previous+")";
+   headers[5].innerHTML=(net?"Net_sale_ly":"Gross_sale_ly")+"<br>("+previous+")";
+   headers[6].innerHTML="Budget<br>("+current+")";
+   headers[7].innerHTML="Budget<br>("+current+")";
+   headers[8].innerHTML=(net?"Net_sale_ty":"Gross_sale_ty")+"<br>("+current+")";
+   headers[9].innerHTML=(net?"Net_sale_ty":"Gross_sale_ty")+"<br>("+current+")";
    headers[10].innerHTML="New_Profit<br>("+current+")";
+   headers[11].innerHTML="%<br>Prf";
+   headers[12].innerHTML="%<br>Prf";
+   headers[13].innerHTML="%<br>Ach";
+   headers[14].innerHTML="%<br>Ach";
+   headers[15].innerHTML="%<br>Growth";
+   headers[16].innerHTML="%<br>Growth";
    headers[17].innerHTML="Shrinkage<br>("+current+")";
+   headers[18].innerHTML="%<br>Shr";
+   headers[19].innerHTML="%<br>Shr";
    table.querySelectorAll('[data-metric="gross"]').forEach(c=>c.classList.toggle("hide-col",net));
    table.querySelectorAll('[data-metric="net"]').forEach(c=>c.classList.toggle("hide-col",!net));
  }
