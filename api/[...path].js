@@ -535,7 +535,7 @@ async function driveApi(accessToken,url,options={}){
         if(descriptionMatch&&descriptionMatch[1].trim())return descriptionMatch[1].trim();
         // Older Drive photos may have lost appProperties/description; recover Product Code from DISPLAY_<code>.<ext>.
         const filenameMatch=String(file&&file.name||"").match(/^DISPLAY_(.+)\.(?:jpe?g|png|webp)$/i);
-        return filenameMatch?filenameMatch[1].trim().replace(/_/g," "):"";
+        return filenameMatch?filenameMatch[1].trim():"";
       };
       const legacy=async()=>{try{return await readWarehousePhotoIndex()}catch(error){console.warn("Indeks foto lama tidak terbaca; Drive tetap menjadi sumber utama:",error.message);return {}}};
       if(method==="GET"){
