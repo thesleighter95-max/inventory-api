@@ -531,8 +531,11 @@ async function driveApi(accessToken,url,options={}){
       const codeOf=file=>{
         const prop=file&&file.appProperties&&file.appProperties.productCode;
         if(prop)return String(prop).trim();
-        const m=String(file&&file.description||"").match(/Product Code:\s*([^\r\n]+)/i);
-        return m?m[1].trim():"";
+        const descriptionMatch=String(file&&file.description||"").match(/Product Code:\s*([^\r\n]+)/i);
+        if(descriptionMatch&&descriptionMatch[1].trim())return descriptionMatch[1].trim();
+        // Older Drive photos may have lost appProperties/description; recover Product Code from DISPLAY_<code>.<ext>.
+        const filenameMatch=String(file&&file.name||"").match(/^DISPLAY_(.+)\.(?:jpe?g|png|webp)$/i);
+        return filenameMatch?filenameMatch[1].trim().replace(/_/g," "):"";
       };
       const legacy=async()=>{try{return await readWarehousePhotoIndex()}catch(error){console.warn("Indeks foto lama tidak terbaca; Drive tetap menjadi sumber utama:",error.message);return {}}};
       if(method==="GET"){
