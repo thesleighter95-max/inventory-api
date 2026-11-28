@@ -25,8 +25,8 @@
      if(c==='"'&&quoted&&next==='"'){field+='"';i++;}
      else if(c==='"') quoted=!quoted;
      else if(c===','&&!quoted){row.push(field);field="";}
-     else if((c==='\\n'||c==='\\r')&&!quoted){
-       if(c==='\\r'&&next==='\\n')i++;
+     else if((c==='\n'||c==='\r')&&!quoted){
+       if(c==='\r'&&next==='\n')i++;
        row.push(field);field="";
        if(row.some(v=>v.trim()!==""))rows.push(row);
        row=[];
@@ -35,7 +35,7 @@
    if(field.length||row.length){row.push(field);if(row.some(v=>v.trim()!==""))rows.push(row);}
    return rows;
  }
- function safeCell(value){return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/\\n/g,"<br>");}
+ function safeCell(value){return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/\n/g,"<br>");}
  async function loadSheetData(){
    try{
      status.textContent="Memuat data...";
